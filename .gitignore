@@ -1,0 +1,36 @@
+# Certificates / secrets
+*.cer
+*.pfx
+*.pem
+*.p12
+*.crt
+*.key
+*.pkcs12
+
+# Credentials
+*.secret
+*.env
+.env
+.env.*
+credentials.json
+secrets.json
+
+# GREX365 local auth/config (tenant, app, cert metadata — never commit)
+GREX365/config/exo-app-params.json
+exo-app-params.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+
+# Logs / temp
+*.log
+*.tmp
+*.bak
+
+# Backups
+backup_*/
+*_BACKUP/

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Instrucciones CSV — GREX365</title>
+<style>
+  :root{
+    --bg:#0d0f14;--bg2:#13161d;--panel:#171b24;
+    --border:#1f2532;--border2:#2a3142;
+    --cyan:#00d4ff;--cyan-d:#0099bb;
+    --magenta:#ff2a6d;--yellow:#ffd166;--green:#5cdb95;
+    --text:#c5c8d1;--text-d:#7a8294;--text-h:#eef0f5;
+    --mono:'JetBrains Mono','Fira Code','Cascadia Code','Consolas',monospace;
+    --sans:'Segoe UI','Inter',system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:var(--sans);line-height:1.55;font-size:15px;
+  }
+  header{
+    background:linear-gradient(135deg,#0a0d12 0%,#13161d 100%);
+    border-bottom:1px solid var(--border2);
+    padding:48px 40px 32px;position:relative;overflow:hidden;
+  }
+  header::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,transparent,var(--cyan),var(--magenta),transparent);
+  }
+  header h1{
+    margin:0;font-size:32px;font-weight:600;letter-spacing:.5px;
+    color:var(--text-h);
+  }
+  header h1 .accent{color:var(--cyan)}
+  header h1 .frame{color:var(--text-d);font-weight:400}
+  header .sub{
+    margin-top:8px;color:var(--text-d);font-family:var(--mono);
+    font-size:13px;letter-spacing:.5px;
+  }
+  main{max-width:1100px;margin:0 auto;padding:32px 40px 64px}
+  nav.toc{
+    display:flex;flex-wrap:wrap;gap:8px;
+    padding:16px;background:var(--panel);
+    border:1px solid var(--border);border-radius:6px;margin-bottom:32px;
+  }
+  nav.toc a{
+    color:var(--cyan);text-decoration:none;font-family:var(--mono);
+    font-size:13px;padding:6px 12px;border:1px solid var(--border2);
+    border-radius:4px;transition:all .15s;
+  }
+  nav.toc a:hover{
+    background:rgba(0,212,255,.08);border-color:var(--cyan-d);
+  }
+  section{margin-bottom:48px;scroll-margin-top:24px}
+  h2{
+    color:var(--text-h);font-size:22px;font-weight:600;
+    margin:0 0 4px 0;padding-bottom:8px;border-bottom:1px solid var(--border2);
+  }
+  h2 .tag{
+    color:var(--cyan);font-family:var(--mono);font-size:14px;
+    margin-right:10px;font-weight:400;
+  }
+  h3{
+    color:var(--text-h);font-size:17px;font-weight:600;
+    margin:28px 0 12px;letter-spacing:.3px;
+  }
+  h3::before{
+    content:'▌ ';color:var(--magenta);font-weight:400;
+  }
+  p{margin:8px 0 14px}
+  code{
+    font-family:var(--mono);font-size:13px;
+    background:#1a1f2b;padding:2px 6px;border-radius:3px;
+    color:var(--yellow);border:1px solid var(--border);
+  }
+  pre{
+    background:var(--bg2);border:1px solid var(--border);
+    border-left:3px solid var(--cyan);
+    border-radius:4px;padding:16px 20px;overflow-x:auto;
+    font-family:var(--mono);font-size:13px;line-height:1.6;
+    color:var(--text-h);
+  }
+  pre.example{border-left-color:var(--green)}
+  pre.bad{border-left-color:var(--magenta)}
+  pre .h{color:var(--cyan)}
+  pre .v{color:var(--yellow)}
+  pre .c{color:var(--text-d);font-style:italic}
+  table{
+    width:100%;border-collapse:collapse;margin:12px 0 20px;
+    font-size:14px;
+  }
+  th,td{
+    text-align:left;padding:10px 14px;
+    border-bottom:1px solid var(--border);
+  }
+  th{
+    background:var(--panel);color:var(--cyan);
+    font-weight:600;font-family:var(--mono);font-size:12px;
+    letter-spacing:.5px;text-transform:uppercase;
+  }
+  td code{font-size:12px}
+  .pill{
+    display:inline-block;padding:2px 8px;border-radius:3px;
+    font-family:var(--mono);font-size:11px;font-weight:600;
+    letter-spacing:.5px;
+  }
+  .pill.req{background:rgba(255,42,109,.12);color:var(--magenta);border:1px solid var(--magenta)}
+  .pill.opt{background:rgba(0,212,255,.10);color:var(--cyan);border:1px solid var(--cyan-d)}
+  .callout{
+    border-left:3px solid var(--yellow);background:rgba(255,209,102,.05);
+    padding:14px 18px;margin:16px 0;border-radius:0 4px 4px 0;
+  }
+  .callout.warn{border-color:var(--magenta);background:rgba(255,42,109,.05)}
+  .callout.ok{border-color:var(--green);background:rgba(92,219,149,.05)}
+  .callout strong{color:var(--text-h)}
+  ul{padding-left:20px}
+  ul li{margin:4px 0}
+  ul li::marker{color:var(--cyan)}
+  footer{
+    text-align:center;color:var(--text-d);font-family:var(--mono);
+    font-size:12px;padding:32px 0 16px;border-top:1px solid var(--border);
+    margin-top:48px;
+  }
+  footer .accent{color:var(--cyan)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="frame">[</span> <span class="accent">GREX365</span> <span class="frame">]</span> Instrucciones CSV</h1>
+  <div class="sub">&gt; Especificación de formatos de entrada · módulos de inyección y creación masiva</div>
+</header>
+
+<main>
+
+<nav class="toc">
+  <a href="#general">01 · General</a>
+  <a href="#schema-emailid">02 · Schema A — Email[+Id]</a>
+  <a href="#schema-emailgroup">03 · Schema B — Email + GroupName</a>
+  <a href="#delim">04 · Delimitadores y encoding</a>
+  <a href="#valid">05 · Validaciones</a>
+  <a href="#errores">06 · Errores comunes</a>
+</nav>
+
+<section id="general">
+  <h2><span class="tag">01</span>General</h2>
+  <p>Los scripts de GREX365 leen ficheros <code>.csv</code> con dos esquemas de columnas según el módulo:</p>
+  <table>
+    <tr><th>Schema</th><th>Módulo</th><th>Columnas</th></tr>
+    <tr>
+      <td><strong>A</strong></td>
+      <td>Inyección de usuarios a grupo / DL existente</td>
+      <td><code>Email</code> <span class="pill req">obligatoria</span> &middot; <code>Id</code> <span class="pill opt">opcional</span></td>
+    </tr>
+    <tr>
+      <td><strong>B</strong></td>
+      <td>Creación masiva de grupos / DL desde CSV</td>
+      <td><code>Email</code> <span class="pill req">obligatoria</span> &middot; <code>GroupName</code> <span class="pill req">obligatoria</span></td>
+    </tr>
+  </table>
+  <div class="callout">
+    <strong>Detección automática.</strong> Encoding (UTF-8 con/sin BOM, UTF-16) y delimitador (<code>,</code> <code>;</code> <code>TAB</code>) se autodetectan. No hace falta declararlos.
+  </div>
+</section>
+
+<section id="schema-emailid">
+  <h2><span class="tag">02</span>Schema A — <code>Email</code> [+ <code>Id</code>]</h2>
+  <p>Para módulos que añaden miembros a un grupo o lista de distribución existente.</p>
+
+  <h3>Cabeceras válidas</h3>
+  <table>
+    <tr><th>Campo</th><th>Alias aceptados</th><th>Estado</th></tr>
+    <tr><td><code>Email</code></td><td><code>Email</code> · <code>Mail</code> · <code>UserPrincipalName</code> · <code>UPN</code> · <code>Correo</code> · <code>PrimarySmtpAddress</code> · <code>EmailAddress</code> · <code>MemberEmail</code></td><td><span class="pill req">obligatoria</span></td></tr>
+    <tr><td><code>Id</code></td><td><code>Id</code> · <code>ObjectId</code> · <code>UserId</code> · <code>ExternalDirectoryObjectId</code></td><td><span class="pill opt">opcional</span></td></tr>
+  </table>
+
+  <h3>Ejemplo mínimo (sólo Email)</h3>
+<pre class="example"><span class="h">Email</span>
+ana.garcia@contoso.com
+luis.perez@contoso.com
+maria.lopez@contoso.com</pre>
+
+  <h3>Ejemplo completo (Email + Id)</h3>
+<pre class="example"><span class="h">Email;Id</span>
+ana.garcia@contoso.com<span class="c">;</span>9c0f8b21-43a1-4e7c-9d2f-1a2b3c4d5e6f
+luis.perez@contoso.com<span class="c">;</span>a1b2c3d4-5e6f-7890-abcd-ef1234567890</pre>
+
+  <div class="callout ok">
+    <strong>Comportamiento.</strong> Si falta el <code>Id</code>, el script lo resuelve consultando Microsoft Graph por el correo. Si el correo y el Id están ambos presentes, el Id manda en caso de conflicto.
+  </div>
+
+  <h3>Una sola columna sin cabecera</h3>
+<pre class="example">ana.garcia@contoso.com
+luis.perez@contoso.com
+maria.lopez@contoso.com</pre>
+  <p>Si no hay cabecera, la primera columna se interpreta como <code>Email</code>.</p>
+</section>
+
+<section id="schema-emailgroup">
+  <h2><span class="tag">03</span>Schema B — <code>Email</code> + <code>GroupName</code></h2>
+  <p>Para crear varios grupos en lote y poblarlos en una sola pasada. Cada fila asocia un usuario a un grupo. El script agrupa internamente por <code>GroupName</code>.</p>
+
+  <h3>Cabeceras válidas</h3>
+  <table>
+    <tr><th>Campo</th><th>Alias aceptados</th><th>Estado</th></tr>
+    <tr><td><code>Email</code></td><td>Mismos alias que Schema A</td><td><span class="pill req">obligatoria</span></td></tr>
+    <tr><td><code>GroupName</code></td><td><code>GroupName</code> · <code>Group</code> · <code>Grupo</code> · <code>NombreGrupo</code> · <code>ListName</code> · <code>DL</code> · <code>DistributionList</code> · <code>GroupAlias</code> · <code>Nombre</code></td><td><span class="pill req">obligatoria</span></td></tr>
+  </table>
+
+  <h3>Ejemplo</h3>
+<pre class="example"><span class="h">Email;GroupName</span>
+ana.garcia@contoso.com<span class="c">;</span>Marketing-Lisboa
+luis.perez@contoso.com<span class="c">;</span>Marketing-Lisboa
+maria.lopez@contoso.com<span class="c">;</span>Ventas-Madrid
+pedro.ruiz@contoso.com<span class="c">;</span>Ventas-Madrid</pre>
+
+  <div class="callout">
+    <strong>Construcción del email del grupo.</strong> El script pide un dominio al inicio (ej: <code>contoso.com</code>) y construye el correo del grupo como <code>GroupName@dominio</code>. El <code>GroupName</code> se usa también como <code>DisplayName</code> y <code>MailNickname</code>.
+  </div>
+
+  <h3>Filas con GroupName vacío</h3>
+<pre class="example"><span class="h">Email;GroupName</span>
+ana.garcia@contoso.com<span class="c">;</span>Marketing-Lisboa
+luis.perez@contoso.com<span class="c">;</span>
+maria.lopez@contoso.com<span class="c">;</span>Ventas-Madrid</pre>
+  <p>Si una fila trae <code>GroupName</code> vacío, hereda el último valor no vacío de las filas anteriores (en el ejemplo, Luis cae en <em>Marketing-Lisboa</em>).</p>
+</section>
+
+<section id="delim">
+  <h2><span class="tag">04</span>Delimitadores y encoding</h2>
+
+  <h3>Delimitadores soportados</h3>
+  <ul>
+    <li>Coma <code>,</code></li>
+    <li>Punto y coma <code>;</code> &mdash; <em>recomendado en entornos europeos por compatibilidad con Excel ES/PT</em></li>
+    <li>Tabulador <code>TAB</code></li>
+  </ul>
+
+  <h3>Encoding</h3>
+  <ul>
+    <li>UTF-8 (con o sin BOM) &mdash; <em>recomendado</em></li>
+    <li>UTF-16 LE / BE (BOM detectado)</li>
+  </ul>
+
+  <h3>Comillas</h3>
+  <p>Los valores entre comillas dobles se respetan. Para escapar una comilla dentro de un valor, dúplicala:</p>
+<pre class="example"><span class="h">Email;DisplayName</span>
+ana@contoso.com<span class="c">;</span>"García, Ana"
+luis@contoso.com<span class="c">;</span>"O""Brien, Luis"</pre>
+</section>
+
+<section id="valid">
+  <h2><span class="tag">05</span>Validaciones</h2>
+  <table>
+    <tr><th>Regla</th><th>Comportamiento</th></tr>
+    <tr><td>Email vacío</td><td>Fila omitida, registrada en log como <code>Error / Email vacío</code></td></tr>
+    <tr><td>Email malformado</td><td>Fila omitida, registrada como <code>Error / Formato de email inválido</code></td></tr>
+    <tr><td>Usuario no existe en Graph</td><td>Fila omitida, registrada como <code>Error / Usuario no encontrado</code></td></tr>
+    <tr><td>Miembro ya pertenece</td><td>Fila omitida, registrada como <code>MemberSkipped</code></td></tr>
+    <tr><td>Grupo ya existe (Schema B)</td><td>Se reutiliza, no se duplica. Se añaden miembros nuevos.</td></tr>
+    <tr><td>GUID inválido en columna <code>Id</code></td><td>Se ignora el Id, se cae a resolución por correo</td></tr>
+  </table>
+  <div class="callout warn">
+    <strong>Validador de email.</strong> Patrón aplicado: <code>^[^@\s]+@[^@\s]+\.[^@\s]+$</code>. No valida MX ni existencia real, sólo formato.
+  </div>
+</section>
+
+<section id="errores">
+  <h2><span class="tag">06</span>Errores comunes</h2>
+
+  <h3>1. Excel guarda con BOM y separador local</h3>
+  <p>No es problema: ambos se autodetectan. Sólo cuida que la cabecera empiece con un alias válido (no la primera celda en blanco).</p>
+
+  <h3>2. Cabecera con espacios o tildes</h3>
+  <p>Las cabeceras se comparan en minúsculas y sin acentos. <code>Correo</code>, <code>correo</code> y <code>CORREO</code> son equivalentes.</p>
+
+  <h3>3. Fila vacía intermedia</h3>
+  <p>Las filas en blanco se ignoran sin error.</p>
+
+  <h3>4. CSV con sólo una columna sin cabecera</h3>
+  <p>Schema A: la columna se asume <code>Email</code>. Schema B: necesita siempre <code>Email</code> + <code>GroupName</code>; con sólo una columna falla.</p>
+
+  <h3>5. Caracteres invisibles (BOM duplicado)</h3>
+  <p>El script limpia el BOM al inicio de la primera celda. Si tu cabecera aparece como <code>﻿Email</code> en logs, el script ya lo está saneando.</p>
+
+  <h3>Ejemplos malos</h3>
+<pre class="bad"><span class="c">// Sin cabecera y dos columnas (Schema B falla):</span>
+ana@contoso.com;Marketing-Lisboa
+luis@contoso.com;Marketing-Lisboa
+
+<span class="c">// Cabecera incorrecta en Schema B:</span>
+correoUsuario;listaDistribucion
+ana@contoso.com;Marketing-Lisboa
+
+<span class="c">// Email malformado:</span>
+ana_at_contoso.com;Marketing-Lisboa</pre>
+</section>
+
+</main>
+
+<footer>
+  <span class="accent">GREX365</span> · Toolkit M365 / Exchange Online · Spec CSV v1
+</footer>
+
+</body>
+</html>
