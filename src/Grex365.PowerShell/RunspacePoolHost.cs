@@ -16,7 +16,9 @@ public sealed class RunspacePoolHost : IDisposable
         iss.Variables.Add(new SessionStateVariableEntry("WarningPreference", "SilentlyContinue", string.Empty));
         iss.Variables.Add(new SessionStateVariableEntry("ErrorActionPreference", "Continue", string.Empty));
 
-        _pool = RunspaceFactory.CreateRunspacePool(minRunspaces, maxRunspaces, iss, host: null);
+        _pool = RunspaceFactory.CreateRunspacePool(iss);
+        _pool.SetMinRunspaces(minRunspaces);
+        _pool.SetMaxRunspaces(maxRunspaces);
         _pool.ApartmentState = System.Threading.ApartmentState.MTA;
         _pool.ThreadOptions = PSThreadOptions.Default;
         _pool.Open();

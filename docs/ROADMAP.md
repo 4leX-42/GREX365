@@ -60,10 +60,10 @@ Goal: rock-solid services usable from any UI, fully tested.
 | 1.1.3 | `PowerShellRunner.RunAsync` happy path | ✅ | S | BeginInvoke + Task.Factory.FromAsync |
 | 1.1.4 | Stream forwarding (Info/Warn/Error/Verbose/Debug) | ✅ | S | |
 | 1.1.5 | CancellationToken → ps.Stop() | ✅ | S | |
-| 1.1.6 | Unit tests for happy path | 🔴 | S | Need PSCommandBuilder testable seam |
-| 1.1.7 | Unit tests for cancellation | 🔴 | S | |
-| 1.1.8 | Unit tests for stream forwarding | 🔴 | S | |
-| 1.1.9 | Integration test: real `Get-Date` script | 🔴 | S | |
+| 1.1.6 | Unit tests for happy path | ✅ | S | PowerShellRunnerTests in test project |
+| 1.1.7 | Unit tests for cancellation | ✅ | S | Start-Sleep 30s + 200ms cancel |
+| 1.1.8 | Unit tests for stream forwarding | ✅ | S | Info + Warning streams covered |
+| 1.1.9 | Integration test: real `Get-Date` script | ✅ | S | Plus concurrent calls test |
 | 1.1.10 | Handle PSGallery first-time install (timeout, fallback) | 🔴 | M | Real-world: 60s install with no output is unacceptable |
 | 1.1.11 | Progress events for module install | 🔴 | M | Verbose stream → progress |
 | 1.1.12 | Reset runspace state on error (avoid contaminated reuse) | 🔴 | M | Currently uses default thread options |
