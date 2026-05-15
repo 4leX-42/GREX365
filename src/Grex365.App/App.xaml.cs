@@ -1,4 +1,5 @@
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using Grex365.App.Services;
 using Grex365.App.ViewModels;
@@ -40,6 +41,9 @@ public partial class App : Application
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
             .CreateLogger();
 
+        WireGlobalExceptionHandlers();
+        TryImportLegacyConfig(configDir);
+
         _host = Host.CreateDefaultBuilder()
             .ConfigureServices(services =>
             {
@@ -52,6 +56,7 @@ public partial class App : Application
                 services.AddSingleton<IGraphConnection, GraphConnection>();
                 services.AddSingleton<IExchangeConnection, ExchangeConnection>();
                 services.AddSingleton<IConnectionStateMonitor, ConnectionStateMonitor>();
+                services.AddSingleton<ICertValidator, CertValidator>();
 
                 services.AddSingleton<IPreferencesStore>(_ => new JsonPreferencesStore(configDir));
                 services.AddSingleton<ICertConfigStore>(_ => new JsonCertConfigStore(configDir));
@@ -70,6 +75,11 @@ public partial class App : Application
         var main = Services.GetRequiredService<MainWindow>();
         main.Show();
 
+        base.OnStartup(e);
+    }
+
+    private void WireGlobalExceptionHandlers()
+    {
         DispatcherUnhandledException += (_, args) =>
         {
             Log.Error(args.Exception, "Unhandled UI exception");
@@ -77,7 +87,47 @@ public partial class App : Application
             args.Handled = true;
         };
 
-        base.OnStartup(e);
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            if (args.ExceptionObject is Exception ex)
+            {
+                Log.Fatal(ex, "Unhandled AppDomain exception (terminating={Terminating})", args.IsTerminating);
+            }
+        };
+
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            Log.Error(args.Exception, "Unobserved task exception");
+            args.SetObserved();
+        };
+    }
+
+    private static void TryImportLegacyConfig(string targetConfigDir)
+    {
+        try
+        {
+            var exeDir = AppContext.BaseDirectory;
+            var candidates = new List<string>
+            {
+                Path.Combine(exeDir, "..", "..", "..", "..", "..", "GREX365", "config"),
+                Path.Combine(exeDir, "GREX365", "config"),
+                Path.Combine(Directory.GetCurrentDirectory(), "GREX365", "config")
+            };
+
+            var importer = new LegacyPreferencesImporter(targetConfigDir);
+            var result = importer.TryImportAsync(candidates).GetAwaiter().GetResult();
+            if (result.PreferencesImported || result.CertConfigImported)
+            {
+                Log.Information(
+                    "Imported legacy config (prefs={Prefs}, cert={Cert})",
+                    result.PreferencesImported,
+                    result.CertConfigImported);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Legacy config import failed (non-fatal)");
+        }
     }
 
     protected override async void OnExit(ExitEventArgs e)

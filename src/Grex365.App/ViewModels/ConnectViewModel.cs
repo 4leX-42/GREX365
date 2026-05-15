@@ -12,6 +12,7 @@ public sealed partial class ConnectViewModel : ObservableObject
     private readonly IExchangeConnection _exchange;
     private readonly IConnectionStateMonitor _monitor;
     private readonly ICertConfigStore _certStore;
+    private readonly ICertValidator _certValidator;
     private readonly IUiLogSink _log;
     private CancellationTokenSource? _cts;
 
@@ -41,12 +42,14 @@ public sealed partial class ConnectViewModel : ObservableObject
         IExchangeConnection exchange,
         IConnectionStateMonitor monitor,
         ICertConfigStore certStore,
+        ICertValidator certValidator,
         IUiLogSink log)
     {
         _graph = graph;
         _exchange = exchange;
         _monitor = monitor;
         _certStore = certStore;
+        _certValidator = certValidator;
         _log = log;
 
         _monitor.PropertyChanged += OnMonitorChanged;
@@ -75,6 +78,15 @@ public sealed partial class ConnectViewModel : ObservableObject
                 _log.Progress.Report(LogEntry.Warn("Connect", StatusMessage));
                 return;
             }
+
+            var validation = _certValidator.Validate(config);
+            if (!validation.IsValid)
+            {
+                StatusMessage = "Cert inválido: " + validation.Message;
+                _log.Progress.Report(LogEntry.Error("Connect", StatusMessage));
+                return;
+            }
+            _log.Progress.Report(LogEntry.Info("Connect", validation.Message));
 
             StatusMessage = "Conectando...";
             await _graph.ConnectByCertificateAsync(config, _log.Progress, _cts.Token).ConfigureAwait(true);

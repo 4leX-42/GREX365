@@ -118,7 +118,7 @@ Goal: rock-solid services usable from any UI, fully tested.
 | 1.5.3 | Unit tests roundtrip | ✅ | S | |
 | 1.5.4 | Schema version + migration logic | 🔴 | S | Future-proof if shape changes |
 | 1.5.5 | Validation on load (corrupted file → default + warn) | 🔴 | S | |
-| 1.5.6 | Read legacy paths if found (`GREX365/config/*.json`) | 🔴 | S | Smooth migration |
+| 1.5.6 | Read legacy paths if found (`GREX365/config/*.json`) | ✅ | S | `LegacyPreferencesImporter` invoked on App startup |
 
 ### 1.6 Logging
 
@@ -144,12 +144,12 @@ Goal: the bug that started this conversation is fully fixed in the new app.
 | 2.4 | UI log panel virtualized | ✅ | S | |
 | 2.5 | DI bootstrap in `App.xaml.cs` | ✅ | S | |
 | 2.6 | Global exception handler | ✅ | S | DispatcherUnhandledException only — need 3 more |
-| 2.7 | App.UnhandledException + TaskScheduler.UnobservedTaskException | 🔴 | S | |
+| 2.7 | App.UnhandledException + TaskScheduler.UnobservedTaskException | ✅ | S | Wired in `WireGlobalExceptionHandlers` |
 | 2.8 | Settings view (cert path, tenant id, connection method) | 🔴 | M | Bind to `IPreferencesStore` |
 | 2.9 | First-run wizard (no config exists) | 🔴 | M | Guide user to set cert + tenant |
 | 2.10 | Smoke test against real tenant | 🔴 | M | Manual; documents the flow |
 | 2.11 | Replace fake `IsConnected` with real state | ✅ | M | Wired to H1.2.5 + H1.3.6 + dispatcher marshalling |
-| 2.12 | Cert config validation UI (warn if cert expired, missing in store) | 🔴 | S | Port from `Test-CertConfigExists` |
+| 2.12 | Cert config validation UI (warn if cert expired, missing in store) | ✅ | S | `ICertValidator` runs before Connect, blocks if invalid |
 | 2.13 | Theme toggle (light/dark) | 🔴 | S | Read from prefs |
 | 2.14 | Window restore (size, position) on relaunch | 🔴 | S | |
 | 2.15 | App icon + branding | 🔴 | S | |
