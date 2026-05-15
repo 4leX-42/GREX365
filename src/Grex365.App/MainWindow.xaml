@@ -126,6 +126,20 @@
             <StatusBarItem>
                 <TextBlock Text="GREX365 · v0.1.0-alpha" Opacity="0.6" />
             </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <TextBlock>
+                    <Run Text="Tenant: " Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <Run Text="{Binding Connect.TenantDomain, FallbackValue=—}" />
+                </TextBlock>
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <TextBlock>
+                    <Run Text="Account: " Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <Run Text="{Binding Connect.Account, FallbackValue=—}" />
+                </TextBlock>
+            </StatusBarItem>
         </StatusBar>
     </Grid>
 </ui:FluentWindow>

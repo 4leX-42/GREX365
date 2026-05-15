@@ -10,10 +10,19 @@ namespace Grex365.Core.Connections;
 public sealed class GraphConnection : IGraphConnection
 {
     private GraphServiceClient? _client;
+    private string? _tenantId;
+    private string? _account;
+    private DateTimeOffset _lastProbe = DateTimeOffset.MinValue;
+    private bool _lastProbeResult;
+    private static readonly TimeSpan ProbeCacheTtl = TimeSpan.FromSeconds(10);
 
     public bool IsConnected => _client is not null;
 
     public GraphServiceClient? Client => _client;
+
+    public string? TenantId => _tenantId;
+
+    public string? Account => _account;
 
     public async Task ConnectByCertificateAsync(
         CertConfig config,
@@ -29,7 +38,6 @@ public sealed class GraphConnection : IGraphConnection
         var credential = new ClientCertificateCredential(config.TenantId, config.AppId, cert);
         var client = new GraphServiceClient(credential, ["https://graph.microsoft.com/.default"]);
 
-        // Smoke test: read organization. Confirms cert auth works before we mark connected.
         Organization? org = null;
         try
         {
@@ -45,12 +53,52 @@ public sealed class GraphConnection : IGraphConnection
         }
 
         _client = client;
+        _tenantId = config.TenantId;
+        _account = $"App ({config.AppId})";
+        _lastProbe = DateTimeOffset.Now;
+        _lastProbeResult = true;
         progress?.Report(LogEntry.Ok("Graph", $"Conectado. Organización: {org?.DisplayName ?? "?"}"));
+    }
+
+    public async Task<bool> CheckLiveAsync(CancellationToken cancellationToken = default)
+    {
+        if (_client is null)
+        {
+            return false;
+        }
+
+        var now = DateTimeOffset.Now;
+        if (now - _lastProbe < ProbeCacheTtl)
+        {
+            return _lastProbeResult;
+        }
+
+        try
+        {
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(5));
+
+            var orgResponse = await _client.Organization
+                .GetAsync(cancellationToken: timeoutCts.Token)
+                .ConfigureAwait(false);
+            _lastProbeResult = orgResponse?.Value?.Count > 0;
+        }
+        catch
+        {
+            _lastProbeResult = false;
+        }
+
+        _lastProbe = now;
+        return _lastProbeResult;
     }
 
     public Task DisconnectAsync(CancellationToken cancellationToken = default)
     {
         _client = null;
+        _tenantId = null;
+        _account = null;
+        _lastProbeResult = false;
+        _lastProbe = DateTimeOffset.MinValue;
         return Task.CompletedTask;
     }
 

@@ -22,6 +22,15 @@ public sealed partial class ConnectViewModel : ObservableObject
     private bool _exchangeConnected;
 
     [ObservableProperty]
+    private string? _tenantId;
+
+    [ObservableProperty]
+    private string? _tenantDomain;
+
+    [ObservableProperty]
+    private string? _account;
+
+    [ObservableProperty]
     private string _statusMessage = "Sin conectar.";
 
     [ObservableProperty]
@@ -118,7 +127,16 @@ public sealed partial class ConnectViewModel : ObservableObject
 
     private void OnMonitorChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        SyncFromMonitor();
+        // Marshal to UI thread; monitor PropertyChanged fires from background task.
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is not null && !dispatcher.CheckAccess())
+        {
+            dispatcher.Invoke(SyncFromMonitor);
+        }
+        else
+        {
+            SyncFromMonitor();
+        }
     }
 
     private void SyncFromMonitor()
@@ -126,5 +144,8 @@ public sealed partial class ConnectViewModel : ObservableObject
         var state = _monitor.Current;
         GraphConnected = state.GraphConnected;
         ExchangeConnected = state.ExchangeConnected;
+        TenantId = state.TenantId;
+        TenantDomain = state.TenantDomain;
+        Account = state.Account;
     }
 }

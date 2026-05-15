@@ -15,7 +15,7 @@ public sealed class ConnectionStateMonitor : IConnectionStateMonitor
     private ConnectionState _current = ConnectionState.Disconnected;
 
     public ConnectionStateMonitor(IGraphConnection graph, IExchangeConnection exchange)
-        : this(graph, exchange, TimeSpan.FromSeconds(1))
+        : this(graph, exchange, TimeSpan.FromSeconds(2))
     {
     }
 
@@ -63,16 +63,23 @@ public sealed class ConnectionStateMonitor : IConnectionStateMonitor
         {
             try
             {
+                var graphOk = _graph.IsConnected && await _graph.CheckLiveAsync(ct).ConfigureAwait(false);
+                var exoOk = _exchange.IsConnected && await _exchange.CheckLiveAsync(ct).ConfigureAwait(false);
+
                 Current = new ConnectionState(
-                    GraphConnected: _graph.IsConnected,
-                    ExchangeConnected: _exchange.IsConnected,
-                    TenantId: null,
-                    TenantDomain: null,
-                    Account: null);
+                    GraphConnected: graphOk,
+                    ExchangeConnected: exoOk,
+                    TenantId: _graph.TenantId ?? _exchange.TenantId,
+                    TenantDomain: _exchange.Organization,
+                    Account: _graph.Account);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
             }
             catch
             {
-                // swallow; next tick retries.
+                // probe failures must not kill the loop
             }
 
             try

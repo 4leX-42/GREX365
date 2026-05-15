@@ -6,8 +6,14 @@ namespace Grex365.PowerShell;
 public sealed class ExchangeConnection : IExchangeConnection
 {
     private const string ModuleName = "ExchangeOnlineManagement";
+    private static readonly TimeSpan ProbeCacheTtl = TimeSpan.FromSeconds(10);
+
     private readonly IPowerShellRunner _runner;
     private bool _connected;
+    private string? _tenantId;
+    private string? _organization;
+    private DateTimeOffset _lastProbe = DateTimeOffset.MinValue;
+    private bool _lastProbeResult;
 
     public ExchangeConnection(IPowerShellRunner runner)
     {
@@ -15,6 +21,10 @@ public sealed class ExchangeConnection : IExchangeConnection
     }
 
     public bool IsConnected => _connected;
+
+    public string? TenantId => _tenantId;
+
+    public string? Organization => _organization;
 
     public async Task ConnectByCertificateAsync(
         CertConfig config,
@@ -33,7 +43,13 @@ public sealed class ExchangeConnection : IExchangeConnection
                 -Organization $Organization `
                 -ShowBanner:$false `
                 -ErrorAction Stop
-            Get-ConnectionInformation | Where-Object { $_.State -eq 'Connected' } | Select-Object -First 1
+            $info = Get-ConnectionInformation | Where-Object { $_.State -eq 'Connected' } | Select-Object -First 1
+            if ($info) {
+                [PSCustomObject]@{
+                    TenantId     = [string]$info.TenantId
+                    Organization = [string]$info.Organization
+                }
+            }
             """;
 
         var result = await _runner.RunAsync(
@@ -54,7 +70,47 @@ public sealed class ExchangeConnection : IExchangeConnection
         }
 
         _connected = true;
+        _tenantId = config.TenantId;
+        _organization = config.Organization;
+        _lastProbeResult = true;
+        _lastProbe = DateTimeOffset.Now;
+
         progress?.Report(LogEntry.Ok("EXO", "Exchange Online conectado."));
+    }
+
+    public async Task<bool> CheckLiveAsync(CancellationToken cancellationToken = default)
+    {
+        if (!_connected)
+        {
+            return false;
+        }
+
+        var now = DateTimeOffset.Now;
+        if (now - _lastProbe < ProbeCacheTtl)
+        {
+            return _lastProbeResult;
+        }
+
+        try
+        {
+            const string script = """
+                $info = Get-ConnectionInformation -ErrorAction SilentlyContinue |
+                    Where-Object { $_.State -eq 'Connected' } | Select-Object -First 1
+                [bool]$info
+                """;
+            var result = await _runner.RunAsync(script, parameters: null, progress: null, cancellationToken).ConfigureAwait(false);
+            _lastProbeResult = result.Success
+                && result.Output.Count > 0
+                && result.Output[0] is bool b
+                && b;
+        }
+        catch
+        {
+            _lastProbeResult = false;
+        }
+
+        _lastProbe = now;
+        return _lastProbeResult;
     }
 
     public async Task DisconnectAsync(
@@ -72,6 +128,10 @@ public sealed class ExchangeConnection : IExchangeConnection
 
         await _runner.RunAsync(script, parameters: null, progress, cancellationToken).ConfigureAwait(false);
         _connected = false;
+        _tenantId = null;
+        _organization = null;
+        _lastProbeResult = false;
+        _lastProbe = DateTimeOffset.MinValue;
         progress?.Report(LogEntry.Info("EXO", "Exchange Online desconectado."));
     }
 

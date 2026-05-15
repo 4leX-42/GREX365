@@ -76,7 +76,7 @@ Goal: rock-solid services usable from any UI, fully tested.
 | 1.2.2 | `ClientCertificateCredential` flow | ✅ | S | |
 | 1.2.3 | Smoke test via `Organization.GetAsync` | ✅ | S | |
 | 1.2.4 | Cert loading from CurrentUser\My | ✅ | S | |
-| 1.2.5 | Real connection state (token validity, not just IsConnected flag) | 🔴 | M | Currently faked |
+| 1.2.5 | Real connection state (token validity, not just IsConnected flag) | ✅ | M | `CheckLiveAsync` probes Graph with 10s cache |
 | 1.2.6 | Tenant lock enforcement (compare actual TenantId vs expected) | 🔴 | S | Port from legacy `Assert-TenantLock` |
 | 1.2.7 | Scope handling (currently hardcoded `.default`) | 🔴 | S | Keep app-only for cert; explicit scopes for device code |
 | 1.2.8 | Device-code / traditional flow | 🔴 | M | `DeviceCodeCredential` |
@@ -92,7 +92,7 @@ Goal: rock-solid services usable from any UI, fully tested.
 | 1.3.3 | Module ensure (install + import) | ✅ | S | |
 | 1.3.4 | Disconnect | ✅ | S | |
 | 1.3.5 | Persistent session across runspace pool | 🔴 | M | Currently each runspace lacks connection state |
-| 1.3.6 | Real `Test-ExchangeOnlineConnected` via runspace | 🔴 | S | Wire to `IConnectionStateMonitor` |
+| 1.3.6 | Real `Test-ExchangeOnlineConnected` via runspace | ✅ | S | `CheckLiveAsync` calls Get-ConnectionInformation |
 | 1.3.7 | Tenant lock enforcement | 🔴 | S | |
 | 1.3.8 | Device-code flow | 🔴 | M | |
 | 1.3.9 | Integration test (mock or real tenant) | 🔴 | M | |
@@ -104,9 +104,9 @@ Goal: rock-solid services usable from any UI, fully tested.
 | 1.4.1 | `IConnectionStateMonitor` interface | ✅ | S | |
 | 1.4.2 | 1s poll loop with cancellation | ✅ | S | |
 | 1.4.3 | `INotifyPropertyChanged` plumbing | ✅ | S | |
-| 1.4.4 | Real check vs `IGraphConnection.IsConnected` | 🟡 | S | Currently mirrors flag, not actual state |
-| 1.4.5 | Real check vs `Get-ConnectionInformation` runspace | 🔴 | M | Cache last result to avoid stampede |
-| 1.4.6 | Surface tenant + account info in state | 🔴 | S | Currently null |
+| 1.4.4 | Real check vs `IGraphConnection.IsConnected` | ✅ | S | Calls `CheckLiveAsync` per tick |
+| 1.4.5 | Real check vs `Get-ConnectionInformation` runspace | ✅ | M | 10s cache TTL prevents stampede |
+| 1.4.6 | Surface tenant + account info in state | ✅ | S | TenantId, Organization, Account flow to UI |
 | 1.4.7 | Unit tests | 🔴 | S | |
 
 ### 1.5 Preferences + cert config
@@ -148,7 +148,7 @@ Goal: the bug that started this conversation is fully fixed in the new app.
 | 2.8 | Settings view (cert path, tenant id, connection method) | 🔴 | M | Bind to `IPreferencesStore` |
 | 2.9 | First-run wizard (no config exists) | 🔴 | M | Guide user to set cert + tenant |
 | 2.10 | Smoke test against real tenant | 🔴 | M | Manual; documents the flow |
-| 2.11 | Replace fake `IsConnected` with real state | 🔴 | M | Wires to H1.2.5 + H1.3.6 |
+| 2.11 | Replace fake `IsConnected` with real state | ✅ | M | Wired to H1.2.5 + H1.3.6 + dispatcher marshalling |
 | 2.12 | Cert config validation UI (warn if cert expired, missing in store) | 🔴 | S | Port from `Test-CertConfigExists` |
 | 2.13 | Theme toggle (light/dark) | 🔴 | S | Read from prefs |
 | 2.14 | Window restore (size, position) on relaunch | 🔴 | S | |
