@@ -1,0 +1,9 @@
+{
+  "name": "offboarding-temporary-es",
+  "description": "Auto-reply temporal mientras se gestiona el traspaso.",
+  "category": "auto-reply",
+  "lang": "es",
+  "subject": "Ausencia temporal",
+  "bodyText": "Hola,\n\n{user} no está disponible actualmente. Tu mensaje será atendido por {delegates}.\n\nUn saludo.",
+  "bodyHtml": "<p>Hola,</p><p><strong>{user}</strong> no está disponible actualmente. Tu mensaje será atendido por <strong>{delegates}</strong>.</p><p>Un saludo.</p>"
+}

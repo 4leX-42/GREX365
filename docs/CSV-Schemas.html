@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Esquemas CSV — GREX365</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-alt: #faf9f8;
+    --border: #e1dfdd;
+    --border-strong: #c8c6c4;
+    --text: #323130;
+    --text-secondary: #605e5c;
+    --text-tertiary: #8a8886;
+    --accent: #0078d4;
+    --accent-hover: #106ebe;
+    --code-bg: #f3f2f1;
+    --warn-bg: #fff4ce;
+    --warn-border: #f0c36d;
+    --ok-bg: #dff6dd;
+    --ok-border: #92c353;
+    --sans: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'Cascadia Code', 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 32px 48px 24px;
+    background: var(--bg);
+  }
+  header .breadcrumb {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-bottom: 12px;
+  }
+  header h1 {
+    margin: 0 0 8px 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  header p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 32px 48px 64px;
+  }
+  nav.toc {
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-bottom: 32px;
+  }
+  nav.toc h2 {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+  }
+  nav.toc ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  nav.toc li {
+    margin: 2px 0;
+  }
+  nav.toc a {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 13px;
+  }
+  nav.toc a:hover {
+    text-decoration: underline;
+  }
+  section {
+    margin-bottom: 40px;
+  }
+  section h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0 0 8px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  section h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 24px 0 8px 0;
+  }
+  p { margin: 12px 0; }
+  code {
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--code-bg);
+    padding: 2px 6px;
+    border-radius: 2px;
+    color: var(--text);
+  }
+  pre {
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    overflow-x: auto;
+    margin: 12px 0;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  th, td {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--bg-alt);
+    font-weight: 600;
+    color: var(--text);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-strong);
+  }
+  td code {
+    background: transparent;
+    padding: 0;
+  }
+  .note {
+    border-left: 4px solid var(--accent);
+    background: var(--bg-alt);
+    padding: 12px 16px;
+    margin: 16px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .note strong { color: var(--accent); }
+  .warn {
+    border-left: 4px solid var(--warn-border);
+    background: var(--warn-bg);
+    padding: 12px 16px;
+    margin: 16px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 48px;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="breadcrumb">GREX365 / Documentación / Esquemas CSV</div>
+  <h1>Esquemas CSV soportados</h1>
+  <p>Formato, encoding y delimitadores aceptados por los scripts de inyección y creación.</p>
+</header>
+<main>
+
+<nav class="toc">
+  <h2>Contenido</h2>
+  <ul>
+    <li><a href="#deteccion">Detección automática</a></li>
+    <li><a href="#email-id">Esquema EmailId (Agregar miembros)</a></li>
+    <li><a href="#email-groupname">Esquema EmailGroupName (Crear grupos)</a></li>
+    <li><a href="#multi-email">Múltiples emails por fila</a></li>
+    <li><a href="#encoding">Encoding y delimitadores</a></li>
+  </ul>
+</nav>
+
+<section id="deteccion">
+  <h2>Detección automática</h2>
+  <p>El motor de CSV detecta encoding y delimitador sin configuración manual:</p>
+  <ul>
+    <li><strong>Encoding</strong>: UTF-8, UTF-8 con BOM, UTF-16 LE, UTF-16 BE.</li>
+    <li><strong>Delimitador</strong>: <code>;</code>, <code>,</code>, TAB (selecciona el más frecuente en la cabecera, respetando comillas).</li>
+    <li><strong>Cabeceras</strong>: lookup case-insensitive contra listas de alias por columna.</li>
+  </ul>
+  <p>Si la cabecera no coincide con ningún alias y el CSV tiene al menos 2 columnas, se asume que la primera es el campo principal y la segunda el secundario, con un aviso en el log.</p>
+</section>
+
+<section id="email-id">
+  <h2>Esquema <code>EmailId</code></h2>
+  <p>Usado por <strong>Agregar miembros a grupo/DL</strong>. Cada fila representa un usuario a añadir.</p>
+
+  <h3>Columnas</h3>
+  <table>
+    <thead><tr><th>Campo lógico</th><th>Alias aceptados</th><th>Obligatorio</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>Email</code></td>
+        <td><code>Email</code>, <code>Mail</code>, <code>UserPrincipalName</code>, <code>UPN</code>, <code>Correo</code>, <code>PrimarySmtpAddress</code>, <code>WindowsLiveID</code>, <code>Login</code>, <code>EmailAddress</code></td>
+        <td>Al menos uno de <code>Email</code> o <code>Id</code></td>
+      </tr>
+      <tr>
+        <td><code>Id</code></td>
+        <td><code>Id</code>, <code>ID</code>, <code>ObjectId</code>, <code>ExternalDirectoryObjectId</code>, <code>Guid</code>, <code>GUID</code>, <code>EntraId</code>, <code>AzureObjectId</code></td>
+        <td>Al menos uno de <code>Email</code> o <code>Id</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Ejemplo mínimo (solo Email)</h3>
+<pre>Email
+juan.perez@contoso.com
+maria.gomez@contoso.com
+</pre>
+
+  <h3>Ejemplo completo</h3>
+<pre>Email;Id
+juan.perez@contoso.com;12345678-90ab-cdef-1234-567890abcdef
+maria.gomez@contoso.com;
+;abcdef12-3456-7890-abcd-ef1234567890
+</pre>
+
+  <div class="note">
+    <strong>Resolución inteligente:</strong> si falta una columna, se intenta resolver vía Microsoft Graph usando la otra. Si ambas faltan o no resuelven, la fila se marca como <code>ID_NO_RESUELTO</code> en el resultado.
+  </div>
+</section>
+
+<section id="email-groupname">
+  <h2>Esquema <code>EmailGroupName</code></h2>
+  <p>Usado por <strong>Crear grupos/DL desde CSV</strong>. Cada fila representa un miembro a añadir a un grupo (que se crea si no existe).</p>
+
+  <h3>Columnas</h3>
+  <table>
+    <thead><tr><th>Campo lógico</th><th>Alias aceptados</th><th>Obligatorio</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>Email</code></td>
+        <td><code>Email</code>, <code>Mail</code>, <code>UserPrincipalName</code>, <code>UPN</code>, <code>Correo</code>, <code>PrimarySmtpAddress</code>, <code>WindowsLiveID</code>, <code>Login</code>, <code>EmailAddress</code>, <code>MemberEmail</code></td>
+        <td>Sí</td>
+      </tr>
+      <tr>
+        <td><code>GroupName</code></td>
+        <td><code>GroupName</code>, <code>Group</code>, <code>Grupo</code>, <code>NombreGrupo</code>, <code>ListName</code>, <code>DL</code>, <code>DistributionList</code>, <code>GroupAlias</code>, <code>Nombre</code></td>
+        <td>Sí (heredable de fila previa si está vacía)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Ejemplo</h3>
+<pre>GroupName;Email
+ventas-norte;juan.perez@contoso.com
+ventas-norte;maria.gomez@contoso.com
+ventas-sur;pedro.lopez@contoso.com
+</pre>
+
+  <p>El dominio del grupo se solicita al ejecutar el script (no se incluye en el CSV). En el ejemplo anterior, con dominio <code>contoso.com</code>, se crearán los grupos <code>ventas-norte@contoso.com</code> y <code>ventas-sur@contoso.com</code>.</p>
+
+  <div class="note">
+    <strong>Herencia de GroupName:</strong> si una fila tiene <code>GroupName</code> vacío, hereda el valor de la fila anterior. Útil para CSVs agrupados visualmente.
+  </div>
+</section>
+
+<section id="multi-email">
+  <h2>Múltiples emails por fila</h2>
+  <p>En el esquema <code>EmailId</code>, si una celda <code>Email</code> contiene varios correos separados por espacios, saltos de línea o comas, se expanden automáticamente a una fila por correo (manteniendo el mismo <code>Id</code> si existe).</p>
+
+<pre>Email;Id
+juan.perez@contoso.com maria.gomez@contoso.com;
+</pre>
+
+  <p>Se procesará como dos filas independientes.</p>
+</section>
+
+<section id="encoding">
+  <h2>Encoding y delimitadores</h2>
+
+  <h3>Encoding recomendado</h3>
+  <p><strong>UTF-8 con BOM</strong> garantiza interoperabilidad con Excel y otros editores. UTF-8 sin BOM también funciona pero algunos editores pueden mal-interpretar acentos.</p>
+
+  <h3>Delimitador recomendado</h3>
+  <p><strong>Punto y coma (<code>;</code>)</strong> es estándar en locales europeos y evita conflictos con comas dentro de campos.</p>
+
+  <h3>Campos con caracteres especiales</h3>
+  <p>Encerrar entre comillas dobles si contienen el delimitador, comillas dobles o saltos de línea:</p>
+<pre>Email;Id
+"valor,con,comas@contoso.com";
+"valor con ""comillas""@contoso.com";
+</pre>
+
+  <div class="warn">
+    <strong>Atención:</strong> evitar caracteres de control (<code>\0</code>, <code>\x01-\x1F</code>) excepto TAB. La detección de delimitador asume contenido textual ASCII/UTF-8.
+  </div>
+</section>
+
+</main>
+<footer>
+  GREX365 · Documentación interna
+</footer>
+</body>
+</html>

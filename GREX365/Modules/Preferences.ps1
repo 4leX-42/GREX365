@@ -3,10 +3,10 @@
 # No mantiene estado en variables: cada llamada lee el JSON desde disco.
 
 function Get-PreferencesPath {
-    if (-not $script:BasePath) {
+    if (-not $global:GREX365_BasePath) {
         throw "BasePath no inicializado. Llama desde Main.ps1."
     }
-    $configDir = Join-Path $script:BasePath 'config'
+    $configDir = Join-Path $global:GREX365_BasePath 'config'
     if (-not (Test-Path -LiteralPath $configDir)) {
         New-Item -ItemType Directory -Path $configDir -Force | Out-Null
     }
@@ -14,10 +14,10 @@ function Get-PreferencesPath {
 }
 
 function Get-CertParamsPath {
-    if (-not $script:BasePath) {
+    if (-not $global:GREX365_BasePath) {
         throw "BasePath no inicializado."
     }
-    $configDir = Join-Path $script:BasePath 'config'
+    $configDir = Join-Path $global:GREX365_BasePath 'config'
     if (-not (Test-Path -LiteralPath $configDir)) {
         New-Item -ItemType Directory -Path $configDir -Force | Out-Null
     }
@@ -26,11 +26,16 @@ function Get-CertParamsPath {
 
 function New-DefaultPreferences {
     return [PSCustomObject]@{
-        ConnectionMethod = $null
+        ConnectionMethod    = $null
         TraditionalAdminUpn = $null
-        Organization = $null
-        FirstRunCompleted = $false
-        LastUpdated = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ss')
+        Organization        = $null
+        FirstRunCompleted   = $false
+        ExpectedTenantId    = $null
+        ExpectedTenantDomain = $null
+        EnforceTenantLock   = $false
+        Role                = 'operator'
+        UIMode              = 'support'
+        LastUpdated         = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ss')
     }
 }
 

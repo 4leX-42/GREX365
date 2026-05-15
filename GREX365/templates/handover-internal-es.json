@@ -1,0 +1,9 @@
+{
+  "name": "handover-internal-es",
+  "description": "Nota interna de traspaso para el manager.",
+  "category": "handover",
+  "lang": "es",
+  "subject": "Traspaso de funciones de {user}",
+  "bodyText": "Hola {manager},\n\n{user} ha sido offboarded con fecha {date}.\nDelegado(s) con acceso al buzón: {delegates}.\nForwarding configurado hacia: {replacement_email}.\n\nAcciones aplicadas:\n - Bloqueo de inicio de sesión\n - Revocación de sesiones activas\n - Eliminación de licencias\n - Conversión de buzón a compartido\n - Configuración de auto-reply\n - Delegación de FullAccess + SendAs\n - Forward al delegado primario\n - Ocultación de GAL\n - Limpieza de membresías de grupos\n\nUn saludo.",
+  "bodyHtml": ""
+}

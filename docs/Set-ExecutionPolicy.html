@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>ExecutionPolicy — GREX365</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-alt: #faf9f8;
+    --border: #e1dfdd;
+    --border-strong: #c8c6c4;
+    --text: #323130;
+    --text-secondary: #605e5c;
+    --text-tertiary: #8a8886;
+    --accent: #0078d4;
+    --code-bg: #f3f2f1;
+    --warn-bg: #fff4ce;
+    --warn-border: #f0c36d;
+    --sans: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'Cascadia Code', 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 32px 48px 24px;
+  }
+  header .breadcrumb {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-bottom: 12px;
+  }
+  header h1 { margin: 0 0 8px 0; font-size: 28px; font-weight: 600; }
+  header p { margin: 0; color: var(--text-secondary); }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 48px 64px; }
+  section { margin-bottom: 40px; }
+  section h2 {
+    font-size: 20px; font-weight: 600;
+    margin: 0 0 8px 0; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  section h3 { font-size: 16px; font-weight: 600; margin: 24px 0 8px 0; }
+  p { margin: 12px 0; }
+  code {
+    font-family: var(--mono); font-size: 13px;
+    background: var(--code-bg); padding: 2px 6px;
+    border-radius: 2px;
+  }
+  pre {
+    background: var(--bg-alt); border: 1px solid var(--border);
+    border-radius: 4px; padding: 16px; overflow-x: auto;
+    font-family: var(--mono); font-size: 13px; line-height: 1.5;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  th { background: var(--bg-alt); font-weight: 600; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border-strong); }
+  .note { border-left: 4px solid var(--accent); background: var(--bg-alt); padding: 12px 16px; margin: 16px 0; border-radius: 0 4px 4px 0; }
+  .note strong { color: var(--accent); }
+  .warn { border-left: 4px solid var(--warn-border); background: var(--warn-bg); padding: 12px 16px; margin: 16px 0; border-radius: 0 4px 4px 0; }
+  footer { border-top: 1px solid var(--border); padding: 24px 48px; color: var(--text-tertiary); font-size: 12px; text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <div class="breadcrumb">GREX365 / Documentación / ExecutionPolicy</div>
+  <h1>Configurar ExecutionPolicy</h1>
+  <p>PowerShell exige una política de ejecución que permita scripts locales. GREX365 intenta establecerla automáticamente, pero algunos entornos corporativos lo bloquean.</p>
+</header>
+<main>
+
+<section>
+  <h2>Estado actual</h2>
+  <p>Comprueba la política activa por scope:</p>
+<pre>Get-ExecutionPolicy -List</pre>
+  <p>Salida típica en una instalación recién hecha:</p>
+<pre>        Scope ExecutionPolicy
+        ----- ---------------
+MachinePolicy       Undefined
+   UserPolicy       Undefined
+      Process       Undefined
+  CurrentUser       Undefined
+ LocalMachine    Restricted
+</pre>
+  <p>Si <code>LocalMachine</code> es <code>Restricted</code>, los scripts no se pueden ejecutar a menos que se levante la política para el usuario actual o el proceso.</p>
+</section>
+
+<section>
+  <h2>Opciones recomendadas</h2>
+  <h3>Opción 1 — Process scope (recomendado)</h3>
+  <p>Levanta la restricción solo para la sesión actual. No afecta otras sesiones ni a otros usuarios:</p>
+<pre>Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force</pre>
+  <div class="note">
+    <strong>GREX365 ejecuta esta línea automáticamente al arrancar.</strong> Solo necesitas hacerlo a mano si el bootstrap falla por GPO.
+  </div>
+
+  <h3>Opción 2 — CurrentUser scope</h3>
+  <p>Persistente entre sesiones para tu usuario:</p>
+<pre>Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned</pre>
+  <p><code>RemoteSigned</code> permite scripts locales sin firma y exige firma para scripts descargados (más estricto que <code>Bypass</code>).</p>
+
+  <h3>Opción 3 — Ejecutar el launcher con override inline</h3>
+<pre>powershell.exe -ExecutionPolicy Bypass -File ".\Main.ps1"</pre>
+  <p>Útil para shortcuts o scheduled tasks sin tocar configuración global.</p>
+</section>
+
+<section>
+  <h2>Niveles de política</h2>
+  <table>
+    <thead><tr><th>Valor</th><th>Comportamiento</th></tr></thead>
+    <tbody>
+      <tr><td><code>Restricted</code></td><td>Ningún script se ejecuta. Default histórico en algunas ediciones.</td></tr>
+      <tr><td><code>AllSigned</code></td><td>Solo scripts firmados por un publisher de confianza.</td></tr>
+      <tr><td><code>RemoteSigned</code></td><td>Scripts locales libres; scripts descargados (zone Internet) requieren firma.</td></tr>
+      <tr><td><code>Unrestricted</code></td><td>Cualquier script, pero advierte para los descargados.</td></tr>
+      <tr><td><code>Bypass</code></td><td>Sin restricciones ni advertencias. Recomendado para <code>Scope Process</code>.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Errores comunes</h2>
+
+  <h3><code>cannot be loaded because running scripts is disabled on this system</code></h3>
+  <p>Tu política activa es <code>Restricted</code>. Aplica Opción 1 o 2 arriba.</p>
+
+  <h3><code>cannot be loaded. The file ... is not digitally signed</code></h3>
+  <p>Política <code>AllSigned</code> activa. O cambia a <code>RemoteSigned</code> en <code>CurrentUser</code>, o desbloquea el archivo si fue descargado:</p>
+<pre>Unblock-File -Path .\Main.ps1</pre>
+  <p>GREX365 hace <code>Unblock-File</code> recursivo en sus propios scripts durante el bootstrap.</p>
+
+  <h3>GPO o MDM bloquean el cambio</h3>
+  <p>En tenants con política administrada, <code>Set-ExecutionPolicy</code> devolverá un error. Usa la <strong>Opción 3</strong> (override inline en el launcher) — no requiere permisos para modificar configuración persistente.</p>
+
+  <div class="warn">
+    <strong>Atención:</strong> nunca uses <code>Set-ExecutionPolicy -Scope LocalMachine</code> sin justificación corporativa. Afecta a todos los usuarios del equipo y puede violar políticas de cumplimiento.
+  </div>
+</section>
+
+</main>
+<footer>
+  GREX365 · Documentación interna
+</footer>
+</body>
+</html>

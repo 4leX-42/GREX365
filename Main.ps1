@@ -1,204 +1,395 @@
-#requires -Version 5.1
+#requires -Version 7.4
 [CmdletBinding()]
 param()
 
 # --- BOOTSTRAP ---
 
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    Write-Host ''
+    Write-Host '  GREX365 requiere PowerShell 7.4 o superior.' -ForegroundColor Red
+    Write-Host ('  Versión detectada: {0}' -f $PSVersionTable.PSVersion) -ForegroundColor Yellow
+    Write-Host ''
+    Write-Host '  Instala PowerShell 7+ desde:' -ForegroundColor Yellow
+    Write-Host '    winget install --id Microsoft.PowerShell' -ForegroundColor DarkGray
+    Write-Host '    o https://aka.ms/powershell' -ForegroundColor DarkGray
+    Write-Host ''
+    Write-Host '  Después ejecuta el toolkit con: pwsh .\Main.ps1' -ForegroundColor Yellow
+    Write-Host ''
+    exit 1
+}
+
 try {
     Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force -ErrorAction Stop
+} catch {}
+
+# Minimal progress bar style (cleaner Write-Progress lines on PS7+).
+try { $PSStyle.Progress.View = 'Minimal' } catch {}
+
+# Force UTF-8 output (renders box-drawing + acentos correctamente en consola Windows).
+try {
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    $OutputEncoding = [System.Text.Encoding]::UTF8
 } catch {}
 
 $Script:LauncherPath = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 if (Test-Path (Join-Path $Script:LauncherPath 'GREX365')) {
     $Script:BasePath = Join-Path $Script:LauncherPath 'GREX365'
-}
-else {
+} else {
     $Script:BasePath = $Script:LauncherPath
 }
 
-$Script:ModulesPath  = Join-Path $Script:BasePath 'Modules'
-$Script:ScriptsPath  = Join-Path $Script:BasePath 'Scripts'
-$Script:ConfigPath   = Join-Path $Script:BasePath 'config'
-$Script:CertCsvPath  = Join-Path $Script:BasePath 'cert_instrunciones\EXO_Cert_Auth_Pasos.csv'
-$Script:CsvDocPath   = Join-Path $Script:LauncherPath 'Instrucciones_CSV.html'
+# Exposed as $global: so child scripts invoked via & inherit the toolkit context.
+$global:GREX365_BasePath = $Script:BasePath
 
-foreach ($p in @($Script:ConfigPath)) {
-    if (-not (Test-Path -LiteralPath $p)) { New-Item -ItemType Directory -Path $p -Force | Out-Null }
-}
+$Script:ModulesPath = Join-Path $Script:BasePath  'Modules'
+$Script:ScriptsPath = Join-Path $Script:BasePath  'Scripts'
+$Script:ConfigPath  = Join-Path $Script:BasePath  'config'
+$Script:LogsPath    = Join-Path $Script:BasePath  'logs'
+$Script:DocsPath    = Join-Path $Script:LauncherPath 'docs'
+$Script:CertCsvPath = Join-Path $Script:DocsPath  'Certificate-Setup-Steps.csv'
+$Script:CsvDocPath  = Join-Path $Script:DocsPath  'CSV-Schemas.html'
 
-if (-not (Test-Path -LiteralPath $Script:CsvDocPath)) {
-    Write-Host "  [aviso] No se encontró Instrucciones_CSV.html en: $Script:CsvDocPath" -ForegroundColor DarkYellow
+foreach ($p in @($Script:ConfigPath, $Script:LogsPath)) {
+    if (-not (Test-Path -LiteralPath $p)) {
+        New-Item -ItemType Directory -Path $p -Force | Out-Null
+    }
 }
 
 Get-ChildItem -Path $Script:BasePath -Recurse -Filter *.ps1 -File -ErrorAction SilentlyContinue |
     Unblock-File -ErrorAction SilentlyContinue
 
-$modulesToLoad = @(
-    Join-Path $Script:ModulesPath 'Common.ps1'
-    Join-Path $Script:ModulesPath 'Preferences.ps1'
-    Join-Path $Script:ModulesPath 'Ui.ps1'
-    Join-Path $Script:ModulesPath 'Connect-Services.ps1'
-    Join-Path $Script:ModulesPath 'Cert-Wizard.ps1'
+$Script:ModulesToLoad = @(
+    'Logging.ps1'
+    'Console.ps1'
+    'Validation.ps1'
+    'Csv.ps1'
+    'Preferences.ps1'
+    'Retry.ps1'
+    'Audit.ps1'
+    'Report.ps1'
+    'Roles.ps1'
+    'Templates.ps1'
+    'Jobs.ps1'
+    'Connection.ps1'
+    'GroupResolver.ps1'
+    'CertWizard.ps1'
+    'Menu.ps1'
 )
 
-foreach ($m in $modulesToLoad) {
-    if (-not (Test-Path -LiteralPath $m)) {
+foreach ($name in $Script:ModulesToLoad) {
+    $modulePath = Join-Path $Script:ModulesPath $name
+    if (-not (Test-Path -LiteralPath $modulePath)) {
         Write-Host ''
-        Write-Host "No se encontró el módulo requerido: $m" -ForegroundColor Red
+        Write-Host ('No se encontró el módulo requerido: ' + $modulePath) -ForegroundColor Red
         Write-Host ''
         exit 1
     }
-    . $m
+    . $modulePath
 }
 
-# --- DEFINICIÓN DEL MENÚ ---
+# --- MENU DEFINITION ---
 
 $Script:MenuItems = @(
     @{
-        Label       = 'INYECCIÓN DE USUARIOS // 365-DL'
-        Script      = 'Add-MembersToGroup_Fixed.ps1'
+        Section     = 'Operaciones'
+        Label       = 'Workflow de grupos (crear + miembros + permisos)'
+        Tag         = 'Graph + EXO'
+        Script      = 'Invoke-GroupsWorkflow.ps1'
         NeedsGraph  = $true
         NeedsExo    = $true
-        Scopes      = @('User.Read.All','Group.Read.All','GroupMember.ReadWrite.All')
+        Scopes      = @('User.Read.All','Group.ReadWrite.All','GroupMember.ReadWrite.All')
     }
     @{
-        Label       = 'EXTRACCIÓN DE USUARIOS // EMAIL-ID'
-        Script      = 'extraccion_user.ps1'
+        Section     = 'Operaciones'
+        Label       = 'Exportar miembros de grupo/DL'
+        Tag         = 'Graph + EXO'
+        Script      = 'Export-GroupMembers.ps1'
         NeedsGraph  = $true
         NeedsExo    = $true
         Scopes      = @('User.Read.All','Group.Read.All')
     }
     @{
-        Label       = 'CREAR GRUPOS / DL DESDE CSV'
+        Section     = 'Operaciones'
+        Label       = 'Convertir SharedMailbox a UserMailbox'
+        Tag         = 'EXO'
+        Script      = 'Convert-SharedToUserMailbox.ps1'
+        NeedsGraph  = $false
+        NeedsExo    = $true
+        Scopes      = @()
+    }
+    @{
+        Section     = 'Operaciones'
+        Label       = 'Permisos sobre buzón (bulk CSV)'
+        Tag         = 'EXO'
+        Script      = 'Set-SharedMailboxPermissions.ps1'
+        NeedsGraph  = $false
+        NeedsExo    = $true
+        Scopes      = @()
+    }
+    @{
+        Section     = 'Legacy'
+        Label       = 'Agregar miembros (solo)'
+        Tag         = 'usar el Workflow en su lugar'
+        Script      = 'Add-GroupMembers.ps1'
+        NeedsGraph  = $true
+        NeedsExo    = $true
+        Scopes      = @('User.Read.All','Group.Read.All','GroupMember.ReadWrite.All')
+    }
+    @{
+        Section     = 'Legacy'
+        Label       = 'Crear grupos/DL (solo)'
+        Tag         = 'usar el Workflow en su lugar'
         Script      = 'New-GroupsFromCsv.ps1'
         NeedsGraph  = $true
         NeedsExo    = $true
         Scopes      = @('User.Read.All','Group.ReadWrite.All','GroupMember.ReadWrite.All')
     }
     @{
-        Label       = 'CORREGIR SHAREDMAILBOX → USERMAILBOX (TEAMS)'
-        Script      = 'Fix-SharedMailbox.ps1'
-        NeedsGraph  = $false
+        Section     = 'Workflows'
+        Label       = 'Offboarding wizard (14 pasos)'
+        Tag         = 'Graph + EXO · admin'
+        Script      = 'Invoke-OffboardingWizard.ps1'
+        NeedsGraph  = $true
         NeedsExo    = $true
-        Scopes      = @()
+        Scopes      = @('User.ReadWrite.All','Group.ReadWrite.All','Directory.AccessAsUser.All','UserAuthenticationMethod.ReadWrite.All','Mail.ReadWrite')
     }
     @{
-        Label       = 'ASISTENTE DE CREACIÓN DE CERTIFICADO (ExO + Graph)'
+        Section     = 'Auditoría'
+        Label       = 'Dashboard de salud del tenant'
+        Tag         = 'Graph + EXO · read-only'
+        Script      = 'Show-TenantHealth.ps1'
+        NeedsGraph  = $true
+        NeedsExo    = $true
+        Scopes      = @('Directory.Read.All','Reports.Read.All','Application.Read.All','AuditLog.Read.All','ServiceHealth.Read.All')
+    }
+    @{
+        Section     = 'Auditoría'
+        Label       = 'Identity audit (stale + huérfanos)'
+        Tag         = 'Graph · read-only'
+        Script      = 'Invoke-IdentityAudit.ps1'
+        NeedsGraph  = $true
+        NeedsExo    = $false
+        Scopes      = @('User.Read.All','Group.Read.All','AuditLog.Read.All')
+    }
+    @{
+        Section     = 'Auditoría'
+        Label       = 'Self-test sobre objetos testeo*'
+        Tag         = 'Graph + EXO · crea y borra DL temporal'
+        Script      = 'Invoke-SelfTest.ps1'
+        NeedsGraph  = $true
+        NeedsExo    = $true
+        Scopes      = @('User.Read.All','Group.ReadWrite.All','GroupMember.ReadWrite.All')
+    }
+    @{
+        Section     = 'Configuración'
+        Label       = 'Asistente de certificado (ExO + Graph)'
+        Tag         = ''
         Action      = 'cert-wizard'
         NeedsGraph  = $false
         NeedsExo    = $false
     }
     @{
-        Label       = 'PREFERENCIAS / MÉTODO DE CONEXIÓN'
+        Section     = 'Configuración'
+        Label       = 'Preferencias'
+        Tag         = ''
         Action      = 'preferences'
+        NeedsGraph  = $false
+        NeedsExo    = $false
+    }
+    @{
+        Section     = 'Configuración'
+        Label       = 'Jobs en background'
+        Tag         = ''
+        Action      = 'jobs'
         NeedsGraph  = $false
         NeedsExo    = $false
     }
 )
 
-# --- LANZADORES DE SCRIPTS ---
+# --- LAUNCHERS ---
 
 function Invoke-ToolkitScript {
-    param(
-        [Parameter(Mandatory = $true)][hashtable]$MenuItem
-    )
+    param([Parameter(Mandatory = $true)][hashtable]$MenuItem)
 
     $scriptPath = Join-Path $Script:ScriptsPath $MenuItem.Script
 
     if (-not (Test-Path -LiteralPath $scriptPath)) {
-        Show-Header -Title $MenuItem.Label -Subtitle 'SCRIPT NO DISPONIBLE'
-        Write-Log "No se encontró el script: $scriptPath" 'WARN'
-        Wait-ForMenuReturn
+        Show-Header -Title 'GREX365' -Subtitle $MenuItem.Label
+        Show-ErrorBlock -Title 'Script no disponible' -Detail $scriptPath
+        Wait-ForKey
         return
     }
+
+    $auditMeta = @{
+        label  = $MenuItem.Label
+        script = $MenuItem.Script
+        needsGraph = [bool]$MenuItem.NeedsGraph
+        needsExo   = [bool]$MenuItem.NeedsExo
+    }
+    $auditCtx = $null
+    $auditResult = 'OK'
+    try { $auditCtx = Start-AuditOperation -Operation $MenuItem.Label -Metadata $auditMeta } catch {}
 
     try {
         $needsGraph = [bool]$MenuItem.NeedsGraph
         $needsExo   = [bool]$MenuItem.NeedsExo
 
         if ($needsGraph -or $needsExo) {
+            Show-Header -Title 'GREX365' -Subtitle ('Conectando · ' + $MenuItem.Label) -ActiveMethod (Get-UserPreferences).ConnectionMethod
             Connect-RequiredServices -MgGraph:$needsGraph -ExchangeOnline:$needsExo -GraphScopes $MenuItem.Scopes
-        }
-        else {
-            Write-Log "Este script no requiere conexión a servicios M365." 'INFO'
+        } else {
+            Write-Log 'Este script no requiere conexión a servicios.' -Source 'Main'
         }
 
         & $scriptPath
-    }
-    catch {
+    } catch {
         $msg = $_.Exception.Message
         if ($msg -in @('INPUT_EMPTY','INPUT_INVALID','INPUT_NOTFOUND')) {
-            # Ya mostrado por el script con Show-ErrorPanel.
+            $auditResult = 'CANCELLED'
+        } else {
+            $auditResult = 'ERROR'
+            Show-Header -Title 'GREX365' -Subtitle $MenuItem.Label
+            Show-ErrorBlock -Title $MenuItem.Label -Detail $msg
+            try { Write-AuditEvent -EventType 'Exception' -Properties @{ message = $msg } } catch {}
         }
-        elseif (Get-Command Show-ErrorPanel -ErrorAction SilentlyContinue) {
-            Show-Header -Title $MenuItem.Label -Subtitle 'ERROR'
-            Show-ErrorPanel -Title $MenuItem.Label -Reason $msg
-        }
-        else {
-            Show-Header -Title $MenuItem.Label -Subtitle 'ERROR'
-            Write-Log $msg 'ERROR'
-        }
+    } finally {
+        try { Stop-AuditOperation -Result $auditResult } catch {}
     }
 
-    Wait-ForMenuReturn
+    Wait-ForKey
 }
 
 function Invoke-PreferencesMenu {
     while ($true) {
-        Show-Header -Title 'PREFERENCIAS' -Subtitle 'Método de conexión y configuración'
-
         $prefs = Get-UserPreferences
-        Write-Centered -Text ("Método actual:    {0}" -f (Format-MethodLabel -Method $prefs.ConnectionMethod)) -Color 'Cyan'
-        if ($prefs.TraditionalAdminUpn) {
-            Write-Centered -Text ("Admin tradicional: {0}" -f $prefs.TraditionalAdminUpn) -Color 'Gray'
+
+        Show-Header -Title 'GREX365' -Subtitle 'Preferencias' -ActiveMethod $prefs.ConnectionMethod
+
+        $lockEnabled = $false
+        $expectedTid = $null
+        if ($prefs.PSObject.Properties.Name -contains 'EnforceTenantLock') { $lockEnabled = [bool]$prefs.EnforceTenantLock }
+        if ($prefs.PSObject.Properties.Name -contains 'ExpectedTenantId')  { $expectedTid = [string]$prefs.ExpectedTenantId }
+        $lockStatus = if ($lockEnabled -and $expectedTid) { 'Activo' } elseif ($expectedTid) { 'Configurado (desactivado)' } else { 'No configurado' }
+
+        $role   = Get-CurrentRole
+        $uiMode = Get-CurrentUIMode
+
+        Show-Section -Title 'Configuración actual'
+        Write-KeyValue -Key 'Método activo'  -Value (Format-MethodLabel -Method $prefs.ConnectionMethod)
+        Write-KeyValue -Key 'Admin UPN'      -Value ($prefs.TraditionalAdminUpn ? $prefs.TraditionalAdminUpn : '—')
+        $certStatus = if (Test-CertConfigExists) { 'Configurado' } else { 'No configurado' }
+        Write-KeyValue -Key 'Certificado'    -Value $certStatus
+        Write-KeyValue -Key 'Rol activo'     -Value $role
+        Write-KeyValue -Key 'UI Mode'        -Value $uiMode
+        Write-KeyValue -Key 'Tenant lock'    -Value $lockStatus
+        if ($expectedTid) {
+            Write-KeyValue -Key 'Tenant esperado' -Value $expectedTid
         }
-        $certStatus = if (Test-CertConfigExists) { 'SÍ' } else { 'NO' }
-        Write-Centered -Text ("Cert configurado: {0}" -f $certStatus) -Color 'Gray'
 
         if (Get-Command Show-StatusPanel -ErrorAction SilentlyContinue) {
             Show-StatusPanel
         }
 
-        Write-Centered -Text '[1] Cambiar método de conexión' -Color 'White'
-        Write-Centered -Text '[2] Cambiar UPN de admin tradicional' -Color 'White'
-        Write-Centered -Text '[3] Resetear preferencias (vuelve a primera ejecución)' -Color 'White'
-        if ($certStatus -eq 'SÍ') {
-            Write-Centered -Text '[4] Eliminar certificado configurado (DESTRUCTIVO)' -Color 'Red'
+        Show-Section -Title 'Acciones'
+        Write-Indent -Level 2; Write-Host '1   Cambiar método de conexión' -ForegroundColor Gray
+        Write-Indent -Level 2; Write-Host '2   Cambiar UPN admin tradicional' -ForegroundColor Gray
+        Write-Indent -Level 2; Write-Host '3   Resetear preferencias' -ForegroundColor Gray
+        Write-Indent -Level 2; Write-Host '5   Tenant lock (anclar a tenant actual)' -ForegroundColor Gray
+        if ($expectedTid) {
+            Write-Indent -Level 2; Write-Host '6   Tenant lock — activar/desactivar' -ForegroundColor Gray
+            Write-Indent -Level 2; Write-Host '7   Tenant lock — limpiar' -ForegroundColor Gray
         }
-        Write-Centered -Text '[0] Volver' -Color 'DarkGray'
+        Write-Indent -Level 2; Write-Host '8   Cambiar rol (viewer / operator / admin)' -ForegroundColor Gray
+        Write-Indent -Level 2; Write-Host '9   Cambiar UI Mode (support / advanced)' -ForegroundColor Gray
+        if ($certStatus -eq 'Configurado') {
+            Write-Indent -Level 2; Write-Host '4   Eliminar certificado (DESTRUCTIVO)' -ForegroundColor Red
+        }
+        Write-Indent -Level 2; Write-Host '0   Volver' -ForegroundColor DarkGray
         Write-Host ''
 
-        $opt = Read-Host 'Opción'
+        $opt = Read-Input -Prompt 'Opción'
         switch ($opt) {
             '1' {
                 $newMethod = Show-MethodSelector
                 if ($newMethod) {
                     Set-PreferenceValue -Key 'ConnectionMethod' -Value $newMethod
-                    Write-Log ("Método cambiado a: {0}" -f $newMethod) 'OK'
-                    Start-Sleep -Milliseconds 800
+                    Write-Log ('Método cambiado a: ' + $newMethod) -Level OK -Source 'Prefs'
+                    Start-Sleep -Milliseconds 700
                 }
             }
             '2' {
-                $upn = Read-Host 'Nuevo UPN de administrador'
+                $upn = Read-Input -Prompt 'Nuevo UPN de administrador'
                 if (-not [string]::IsNullOrWhiteSpace($upn)) {
-                    Set-PreferenceValue -Key 'TraditionalAdminUpn' -Value $upn.Trim()
-                    Write-Log "UPN actualizado." 'OK'
-                    Start-Sleep -Milliseconds 800
+                    Set-PreferenceValue -Key 'TraditionalAdminUpn' -Value (Normalize-Input -Value $upn)
+                    Write-Log 'UPN actualizado.' -Level OK -Source 'Prefs'
+                    Start-Sleep -Milliseconds 700
                 }
             }
             '3' {
-                $confirm = Read-Host '¿Seguro que quieres resetear preferencias? (S/N)'
+                $confirm = Read-Input -Prompt '¿Resetear preferencias? (S/N)'
                 if ($confirm -match '^[Ss]') {
                     $defaults = New-DefaultPreferences
                     Save-UserPreferences -Preferences $defaults
-                    Write-Log "Preferencias reseteadas." 'OK'
-                    Start-Sleep -Milliseconds 800
+                    Write-Log 'Preferencias reseteadas.' -Level OK -Source 'Prefs'
+                    Start-Sleep -Milliseconds 700
                 }
             }
             '4' {
-                if ($certStatus -ne 'SÍ') { continue }
+                if ($certStatus -ne 'Configurado') { continue }
                 Invoke-DeleteCertificateFlow
+            }
+            '5' {
+                $currentTid = Get-CurrentConnectedTenantId
+                if (-not $currentTid) {
+                    Show-WarningBlock -Title 'No hay tenant conectado' -Detail 'Conecta antes a Graph / EXO para fijar el tenant esperado.'
+                    Start-Sleep -Seconds 2
+                } else {
+                    $state = Get-SessionState
+                    Set-PreferenceValue -Key 'ExpectedTenantId'     -Value $currentTid
+                    Set-PreferenceValue -Key 'ExpectedTenantDomain' -Value ([string]$state.TenantDomain)
+                    Set-PreferenceValue -Key 'EnforceTenantLock'    -Value $true
+                    Write-Log ('Tenant lock activado y anclado a ' + $currentTid) -Level OK -Source 'Prefs'
+                    Start-Sleep -Milliseconds 900
+                }
+            }
+            '6' {
+                if (-not $expectedTid) { continue }
+                $newVal = -not $lockEnabled
+                Set-PreferenceValue -Key 'EnforceTenantLock' -Value $newVal
+                Write-Log ('Tenant lock = ' + $newVal) -Level OK -Source 'Prefs'
+                Start-Sleep -Milliseconds 700
+            }
+            '7' {
+                if (-not $expectedTid) { continue }
+                Set-PreferenceValue -Key 'ExpectedTenantId'     -Value $null
+                Set-PreferenceValue -Key 'ExpectedTenantDomain' -Value $null
+                Set-PreferenceValue -Key 'EnforceTenantLock'    -Value $false
+                Write-Log 'Tenant lock limpiado.' -Level OK -Source 'Prefs'
+                Start-Sleep -Milliseconds 700
+            }
+            '8' {
+                Write-Host ''
+                Write-Indent -Level 2; Write-Host '1) viewer   (solo lectura, no destructivas)' -ForegroundColor Gray
+                Write-Indent -Level 2; Write-Host '2) operator (operaciones diarias)'           -ForegroundColor Gray
+                Write-Indent -Level 2; Write-Host '3) admin    (offboarding, bulk destructivo)' -ForegroundColor Gray
+                $r = Read-Input -Prompt 'Rol nuevo'
+                $map = @{ '1'='viewer'; '2'='operator'; '3'='admin' }
+                if ($map.ContainsKey($r)) {
+                    Set-CurrentRole -Role $map[$r]
+                    Start-Sleep -Milliseconds 700
+                }
+            }
+            '9' {
+                Write-Host ''
+                Write-Indent -Level 2; Write-Host '1) support  (wizards, dry-run forzado, confirmaciones extra)' -ForegroundColor Gray
+                Write-Indent -Level 2; Write-Host '2) advanced (cmdlets visibles, menos confirmaciones)'         -ForegroundColor Gray
+                $m = Read-Input -Prompt 'Modo nuevo'
+                $map = @{ '1'='support'; '2'='advanced' }
+                if ($map.ContainsKey($m)) {
+                    Set-CurrentUIMode -Mode $map[$m]
+                    Start-Sleep -Milliseconds 700
+                }
             }
             '0' { return }
             default { }
@@ -206,134 +397,155 @@ function Invoke-PreferencesMenu {
     }
 }
 
-function Invoke-DeleteCertificateFlow {
-    Write-Host ''
-    Write-Host '  ╔════════════════════════════════════════════════════════════════════╗' -ForegroundColor Red
-    Write-Host '  ║   ATENCIÓN — ACCIÓN DESTRUCTIVA                                    ║' -ForegroundColor Red
-    Write-Host '  ╚════════════════════════════════════════════════════════════════════╝' -ForegroundColor Red
-    Write-Host ''
-    Write-Host '  Se va a eliminar:' -ForegroundColor Yellow
-    Write-Host '    - El certificado del almacén CurrentUser\My (con su clave privada)' -ForegroundColor Yellow
-    Write-Host '    - El archivo .cer público exportado' -ForegroundColor Yellow
-    Write-Host '    - El JSON exo-app-params.json (parámetros de la App)' -ForegroundColor Yellow
-    Write-Host ''
-    Write-Host '  La App Registration en Entra ID NO se elimina automáticamente.' -ForegroundColor DarkYellow
-    Write-Host '  Tendrás que borrarla a mano si quieres limpiar el tenant.' -ForegroundColor DarkYellow
-    Write-Host ''
+function Invoke-JobsMenu {
+    Show-Header -Title 'GREX365' -Subtitle 'Jobs en background' -ActiveMethod (Get-UserPreferences).ConnectionMethod
 
-    $first = Read-Host '  ¿Continuar con la eliminación? (S/N)'
-    if ($first -notmatch '^[Ss]') {
-        Write-Log 'Eliminación cancelada.' 'WARN'
-        Start-Sleep -Milliseconds 800
+    $jobs = Get-ToolkitJobs
+    Show-Section -Title 'Jobs registrados'
+
+    if (-not $jobs -or $jobs.Count -eq 0) {
+        Write-Indent -Level 2; Write-Host 'No hay jobs registrados.' -ForegroundColor DarkGray
+        Write-Host ''
+        Wait-ForKey
         return
     }
 
+    $i = 0
+    foreach ($j in $jobs) {
+        $i++
+        $color = switch ($j.State) {
+            'Completed' { 'Green' }
+            'Failed'    { 'Red' }
+            'Stopped'   { 'Yellow' }
+            'Running'   { 'Cyan' }
+            default     { 'Gray' }
+        }
+        Write-Indent -Level 2
+        Write-Host ('{0,2}  ' -f $i)        -NoNewline -ForegroundColor DarkGray
+        Write-Host ($j.Name.PadRight(40))   -NoNewline -ForegroundColor White
+        Write-Host ($j.State.PadRight(12))  -NoNewline -ForegroundColor $color
+        Write-Host ('id=' + $j.Id)          -ForegroundColor DarkGray
+    }
     Write-Host ''
-    Write-Host '  Confirmación final. Para proceder, escribe literalmente la palabra: ' -ForegroundColor Red -NoNewline
+    Write-Indent -Level 2; Write-Host '1   Limpiar jobs finalizados' -ForegroundColor Gray
+    Write-Indent -Level 2; Write-Host '0   Volver' -ForegroundColor DarkGray
+    Write-Host ''
+
+    $opt = Read-Input -Prompt 'Opción'
+    if ($opt -eq '1') {
+        Remove-FinishedJobs
+        Write-Log 'Jobs finalizados eliminados.' -Level OK -Source 'Jobs'
+        Start-Sleep -Milliseconds 700
+    }
+}
+
+function Invoke-DeleteCertificateFlow {
+    Show-Header -Title 'GREX365' -Subtitle 'Eliminar certificado' -ActiveMethod (Get-UserPreferences).ConnectionMethod
+
+    Show-ErrorBlock -Title 'Acción destructiva' -Detail @"
+Se va a eliminar:
+  · El certificado de CurrentUser\My (con clave privada)
+  · El archivo .cer público exportado
+  · El JSON exo-app-params.json
+
+La App Registration en Entra ID NO se elimina automáticamente.
+"@
+
+    $first = Read-Input -Prompt '¿Continuar? (S/N)'
+    if ($first -notmatch '^[Ss]') {
+        Write-Log 'Cancelado.' -Level WARN -Source 'CertDelete'
+        Start-Sleep -Milliseconds 700
+        return
+    }
+
+    Write-Indent
+    Write-Host 'Confirmación final. Escribe literalmente ' -NoNewline -ForegroundColor Red
     Write-Host 'CONFIRMAR' -ForegroundColor White
-    $second = Read-Host '  >'
+    $second = Read-Input -Prompt '>'
     if ($second -ne 'CONFIRMAR') {
-        Write-Log 'Texto de confirmación incorrecto. Eliminación abortada.' 'WARN'
-        Start-Sleep -Milliseconds 1200
+        Show-WarningBlock -Title 'Texto incorrecto. Eliminación abortada.'
+        Start-Sleep -Milliseconds 1000
         return
     }
 
     try {
         $ok = Remove-CertConfig
-        if ($ok) {
-            Write-Log 'Certificado y configuración eliminados correctamente.' 'OK'
-        }
-        else {
-            Write-Log 'Eliminación parcial. Revisa los mensajes anteriores.' 'WARN'
-        }
-    }
-    catch {
-        Write-Log ("Error eliminando certificado: {0}" -f $_.Exception.Message) 'ERROR'
+        if ($ok) { Write-Log 'Certificado eliminado.' -Level OK -Source 'CertDelete' }
+        else     { Write-Log 'Eliminación parcial. Revisa mensajes anteriores.' -Level WARN -Source 'CertDelete' }
+    } catch {
+        Show-ErrorBlock -Title 'Error eliminando certificado' -Detail $_.Exception.Message
     }
     Start-Sleep -Seconds 2
 }
 
 function Invoke-CertWizardLauncher {
     if (Test-CertConfigExists) {
-        Show-Header -Title 'ASISTENTE DE CERTIFICADO' -Subtitle 'Configuración existente detectada'
+        Show-Header -Title 'GREX365' -Subtitle 'Asistente de certificado' -ActiveMethod (Get-UserPreferences).ConnectionMethod
         $cfg = Get-CertConfig
-        Write-Centered -Text "Ya tienes un certificado válido configurado:" -Color 'Green'
+        Show-Section -Title 'Configuración existente detectada'
+        Write-KeyValue -Key 'AppId'        -Value $cfg.AppId
+        Write-KeyValue -Key 'Thumbprint'   -Value $cfg.CertThumbprint
+        Write-KeyValue -Key 'Tenant'       -Value $cfg.TenantId
+        Write-KeyValue -Key 'Organization' -Value $cfg.Organization
+
         Write-Host ''
-        Write-Centered -Text ("AppId:        {0}" -f $cfg.AppId) -Color 'Gray'
-        Write-Centered -Text ("Thumbprint:   {0}" -f $cfg.CertThumbprint) -Color 'Gray'
-        Write-Centered -Text ("Tenant:       {0}" -f $cfg.TenantId) -Color 'Gray'
-        Write-Centered -Text ("Organization: {0}" -f $cfg.Organization) -Color 'Gray'
-        Write-Host ''
-        $r = Read-Host '¿Quieres rehacer el asistente de todas formas? (S/N)'
+        $r = Read-Input -Prompt '¿Rehacer el asistente de todas formas? (S/N)'
         if ($r -notmatch '^[Ss]') { return }
     }
 
     try {
         Start-CertificateWizard -CsvStepsPath $Script:CertCsvPath -ConfigPath (Join-Path $Script:ConfigPath 'exo-app-params.json')
+    } catch {
+        Show-ErrorBlock -Title 'Asistente fallido' -Detail $_.Exception.Message
     }
-    catch {
-        Write-Log $_.Exception.Message 'ERROR'
-    }
-
-    Wait-ForMenuReturn
+    Wait-ForKey
 }
-
-# --- FLUJO PRINCIPAL ---
 
 function Initialize-FirstRun {
     $prefs = Get-UserPreferences
-
-    if ($prefs.FirstRunCompleted -and $prefs.ConnectionMethod) {
-        return
-    }
+    if ($prefs.FirstRunCompleted -and $prefs.ConnectionMethod) { return }
 
     $method = Show-MethodSelector
     if (-not $method) {
-        Write-Log "Selección cancelada. Saliendo." 'WARN'
+        Write-Log 'Selección cancelada. Saliendo.' -Level WARN -Source 'Main'
         exit 0
     }
 
-    Set-PreferenceValue -Key 'ConnectionMethod' -Value $method
+    Set-PreferenceValue -Key 'ConnectionMethod'  -Value $method
     Set-PreferenceValue -Key 'FirstRunCompleted' -Value $true
 
     if ($method -eq 'cert' -and -not (Test-CertConfigExists)) {
-        Show-Header -Title 'PRIMERA EJECUCIÓN' -Subtitle 'No hay certificado configurado'
-        Write-Centered -Text 'Has elegido método CERTIFICADO pero no hay configuración válida.' -Color 'Yellow'
-        Write-Centered -Text '¿Quieres lanzar ahora el asistente de creación de certificado?' -Color 'White'
-        Write-Host ''
-        $r = Read-Host '(S/N)'
-        if ($r -match '^[Ss]') {
-            Invoke-CertWizardLauncher
-        }
+        Show-Header -Title 'GREX365' -Subtitle 'Primera ejecución'
+        Show-WarningBlock -Title 'Certificado no configurado' -Detail 'Has elegido método CERTIFICADO pero no hay configuración válida.'
+
+        $r = Read-Input -Prompt '¿Lanzar ahora el asistente de creación? (S/N)'
+        if ($r -match '^[Ss]') { Invoke-CertWizardLauncher }
         else {
-            Write-Centered -Text 'Puedes lanzarlo más tarde desde el Main menu' -Color 'DarkGray'
+            Write-Indent; Write-Host 'Puedes lanzarlo más tarde desde el menú principal.' -ForegroundColor DarkGray
             Start-Sleep -Seconds 2
         }
     }
 }
 
-function Get-MenuItemsForUi {
-    return @($Script:MenuItems | ForEach-Object { @{ Label = $_.Label; ComingSoon = $false } })
-}
+# --- MAIN LOOP ---
 
 try {
     Initialize-FirstRun
 
     while ($true) {
         $prefs = Get-UserPreferences
-        $items = Get-MenuItemsForUi
-        $result = Show-MainMenu -Items $items -ActiveMethod $prefs.ConnectionMethod
+        $result = Show-MainMenu -Items $Script:MenuItems -ActiveMethod $prefs.ConnectionMethod
 
         switch ($result.Action) {
             'exit' {
-                Show-Header -Title 'GREX365' -Subtitle 'Hasta luego.'
+                Show-Header -Title 'GREX365' -Subtitle 'Hasta luego'
                 exit 0
             }
             'toggle' {
                 if ($result.Value -ne $prefs.ConnectionMethod) {
                     Set-PreferenceValue -Key 'ConnectionMethod' -Value $result.Value
-                    Write-Log ("Método cambiado a: {0}" -f $result.Value) 'OK'
-                    Start-Sleep -Milliseconds 700
+                    Write-Log ('Método cambiado a: ' + $result.Value) -Level OK -Source 'Main'
+                    Start-Sleep -Milliseconds 600
                 }
             }
             'option' {
@@ -345,17 +557,16 @@ try {
                     switch ($item.Action) {
                         'cert-wizard' { Invoke-CertWizardLauncher }
                         'preferences' { Invoke-PreferencesMenu }
-                        default { }
+                        'jobs'        { Invoke-JobsMenu }
+                        default       { }
                     }
-                }
-                else {
+                } else {
                     Invoke-ToolkitScript -MenuItem $item
                 }
             }
         }
     }
-}
-catch {
+} catch {
     Write-Host ''
     Write-Host $_.Exception.Message -ForegroundColor Red
     Write-Host ''

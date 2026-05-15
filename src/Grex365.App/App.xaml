@@ -1,0 +1,18 @@
+<Application x:Class="Grex365.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:conv="clr-namespace:Grex365.App.Converters"
+             xmlns:local="clr-namespace:Grex365.App">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemesDictionary Theme="Dark" />
+                <ui:ControlsDictionary />
+            </ResourceDictionary.MergedDictionaries>
+            <conv:BoolToBrushConverter x:Key="BoolToBrushConverter" />
+            <conv:BoolToOnOffConverter x:Key="BoolToOnOffConverter" />
+            <conv:SeverityToBrushConverter x:Key="SeverityToBrushConverter" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

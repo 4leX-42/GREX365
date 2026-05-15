@@ -1,0 +1,9 @@
+{
+  "name": "offboarding-permanent-pt",
+  "description": "Resposta automática permanente. Funcionário já não disponível.",
+  "category": "auto-reply",
+  "lang": "pt",
+  "subject": "{user} já não está disponível",
+  "bodyText": "Olá,\n\n{user} já não está disponível nesta caixa de correio desde {date}.\n\nPara qualquer assunto relacionado, por favor contacte {delegates}.\n\nCumprimentos.",
+  "bodyHtml": "<p>Olá,</p><p><strong>{user}</strong> já não está disponível nesta caixa de correio desde <strong>{date}</strong>.</p><p>Para qualquer assunto relacionado, por favor contacte <strong>{delegates}</strong>.</p><p>Cumprimentos.</p>"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "offboarding-temporary-en",
+  "description": "Temporary auto-reply while handover is in progress.",
+  "category": "auto-reply",
+  "lang": "en",
+  "subject": "Temporary absence",
+  "bodyText": "Hello,\n\n{user} is currently unavailable. Your message will be handled by {delegates}.\n\nKind regards.",
+  "bodyHtml": "<p>Hello,</p><p><strong>{user}</strong> is currently unavailable. Your message will be handled by <strong>{delegates}</strong>.</p><p>Kind regards.</p>"
+}

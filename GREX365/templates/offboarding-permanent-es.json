@@ -1,0 +1,9 @@
+{
+  "name": "offboarding-permanent-es",
+  "description": "Auto-reply permanente. El empleado ya no forma parte de la organización.",
+  "category": "auto-reply",
+  "lang": "es",
+  "subject": "{user} ya no está disponible",
+  "bodyText": "Hola,\n\n{user} ya no está disponible en este buzón desde el {date}.\n\nPara cualquier asunto relacionado, ponte en contacto con {delegates}.\n\nUn saludo.",
+  "bodyHtml": "<p>Hola,</p><p><strong>{user}</strong> ya no está disponible en este buzón desde el <strong>{date}</strong>.</p><p>Para cualquier asunto relacionado, ponte en contacto con <strong>{delegates}</strong>.</p><p>Un saludo.</p>"
+}

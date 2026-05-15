@@ -1,0 +1,9 @@
+{
+  "name": "offboarding-temporary-pt",
+  "description": "Resposta automática temporária durante a passagem de pasta.",
+  "category": "auto-reply",
+  "lang": "pt",
+  "subject": "Ausência temporária",
+  "bodyText": "Olá,\n\n{user} não está disponível neste momento. A sua mensagem será tratada por {delegates}.\n\nCumprimentos.",
+  "bodyHtml": "<p>Olá,</p><p><strong>{user}</strong> não está disponível neste momento. A sua mensagem será tratada por <strong>{delegates}</strong>.</p><p>Cumprimentos.</p>"
+}

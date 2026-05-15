@@ -1,0 +1,9 @@
+{
+  "name": "offboarding-permanent-en",
+  "description": "Permanent auto-reply. Employee no longer available.",
+  "category": "auto-reply",
+  "lang": "en",
+  "subject": "{user} is no longer available",
+  "bodyText": "Hello,\n\n{user} is no longer available at this mailbox as of {date}.\n\nFor any related matter, please contact {delegates}.\n\nKind regards.",
+  "bodyHtml": "<p>Hello,</p><p><strong>{user}</strong> is no longer available at this mailbox as of <strong>{date}</strong>.</p><p>For any related matter, please contact <strong>{delegates}</strong>.</p><p>Kind regards.</p>"
+}

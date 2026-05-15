@@ -17,7 +17,11 @@ secrets.json
 
 # GREX365 local auth/config (tenant, app, cert metadata — never commit)
 GREX365/config/exo-app-params.json
+GREX365/config/user_preferences.json
 exo-app-params.json
+
+# Per-session run logs
+GREX365/logs/
 
 # OS / editor
 .DS_Store
@@ -34,3 +38,39 @@ desktop.ini
 # Backups
 backup_*/
 *_BACKUP/
+
+# Personal tracking notes (not for public repo)
+GREX365/Seguimiento Claude/
+Seguimiento Claude/
+
+# .NET build output
+**/bin/
+**/obj/
+**/publish/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+.idea/
+*.csproj.bak
+
+# Test results
+**/TestResults/
+*.trx
+coverage.cobertura.xml
+coverage.opencover.xml
+
+# Rider / VS Code
+.vscode/
+*.swp
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+# Velopack / signing artifacts
+*.pfx
+*.snk
+releases/
