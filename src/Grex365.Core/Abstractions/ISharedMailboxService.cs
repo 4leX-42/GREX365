@@ -17,4 +17,9 @@ public interface ISharedMailboxService
         string principal,
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<MailboxPermissionEntry>> GetPermissionsAsync(
+        string mailbox,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
 }

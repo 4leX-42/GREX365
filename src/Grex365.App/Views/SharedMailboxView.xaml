@@ -74,9 +74,33 @@
             </Border>
 
             <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}"
+                    Visibility="{Binding CurrentPermissions.Count, Converter={StaticResource CountToVisibilityConverter}, FallbackValue=Collapsed}">
+                <StackPanel>
+                    <TextBlock Text="Permisos actuales" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
+                    <ItemsControl ItemsSource="{Binding CurrentPermissions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:MailboxPermissionEntry}">
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="3*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Permission}" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Principal}" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Detail}" Opacity="0.7" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="Permisos" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
+                    <TextBlock Text="Aplicar permisos" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
                     <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />

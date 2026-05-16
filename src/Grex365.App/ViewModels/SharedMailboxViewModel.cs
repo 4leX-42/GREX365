@@ -26,6 +26,7 @@ public sealed partial class SharedMailboxViewModel : ObservableObject
     [ObservableProperty] private string _permPermission = "FullAccess";
 
     public ObservableCollection<MailboxPermissionResult> PermissionResults { get; } = new();
+    public ObservableCollection<MailboxPermissionEntry> CurrentPermissions { get; } = new();
 
     public SharedMailboxViewModel(ISharedMailboxService service, IUiLogSink log)
     {
@@ -46,7 +47,27 @@ public sealed partial class SharedMailboxViewModel : ObservableObject
         try
         {
             MailboxInfo = await _service.GetMailboxAsync(MailboxIdentity.Trim(), _log.Progress).ConfigureAwait(true);
-            StatusMessage = MailboxInfo is null ? "Buzón no encontrado." : $"Tipo: {MailboxInfo.RecipientTypeDetails}";
+            CurrentPermissions.Clear();
+            if (MailboxInfo is not null)
+            {
+                try
+                {
+                    var perms = await _service.GetPermissionsAsync(MailboxIdentity.Trim(), _log.Progress).ConfigureAwait(true);
+                    foreach (var p in perms)
+                    {
+                        CurrentPermissions.Add(p);
+                    }
+                    StatusMessage = $"Tipo: {MailboxInfo.RecipientTypeDetails} · {perms.Count} permisos activos";
+                }
+                catch (Exception permEx)
+                {
+                    StatusMessage = $"Tipo: {MailboxInfo.RecipientTypeDetails} · perms: {permEx.Message}";
+                }
+            }
+            else
+            {
+                StatusMessage = "Buzón no encontrado.";
+            }
         }
         catch (Exception ex)
         {

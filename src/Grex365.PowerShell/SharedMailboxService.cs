@@ -219,6 +219,63 @@ public sealed class SharedMailboxService : ISharedMailboxService
         };
     }
 
+    public async Task<IReadOnlyList<MailboxPermissionEntry>> GetPermissionsAsync(
+        string mailbox,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        const string script = """
+            $full = @(Get-MailboxPermission -Identity $Mailbox -ErrorAction Stop |
+                Where-Object { $_.AccessRights -contains 'FullAccess' -and -not $_.IsInherited -and $_.User -notlike 'NT AUTHORITY\\SELF' })
+            $send = @(Get-RecipientPermission -Identity $Mailbox -ErrorAction SilentlyContinue |
+                Where-Object { $_.AccessRights -contains 'SendAs' -and $_.Trustee -notlike 'NT AUTHORITY\\SELF' })
+            $mbx  = Get-Mailbox -Identity $Mailbox -ErrorAction Stop
+            $onBehalf = @($mbx.GrantSendOnBehalfTo)
+
+            $out = New-Object System.Collections.Generic.List[object]
+            foreach ($f in $full)  { $out.Add([PSCustomObject]@{ Permission='FullAccess';   Principal=[string]$f.User;    Detail=[string]$f.AccessRights }) }
+            foreach ($s in $send)  { $out.Add([PSCustomObject]@{ Permission='SendAs';       Principal=[string]$s.Trustee; Detail=[string]$s.AccessRights }) }
+            foreach ($o in $onBehalf) { $out.Add([PSCustomObject]@{ Permission='SendOnBehalf'; Principal=[string]$o; Detail='From Set-Mailbox' }) }
+            $out
+            """;
+
+        var result = await _runner.RunAsync(
+            script,
+            new Dictionary<string, object?> { ["Mailbox"] = mailbox },
+            progress,
+            cancellationToken).ConfigureAwait(false);
+
+        if (!result.Success)
+        {
+            throw new InvalidOperationException("Get-permissions falló: " + string.Join("; ", result.Errors));
+        }
+
+        var entries = new List<MailboxPermissionEntry>(result.Output.Count);
+        foreach (var raw in result.Output)
+        {
+            entries.Add(MapPermission(raw));
+        }
+        return entries;
+    }
+
+    private static MailboxPermissionEntry MapPermission(object? raw)
+    {
+        if (raw is System.Management.Automation.PSObject ps)
+        {
+            return new MailboxPermissionEntry(
+                Permission: ps.Properties["Permission"]?.Value?.ToString() ?? string.Empty,
+                Principal: ps.Properties["Principal"]?.Value?.ToString() ?? string.Empty,
+                Detail: ps.Properties["Detail"]?.Value?.ToString() ?? string.Empty);
+        }
+        var t = raw?.GetType();
+        if (t is null)
+        {
+            return new MailboxPermissionEntry(string.Empty, string.Empty, string.Empty);
+        }
+        string Get(string name) => t.GetProperty(name)?.GetValue(raw)?.ToString() ?? string.Empty;
+        return new MailboxPermissionEntry(Get("Permission"), Get("Principal"), Get("Detail"));
+    }
+
     private static MailboxInfo Map(object? raw)
     {
         if (raw is System.Management.Automation.PSObject ps)
