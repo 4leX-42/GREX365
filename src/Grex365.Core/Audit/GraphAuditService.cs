@@ -68,7 +68,7 @@ public sealed class GraphAuditService : IAuditService
         {
             req.QueryParameters.Select = new[]
             {
-                "id", "displayName", "mail", "groupTypes", "mailEnabled", "securityEnabled"
+                "id", "displayName", "mail", "groupTypes", "mailEnabled", "securityEnabled", "visibility"
             };
             req.QueryParameters.Top = 999;
             req.Headers.Add("ConsistencyLevel", "eventual");
@@ -148,6 +148,39 @@ public sealed class GraphAuditService : IAuditService
             catch
             {
                 // tolerate
+            }
+        }
+
+        if (isUnified && string.Equals(group.Visibility, "Private", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var membersResp = await client.Groups[id].Members.GetAsync(req =>
+                {
+                    req.QueryParameters.Select = new[] { "id", "displayName", "userType", "userPrincipalName", "mail" };
+                    req.QueryParameters.Top = 999;
+                }, ct).ConfigureAwait(false);
+                var guestIterator = PageIterator<DirectoryObject, DirectoryObjectCollectionResponse>.CreatePageIterator(
+                    client,
+                    membersResp!,
+                    member =>
+                    {
+                        if (member is User u && string.Equals(u.UserType, "Guest", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var who = u.UserPrincipalName ?? u.Mail ?? u.DisplayName ?? u.Id ?? "?";
+                            findings.Add(new AuditFinding(
+                                "Guest in private M365 group",
+                                $"{name} ← {who}",
+                                $"groupId={id}; userId={u.Id}",
+                                "WARN"));
+                        }
+                        return true;
+                    });
+                await guestIterator.IterateAsync(ct).ConfigureAwait(false);
+            }
+            catch
+            {
+                // tolerate (Graph perms may not allow expanding members for some groups)
             }
         }
     }

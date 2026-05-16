@@ -42,7 +42,7 @@ Navegación lateral con 12 módulos:
 - [x] **Grupos** — buscar, miembros, añadir (texto/CSV), eliminar, exportar CSV, **bulk create M365 o DL desde CSV (forward-fill GroupName, toggle M365/DL)**
 - [x] **Buzones** — lookup + permisos actuales, Regular↔Shared, FullAccess/SendAs/SendOnBehalf, CSV import/export
 - [x] **Reglas buzón** — Out-of-Office (Disabled/Enabled/Scheduled + mensajes interno/externo + rango fechas) · Forwarding (SMTP destino + DeliverToMailboxAndForward) · **Permisos calendario** (Add/Update/Remove via *-MailboxFolderPermission)
-- [x] **Auditoria** — identidades (stale members/guests + disabled+licensed) + grupos (sin owner / vacíos), paralelizado 8x
+- [x] **Auditoria** — identidades (stale members/guests + disabled+licensed) + grupos (sin owner / vacíos / **guests en grupos M365 privados**), paralelizado 8x
 - [x] **Onboarding** — wizard compuesto (crear user + UsageLocation + asignar SKUs múltiples + añadir a grupos)
 - [x] **Offboarding** — wizard compuesto (deshabilitar + quitar licencias + convertir a shared)
 - [x] **Cert Wizard** — generar self-signed RSA 2048, instalar CurrentUser\My, exportar .cer
@@ -89,7 +89,7 @@ UX/QoL fase 3:
 ### Features útiles pendientes
 - [ ] Auth tradicional/UPN interactivo (MSAL) — alternativa al cert-based actual
 - [ ] Mail flow rules viewer
-- [ ] Auditoría: grupos sin actividad reciente, externos en grupos privados
+- [ ] Auditoría: grupos sin actividad reciente (necesita /reports/getMicrosoft365GroupsActivity)
 - [ ] Cert export PFX con password
 - [ ] Auto-update App Registration permisos vía Graph (legacy CertWizard hace 29 pasos)
 
@@ -151,9 +151,9 @@ Datos persistidos en `%LOCALAPPDATA%\Grex365\`:
 ## Próximo bloque planificado
 
 **Orden propuesto (mayor utilidad / menor riesgo primero):**
-1. Auditoría: grupos sin actividad reciente, externos en grupos privados
-2. Toast notifications (Snackbar wpf-ui) — UX polish
-3. Charts en TenantHealth — polish visual
-4. Fase 4 (plugin system MEF) — empezar arquitectura modular
-5. Fase 5 (MSIX packaging + AppInstaller auto-update)
-6. Fase 6 (Application Insights + audit DB)
+1. Toast notifications (Snackbar wpf-ui) — UX polish (rápido)
+2. Charts en TenantHealth — polish visual
+3. Fase 4 (plugin system MEF) — empezar arquitectura modular
+4. Fase 5 (MSIX packaging + AppInstaller auto-update)
+5. Fase 6 (Application Insights + audit DB)
+6. MSAL interactive auth (alternativa a cert-based)
