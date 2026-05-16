@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Grex365.App.Services;
 using Grex365.Core.Abstractions;
 using Grex365.Core.Models;
+using Grex365.Core.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Grex365.App.ViewModels;
@@ -57,7 +58,8 @@ public sealed partial class MainViewModel : ObservableObject
         IConnectionStateMonitor monitor,
         IPreferencesStore prefs,
         IGraphConnection graph,
-        IExchangeConnection exchange)
+        IExchangeConnection exchange,
+        PluginLoadReport pluginReport)
     {
         _uiLog = uiLog;
         LogEntries = uiLog.Entries;
@@ -88,6 +90,11 @@ public sealed partial class MainViewModel : ObservableObject
             new("Cert Wizard",    "", typeof(CertWizardViewModel)),
             new("DNS check",      "", typeof(DomainCheckViewModel)),
         };
+
+        foreach (var module in pluginReport.AllModules)
+        {
+            NavigationItems.Add(new NavigationItem(module.Title, module.Glyph, module.ViewModelType));
+        }
 
         SelectedNavigation = LoadLastNavigation() ?? NavigationItems[0];
     }

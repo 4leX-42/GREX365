@@ -12,6 +12,7 @@ using Grex365.Core.Groups;
 using Grex365.Core.Health;
 using Grex365.Core.Offboarding;
 using Grex365.Core.Onboarding;
+using Grex365.Core.Plugins;
 using Grex365.Core.Preferences;
 using Grex365.Core.Users;
 using Grex365.PowerShell;
@@ -51,6 +52,18 @@ public partial class App : Application
 
         WireGlobalExceptionHandlers();
         TryImportLegacyConfig(configDir);
+
+        var pluginsDir = Path.Combine(DataDirectory, "plugins");
+        Directory.CreateDirectory(pluginsDir);
+        var pluginReport = PluginLoader.LoadFrom(pluginsDir);
+        foreach (var failure in pluginReport.Failures)
+        {
+            Log.Warning("Plugin descartado {Path}: {Reason}", failure.AssemblyPath, failure.Message);
+        }
+        foreach (var plugin in pluginReport.Plugins)
+        {
+            Log.Information("Plugin {Asm} aporta {Count} módulo(s)", plugin.AssemblyName, plugin.Modules.Count);
+        }
 
         _host = Host.CreateDefaultBuilder()
             .ConfigureServices(services =>
@@ -101,8 +114,32 @@ public partial class App : Application
                 services.AddSingleton<MainViewModel>();
                 services.AddSingleton<MainWindow>();
                 services.AddTransient<SettingsWindow>();
+
+                services.AddSingleton(pluginReport);
+                foreach (var module in pluginReport.AllModules)
+                {
+                    module.RegisterServices(services);
+                    services.AddTransient(module.ViewModelType);
+                }
             })
             .Build();
+
+        foreach (var module in pluginReport.AllModules)
+        {
+            try
+            {
+                var template = new System.Windows.DataTemplate
+                {
+                    DataType = module.ViewModelType,
+                    VisualTree = new System.Windows.FrameworkElementFactory(module.ViewType)
+                };
+                Current.Resources.Add(new System.Windows.DataTemplateKey(module.ViewModelType), template);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "No se pudo registrar template del módulo {Title}", module.Title);
+            }
+        }
 
         var monitor = Services.GetRequiredService<IConnectionStateMonitor>();
         monitor.Start();

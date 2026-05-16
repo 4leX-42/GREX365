@@ -4,7 +4,7 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting**
-- Tests: **137 passing** (xUnit + FluentAssertions)
+- Tests: **141 passing** (xUnit + FluentAssertions)
 - Última actualización: 2026-05-16
 
 > Nota stack: el plantamiento sugiere WinUI 3 como preferente y WPF como fallback aceptable. Se eligió **WPF + wpf-ui** por madurez, ecosistema y compatibilidad con Win10/11. Migración a WinUI 3 queda como posible Fase 7 si surge necesidad.
@@ -59,12 +59,14 @@ UX/QoL fase 3:
 - [x] Cert picker dialog (lista certs CurrentUser\My)
 - [x] Toast notifications (wpf-ui `SnackbarPresenter`) en Ok/Warn/Error desde `UiLogSink`
 
-### Fase 4 — Arquitectura modular / plugins (MEF o Prism) — **PENDIENTE**
-- [ ] Definir contrato `IModule` (DisplayName, Icon, ViewModelType, ViewType)
-- [ ] Descubrimiento dinámico desde `%LOCALAPPDATA%\Grex365\plugins\*.dll`
-- [ ] Migrar al menos 1 módulo existente como plugin (p.ej. CertWizard) como prueba de concepto
-- [ ] Aislamiento de assemblies (AssemblyLoadContext) para descarga segura
-- [ ] Settings UI: gestión de plugins habilitados/deshabilitados
+### Fase 4 — Arquitectura modular / plugins — **FOUNDATION DONE**
+- [x] Contrato `IModule` (Title, Glyph, ViewModelType, ViewType, RegisterServices)
+- [x] `PluginLoader` con `AssemblyLoadContext` por DLL desde `%LOCALAPPDATA%\Grex365\plugins\*.dll`
+- [x] Discovery con tolerancia a fallos (corruptos/ReflectionTypeLoadException → log warn, no aborta)
+- [x] App.xaml.cs: plugins inyectan servicios en DI + registran ViewModels + DataTemplate dinámico
+- [x] MainViewModel: append nav entries por cada `IModule` descubierto
+- [ ] Sample plugin externo de referencia (POC desplegable)
+- [ ] Settings UI: enable/disable + reload
 
 ### Fase 5 — Packaging y despliegue — **PENDIENTE**
 - [ ] PublishSingleFile self-contained para `.exe` portable
@@ -121,6 +123,7 @@ UX/QoL fase 3:
 | OnboardingValidator | 16 | UPN/password/usage/mail-nickname validation + derive |
 | MailboxRulesValidator | 15 | OOO state transitions, date ranges, forwarding SMTP shape |
 | BulkUserActionParser | 17 | enable/disable/remove-licenses + assign:&lt;SKU&gt; parse + lookup |
+| PluginLoader | 4 | empty dir / corrupt dll / whitespace path |
 
 ---
 
@@ -150,8 +153,8 @@ Datos persistidos en `%LOCALAPPDATA%\Grex365\`:
 ## Próximo bloque planificado
 
 **Orden propuesto (mayor utilidad / menor riesgo primero):**
-1. Fase 4 (plugin system MEF) — empezar arquitectura modular
-2. Fase 5 (MSIX packaging + AppInstaller auto-update)
-3. Fase 6 (Application Insights + audit DB)
+1. Fase 5 (MSIX packaging + AppInstaller auto-update + PublishSingleFile)
+2. Fase 6 (Application Insights + audit DB SQLite/EF Core)
+3. Sample plugin externo (cierra Fase 4)
 4. MSAL interactive auth (alternativa a cert-based)
 5. Auto-update App Registration permisos via Graph (legacy CertWizard hace 29 pasos)
