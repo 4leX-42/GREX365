@@ -1,12 +1,15 @@
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Grex365.Core.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Grex365.App.ViewModels;
 
 public sealed partial class DashboardViewModel : ObservableObject
 {
     private readonly IConnectionStateMonitor _monitor;
+    private readonly IServiceProvider _services;
 
     [ObservableProperty] private bool _graphConnected;
     [ObservableProperty] private bool _exchangeConnected;
@@ -14,11 +17,25 @@ public sealed partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private string? _tenantDomain;
     [ObservableProperty] private string? _account;
 
-    public DashboardViewModel(IConnectionStateMonitor monitor)
+    public DashboardViewModel(IConnectionStateMonitor monitor, IServiceProvider services)
     {
         _monitor = monitor;
+        _services = services;
         _monitor.PropertyChanged += OnMonitorChanged;
         Sync();
+    }
+
+    [RelayCommand]
+    private void GoTo(string target)
+    {
+        var main = _services.GetRequiredService<MainViewModel>();
+        // resolve the same instance App uses
+        var matching = main.NavigationItems.FirstOrDefault(i =>
+            string.Equals(i.Title, target, StringComparison.OrdinalIgnoreCase));
+        if (matching is not null)
+        {
+            main.SelectedNavigation = matching;
+        }
     }
 
     private void OnMonitorChanged(object? sender, PropertyChangedEventArgs e)

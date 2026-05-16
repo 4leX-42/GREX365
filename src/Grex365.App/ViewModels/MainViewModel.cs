@@ -70,6 +70,7 @@ public sealed partial class MainViewModel : ObservableObject
             new("Grupos",         "", typeof(GroupsViewModel)),
             new("Buzones",        "", typeof(SharedMailboxViewModel)),
             new("Auditoria",      "", typeof(AuditViewModel)),
+            new("Offboarding",    "", typeof(OffboardingViewModel)),
         };
 
         SelectedNavigation = NavigationItems[0];

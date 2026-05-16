@@ -38,6 +38,62 @@ public sealed class SharedMailboxService : ISharedMailboxService
         return Map(result.Output[0]);
     }
 
+    public async Task<MailboxInfo?> ConvertToSharedAsync(string identity, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default)
+    {
+        const string script = """
+            $current = Get-Mailbox -Identity $Identity -ErrorAction Stop
+            if ($current.RecipientTypeDetails -eq 'SharedMailbox') {
+                [PSCustomObject]@{
+                    Identity = [string]$current.Identity
+                    DisplayName = [string]$current.DisplayName
+                    PrimarySmtpAddress = [string]$current.PrimarySmtpAddress
+                    RecipientTypeDetails = [string]$current.RecipientTypeDetails
+                }
+                return
+            }
+
+            Set-Mailbox -Identity $Identity -Type Shared -ErrorAction Stop
+            Write-Information "Set-Mailbox -Type Shared aplicado."
+
+            $deadline = (Get-Date).AddSeconds(120)
+            do {
+                Start-Sleep -Seconds 5
+                try {
+                    $check = Get-Mailbox -Identity $Identity -ErrorAction Stop
+                } catch {
+                    $check = $null
+                }
+                if ($check -and $check.RecipientTypeDetails -eq 'SharedMailbox') {
+                    break
+                }
+            } while ((Get-Date) -lt $deadline)
+
+            if (-not $check) {
+                throw "No se pudo confirmar la conversion: Get-Mailbox devolvio vacio."
+            }
+
+            [PSCustomObject]@{
+                Identity            = [string]$check.Identity
+                DisplayName         = [string]$check.DisplayName
+                PrimarySmtpAddress  = [string]$check.PrimarySmtpAddress
+                RecipientTypeDetails = [string]$check.RecipientTypeDetails
+            }
+            """;
+
+        var result = await _runner.RunAsync(
+            script,
+            new Dictionary<string, object?> { ["Identity"] = identity },
+            progress,
+            cancellationToken).ConfigureAwait(false);
+
+        if (!result.Success)
+        {
+            throw new InvalidOperationException("Conversion a Shared fallo: " + string.Join("; ", result.Errors));
+        }
+
+        return result.Output.Count > 0 ? Map(result.Output[0]) : null;
+    }
+
     public async Task<MailboxInfo?> ConvertToRegularAsync(string identity, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default)
     {
         const string script = """

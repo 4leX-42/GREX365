@@ -8,6 +8,8 @@ public interface ISharedMailboxService
 
     Task<MailboxInfo?> ConvertToRegularAsync(string identity, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default);
 
+    Task<MailboxInfo?> ConvertToSharedAsync(string identity, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default);
+
     Task<MailboxPermissionResult> ApplyPermissionAsync(
         string action,
         string permission,

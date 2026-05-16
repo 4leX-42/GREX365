@@ -11,6 +11,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <TextBlock Grid.Row="0"
@@ -21,9 +22,28 @@
             <TextBlock Grid.Row="1"
                        Text="Estado de la conexión y resumen del tenant"
                        Opacity="0.7"
-                       Margin="0,0,0,24" />
+                       Margin="0,0,0,16" />
 
-            <UniformGrid Grid.Row="2" Columns="3" Rows="2">
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,16">
+                <ui:Button Content="Conectar"
+                           Appearance="Primary"
+                           Margin="0,0,8,0"
+                           Command="{Binding GoToCommand}"
+                           CommandParameter="Conexion" />
+                <ui:Button Content="Ver salud tenant"
+                           Margin="0,0,8,0"
+                           Command="{Binding GoToCommand}"
+                           CommandParameter="Salud tenant" />
+                <ui:Button Content="Buscar usuario"
+                           Margin="0,0,8,0"
+                           Command="{Binding GoToCommand}"
+                           CommandParameter="Usuarios" />
+                <ui:Button Content="Auditoria"
+                           Command="{Binding GoToCommand}"
+                           CommandParameter="Auditoria" />
+            </StackPanel>
+
+            <UniformGrid Grid.Row="3" Columns="3" Rows="2">
                 <Border CornerRadius="8" Padding="16" Margin="0,0,12,12"
                         Background="{DynamicResource ControlFillColorDefaultBrush}">
                     <StackPanel>

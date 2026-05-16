@@ -8,6 +8,7 @@ using Grex365.Core.Audit;
 using Grex365.Core.Connections;
 using Grex365.Core.Groups;
 using Grex365.Core.Health;
+using Grex365.Core.Offboarding;
 using Grex365.Core.Preferences;
 using Grex365.Core.Users;
 using Grex365.PowerShell;
@@ -67,6 +68,7 @@ public partial class App : Application
                 services.AddSingleton<IAuditService, GraphAuditService>();
                 services.AddSingleton<ITenantHealthService, GraphTenantHealthService>();
                 services.AddSingleton<IUsersService, GraphUsersService>();
+                services.AddSingleton<IOffboardingService, OffboardingService>();
 
                 services.AddSingleton<IPreferencesStore>(_ => new JsonPreferencesStore(configDir));
                 services.AddSingleton<ICertConfigStore>(_ => new JsonCertConfigStore(configDir));
@@ -80,8 +82,9 @@ public partial class App : Application
                 services.AddTransient<AuditViewModel>();
                 services.AddTransient<TenantHealthViewModel>();
                 services.AddTransient<UsersViewModel>();
+                services.AddTransient<OffboardingViewModel>();
                 services.AddTransient<SettingsViewModel>();
-                services.AddTransient<MainViewModel>();
+                services.AddSingleton<MainViewModel>();
                 services.AddSingleton<MainWindow>();
                 services.AddTransient<SettingsWindow>();
             })
