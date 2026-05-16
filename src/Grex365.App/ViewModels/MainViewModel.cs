@@ -29,8 +29,11 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private NavigationItem? _selectedNavigation;
     [ObservableProperty] private ObservableObject? _currentPage;
 
+    private readonly IUiLogSink _uiLog;
+
     public MainViewModel(IUiLogSink uiLog, IServiceProvider services)
     {
+        _uiLog = uiLog;
         LogEntries = uiLog.Entries;
         _services = services;
 
@@ -67,4 +70,7 @@ public sealed partial class MainViewModel : ObservableObject
         window.Owner = Application.Current?.MainWindow;
         window.ShowDialog();
     }
+
+    [RelayCommand]
+    private void ClearLog() => _uiLog.Clear();
 }

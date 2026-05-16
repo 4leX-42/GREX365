@@ -111,6 +111,14 @@
                                    Command="{Binding ApplyPermissionCommand}" />
                     </Grid>
 
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <ui:Button Content="Importar CSV..."
+                                   Margin="0,0,8,0"
+                                   Command="{Binding ImportPermissionsCsvCommand}" />
+                        <ui:Button Content="Exportar resultados..."
+                                   Command="{Binding ExportPermissionResultsCommand}" />
+                    </StackPanel>
+
                     <ItemsControl ItemsSource="{Binding PermissionResults}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type models:MailboxPermissionResult}">

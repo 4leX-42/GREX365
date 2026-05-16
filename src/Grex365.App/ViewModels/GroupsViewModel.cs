@@ -15,6 +15,7 @@ public sealed partial class GroupsViewModel : ObservableObject
 {
     private readonly IGroupsService _groups;
     private readonly IUiLogSink _log;
+    private CancellationTokenSource? _cts;
 
     [ObservableProperty] private string _searchQuery = string.Empty;
     [ObservableProperty] private GroupSummary? _selectedGroup;
@@ -46,18 +47,24 @@ public sealed partial class GroupsViewModel : ObservableObject
     [RelayCommand]
     private async Task SearchAsync()
     {
+        EnsureToken();
         IsBusy = true;
+        CancelCommand.NotifyCanExecuteChanged();
         StatusMessage = "Buscando...";
         try
         {
             Groups.Clear();
-            var found = await _groups.SearchAsync(SearchQuery).ConfigureAwait(true);
+            var found = await _groups.SearchAsync(SearchQuery, _cts!.Token).ConfigureAwait(true);
             foreach (var g in found)
             {
                 Groups.Add(g);
             }
             StatusMessage = $"{found.Count} grupos.";
-            _log.Progress.Report(LogEntry.Info("Groups", $"Search '{SearchQuery}' → {found.Count} resultados"));
+            _log.Progress.Report(LogEntry.Info("Groups", $"Search '{SearchQuery}' -> {found.Count} resultados"));
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
         }
         catch (Exception ex)
         {
@@ -66,22 +73,47 @@ public sealed partial class GroupsViewModel : ObservableObject
         }
         finally
         {
-            IsBusy = false;
+            DisposeToken();
         }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanCancel))]
+    private void Cancel() => _cts?.Cancel();
+
+    private bool CanCancel() => IsBusy;
+
+    private void EnsureToken()
+    {
+        _cts?.Dispose();
+        _cts = new CancellationTokenSource();
+    }
+
+    private void DisposeToken()
+    {
+        IsBusy = false;
+        _cts?.Dispose();
+        _cts = null;
+        CancelCommand.NotifyCanExecuteChanged();
     }
 
     private async Task LoadMembersAsync(string groupId)
     {
+        EnsureToken();
         IsBusy = true;
+        CancelCommand.NotifyCanExecuteChanged();
         try
         {
-            var members = await _groups.GetMembersAsync(groupId).ConfigureAwait(true);
+            var members = await _groups.GetMembersAsync(groupId, _cts!.Token).ConfigureAwait(true);
             Members.Clear();
             foreach (var m in members)
             {
                 Members.Add(m);
             }
             StatusMessage = $"{members.Count} miembros.";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
         }
         catch (Exception ex)
         {
@@ -90,7 +122,7 @@ public sealed partial class GroupsViewModel : ObservableObject
         }
         finally
         {
-            IsBusy = false;
+            DisposeToken();
         }
     }
 
@@ -114,7 +146,9 @@ public sealed partial class GroupsViewModel : ObservableObject
             return;
         }
 
+        EnsureToken();
         IsBusy = true;
+        CancelCommand.NotifyCanExecuteChanged();
         StatusMessage = $"Leyendo {Path.GetFileName(dlg.FileName)}...";
         try
         {
@@ -138,7 +172,7 @@ public sealed partial class GroupsViewModel : ObservableObject
             }
 
             StatusMessage = $"Añadiendo {identifiers.Count} desde CSV...";
-            var results = await _groups.AddMembersAsync(SelectedGroup.Id, identifiers, _log.Progress).ConfigureAwait(true);
+            var results = await _groups.AddMembersAsync(SelectedGroup.Id, identifiers, _log.Progress, _cts!.Token).ConfigureAwait(true);
             LastAddResults.Clear();
             foreach (var r in results)
             {
@@ -147,17 +181,20 @@ public sealed partial class GroupsViewModel : ObservableObject
             var ok = results.Count(r => r.Status == "AGREGADO");
             var existed = results.Count(r => r.Status == "YA_EXISTE");
             var errors = results.Count(r => r.Status is "ERROR" or "NO_RESUELTO");
-            StatusMessage = $"CSV: OK={ok}  YaExistía={existed}  Error={errors}";
+            StatusMessage = $"CSV: OK={ok}  YaExistia={existed}  Error={errors}";
+            DisposeToken();
             await LoadMembersAsync(SelectedGroup.Id).ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
+            DisposeToken();
         }
         catch (Exception ex)
         {
             StatusMessage = "Error: " + ex.Message;
             _log.Progress.Report(LogEntry.Error("Groups", ex.Message, ex));
-        }
-        finally
-        {
-            IsBusy = false;
+            DisposeToken();
         }
     }
 
@@ -233,11 +270,13 @@ public sealed partial class GroupsViewModel : ObservableObject
             return;
         }
 
+        EnsureToken();
         IsBusy = true;
+        CancelCommand.NotifyCanExecuteChanged();
         StatusMessage = $"Añadiendo {lines.Count}...";
         try
         {
-            var results = await _groups.AddMembersAsync(SelectedGroup.Id, lines, _log.Progress).ConfigureAwait(true);
+            var results = await _groups.AddMembersAsync(SelectedGroup.Id, lines, _log.Progress, _cts!.Token).ConfigureAwait(true);
             LastAddResults.Clear();
             foreach (var r in results)
             {
@@ -246,8 +285,13 @@ public sealed partial class GroupsViewModel : ObservableObject
             var ok = results.Count(r => r.Status == "AGREGADO");
             var existed = results.Count(r => r.Status == "YA_EXISTE");
             var errors = results.Count(r => r.Status == "ERROR" || r.Status == "NO_RESUELTO");
-            StatusMessage = $"OK={ok}  YaExistía={existed}  Error={errors}";
+            StatusMessage = $"OK={ok}  YaExistia={existed}  Error={errors}";
+            DisposeToken();
             await LoadMembersAsync(SelectedGroup.Id).ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
         }
         catch (Exception ex)
         {
@@ -256,7 +300,10 @@ public sealed partial class GroupsViewModel : ObservableObject
         }
         finally
         {
-            IsBusy = false;
+            if (IsBusy)
+            {
+                DisposeToken();
+            }
         }
     }
 }

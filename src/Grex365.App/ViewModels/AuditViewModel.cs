@@ -14,6 +14,7 @@ public sealed partial class AuditViewModel : ObservableObject
 {
     private readonly IAuditService _audit;
     private readonly IUiLogSink _log;
+    private CancellationTokenSource? _cts;
 
     [ObservableProperty] private AuditSummary? _summary;
     [ObservableProperty] private string _statusMessage = "Pulsa 'Ejecutar' para auditar.";
@@ -27,25 +28,32 @@ public sealed partial class AuditViewModel : ObservableObject
         _log = log;
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanRun))]
     private async Task RunAsync()
     {
         if (IsBusy)
         {
             return;
         }
+        _cts = new CancellationTokenSource();
         IsBusy = true;
+        RunCommand.NotifyCanExecuteChanged();
+        CancelCommand.NotifyCanExecuteChanged();
         StatusMessage = "Ejecutando auditoría de identidades...";
         Findings.Clear();
         try
         {
-            var (summary, findings) = await _audit.RunIdentityAuditAsync(_log.Progress).ConfigureAwait(true);
+            var (summary, findings) = await _audit.RunIdentityAuditAsync(_log.Progress, _cts.Token).ConfigureAwait(true);
             Summary = summary;
             foreach (var f in findings)
             {
                 Findings.Add(f);
             }
             StatusMessage = $"{summary.UsersTotal} usuarios analizados · {findings.Count} hallazgos";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
         }
         catch (Exception ex)
         {
@@ -55,8 +63,18 @@ public sealed partial class AuditViewModel : ObservableObject
         finally
         {
             IsBusy = false;
+            _cts?.Dispose();
+            _cts = null;
+            RunCommand.NotifyCanExecuteChanged();
+            CancelCommand.NotifyCanExecuteChanged();
         }
     }
+
+    [RelayCommand(CanExecute = nameof(CanCancel))]
+    private void Cancel() => _cts?.Cancel();
+
+    private bool CanRun() => !IsBusy;
+    private bool CanCancel() => IsBusy;
 
     [RelayCommand]
     private void ExportFindings()

@@ -18,6 +18,7 @@
             <conv:SeverityToBrushConverter x:Key="SeverityToBrushConverter" />
             <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
             <conv:NullToCollapsedConverter x:Key="NullToCollapsedConverter" />
+            <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
 
             <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
                 <v:DashboardView />

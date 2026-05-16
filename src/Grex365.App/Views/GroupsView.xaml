@@ -52,6 +52,12 @@
                                    Content="Buscar"
                                    Margin="8,0,0,0"
                                    Command="{Binding SearchCommand}" />
+                        <ui:ProgressRing IsIndeterminate="True"
+                                         Grid.Column="1"
+                                         Width="16" Height="16"
+                                         Margin="0,0,8,0"
+                                         HorizontalAlignment="Right"
+                                         Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}" />
                     </Grid>
 
                     <ListBox Grid.Row="2"
@@ -135,6 +141,9 @@
                         <ui:Button Content="Exportar resultados..."
                                    Margin="0,0,8,0"
                                    Command="{Binding ExportResultsCommand}" />
+                        <ui:Button Content="Cancelar"
+                                   Margin="0,0,8,0"
+                                   Command="{Binding CancelCommand}" />
                         <TextBlock VerticalAlignment="Center"
                                    Text="{Binding StatusMessage}"
                                    Opacity="0.8" />

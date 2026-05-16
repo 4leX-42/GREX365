@@ -30,9 +30,16 @@
                        Appearance="Primary"
                        Margin="0,0,8,0"
                        Command="{Binding RunCommand}" />
+            <ui:Button Content="Cancelar"
+                       Margin="0,0,8,0"
+                       Command="{Binding CancelCommand}" />
             <ui:Button Content="Exportar CSV..."
                        Margin="0,0,8,0"
                        Command="{Binding ExportFindingsCommand}" />
+            <ui:ProgressRing IsIndeterminate="True"
+                             Width="20" Height="20"
+                             Margin="8,0,8,0"
+                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}" />
             <TextBlock VerticalAlignment="Center"
                        Text="{Binding StatusMessage}"
                        Opacity="0.8" />

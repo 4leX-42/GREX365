@@ -87,10 +87,19 @@
                         CornerRadius="8"
                         Background="{DynamicResource ControlFillColorDefaultBrush}">
                     <DockPanel>
-                        <TextBlock DockPanel.Dock="Top"
-                                   Text="Log"
-                                   FontWeight="SemiBold"
-                                   Margin="12,8" />
+                        <Grid DockPanel.Dock="Top" Margin="12,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="Log"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center" />
+                            <ui:Button Grid.Column="1"
+                                       Content="Limpiar"
+                                       Command="{Binding ClearLogCommand}" />
+                        </Grid>
                         <ListBox ItemsSource="{Binding LogEntries}"
                                  Background="Transparent"
                                  BorderThickness="0"
