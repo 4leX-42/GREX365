@@ -23,6 +23,14 @@
 
         <ui:TitleBar Grid.Row="0" Title="GREX365" />
 
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Margin="0,40,16,0"
+                    Grid.Row="0">
+            <ui:Button Content="Settings"
+                       Command="{Binding OpenSettingsCommand}" />
+        </StackPanel>
+
         <Grid Grid.Row="1" Margin="24">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
