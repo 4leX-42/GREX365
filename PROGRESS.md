@@ -4,7 +4,7 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting**
-- Tests: **120 passing** (xUnit + FluentAssertions)
+- Tests: **137 passing** (xUnit + FluentAssertions)
 - Última actualización: 2026-05-16
 
 > Nota stack: el plantamiento sugiere WinUI 3 como preferente y WPF como fallback aceptable. Se eligió **WPF + wpf-ui** por madurez, ecosistema y compatibilidad con Win10/11. Migración a WinUI 3 queda como posible Fase 7 si surge necesidad.
@@ -38,7 +38,7 @@ Navegación lateral con 12 módulos:
 - [x] **Dashboard** — status cards (Graph/EXO/Tenant/Cuenta) + quick actions
 - [x] **Conexion** — cert auth Graph + EXO con feedback en vivo
 - [x] **Salud tenant** — org + counts usuarios/grupos + SKUs consumidos
-- [x] **Usuarios** — buscar, perfil, membresías, enable/disable, quitar licencias, **asignar licencia (SKU picker)**, bulk CSV
+- [x] **Usuarios** — buscar, perfil, membresías, enable/disable, quitar licencias, **asignar licencia (SKU picker)**, bulk CSV (`enable`/`disable`/`remove-licenses`/`assign:<SkuPartNumber>`)
 - [x] **Grupos** — buscar, miembros, añadir (texto/CSV), eliminar, exportar CSV, **bulk create M365 desde CSV (forward-fill GroupName)**
 - [x] **Buzones** — lookup + permisos actuales, Regular↔Shared, FullAccess/SendAs/SendOnBehalf, CSV import/export
 - [x] **Reglas buzón** — Out-of-Office (Disabled/Enabled/Scheduled + mensajes interno/externo + rango fechas) y Forwarding (SMTP destino + DeliverToMailboxAndForward)
@@ -94,7 +94,6 @@ UX/QoL fase 3:
 - [ ] Auditoría: grupos sin actividad reciente, externos en grupos privados
 - [ ] Cert export PFX con password
 - [ ] Auto-update App Registration permisos vía Graph (legacy CertWizard hace 29 pasos)
-- [ ] License assignment bulk CSV (single asignación ya hecha)
 
 ### Polish UI
 - [ ] Charts/gráficos (TenantHealth → pie chart de SKUs)
@@ -124,6 +123,7 @@ UX/QoL fase 3:
 | BulkGroupRowPreprocessor | 13 | Forward-fill, skip orphans, trim, IsEmail theory |
 | OnboardingValidator | 16 | UPN/password/usage/mail-nickname validation + derive |
 | MailboxRulesValidator | 15 | OOO state transitions, date ranges, forwarding SMTP shape |
+| BulkUserActionParser | 17 | enable/disable/remove-licenses + assign:&lt;SKU&gt; parse + lookup |
 
 ---
 
@@ -154,8 +154,8 @@ Datos persistidos en `%LOCALAPPDATA%\Grex365\`:
 
 **Orden propuesto (mayor utilidad / menor riesgo primero):**
 1. DL bulk creation via EXO runner — completa el par con M365 bulk ya hecho
-2. License assignment bulk CSV — natural tras single ya shipped
-3. Calendar permission view/set — feature de buzón habitual
-4. Charts en TenantHealth — polish visual
-5. Toast notifications (Snackbar wpf-ui) — UX polish
-6. Fase 4 (plugin system MEF) — empezar arquitectura modular
+2. Calendar permission view/set — feature de buzón habitual
+3. Charts en TenantHealth — polish visual
+4. Toast notifications (Snackbar wpf-ui) — UX polish
+5. Fase 4 (plugin system MEF) — empezar arquitectura modular
+6. Fase 5 (MSIX packaging + AppInstaller auto-update)

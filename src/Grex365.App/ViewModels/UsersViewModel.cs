@@ -7,6 +7,7 @@ using Grex365.App.Services;
 using Grex365.Core.Abstractions;
 using Grex365.Core.Csv;
 using Grex365.Core.Models;
+using Grex365.Core.Users;
 using Microsoft.Win32;
 
 namespace Grex365.App.ViewModels;
@@ -302,7 +303,7 @@ public sealed partial class UsersViewModel : ObservableObject
     {
         var dlg = new OpenFileDialog
         {
-            Title = "CSV de usuarios (UPN;Action) — Action=enable|disable|remove-licenses",
+            Title = "CSV de usuarios (UPN;Action) — Action=enable|disable|remove-licenses|assign:<SkuPartNumber>",
             Filter = "CSV (*.csv)|*.csv|Todos|*.*",
             CheckFileExists = true
         };
@@ -319,16 +320,30 @@ public sealed partial class UsersViewModel : ObservableObject
         try
         {
             var rows = FlexibleCsvReader.Read(dlg.FileName);
+            var parsed = rows.Select(r =>
+            {
+                r.TryGetValue("UPN", out var upn);
+                r.TryGetValue("Action", out var actionRaw);
+                return (Upn: upn, ActionRaw: actionRaw, Action: BulkUserActionParser.Parse(actionRaw));
+            }).ToList();
+
+            IReadOnlyList<SkuInfo> skus = Array.Empty<SkuInfo>();
+            if (parsed.Any(p => p.Action.Kind == BulkUserActionKind.AssignLicense))
+            {
+                StatusMessage = "Cargando SKUs disponibles...";
+                skus = await _users.ListSkusAsync(_cts!.Token).ConfigureAwait(true);
+            }
+
             var ok = 0; var skipped = 0; var err = 0;
-            foreach (var row in rows)
+            foreach (var entry in parsed)
             {
                 _cts!.Token.ThrowIfCancellationRequested();
-                row.TryGetValue("UPN", out var upn);
-                row.TryGetValue("Action", out var actionRaw);
-                var action = (actionRaw ?? string.Empty).Trim().ToLowerInvariant();
-                if (string.IsNullOrWhiteSpace(upn) || string.IsNullOrWhiteSpace(action))
+                var upn = entry.Upn;
+                var actionDisplay = entry.ActionRaw ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(upn) || entry.Action.Kind == BulkUserActionKind.Unknown)
                 {
-                    BulkResults.Add(new BulkUserResult(upn ?? string.Empty, action, "INVALIDO", "UPN o Action vacíos"));
+                    BulkResults.Add(new BulkUserResult(upn ?? string.Empty, actionDisplay, "INVALIDO",
+                        string.IsNullOrWhiteSpace(upn) ? "UPN vacío" : "Action no soportada"));
                     skipped++;
                     continue;
                 }
@@ -338,30 +353,42 @@ public sealed partial class UsersViewModel : ObservableObject
                     var user = await _users.GetByIdAsync(upn.Trim(), _cts.Token).ConfigureAwait(true);
                     if (user is null)
                     {
-                        BulkResults.Add(new BulkUserResult(upn, action, "NO_RESUELTO", "Usuario no encontrado"));
+                        BulkResults.Add(new BulkUserResult(upn, actionDisplay, "NO_RESUELTO", "Usuario no encontrado"));
                         err++;
                         continue;
                     }
 
-                    switch (action)
+                    switch (entry.Action.Kind)
                     {
-                        case "enable":
+                        case BulkUserActionKind.Enable:
                             await _users.SetAccountEnabledAsync(user.Id, true, _log.Progress, _cts.Token).ConfigureAwait(true);
-                            BulkResults.Add(new BulkUserResult(upn, action, "OK", "Habilitado"));
+                            BulkResults.Add(new BulkUserResult(upn, actionDisplay, "OK", "Habilitado"));
                             ok++;
                             break;
-                        case "disable":
+                        case BulkUserActionKind.Disable:
                             await _users.SetAccountEnabledAsync(user.Id, false, _log.Progress, _cts.Token).ConfigureAwait(true);
-                            BulkResults.Add(new BulkUserResult(upn, action, "OK", "Deshabilitado"));
+                            BulkResults.Add(new BulkUserResult(upn, actionDisplay, "OK", "Deshabilitado"));
                             ok++;
                             break;
-                        case "remove-licenses":
+                        case BulkUserActionKind.RemoveLicenses:
                             await _users.RemoveAllLicensesAsync(user.Id, _log.Progress, _cts.Token).ConfigureAwait(true);
-                            BulkResults.Add(new BulkUserResult(upn, action, "OK", $"{user.AssignedLicenseCount} licencias retiradas"));
+                            BulkResults.Add(new BulkUserResult(upn, actionDisplay, "OK", $"{user.AssignedLicenseCount} licencias retiradas"));
+                            ok++;
+                            break;
+                        case BulkUserActionKind.AssignLicense:
+                            var sku = BulkUserActionParser.FindByPartNumber(skus, entry.Action.SkuPartNumber);
+                            if (sku is null)
+                            {
+                                BulkResults.Add(new BulkUserResult(upn, actionDisplay, "INVALIDO", $"SKU no encontrada: {entry.Action.SkuPartNumber}"));
+                                skipped++;
+                                break;
+                            }
+                            await _users.AssignLicenseAsync(user.Id, sku.SkuId, _log.Progress, _cts.Token).ConfigureAwait(true);
+                            BulkResults.Add(new BulkUserResult(upn, actionDisplay, "OK", $"Asignada {sku.SkuPartNumber}"));
                             ok++;
                             break;
                         default:
-                            BulkResults.Add(new BulkUserResult(upn, action, "INVALIDO", "Action no soportada"));
+                            BulkResults.Add(new BulkUserResult(upn, actionDisplay, "INVALIDO", "Action no soportada"));
                             skipped++;
                             break;
                     }
@@ -372,7 +399,7 @@ public sealed partial class UsersViewModel : ObservableObject
                 }
                 catch (Exception ex)
                 {
-                    BulkResults.Add(new BulkUserResult(upn, action, "ERROR", ex.Message));
+                    BulkResults.Add(new BulkUserResult(upn, actionDisplay, "ERROR", ex.Message));
                     err++;
                 }
             }
