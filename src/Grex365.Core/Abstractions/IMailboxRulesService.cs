@@ -31,4 +31,22 @@ public interface IMailboxRulesService
         string identity,
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<CalendarPermissionEntry>> GetCalendarPermissionsAsync(
+        string identity,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    Task ApplyCalendarPermissionAsync(
+        string identity,
+        string principal,
+        string accessRights,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    Task RemoveCalendarPermissionAsync(
+        string identity,
+        string principal,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
 }

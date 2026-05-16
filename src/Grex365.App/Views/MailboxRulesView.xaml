@@ -127,6 +127,66 @@
                 </StackPanel>
             </Border>
 
+            <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <StackPanel>
+                    <TextBlock Text="Permisos de calendario" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
+
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="200" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox Grid.Column="0"
+                                    Text="{Binding CalendarPrincipal, UpdateSourceTrigger=PropertyChanged}"
+                                    PlaceholderText="UPN o SMTP del concesionario" />
+                        <ComboBox Grid.Column="1"
+                                  ItemsSource="{Binding CalendarAccessOptions}"
+                                  SelectedItem="{Binding CalendarAccess}"
+                                  Margin="8,0,0,0" />
+                        <ui:Button Grid.Column="2"
+                                   Content="Aplicar / Actualizar"
+                                   Appearance="Primary"
+                                   Margin="8,0,0,0"
+                                   Command="{Binding ApplyCalendarPermissionCommand}" />
+                    </Grid>
+
+                    <Grid Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Text="Permisos actuales"
+                                   FontWeight="SemiBold"
+                                   Opacity="0.8" />
+                        <ui:Button Grid.Column="1"
+                                   Content="Quitar seleccionado"
+                                   Command="{Binding RemoveCalendarPermissionCommand}" />
+                    </Grid>
+
+                    <ListBox ItemsSource="{Binding CalendarPermissions}"
+                             SelectedItem="{Binding SelectedCalendarPermission}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             MaxHeight="180">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:CalendarPermissionEntry}">
+                                <Grid Margin="4,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Principal}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding AccessRights}" Opacity="0.8" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </Border>
+
             <TextBlock Text="{Binding StatusMessage}" Opacity="0.8" />
         </StackPanel>
     </ScrollViewer>

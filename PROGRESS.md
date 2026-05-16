@@ -41,7 +41,7 @@ Navegación lateral con 12 módulos:
 - [x] **Usuarios** — buscar, perfil, membresías, enable/disable, quitar licencias, **asignar licencia (SKU picker)**, bulk CSV (`enable`/`disable`/`remove-licenses`/`assign:<SkuPartNumber>`)
 - [x] **Grupos** — buscar, miembros, añadir (texto/CSV), eliminar, exportar CSV, **bulk create M365 o DL desde CSV (forward-fill GroupName, toggle M365/DL)**
 - [x] **Buzones** — lookup + permisos actuales, Regular↔Shared, FullAccess/SendAs/SendOnBehalf, CSV import/export
-- [x] **Reglas buzón** — Out-of-Office (Disabled/Enabled/Scheduled + mensajes interno/externo + rango fechas) y Forwarding (SMTP destino + DeliverToMailboxAndForward)
+- [x] **Reglas buzón** — Out-of-Office (Disabled/Enabled/Scheduled + mensajes interno/externo + rango fechas) · Forwarding (SMTP destino + DeliverToMailboxAndForward) · **Permisos calendario** (Add/Update/Remove via *-MailboxFolderPermission)
 - [x] **Auditoria** — identidades (stale members/guests + disabled+licensed) + grupos (sin owner / vacíos), paralelizado 8x
 - [x] **Onboarding** — wizard compuesto (crear user + UsageLocation + asignar SKUs múltiples + añadir a grupos)
 - [x] **Offboarding** — wizard compuesto (deshabilitar + quitar licencias + convertir a shared)
@@ -88,7 +88,6 @@ UX/QoL fase 3:
 
 ### Features útiles pendientes
 - [ ] Auth tradicional/UPN interactivo (MSAL) — alternativa al cert-based actual
-- [ ] Calendar permission view/set
 - [ ] Mail flow rules viewer
 - [ ] Auditoría: grupos sin actividad reciente, externos en grupos privados
 - [ ] Cert export PFX con password
@@ -152,9 +151,9 @@ Datos persistidos en `%LOCALAPPDATA%\Grex365\`:
 ## Próximo bloque planificado
 
 **Orden propuesto (mayor utilidad / menor riesgo primero):**
-1. Calendar permission view/set — feature de buzón habitual
-2. Auditoría: grupos sin actividad reciente, externos en grupos privados
+1. Auditoría: grupos sin actividad reciente, externos en grupos privados
+2. Toast notifications (Snackbar wpf-ui) — UX polish
 3. Charts en TenantHealth — polish visual
-4. Toast notifications (Snackbar wpf-ui) — UX polish
-5. Fase 4 (plugin system MEF) — empezar arquitectura modular
-6. Fase 5 (MSIX packaging + AppInstaller auto-update)
+4. Fase 4 (plugin system MEF) — empezar arquitectura modular
+5. Fase 5 (MSIX packaging + AppInstaller auto-update)
+6. Fase 6 (Application Insights + audit DB)

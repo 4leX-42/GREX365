@@ -186,6 +186,128 @@ public sealed class MailboxRulesService : IMailboxRulesService
         progress?.Report(LogEntry.Ok("Mailbox", $"Forwarding limpiado en {identity}"));
     }
 
+    public async Task<IReadOnlyList<CalendarPermissionEntry>> GetCalendarPermissionsAsync(
+        string identity,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        const string script = """
+            $folder = "{0}:\Calendar" -f $Identity
+            $perms = @(Get-MailboxFolderPermission -Identity $folder -ErrorAction Stop)
+            foreach ($p in $perms) {
+                [PSCustomObject]@{
+                    Principal    = [string]$p.User
+                    AccessRights = ([string]::Join(',', @($p.AccessRights)))
+                }
+            }
+            """;
+        var result = await _runner.RunAsync(
+            script,
+            new Dictionary<string, object?> { ["Identity"] = identity },
+            progress,
+            cancellationToken).ConfigureAwait(false);
+        if (!result.Success)
+        {
+            throw new InvalidOperationException("Get-MailboxFolderPermission falló: " + string.Join("; ", result.Errors));
+        }
+        var list = new List<CalendarPermissionEntry>(result.Output.Count);
+        foreach (var raw in result.Output)
+        {
+            var principal = ReadStringProp(raw, "Principal");
+            var rights = ReadStringProp(raw, "AccessRights");
+            if (string.IsNullOrEmpty(principal) || string.IsNullOrEmpty(rights))
+            {
+                continue;
+            }
+            if (string.Equals(principal, "Default", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(rights, "None", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+            list.Add(new CalendarPermissionEntry(principal, rights));
+        }
+        return list;
+    }
+
+    public async Task ApplyCalendarPermissionAsync(
+        string identity,
+        string principal,
+        string accessRights,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(identity) || string.IsNullOrWhiteSpace(principal))
+        {
+            throw new ArgumentException("Identity y Principal requeridos.");
+        }
+        if (string.IsNullOrWhiteSpace(accessRights) || !CalendarAccessRights.All.Contains(accessRights))
+        {
+            throw new ArgumentException("AccessRights inválido: " + accessRights);
+        }
+
+        const string script = """
+            $folder = "{0}:\Calendar" -f $Identity
+            $existing = Get-MailboxFolderPermission -Identity $folder -User $Principal -ErrorAction SilentlyContinue
+            if ($existing) {
+                Set-MailboxFolderPermission -Identity $folder -User $Principal -AccessRights $Rights -ErrorAction Stop | Out-Null
+                Write-Information "Calendar perm actualizado: $Principal -> $Rights"
+            } else {
+                Add-MailboxFolderPermission -Identity $folder -User $Principal -AccessRights $Rights -ErrorAction Stop | Out-Null
+                Write-Information "Calendar perm añadido: $Principal -> $Rights"
+            }
+            """;
+        var result = await _runner.RunAsync(
+            script,
+            new Dictionary<string, object?>
+            {
+                ["Identity"] = identity,
+                ["Principal"] = principal,
+                ["Rights"] = accessRights
+            },
+            progress,
+            cancellationToken).ConfigureAwait(false);
+        if (!result.Success)
+        {
+            throw new InvalidOperationException("Calendar perm fallido: " + string.Join("; ", result.Errors));
+        }
+    }
+
+    public async Task RemoveCalendarPermissionAsync(
+        string identity,
+        string principal,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        const string script = """
+            $folder = "{0}:\Calendar" -f $Identity
+            Remove-MailboxFolderPermission -Identity $folder -User $Principal -Confirm:$false -ErrorAction Stop | Out-Null
+            Write-Information "Calendar perm eliminado: $Principal"
+            """;
+        var result = await _runner.RunAsync(
+            script,
+            new Dictionary<string, object?>
+            {
+                ["Identity"] = identity,
+                ["Principal"] = principal
+            },
+            progress,
+            cancellationToken).ConfigureAwait(false);
+        if (!result.Success)
+        {
+            throw new InvalidOperationException("Remove calendar perm fallido: " + string.Join("; ", result.Errors));
+        }
+    }
+
+    private static string ReadStringProp(object? raw, string prop)
+    {
+        if (raw is System.Management.Automation.PSObject ps)
+        {
+            return ps.Properties[prop]?.Value?.ToString() ?? string.Empty;
+        }
+        var t = raw?.GetType();
+        return t?.GetProperty(prop)?.GetValue(raw)?.ToString() ?? string.Empty;
+    }
+
     private static AutoReplyConfig MapAutoReply(object? raw)
     {
         string? Get(string name)
