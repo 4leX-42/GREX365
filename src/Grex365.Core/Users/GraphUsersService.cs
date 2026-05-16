@@ -147,6 +147,32 @@ public sealed class GraphUsersService : IUsersService
         progress?.Report(LogEntry.Ok("Users", $"Asignada licencia {skuId} a {userId}"));
     }
 
+    public async Task<IReadOnlyList<SkuInfo>> ListSkusAsync(CancellationToken cancellationToken = default)
+    {
+        var response = await Client.SubscribedSkus.GetAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        var list = new List<SkuInfo>();
+        if (response?.Value is null)
+        {
+            return list;
+        }
+        foreach (var sku in response.Value)
+        {
+            if (!sku.SkuId.HasValue)
+            {
+                continue;
+            }
+            list.Add(new SkuInfo(
+                SkuId: sku.SkuId.Value,
+                SkuPartNumber: sku.SkuPartNumber ?? "?",
+                Enabled: sku.PrepaidUnits?.Enabled ?? 0,
+                Consumed: sku.ConsumedUnits ?? 0));
+        }
+        return list
+            .OrderByDescending(s => s.Available)
+            .ThenBy(s => s.SkuPartNumber)
+            .ToList();
+    }
+
     private static UserSummary Map(User u) => new(
         Id: u.Id ?? string.Empty,
         DisplayName: u.DisplayName,

@@ -3,6 +3,8 @@
 Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`.
 Última actualización: 2026-05-16.
 
+> Última feature: License assignment UI (ComboBox SKU + Asignar).
+
 ## Done
 
 ### Plataforma
@@ -26,7 +28,7 @@ Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`.
 - [x] Dashboard — status cards + quick action buttons
 - [x] Conexion — cert auth Graph + EXO
 - [x] Salud tenant — org + counts + SKUs consumidos
-- [x] Usuarios — buscar, perfil, membresías, enable/disable, quitar licencias, bulk CSV
+- [x] Usuarios — buscar, perfil, membresías, enable/disable, quitar licencias, **asignar licencia (picker SKU)**, bulk CSV
 - [x] Grupos — buscar, miembros, añadir (texto/CSV), eliminar, exportar CSV
 - [x] Buzones — lookup + permisos actuales, convertir Regular↔Shared, FullAccess/SendAs/SendOnBehalf, CSV import/export
 - [x] Auditoria — identidades (stale members/guests + disabled+licensed) + grupos (sin owner / vacíos), paralelizado 8x
@@ -44,7 +46,7 @@ Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`.
 - [x] Tema Dark/Light persistido en `UserPreferences.Theme`
 - [x] Cert picker dialog desde Settings (lista certs `CurrentUser\My`)
 
-### Tests (70 passing)
+### Tests (76 passing)
 - [x] LogEntry, PreferencesStore, PowerShellRunner, CertValidator
 - [x] LegacyPreferencesImporter
 - [x] TenantLock (5 escenarios)
@@ -53,11 +55,11 @@ Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`.
 - [x] ConnectionStateMonitor (4: estado inicial, polling, fallos, dispose)
 - [x] IdentityAuditAnalyzer (9: stale, disabled+lic, totales)
 - [x] OffboardingService (6: empty UPN, missing user, per-flag, errores)
+- [x] SkuInfo (6: math available, ordering, display, fallback guid)
 
 ## Pending
 
 ### Funcional
-- [ ] License assignment UI (`IUsersService.AssignLicenseAsync` existe, falta UI con dropdown SKU)
 - [ ] Auth tradicional/UPN interactivo (MSAL)
 - [ ] Set-OutOfOffice / forwarding rules
 - [ ] Calendar permission view/set
@@ -82,9 +84,9 @@ Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`.
 ## Por dónde voy
 
 **Capas estables.** Próximo bloque natural sería:
-1. License assignment UI (corto, alta utilidad)
-2. Bulk groups creation desde CSV (legacy tiene `New-GroupsFromCsv.ps1`)
-3. Onboarding wizard (espejo del Offboarding: crear user + asignar licencia + agregar a grupos)
+1. Bulk groups creation desde CSV (legacy tiene `New-GroupsFromCsv.ps1`)
+2. Onboarding wizard (espejo del Offboarding: crear user + asignar licencia + agregar a grupos)
+3. Set-OutOfOffice / forwarding rules en buzones
 
 **Por validar:**
 - Render visual real (no he podido lanzar la UI desde sesión headless)

@@ -119,23 +119,45 @@
                         <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedUser.AssignedLicenseCount}" />
                     </Grid>
 
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,8">
-                        <ui:Button Content="Habilitar"
-                                   Margin="0,0,8,0"
-                                   Command="{Binding EnableCommand}" />
-                        <ui:Button Content="Deshabilitar"
-                                   Margin="0,0,8,0"
-                                   Command="{Binding DisableCommand}" />
-                        <ui:Button Content="Quitar licencias"
-                                   Margin="0,0,8,0"
-                                   Command="{Binding RemoveLicensesCommand}" />
-                        <ui:Button Content="Bulk CSV..."
-                                   Margin="0,0,8,0"
-                                   Command="{Binding ImportBulkCsvCommand}" />
-                        <ui:Button Content="Exportar bulk..."
-                                   Margin="0,0,8,0"
-                                   Command="{Binding ExportBulkResultsCommand}" />
-                        <TextBlock VerticalAlignment="Center"
+                    <StackPanel Grid.Row="2" Margin="0,8,0,8">
+                        <WrapPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <ui:Button Content="Habilitar"
+                                       Margin="0,0,8,4"
+                                       Command="{Binding EnableCommand}" />
+                            <ui:Button Content="Deshabilitar"
+                                       Margin="0,0,8,4"
+                                       Command="{Binding DisableCommand}" />
+                            <ui:Button Content="Quitar licencias"
+                                       Margin="0,0,8,4"
+                                       Command="{Binding RemoveLicensesCommand}" />
+                            <ui:Button Content="Bulk CSV..."
+                                       Margin="0,0,8,4"
+                                       Command="{Binding ImportBulkCsvCommand}" />
+                            <ui:Button Content="Exportar bulk..."
+                                       Margin="0,0,8,4"
+                                       Command="{Binding ExportBulkResultsCommand}" />
+                        </WrapPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:Button Grid.Column="0"
+                                       Content="Cargar SKUs"
+                                       Margin="0,0,8,0"
+                                       Command="{Binding LoadSkusCommand}" />
+                            <ComboBox Grid.Column="1"
+                                      ItemsSource="{Binding AvailableSkus}"
+                                      SelectedItem="{Binding SelectedSku}"
+                                      DisplayMemberPath="Display"
+                                      Margin="0,0,8,0" />
+                            <ui:Button Grid.Column="2"
+                                       Content="Asignar licencia"
+                                       Appearance="Primary"
+                                       Command="{Binding AssignLicenseCommand}" />
+                        </Grid>
+                        <TextBlock Margin="0,8,0,0"
                                    Text="{Binding StatusMessage}"
                                    Opacity="0.8" />
                     </StackPanel>

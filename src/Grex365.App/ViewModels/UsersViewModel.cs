@@ -19,12 +19,14 @@ public sealed partial class UsersViewModel : ObservableObject
 
     [ObservableProperty] private string _searchQuery = string.Empty;
     [ObservableProperty] private UserSummary? _selectedUser;
+    [ObservableProperty] private SkuInfo? _selectedSku;
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private bool _isBusy;
 
     public ObservableCollection<UserSummary> Users { get; } = new();
     public ObservableCollection<GroupSummary> Memberships { get; } = new();
     public ObservableCollection<BulkUserResult> BulkResults { get; } = new();
+    public ObservableCollection<SkuInfo> AvailableSkus { get; } = new();
 
     public UsersViewModel(IUsersService users, IUiLogSink log)
     {
@@ -147,6 +149,92 @@ public sealed partial class UsersViewModel : ObservableObject
                     SelectedUser = refreshed;
                 }
             }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Users", ex.Message, ex));
+        }
+        finally
+        {
+            DisposeToken();
+        }
+    }
+
+    [RelayCommand]
+    private async Task LoadSkusAsync()
+    {
+        EnsureToken();
+        IsBusy = true;
+        StatusMessage = "Cargando SKUs...";
+        try
+        {
+            var skus = await _users.ListSkusAsync(_cts!.Token).ConfigureAwait(true);
+            AvailableSkus.Clear();
+            foreach (var s in skus)
+            {
+                AvailableSkus.Add(s);
+            }
+            StatusMessage = $"{skus.Count} SKUs disponibles.";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Users", ex.Message, ex));
+        }
+        finally
+        {
+            DisposeToken();
+        }
+    }
+
+    [RelayCommand]
+    private async Task AssignLicenseAsync()
+    {
+        if (SelectedUser is null)
+        {
+            StatusMessage = "Selecciona un usuario.";
+            return;
+        }
+        if (SelectedSku is null)
+        {
+            StatusMessage = "Selecciona un SKU (botón Cargar SKUs).";
+            return;
+        }
+        if (SelectedSku.Available <= 0)
+        {
+            var confirm = System.Windows.MessageBox.Show(
+                $"El SKU {SelectedSku.SkuPartNumber} no tiene asientos libres ({SelectedSku.Available}/{SelectedSku.Enabled}). Continuar?",
+                "Confirmar asignación",
+                System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Warning);
+            if (confirm != System.Windows.MessageBoxResult.Yes)
+            {
+                StatusMessage = "Cancelado por el usuario.";
+                return;
+            }
+        }
+        EnsureToken();
+        IsBusy = true;
+        StatusMessage = $"Asignando {SelectedSku.SkuPartNumber}...";
+        try
+        {
+            await _users.AssignLicenseAsync(SelectedUser.Id, SelectedSku.SkuId, _log.Progress, _cts!.Token).ConfigureAwait(true);
+            var refreshed = await _users.GetByIdAsync(SelectedUser.Id, _cts.Token).ConfigureAwait(true);
+            if (refreshed is not null)
+            {
+                var idx = Users.IndexOf(SelectedUser);
+                if (idx >= 0)
+                {
+                    Users[idx] = refreshed;
+                    SelectedUser = refreshed;
+                }
+            }
+            StatusMessage = $"Licencia {SelectedSku.SkuPartNumber} asignada.";
         }
         catch (Exception ex)
         {
