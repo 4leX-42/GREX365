@@ -1,98 +1,129 @@
 # GREX365 v2.0 — Progress log
 
-Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`.
-Última actualización: 2026-05-16.
+> **Documento maestro de seguimiento.** Mapea el estado del proyecto contra `Plantamiento_arquitectura_de_la_herramienta.md` (roadmap arquitectónico) y `deep-research-report.md` (research técnico). Toda feature shipped y todo pendiente vive aquí.
 
-> Última feature: Bulk creation de grupos M365 desde CSV (Email + GroupName forward-fill).
+- Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
+- Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting**
+- Tests: **89 passing** (xUnit + FluentAssertions)
+- Última actualización: 2026-05-16
 
-## Done
+> Nota stack: el plantamiento sugiere WinUI 3 como preferente y WPF como fallback aceptable. Se eligió **WPF + wpf-ui** por madurez, ecosistema y compatibilidad con Win10/11. Migración a WinUI 3 queda como posible Fase 7 si surge necesidad.
 
-### Plataforma
-- [x] Scaffold .NET 10 (`Grex365.Core`, `Grex365.App` (WPF), `Grex365.PowerShell`, `Grex365.Core.Tests`)
-- [x] MVVM con CommunityToolkit.Mvvm
-- [x] DI con `Microsoft.Extensions.Hosting`
-- [x] Serilog → archivo rotativo en `%LOCALAPPDATA%\Grex365\logs\`
-- [x] Global exception handlers (UI / AppDomain / TaskScheduler)
-- [x] Legacy config importer (importa `GREX365/config/*.json` heredado)
-- [x] Runspace pool (`RunspacePoolHost`) y `IPowerShellRunner` con streams
+---
 
-### Conexión M365
-- [x] `IGraphConnection` (cert-based) + smoke test contra `/organization`
-- [x] `IExchangeConnection` (cert-based) vía `Connect-ExchangeOnline`
-- [x] `IConnectionStateMonitor` con polling 2s y `INotifyPropertyChanged`
-- [x] `ICertValidator` (existencia + validez del thumbprint)
-- [x] `ITenantLock` — bloquea conexión si tenant ID no coincide
-- [x] Disconnect Graph + EXO
+## Estado por fase (Plantamiento §7)
 
-### Módulos UI (10 en navegación)
-- [x] Dashboard — status cards + quick action buttons
-- [x] Conexion — cert auth Graph + EXO
-- [x] Salud tenant — org + counts + SKUs consumidos
-- [x] Usuarios — buscar, perfil, membresías, enable/disable, quitar licencias, **asignar licencia (picker SKU)**, bulk CSV
-- [x] Grupos — buscar, miembros, añadir (texto/CSV), eliminar, exportar CSV, **bulk create M365 desde CSV (forward-fill GroupName)**
-- [x] Buzones — lookup + permisos actuales, convertir Regular↔Shared, FullAccess/SendAs/SendOnBehalf, CSV import/export
-- [x] Auditoria — identidades (stale members/guests + disabled+licensed) + grupos (sin owner / vacíos), paralelizado 8x
-- [x] Offboarding — wizard compuesto (deshabilitar + quitar licencias + convertir a shared)
-- [x] Cert Wizard — generar self-signed RSA 2048, instalar en CurrentUser\My, exportar .cer
-- [x] DNS check — nslookup MX/TXT/SPF/DMARC (no requiere auth)
-- [x] Settings (modal) — tenant lock, cert config con picker, tema persistido
+### Fase 1 — Refactor backend + scaffolding plataforma — **DONE**
+- [x] Solución .NET 10 con 4 proyectos: `Grex365.Core` (lib), `Grex365.App` (WPF), `Grex365.PowerShell` (helpers), `Grex365.Core.Tests`
+- [x] Inyección de dependencias con `Microsoft.Extensions.Hosting`
+- [x] MVVM esqueleto con CommunityToolkit.Mvvm (ObservableProperty, RelayCommand)
+- [x] Legacy config importer (`UserPreferences`, `CertConfig` desde `GREX365/config/*.json`)
+- [x] Modelos de dominio (`UserSummary`, `GroupSummary`, `TenantHealth`, etc.)
 
-### UX/QoL
-- [x] Sidebar nav con persistencia del último seleccionado
-- [x] Status bar global (Graph/EXO/Tenant/Cuenta + botón Desconectar todo)
-- [x] Log panel con filtros por severidad + Limpiar
-- [x] Cancellation tokens + ProgressRing en toda operación larga
-- [x] MessageBox confirm en operaciones destructivas (disable, remove licenses, remove member, offboarding)
+### Fase 2 — Motor PowerShell + ejecución asincrónica — **DONE**
+- [x] `IPowerShellRunner` con runspace pool (1..5)
+- [x] Streams Output/Error/Warning/Verbose redirigidos a `IProgress<LogEntry>`
+- [x] Cancellation tokens en cada operación larga
+- [x] Serilog → archivo rotativo `%LOCALAPPDATA%\Grex365\logs\` (30 días)
+- [x] Global exception handlers (UI dispatcher + AppDomain + TaskScheduler)
+- [x] Conexión Graph cert-based (`IGraphConnection`)
+- [x] Conexión EXO cert-based (`IExchangeConnection`)
+- [x] `IConnectionStateMonitor` con polling 2s + INotifyPropertyChanged
+- [x] `ICertValidator` (existencia + validez del thumbprint en CurrentUser\My)
+- [x] `ITenantLock` (bloquea conexión si tenant ID no coincide)
+- [x] Disconnect Graph + EXO + botón global "Desconectar todo"
+
+### Fase 3 — UI moderna (WPF + Fluent) — **DONE**
+Navegación lateral con 10 módulos:
+- [x] **Dashboard** — status cards (Graph/EXO/Tenant/Cuenta) + quick actions
+- [x] **Conexion** — cert auth Graph + EXO con feedback en vivo
+- [x] **Salud tenant** — org + counts usuarios/grupos + SKUs consumidos
+- [x] **Usuarios** — buscar, perfil, membresías, enable/disable, quitar licencias, **asignar licencia (SKU picker)**, bulk CSV
+- [x] **Grupos** — buscar, miembros, añadir (texto/CSV), eliminar, exportar CSV, **bulk create M365 desde CSV (forward-fill GroupName)**
+- [x] **Buzones** — lookup + permisos actuales, Regular↔Shared, FullAccess/SendAs/SendOnBehalf, CSV import/export
+- [x] **Auditoria** — identidades (stale members/guests + disabled+licensed) + grupos (sin owner / vacíos), paralelizado 8x
+- [x] **Offboarding** — wizard compuesto (deshabilitar + quitar licencias + convertir a shared)
+- [x] **Cert Wizard** — generar self-signed RSA 2048, instalar CurrentUser\My, exportar .cer
+- [x] **DNS check** — MX/TXT/SPF/DMARC (no requiere auth)
+- [x] **Settings (modal)** — tenant lock, cert picker, tema persistido
+
+UX/QoL fase 3:
 - [x] Tema Dark/Light persistido en `UserPreferences.Theme`
-- [x] Cert picker dialog desde Settings (lista certs `CurrentUser\My`)
+- [x] Sidebar nav con persistencia del último seleccionado
+- [x] Status bar global (Graph/EXO/Tenant/Cuenta + Desconectar)
+- [x] Log panel con filtros por severidad + Limpiar
+- [x] ProgressRing en operaciones largas
+- [x] MessageBox confirm en destructivas (disable, remove licenses, remove member, offboarding, bulk create)
+- [x] Cert picker dialog (lista certs CurrentUser\My)
 
-### Tests (89 passing)
-- [x] LogEntry, PreferencesStore, PowerShellRunner, CertValidator
-- [x] LegacyPreferencesImporter
-- [x] TenantLock (5 escenarios)
-- [x] SharedMailboxService (12: apply, convert, get permissions, errores)
-- [x] FlexibleCsvReader (8: delimitadores, quoted, BOM, edge cases)
-- [x] ConnectionStateMonitor (4: estado inicial, polling, fallos, dispose)
-- [x] IdentityAuditAnalyzer (9: stale, disabled+lic, totales)
-- [x] OffboardingService (6: empty UPN, missing user, per-flag, errores)
-- [x] SkuInfo (6: math available, ordering, display, fallback guid)
-- [x] BulkGroupRowPreprocessor (13: forward-fill, skip orphans, trim, IsEmail theory)
+### Fase 4 — Arquitectura modular / plugins (MEF o Prism) — **PENDIENTE**
+- [ ] Definir contrato `IModule` (DisplayName, Icon, ViewModelType, ViewType)
+- [ ] Descubrimiento dinámico desde `%LOCALAPPDATA%\Grex365\plugins\*.dll`
+- [ ] Migrar al menos 1 módulo existente como plugin (p.ej. CertWizard) como prueba de concepto
+- [ ] Aislamiento de assemblies (AssemblyLoadContext) para descarga segura
+- [ ] Settings UI: gestión de plugins habilitados/deshabilitados
 
-## Pending
+### Fase 5 — Packaging y despliegue — **PENDIENTE**
+- [ ] PublishSingleFile self-contained para `.exe` portable
+- [ ] Generar MSIX (single-project) con manifest correcto
+- [ ] Firma de código (cert EV) en pipeline
+- [ ] AppInstaller `.appinstaller` con auto-update apuntando a feed interno
+- [ ] Documentación de despliegue por Intune/SCCM
+- [ ] Pipeline CI (GitHub Actions o Azure DevOps): build → test → sign → publish artifact
 
-### Funcional
-- [ ] Auth tradicional/UPN interactivo (MSAL)
-- [ ] Set-OutOfOffice / forwarding rules
+### Fase 6 — Telemetría + features enterprise — **PENDIENTE**
+- [ ] Application Insights wired (`Microsoft.ApplicationInsights.WorkerService`)
+- [ ] Audit DB local (SQLite con EF Core) para audit trail de acciones admin
+- [ ] Métricas: ejecuciones/día, tiempos por operación, errores frecuentes
+- [ ] Niveles de logging DEBUG/INFO/WARN/ERROR configurables vía Settings
+- [ ] Permisos por rol (validar grupo AD/Entra del usuario actual)
+- [ ] Documentación técnica interna (arquitectura, manual operación)
+- [ ] QA escenarios reales (100+ ops simultáneas)
+
+---
+
+## Backlog funcional (no asociado a una fase concreta)
+
+### Features útiles pendientes
+- [ ] Auth tradicional/UPN interactivo (MSAL) — alternativa al cert-based actual
+- [ ] Set-OutOfOffice / forwarding rules en buzones
 - [ ] Calendar permission view/set
 - [ ] Mail flow rules viewer
-- [ ] Audit: groups without recent activity, externos en grupos privados, etc.
-- [ ] Bulk groups CSV: soportar también DL (Exchange Online — script legacy lo hace)
+- [ ] **Onboarding wizard** (espejo del Offboarding: crear user + asignar licencia + agregar a grupos)
+- [ ] Bulk groups CSV — extender a Distribution Lists vía EXO runner (M365 ya hecho)
+- [ ] Auditoría: grupos sin actividad reciente, externos en grupos privados
 - [ ] Cert export PFX con password
-- [ ] Auto-update App Registration permisos via Graph (legacy CertWizard hace los 29 pasos)
-
-### Roadmap doc (fases)
-- [ ] **Fase 4 — Plugins/MEF**: arquitectura modular dinámica
-- [ ] **Fase 5 — Packaging**: MSIX, firma código, AppInstaller, Intune
-- [ ] **Fase 6 — Telemetría**: AppInsights, audit DB, métricas
+- [ ] Auto-update App Registration permisos vía Graph (legacy CertWizard hace 29 pasos)
+- [ ] License assignment bulk CSV (single asignación ya hecha)
 
 ### Polish UI
-- [ ] Charts/gráficos (TenantHealth podría tener pie chart de SKUs)
-- [ ] Terminal PowerShell embebido (`EasyWindowsTerminalControl` o similar)
+- [ ] Charts/gráficos (TenantHealth → pie chart de SKUs)
+- [ ] Terminal PowerShell embebido (`EasyWindowsTerminalControl`)
 - [ ] Theme toggle accesible desde título / dashboard (ahora solo en Settings)
 - [ ] Disable nav items cuando Graph desconectado (gating UX)
-- [ ] Toast notifications (wpf-ui Snackbar) en éxitos/fallos largos
+- [ ] Toast notifications (wpf-ui `Snackbar`) en éxitos/fallos largos
 
-## Por dónde voy
+---
 
-**Capas estables.** Próximo bloque natural sería:
-1. Onboarding wizard (espejo del Offboarding: crear user + asignar licencia + agregar a grupos)
-2. Set-OutOfOffice / forwarding rules en buzones
-3. Bulk groups CSV — extender a DL via EXO runner
+## Tests (89 passing)
 
-**Por validar:**
-- Render visual real (no he podido lanzar la UI desde sesión headless)
-- Conexión M365 real (necesita tenant + cert reales)
-- Comportamiento offline de cada vista (qué pasa al pulsar Buscar sin conexión — debería mostrar "Graph no está conectado.")
+| Suite | Tests | Cubre |
+|-------|-------|-------|
+| LogEntry | 4 | Niveles + factory methods |
+| PreferencesStore | 5 | Load/save/defaults |
+| PowerShellRunner | 4 | Streams + cancellation |
+| CertValidator | 4 | Thumbprint existencia/validez |
+| LegacyPreferencesImporter | 3 | Import legacy JSON |
+| TenantLock | 5 | Match/mismatch/unset |
+| SharedMailboxService | 12 | Apply/convert/permisos/errores |
+| FlexibleCsvReader | 8 | Delimitadores, quoted, BOM, edge cases |
+| ConnectionStateMonitor | 4 | Estado inicial, polling, fallos, dispose |
+| IdentityAuditAnalyzer | 9 | Stale, disabled+lic, totales |
+| OffboardingService | 6 | Empty UPN, missing user, per-flag, errores |
+| SkuInfo | 6 | Math available, ordering, display, fallback guid |
+| BulkGroupRowPreprocessor | 13 | Forward-fill, skip orphans, trim, IsEmail theory |
+
+---
 
 ## Cómo lanzar
 
@@ -106,3 +137,23 @@ Datos persistidos en `%LOCALAPPDATA%\Grex365\`:
 - `config/preferences.json` — tenant lock, theme, last nav
 - `config/exo-app-params.json` — cert config (AppId, TenantId, Org, Thumbprint)
 - `logs/grex365-YYYY-MM-DD.log` — Serilog rotativo (30 días)
+
+---
+
+## Por validar (no automatizable)
+- Render visual real en sesión gráfica (no he podido lanzar la UI desde sesión headless)
+- Conexión M365 real (necesita tenant + cert reales)
+- Comportamiento offline de cada vista (debe mostrar "Graph no está conectado.")
+- Comportamiento bulk con CSVs grandes (1k+ filas)
+
+---
+
+## Próximo bloque planificado
+
+**Orden propuesto (mayor utilidad / menor riesgo primero):**
+1. Onboarding wizard — espejo del Offboarding, alta utilidad inmediata
+2. Set-OutOfOffice / forwarding — feature de buzón habitual
+3. DL bulk creation via EXO runner — completa el par con M365 bulk ya hecho
+4. License assignment bulk CSV — natural tras single ya shipped
+5. Charts en TenantHealth — polish visual
+6. Fase 4 (plugin system MEF) — empezar arquitectura modular
