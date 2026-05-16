@@ -37,7 +37,7 @@
 Navegación lateral con 12 módulos:
 - [x] **Dashboard** — status cards (Graph/EXO/Tenant/Cuenta) + quick actions
 - [x] **Conexion** — cert auth Graph + EXO con feedback en vivo
-- [x] **Salud tenant** — org + counts usuarios/grupos + SKUs consumidos
+- [x] **Salud tenant** — org + counts usuarios/grupos + SKUs consumidos con **barras de progreso por SKU + total agregado**
 - [x] **Usuarios** — buscar, perfil, membresías, enable/disable, quitar licencias, **asignar licencia (SKU picker)**, bulk CSV (`enable`/`disable`/`remove-licenses`/`assign:<SkuPartNumber>`)
 - [x] **Grupos** — buscar, miembros, añadir (texto/CSV), eliminar, exportar CSV, **bulk create M365 o DL desde CSV (forward-fill GroupName, toggle M365/DL)**
 - [x] **Buzones** — lookup + permisos actuales, Regular↔Shared, FullAccess/SendAs/SendOnBehalf, CSV import/export
@@ -95,7 +95,6 @@ UX/QoL fase 3:
 - [ ] Auto-update App Registration permisos vía Graph (legacy CertWizard hace 29 pasos)
 
 ### Polish UI
-- [ ] Charts/gráficos (TenantHealth → pie chart de SKUs)
 - [ ] Terminal PowerShell embebido (`EasyWindowsTerminalControl`)
 - [ ] Theme toggle accesible desde título / dashboard (ahora solo en Settings)
 - [ ] Disable nav items cuando Graph desconectado (gating UX)
