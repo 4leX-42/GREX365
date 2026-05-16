@@ -1,0 +1,120 @@
+<UserControl x:Class="Grex365.App.Views.CertWizardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             mc:Ignorable="d">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24" MaxWidth="900" HorizontalAlignment="Left">
+            <TextBlock Text="Asistente de certificado"
+                       FontSize="24"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,4" />
+            <TextBlock Text="Genera un certificado autofirmado para autenticación de la App Registration"
+                       Opacity="0.7"
+                       Margin="0,0,0,16" />
+
+            <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <StackPanel>
+                    <TextBlock Text="Nombre común (CN)" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <ui:TextBox Text="{Binding CommonName, UpdateSourceTrigger=PropertyChanged}"
+                                PlaceholderText="Grex365-Local"
+                                Margin="0,0,0,12" />
+
+                    <TextBlock Text="Días de validez" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <ui:TextBox Text="{Binding ValidDays, UpdateSourceTrigger=PropertyChanged}"
+                                Width="120"
+                                HorizontalAlignment="Left"
+                                Margin="0,0,0,12" />
+
+                    <TextBlock Text="Carpeta de exportación (.cer)" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox Grid.Column="0"
+                                    Text="{Binding ExportDirectory, UpdateSourceTrigger=PropertyChanged}" />
+                        <ui:Button Grid.Column="1"
+                                   Content="Examinar..."
+                                   Margin="8,0,0,0"
+                                   Command="{Binding BrowseExportFolderCommand}" />
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal">
+                        <ui:Button Content="Generar e instalar"
+                                   Appearance="Primary"
+                                   Margin="0,0,8,0"
+                                   Command="{Binding GenerateCommand}" />
+                        <ui:ProgressRing IsIndeterminate="True"
+                                         Width="20" Height="20"
+                                         Margin="0,0,8,0"
+                                         Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}" />
+                        <TextBlock VerticalAlignment="Center"
+                                   Text="{Binding StatusMessage}"
+                                   Opacity="0.8" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border CornerRadius="8" Padding="16"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}"
+                    Visibility="{Binding Generated, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
+                <StackPanel>
+                    <TextBlock Text="Resultado" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,12" />
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="160" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Subject" Opacity="0.7" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Generated.Subject}" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Thumbprint" Opacity="0.7" />
+                        <TextBlock Grid.Row="1" Grid.Column="1"
+                                   Text="{Binding Generated.Thumbprint}"
+                                   FontFamily="Cascadia Mono,Consolas"
+                                   FontWeight="Bold"
+                                   IsHitTestVisible="True"
+                                   Cursor="IBeam" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Válido desde" Opacity="0.7" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Generated.NotBefore, StringFormat='yyyy-MM-dd HH:mm'}" />
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Válido hasta" Opacity="0.7" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Generated.NotAfter, StringFormat='yyyy-MM-dd HH:mm'}" />
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text=".cer exportado" Opacity="0.7" />
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Generated.CerPath}" TextWrapping="Wrap" />
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <ui:Button Content="Abrir carpeta"
+                                   Margin="0,0,8,0"
+                                   Command="{Binding OpenExportFolderCommand}" />
+                    </StackPanel>
+
+                    <Border BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                            BorderThickness="0,1,0,0"
+                            Padding="0,12,0,0"
+                            Margin="0,12,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Próximos pasos" FontWeight="SemiBold" Margin="0,0,0,4" />
+                            <TextBlock TextWrapping="Wrap" Opacity="0.85">
+                                1. Subir el archivo .cer al App Registration en Azure AD (Certificates &amp; secrets → Certificates).<LineBreak />
+                                2. Anotar el Thumbprint y el Application (client) ID en Settings.<LineBreak />
+                                3. Conceder los permisos delegados/aplicación necesarios (Graph: User.ReadWrite.All, Group.ReadWrite.All, Organization.Read.All, AuditLog.Read.All; Exchange.ManageAsApp).<LineBreak />
+                                4. Volver a Conexión y pulsar Connect.
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

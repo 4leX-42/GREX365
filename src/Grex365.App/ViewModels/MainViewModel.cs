@@ -71,6 +71,7 @@ public sealed partial class MainViewModel : ObservableObject
             new("Buzones",        "", typeof(SharedMailboxViewModel)),
             new("Auditoria",      "", typeof(AuditViewModel)),
             new("Offboarding",    "", typeof(OffboardingViewModel)),
+            new("Cert Wizard",    "", typeof(CertWizardViewModel)),
         };
 
         SelectedNavigation = NavigationItems[0];
