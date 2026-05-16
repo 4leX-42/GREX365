@@ -1,0 +1,74 @@
+<UserControl x:Class="Grex365.App.Views.DomainCheckView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
+             mc:Ignorable="d">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Comprobación de dominio"
+                   FontSize="24"
+                   FontWeight="SemiBold"
+                   Margin="0,0,0,4" />
+        <TextBlock Grid.Row="1"
+                   Text="Verifica MX, SPF y DMARC vía nslookup (no requiere conexión a M365)"
+                   Opacity="0.7"
+                   Margin="0,0,0,16" />
+
+        <Grid Grid.Row="2" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ui:TextBox Grid.Column="0"
+                        Text="{Binding Domain, UpdateSourceTrigger=PropertyChanged}"
+                        PlaceholderText="contoso.com" />
+            <ui:Button Grid.Column="1"
+                       Content="Comprobar"
+                       Appearance="Primary"
+                       Margin="8,0,0,0"
+                       Command="{Binding RunCommand}" />
+            <ui:Button Grid.Column="2"
+                       Content="Cancelar"
+                       Margin="8,0,0,0"
+                       Command="{Binding CancelCommand}" />
+            <ui:ProgressRing Grid.Column="3"
+                             IsIndeterminate="True"
+                             Width="20" Height="20"
+                             Margin="8,0,0,0"
+                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}" />
+        </Grid>
+
+        <Border Grid.Row="3" CornerRadius="8"
+                Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top"
+                           Text="{Binding StatusMessage}"
+                           Opacity="0.8"
+                           Margin="12,8" />
+                <ListView ItemsSource="{Binding Records}"
+                          Background="Transparent"
+                          BorderThickness="0">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Tipo"    Width="100" DisplayMemberBinding="{Binding Type}" />
+                            <GridViewColumn Header="Estado"  Width="100" DisplayMemberBinding="{Binding Status}" />
+                            <GridViewColumn Header="Valor"   Width="700" DisplayMemberBinding="{Binding Value}" />
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

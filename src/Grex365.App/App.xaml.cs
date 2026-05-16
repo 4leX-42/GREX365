@@ -7,6 +7,7 @@ using Grex365.Core.Abstractions;
 using Grex365.Core.Audit;
 using Grex365.Core.Certificates;
 using Grex365.Core.Connections;
+using Grex365.Core.DomainChecks;
 using Grex365.Core.Groups;
 using Grex365.Core.Health;
 using Grex365.Core.Offboarding;
@@ -71,6 +72,7 @@ public partial class App : Application
                 services.AddSingleton<IUsersService, GraphUsersService>();
                 services.AddSingleton<IOffboardingService, OffboardingService>();
                 services.AddSingleton<ICertificateGenerator, SelfSignedCertificateGenerator>();
+                services.AddSingleton<IDomainChecker, NslookupDomainChecker>();
 
                 services.AddSingleton<IPreferencesStore>(_ => new JsonPreferencesStore(configDir));
                 services.AddSingleton<ICertConfigStore>(_ => new JsonCertConfigStore(configDir));
@@ -86,6 +88,7 @@ public partial class App : Application
                 services.AddTransient<UsersViewModel>();
                 services.AddTransient<OffboardingViewModel>();
                 services.AddTransient<CertWizardViewModel>();
+                services.AddTransient<DomainCheckViewModel>();
                 services.AddTransient<SettingsViewModel>();
                 services.AddSingleton<MainViewModel>();
                 services.AddSingleton<MainWindow>();

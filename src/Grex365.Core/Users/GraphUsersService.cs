@@ -133,6 +133,20 @@ public sealed class GraphUsersService : IUsersService
         progress?.Report(LogEntry.Ok("Users", $"Quitadas {skuIds.Count} licencias de {userId}"));
     }
 
+    public async Task AssignLicenseAsync(string userId, Guid skuId, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default)
+    {
+        var body = new AssignLicensePostRequestBody
+        {
+            AddLicenses = new List<AssignedLicense>
+            {
+                new() { SkuId = skuId }
+            },
+            RemoveLicenses = new List<Guid?>()
+        };
+        await Client.Users[userId].AssignLicense.PostAsync(body, cancellationToken: cancellationToken).ConfigureAwait(false);
+        progress?.Report(LogEntry.Ok("Users", $"Asignada licencia {skuId} a {userId}"));
+    }
+
     private static UserSummary Map(User u) => new(
         Id: u.Id ?? string.Empty,
         DisplayName: u.DisplayName,

@@ -13,4 +13,6 @@ public interface IUsersService
     Task SetAccountEnabledAsync(string userId, bool enabled, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default);
 
     Task RemoveAllLicensesAsync(string userId, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default);
+
+    Task AssignLicenseAsync(string userId, Guid skuId, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default);
 }

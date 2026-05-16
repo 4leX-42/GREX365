@@ -47,6 +47,9 @@
             <DataTemplate DataType="{x:Type vm:CertWizardViewModel}">
                 <v:CertWizardView />
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:DomainCheckViewModel}">
+                <v:DomainCheckView />
+            </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
