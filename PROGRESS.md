@@ -68,13 +68,14 @@ UX/QoL fase 3:
 - [ ] Sample plugin externo de referencia (POC desplegable)
 - [ ] Settings UI: enable/disable + reload
 
-### Fase 5 — Packaging y despliegue — **PENDIENTE**
-- [ ] PublishSingleFile self-contained para `.exe` portable
-- [ ] Generar MSIX (single-project) con manifest correcto
+### Fase 5 — Packaging y despliegue — **IN PROGRESS**
+- [x] PublishSingleFile self-contained para `.exe` portable (`PublishProfiles/win-x64-portable.pubxml`)
+- [x] Pipeline CI (GitHub Actions): build + test multiplataforma (.github/workflows/ci.yml)
+- [x] Documentación de despliegue (`PACKAGING.md`) con Intune/SCCM/AppInstaller
+- [ ] Generar MSIX (single-project) con `Package.appxmanifest`
 - [ ] Firma de código (cert EV) en pipeline
-- [ ] AppInstaller `.appinstaller` con auto-update apuntando a feed interno
-- [ ] Documentación de despliegue por Intune/SCCM
-- [ ] Pipeline CI (GitHub Actions o Azure DevOps): build → test → sign → publish artifact
+- [ ] `.appinstaller` con auto-update apuntando a feed interno
+- [ ] Job CI de release (`tag v*`) que firma y publica MSIX
 
 ### Fase 6 — Telemetría + features enterprise — **PENDIENTE**
 - [ ] Application Insights wired (`Microsoft.ApplicationInsights.WorkerService`)
@@ -153,8 +154,8 @@ Datos persistidos en `%LOCALAPPDATA%\Grex365\`:
 ## Próximo bloque planificado
 
 **Orden propuesto (mayor utilidad / menor riesgo primero):**
-1. Fase 5 (MSIX packaging + AppInstaller auto-update + PublishSingleFile)
-2. Fase 6 (Application Insights + audit DB SQLite/EF Core)
+1. Fase 6 (Application Insights + audit DB SQLite/EF Core)
+2. MSIX `Package.appxmanifest` + release CI job (cierra Fase 5)
 3. Sample plugin externo (cierra Fase 4)
 4. MSAL interactive auth (alternativa a cert-based)
 5. Auto-update App Registration permisos via Graph (legacy CertWizard hace 29 pasos)
