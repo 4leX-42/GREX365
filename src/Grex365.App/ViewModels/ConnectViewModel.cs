@@ -13,6 +13,7 @@ public sealed partial class ConnectViewModel : ObservableObject
     private readonly IConnectionStateMonitor _monitor;
     private readonly ICertConfigStore _certStore;
     private readonly ICertValidator _certValidator;
+    private readonly ITenantLock _tenantLock;
     private readonly IUiLogSink _log;
     private CancellationTokenSource? _cts;
 
@@ -43,6 +44,7 @@ public sealed partial class ConnectViewModel : ObservableObject
         IConnectionStateMonitor monitor,
         ICertConfigStore certStore,
         ICertValidator certValidator,
+        ITenantLock tenantLock,
         IUiLogSink log)
     {
         _graph = graph;
@@ -50,6 +52,7 @@ public sealed partial class ConnectViewModel : ObservableObject
         _monitor = monitor;
         _certStore = certStore;
         _certValidator = certValidator;
+        _tenantLock = tenantLock;
         _log = log;
 
         _monitor.PropertyChanged += OnMonitorChanged;
@@ -90,6 +93,19 @@ public sealed partial class ConnectViewModel : ObservableObject
 
             StatusMessage = "Conectando...";
             await _graph.ConnectByCertificateAsync(config, _log.Progress, _cts.Token).ConfigureAwait(true);
+
+            try
+            {
+                await _tenantLock.EnforceAsync(_graph.TenantId ?? config.TenantId, _cts.Token).ConfigureAwait(true);
+            }
+            catch (TenantLockViolationException violation)
+            {
+                _log.Progress.Report(LogEntry.Error("TenantLock", violation.Message, violation));
+                await _graph.DisconnectAsync(_cts.Token).ConfigureAwait(true);
+                StatusMessage = "Tenant lock: " + violation.Message;
+                return;
+            }
+
             await _exchange.ConnectByCertificateAsync(config, _log.Progress, _cts.Token).ConfigureAwait(true);
             StatusMessage = "Conectado.";
         }

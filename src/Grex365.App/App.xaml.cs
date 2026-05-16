@@ -57,6 +57,7 @@ public partial class App : Application
                 services.AddSingleton<IExchangeConnection, ExchangeConnection>();
                 services.AddSingleton<IConnectionStateMonitor, ConnectionStateMonitor>();
                 services.AddSingleton<ICertValidator, CertValidator>();
+                services.AddSingleton<ITenantLock, TenantLock>();
 
                 services.AddSingleton<IPreferencesStore>(_ => new JsonPreferencesStore(configDir));
                 services.AddSingleton<ICertConfigStore>(_ => new JsonCertConfigStore(configDir));
@@ -64,6 +65,7 @@ public partial class App : Application
                 services.AddSingleton<IUiLogSink, UiLogSink>();
 
                 services.AddTransient<ConnectViewModel>();
+                services.AddTransient<SettingsViewModel>();
                 services.AddTransient<MainViewModel>();
                 services.AddSingleton<MainWindow>();
             })
