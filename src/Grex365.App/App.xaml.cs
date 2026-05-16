@@ -113,6 +113,7 @@ public partial class App : Application
                 services.AddTransient<OffboardingViewModel>();
                 services.AddTransient<OnboardingViewModel>();
                 services.AddTransient<MailboxRulesViewModel>();
+                services.AddTransient<AuditLogViewModel>();
                 services.AddTransient<CertWizardViewModel>();
                 services.AddTransient<DomainCheckViewModel>();
                 services.AddTransient<SettingsViewModel>();
