@@ -36,10 +36,11 @@ public sealed partial class MainViewModel : ObservableObject
 
         NavigationItems = new ObservableCollection<NavigationItem>
         {
-            new("Dashboard", "", typeof(DashboardViewModel)),
-            new("Conexion",  "", typeof(ConnectViewModel)),
-            new("Grupos",    "", typeof(GroupsViewModel)),
-            new("Buzones",   "", typeof(SharedMailboxViewModel)),
+            new("Dashboard",  "", typeof(DashboardViewModel)),
+            new("Conexion",   "", typeof(ConnectViewModel)),
+            new("Grupos",     "", typeof(GroupsViewModel)),
+            new("Buzones",    "", typeof(SharedMailboxViewModel)),
+            new("Auditoria",  "", typeof(AuditViewModel)),
         };
 
         SelectedNavigation = NavigationItems[0];

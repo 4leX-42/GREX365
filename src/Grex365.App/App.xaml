@@ -31,6 +31,9 @@
             <DataTemplate DataType="{x:Type vm:SharedMailboxViewModel}">
                 <v:SharedMailboxView />
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:AuditViewModel}">
+                <v:AuditView />
+            </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

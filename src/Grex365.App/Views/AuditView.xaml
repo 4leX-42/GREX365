@@ -1,0 +1,105 @@
+<UserControl x:Class="Grex365.App.Views.AuditView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
+             mc:Ignorable="d">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Auditoría de identidades"
+                   FontSize="24"
+                   FontWeight="SemiBold"
+                   Margin="0,0,0,4" />
+        <TextBlock Grid.Row="1"
+                   Text="Detecta usuarios obsoletos, deshabilitados con licencia y otros hallazgos"
+                   Opacity="0.7"
+                   Margin="0,0,0,16" />
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,16">
+            <ui:Button Content="Ejecutar"
+                       Appearance="Primary"
+                       Margin="0,0,8,0"
+                       Command="{Binding RunCommand}" />
+            <ui:Button Content="Exportar CSV..."
+                       Margin="0,0,8,0"
+                       Command="{Binding ExportFindingsCommand}" />
+            <TextBlock VerticalAlignment="Center"
+                       Text="{Binding StatusMessage}"
+                       Opacity="0.8" />
+        </StackPanel>
+
+        <UniformGrid Grid.Row="3" Columns="4" Margin="0,0,0,12"
+                     Visibility="{Binding Summary, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
+            <Border CornerRadius="8" Padding="12" Margin="0,0,8,0"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <StackPanel>
+                    <TextBlock Text="Usuarios" Opacity="0.7" />
+                    <TextBlock Text="{Binding Summary.UsersTotal, FallbackValue=0}" FontSize="22" FontWeight="Bold" />
+                    <TextBlock>
+                        <Run Text="Habilitados: " />
+                        <Run Text="{Binding Summary.UsersEnabled, FallbackValue=0}" />
+                        <Run Text=" · Deshab: " />
+                        <Run Text="{Binding Summary.UsersDisabled, FallbackValue=0}" />
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+            <Border CornerRadius="8" Padding="12" Margin="0,0,8,0"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <StackPanel>
+                    <TextBlock Text="Stale members" Opacity="0.7" />
+                    <TextBlock Text="{Binding Summary.StaleMembers, FallbackValue=0}" FontSize="22" FontWeight="Bold" />
+                    <TextBlock Text=">180 días sin login" Opacity="0.6" />
+                </StackPanel>
+            </Border>
+            <Border CornerRadius="8" Padding="12" Margin="0,0,8,0"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <StackPanel>
+                    <TextBlock Text="Stale guests" Opacity="0.7" />
+                    <TextBlock Text="{Binding Summary.StaleGuests, FallbackValue=0}" FontSize="22" FontWeight="Bold" />
+                    <TextBlock Text=">90 días sin login" Opacity="0.6" />
+                </StackPanel>
+            </Border>
+            <Border CornerRadius="8" Padding="12"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <StackPanel>
+                    <TextBlock Text="Deshab + licencia" Opacity="0.7" />
+                    <TextBlock Text="{Binding Summary.DisabledWithLicense, FallbackValue=0}" FontSize="22" FontWeight="Bold" />
+                    <TextBlock Text="Coste evitable" Opacity="0.6" />
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <Border Grid.Row="4" CornerRadius="8"
+                Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top"
+                           Text="Hallazgos"
+                           FontWeight="SemiBold"
+                           Margin="12,8" />
+                <ListView ItemsSource="{Binding Findings}"
+                          Background="Transparent"
+                          BorderThickness="0"
+                          ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Categoría" Width="160" DisplayMemberBinding="{Binding Category}" />
+                            <GridViewColumn Header="Identity"  Width="260" DisplayMemberBinding="{Binding Identity}" />
+                            <GridViewColumn Header="Detalle"   Width="380" DisplayMemberBinding="{Binding Detail}" />
+                            <GridViewColumn Header="Severidad" Width="100" DisplayMemberBinding="{Binding Severity}" />
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

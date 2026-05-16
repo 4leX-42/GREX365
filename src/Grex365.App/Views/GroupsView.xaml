@@ -129,6 +129,12 @@
                                    Appearance="Primary"
                                    Margin="0,0,8,0"
                                    Command="{Binding AddMembersCommand}" />
+                        <ui:Button Content="Importar CSV..."
+                                   Margin="0,0,8,0"
+                                   Command="{Binding ImportCsvCommand}" />
+                        <ui:Button Content="Exportar resultados..."
+                                   Margin="0,0,8,0"
+                                   Command="{Binding ExportResultsCommand}" />
                         <TextBlock VerticalAlignment="Center"
                                    Text="{Binding StatusMessage}"
                                    Opacity="0.8" />

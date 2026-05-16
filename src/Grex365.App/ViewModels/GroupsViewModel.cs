@@ -1,9 +1,13 @@
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Grex365.App.Services;
 using Grex365.Core.Abstractions;
+using Grex365.Core.Csv;
 using Grex365.Core.Models;
+using Microsoft.Win32;
 
 namespace Grex365.App.ViewModels;
 
@@ -88,6 +92,124 @@ public sealed partial class GroupsViewModel : ObservableObject
         {
             IsBusy = false;
         }
+    }
+
+    [RelayCommand]
+    private async Task ImportCsvAsync()
+    {
+        if (SelectedGroup is null)
+        {
+            StatusMessage = "Selecciona un grupo primero.";
+            return;
+        }
+
+        var dlg = new OpenFileDialog
+        {
+            Title = "Seleccionar CSV de miembros",
+            Filter = "CSV (*.csv)|*.csv|Todos los archivos|*.*",
+            CheckFileExists = true
+        };
+        if (dlg.ShowDialog() != true)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        StatusMessage = $"Leyendo {Path.GetFileName(dlg.FileName)}...";
+        try
+        {
+            var rows = FlexibleCsvReader.Read(dlg.FileName);
+            var identifiers = new List<string>(rows.Count);
+            foreach (var row in rows)
+            {
+                row.TryGetValue("Id", out var id);
+                row.TryGetValue("Email", out var email);
+                var pick = !string.IsNullOrWhiteSpace(id) ? id : email;
+                if (!string.IsNullOrWhiteSpace(pick))
+                {
+                    identifiers.Add(pick.Trim());
+                }
+            }
+
+            if (identifiers.Count == 0)
+            {
+                StatusMessage = "CSV sin columnas Email/Id útiles.";
+                return;
+            }
+
+            StatusMessage = $"Añadiendo {identifiers.Count} desde CSV...";
+            var results = await _groups.AddMembersAsync(SelectedGroup.Id, identifiers, _log.Progress).ConfigureAwait(true);
+            LastAddResults.Clear();
+            foreach (var r in results)
+            {
+                LastAddResults.Add(r);
+            }
+            var ok = results.Count(r => r.Status == "AGREGADO");
+            var existed = results.Count(r => r.Status == "YA_EXISTE");
+            var errors = results.Count(r => r.Status is "ERROR" or "NO_RESUELTO");
+            StatusMessage = $"CSV: OK={ok}  YaExistía={existed}  Error={errors}";
+            await LoadMembersAsync(SelectedGroup.Id).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Groups", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private void ExportResults()
+    {
+        if (LastAddResults.Count == 0)
+        {
+            StatusMessage = "Sin resultados para exportar.";
+            return;
+        }
+
+        var dlg = new SaveFileDialog
+        {
+            Title = "Guardar resultados",
+            Filter = "CSV (*.csv)|*.csv",
+            FileName = $"add_members_result_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
+        };
+        if (dlg.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Input,Status,Detail");
+            foreach (var r in LastAddResults)
+            {
+                sb.Append(Escape(r.Input)).Append(',');
+                sb.Append(Escape(r.Status)).Append(',');
+                sb.Append(Escape(r.Detail)).AppendLine();
+            }
+            File.WriteAllText(dlg.FileName, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+            StatusMessage = $"Exportado: {Path.GetFileName(dlg.FileName)}";
+            _log.Progress.Report(LogEntry.Ok("Groups", "Resultados exportados: " + dlg.FileName));
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Groups", ex.Message, ex));
+        }
+    }
+
+    private static string Escape(string? value)
+    {
+        var v = value ?? string.Empty;
+        if (v.Contains(',') || v.Contains('"') || v.Contains('\n'))
+        {
+            return '"' + v.Replace("\"", "\"\"") + '"';
+        }
+        return v;
     }
 
     [RelayCommand]
