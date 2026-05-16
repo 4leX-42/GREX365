@@ -84,7 +84,18 @@
                         <ui:TextBox Text="{Binding CertOrganization, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
 
                         <TextBlock Text="Cert thumbprint" FontWeight="SemiBold" Margin="0,0,0,4" />
-                        <ui:TextBox Text="{Binding CertThumbprint, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBox Grid.Column="0"
+                                        Text="{Binding CertThumbprint, UpdateSourceTrigger=PropertyChanged}" />
+                            <ui:Button Grid.Column="1"
+                                       Content="Examinar..."
+                                       Margin="8,0,0,0"
+                                       Click="BrowseCert_Click" />
+                        </Grid>
 
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                             <ui:Button Content="Validar"

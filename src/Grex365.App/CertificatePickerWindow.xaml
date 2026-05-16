@@ -1,0 +1,51 @@
+<ui:FluentWindow x:Class="Grex365.App.CertificatePickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        mc:Ignorable="d"
+        Title="Seleccionar certificado"
+        Height="500" Width="780"
+        MinHeight="380" MinWidth="600"
+        WindowBackdropType="Mica"
+        ExtendsContentIntoTitleBar="True"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="Cert:\\CurrentUser\\My" />
+
+        <ListView x:Name="CertList"
+                  Grid.Row="1"
+                  Margin="24,12,24,12"
+                  Background="Transparent"
+                  BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                  BorderThickness="1">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Subject"     Width="280" DisplayMemberBinding="{Binding Subject}" />
+                    <GridViewColumn Header="Thumbprint"  Width="200" DisplayMemberBinding="{Binding Thumbprint}" />
+                    <GridViewColumn Header="Válido hasta" Width="120" DisplayMemberBinding="{Binding NotAfter, StringFormat='yyyy-MM-dd'}" />
+                    <GridViewColumn Header="Issuer"      Width="120" DisplayMemberBinding="{Binding Issuer}" />
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <Border Grid.Row="2" Padding="24,12">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <ui:Button Content="Cancelar"
+                           Margin="0,0,8,0"
+                           Click="Cancel_Click" />
+                <ui:Button Content="Seleccionar"
+                           Appearance="Primary"
+                           Click="Select_Click" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</ui:FluentWindow>
