@@ -8,20 +8,56 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Grex365.App.ViewModels;
 
+public sealed class NavigationItem
+{
+    public NavigationItem(string title, string glyph, Type viewModelType)
+    {
+        Title = title;
+        Glyph = glyph;
+        ViewModelType = viewModelType;
+    }
+
+    public string Title { get; }
+    public string Glyph { get; }
+    public Type ViewModelType { get; }
+}
+
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly IServiceProvider _services;
 
-    public MainViewModel(ConnectViewModel connectViewModel, IUiLogSink uiLog, IServiceProvider services)
+    [ObservableProperty] private NavigationItem? _selectedNavigation;
+    [ObservableProperty] private ObservableObject? _currentPage;
+
+    public MainViewModel(IUiLogSink uiLog, IServiceProvider services)
     {
-        Connect = connectViewModel;
         LogEntries = uiLog.Entries;
         _services = services;
+
+        NavigationItems = new ObservableCollection<NavigationItem>
+        {
+            new("Dashboard", "", typeof(DashboardViewModel)),
+            new("Conexion",  "", typeof(ConnectViewModel)),
+            new("Grupos",    "", typeof(GroupsViewModel)),
+            new("Buzones",   "", typeof(SharedMailboxViewModel)),
+        };
+
+        SelectedNavigation = NavigationItems[0];
     }
 
-    public ConnectViewModel Connect { get; }
+    public ObservableCollection<NavigationItem> NavigationItems { get; }
 
     public ObservableCollection<LogEntry> LogEntries { get; }
+
+    partial void OnSelectedNavigationChanged(NavigationItem? value)
+    {
+        if (value is null)
+        {
+            CurrentPage = null;
+            return;
+        }
+        CurrentPage = (ObservableObject)_services.GetRequiredService(value.ViewModelType);
+    }
 
     [RelayCommand]
     private void OpenSettings()

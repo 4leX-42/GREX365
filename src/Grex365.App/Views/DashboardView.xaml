@@ -1,0 +1,87 @@
+<UserControl x:Class="Grex365.App.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             mc:Ignorable="d">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0"
+                       Text="Dashboard"
+                       FontSize="28"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,4" />
+            <TextBlock Grid.Row="1"
+                       Text="Estado de la conexión y resumen del tenant"
+                       Opacity="0.7"
+                       Margin="0,0,0,24" />
+
+            <UniformGrid Grid.Row="2" Columns="3" Rows="2">
+                <Border CornerRadius="8" Padding="16" Margin="0,0,12,12"
+                        Background="{DynamicResource ControlFillColorDefaultBrush}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="12" Height="12" Margin="0,0,8,0"
+                                     Fill="{Binding GraphConnected, Converter={StaticResource BoolToBrushConverter}}" />
+                            <TextBlock Text="Microsoft Graph" FontWeight="SemiBold" FontSize="16" />
+                        </StackPanel>
+                        <TextBlock Margin="0,8,0,0"
+                                   Text="{Binding GraphConnected, Converter={StaticResource BoolToOnOffConverter}}"
+                                   FontSize="24"
+                                   FontWeight="Bold" />
+                    </StackPanel>
+                </Border>
+
+                <Border CornerRadius="8" Padding="16" Margin="0,0,12,12"
+                        Background="{DynamicResource ControlFillColorDefaultBrush}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="12" Height="12" Margin="0,0,8,0"
+                                     Fill="{Binding ExchangeConnected, Converter={StaticResource BoolToBrushConverter}}" />
+                            <TextBlock Text="Exchange Online" FontWeight="SemiBold" FontSize="16" />
+                        </StackPanel>
+                        <TextBlock Margin="0,8,0,0"
+                                   Text="{Binding ExchangeConnected, Converter={StaticResource BoolToOnOffConverter}}"
+                                   FontSize="24"
+                                   FontWeight="Bold" />
+                    </StackPanel>
+                </Border>
+
+                <Border CornerRadius="8" Padding="16" Margin="0,0,0,12"
+                        Background="{DynamicResource ControlFillColorDefaultBrush}">
+                    <StackPanel>
+                        <TextBlock Text="Tenant" FontWeight="SemiBold" FontSize="16" Opacity="0.85" />
+                        <TextBlock Margin="0,8,0,0"
+                                   Text="{Binding TenantDomain, FallbackValue=—}"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding TenantId, FallbackValue=—}"
+                                   Opacity="0.6"
+                                   FontSize="11"
+                                   FontFamily="Cascadia Mono,Consolas"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Border>
+
+                <Border CornerRadius="8" Padding="16" Margin="0,0,12,0"
+                        Background="{DynamicResource ControlFillColorDefaultBrush}">
+                    <StackPanel>
+                        <TextBlock Text="Cuenta" FontWeight="SemiBold" FontSize="16" Opacity="0.85" />
+                        <TextBlock Margin="0,8,0,0"
+                                   Text="{Binding Account, FallbackValue=—}"
+                                   FontSize="14"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

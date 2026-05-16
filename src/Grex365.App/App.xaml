@@ -3,6 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:conv="clr-namespace:Grex365.App.Converters"
+             xmlns:vm="clr-namespace:Grex365.App.ViewModels"
+             xmlns:v="clr-namespace:Grex365.App.Views"
              xmlns:local="clr-namespace:Grex365.App">
     <Application.Resources>
         <ResourceDictionary>
@@ -10,9 +12,25 @@
                 <ui:ThemesDictionary Theme="Dark" />
                 <ui:ControlsDictionary />
             </ResourceDictionary.MergedDictionaries>
+
             <conv:BoolToBrushConverter x:Key="BoolToBrushConverter" />
             <conv:BoolToOnOffConverter x:Key="BoolToOnOffConverter" />
             <conv:SeverityToBrushConverter x:Key="SeverityToBrushConverter" />
+            <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
+            <conv:NullToCollapsedConverter x:Key="NullToCollapsedConverter" />
+
+            <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+                <v:DashboardView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ConnectViewModel}">
+                <v:ConnectView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:GroupsViewModel}">
+                <v:GroupsView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SharedMailboxViewModel}">
+                <v:SharedMailboxView />
+            </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -5,6 +5,7 @@ using Grex365.App.Services;
 using Grex365.App.ViewModels;
 using Grex365.Core.Abstractions;
 using Grex365.Core.Connections;
+using Grex365.Core.Groups;
 using Grex365.Core.Preferences;
 using Grex365.PowerShell;
 using Microsoft.Extensions.DependencyInjection;
@@ -58,6 +59,8 @@ public partial class App : Application
                 services.AddSingleton<IConnectionStateMonitor, ConnectionStateMonitor>();
                 services.AddSingleton<ICertValidator, CertValidator>();
                 services.AddSingleton<ITenantLock, TenantLock>();
+                services.AddSingleton<IGroupsService, GraphGroupsService>();
+                services.AddSingleton<ISharedMailboxService, SharedMailboxService>();
 
                 services.AddSingleton<IPreferencesStore>(_ => new JsonPreferencesStore(configDir));
                 services.AddSingleton<ICertConfigStore>(_ => new JsonCertConfigStore(configDir));
@@ -65,6 +68,9 @@ public partial class App : Application
                 services.AddSingleton<IUiLogSink, UiLogSink>();
 
                 services.AddTransient<ConnectViewModel>();
+                services.AddTransient<DashboardViewModel>();
+                services.AddTransient<GroupsViewModel>();
+                services.AddTransient<SharedMailboxViewModel>();
                 services.AddTransient<SettingsViewModel>();
                 services.AddTransient<MainViewModel>();
                 services.AddSingleton<MainWindow>();

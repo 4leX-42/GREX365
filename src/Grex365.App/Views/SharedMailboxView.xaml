@@ -1,0 +1,140 @@
+<UserControl x:Class="Grex365.App.Views.SharedMailboxView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
+             mc:Ignorable="d">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24">
+            <TextBlock Text="Buzones compartidos"
+                       FontSize="24"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,4" />
+            <TextBlock Text="Conversión SharedMailbox → UserMailbox y gestión de permisos"
+                       Opacity="0.7"
+                       Margin="0,0,0,16" />
+
+            <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <StackPanel>
+                    <TextBlock Text="Buzón objetivo" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox Grid.Column="0"
+                                    Text="{Binding MailboxIdentity, UpdateSourceTrigger=PropertyChanged}"
+                                    PlaceholderText="user@contoso.com / UPN / SMTP" />
+                        <ui:Button Grid.Column="1"
+                                   Content="Consultar"
+                                   Margin="8,0,0,0"
+                                   Command="{Binding LookupCommand}" />
+                        <ui:Button Grid.Column="2"
+                                   Content="Convertir a UserMailbox"
+                                   Appearance="Primary"
+                                   Margin="8,0,0,0"
+                                   Command="{Binding ConvertToRegularCommand}" />
+                    </Grid>
+
+                    <Border BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                            BorderThickness="0,1,0,0"
+                            Padding="0,8,0,0"
+                            Margin="0,4,0,0"
+                            Visibility="{Binding MailboxInfo, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Identity" Opacity="0.7" />
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding MailboxInfo.Identity}" />
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Display name" Opacity="0.7" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding MailboxInfo.DisplayName}" />
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Primary SMTP" Opacity="0.7" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding MailboxInfo.PrimarySmtpAddress}" />
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Tipo" Opacity="0.7" />
+                            <TextBlock Grid.Row="3" Grid.Column="1"
+                                       Text="{Binding MailboxInfo.RecipientTypeDetails}"
+                                       FontWeight="SemiBold" />
+                        </Grid>
+                    </Border>
+
+                    <TextBlock Text="{Binding StatusMessage}" Opacity="0.85" Margin="0,8,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <StackPanel>
+                    <TextBlock Text="Permisos" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox Grid.Column="0"
+                                    Text="{Binding PermPrincipal, UpdateSourceTrigger=PropertyChanged}"
+                                    PlaceholderText="principal@contoso.com" />
+                        <ComboBox Grid.Column="1"
+                                  SelectedValue="{Binding PermAction}"
+                                  SelectedValuePath="Tag"
+                                  Width="100"
+                                  Margin="8,0,0,0">
+                            <ComboBoxItem Content="add" Tag="add" />
+                            <ComboBoxItem Content="remove" Tag="remove" />
+                        </ComboBox>
+                        <ComboBox Grid.Column="2"
+                                  SelectedValue="{Binding PermPermission}"
+                                  SelectedValuePath="Tag"
+                                  Width="150"
+                                  Margin="8,0,0,0">
+                            <ComboBoxItem Content="FullAccess" Tag="FullAccess" />
+                            <ComboBoxItem Content="SendAs" Tag="SendAs" />
+                            <ComboBoxItem Content="SendOnBehalf" Tag="SendOnBehalf" />
+                        </ComboBox>
+                        <ui:Button Grid.Column="3"
+                                   Content="Aplicar"
+                                   Appearance="Primary"
+                                   Margin="8,0,0,0"
+                                   Command="{Binding ApplyPermissionCommand}" />
+                    </Grid>
+
+                    <ItemsControl ItemsSource="{Binding PermissionResults}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:MailboxPermissionResult}">
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="60" />
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="3*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Action}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Permission}" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Mailbox}" Opacity="0.85" />
+                                    <TextBlock Grid.Column="3" Text="{Binding Principal}" Opacity="0.85" />
+                                    <TextBlock Grid.Column="4" Text="{Binding Status}" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="5" Text="{Binding Detail}" Opacity="0.7" TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
