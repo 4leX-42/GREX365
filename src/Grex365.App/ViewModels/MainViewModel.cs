@@ -25,11 +25,10 @@ public sealed class NavigationItem
 public sealed partial class MainViewModel : ObservableObject
 {
     private readonly IServiceProvider _services;
+    private readonly IUiLogSink _uiLog;
 
     [ObservableProperty] private NavigationItem? _selectedNavigation;
     [ObservableProperty] private ObservableObject? _currentPage;
-
-    private readonly IUiLogSink _uiLog;
 
     public MainViewModel(IUiLogSink uiLog, IServiceProvider services)
     {
@@ -39,11 +38,12 @@ public sealed partial class MainViewModel : ObservableObject
 
         NavigationItems = new ObservableCollection<NavigationItem>
         {
-            new("Dashboard",  "", typeof(DashboardViewModel)),
-            new("Conexion",   "", typeof(ConnectViewModel)),
-            new("Grupos",     "", typeof(GroupsViewModel)),
-            new("Buzones",    "", typeof(SharedMailboxViewModel)),
-            new("Auditoria",  "", typeof(AuditViewModel)),
+            new("Dashboard",      "", typeof(DashboardViewModel)),
+            new("Conexion",       "", typeof(ConnectViewModel)),
+            new("Salud tenant",   "", typeof(TenantHealthViewModel)),
+            new("Grupos",         "", typeof(GroupsViewModel)),
+            new("Buzones",        "", typeof(SharedMailboxViewModel)),
+            new("Auditoria",      "", typeof(AuditViewModel)),
         };
 
         SelectedNavigation = NavigationItems[0];

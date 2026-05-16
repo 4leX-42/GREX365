@@ -35,6 +35,9 @@
             <DataTemplate DataType="{x:Type vm:AuditViewModel}">
                 <v:AuditView />
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:TenantHealthViewModel}">
+                <v:TenantHealthView />
+            </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

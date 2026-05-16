@@ -7,6 +7,7 @@ using Grex365.Core.Abstractions;
 using Grex365.Core.Audit;
 using Grex365.Core.Connections;
 using Grex365.Core.Groups;
+using Grex365.Core.Health;
 using Grex365.Core.Preferences;
 using Grex365.PowerShell;
 using Microsoft.Extensions.DependencyInjection;
@@ -63,6 +64,7 @@ public partial class App : Application
                 services.AddSingleton<IGroupsService, GraphGroupsService>();
                 services.AddSingleton<ISharedMailboxService, SharedMailboxService>();
                 services.AddSingleton<IAuditService, GraphAuditService>();
+                services.AddSingleton<ITenantHealthService, GraphTenantHealthService>();
 
                 services.AddSingleton<IPreferencesStore>(_ => new JsonPreferencesStore(configDir));
                 services.AddSingleton<ICertConfigStore>(_ => new JsonCertConfigStore(configDir));
@@ -74,6 +76,7 @@ public partial class App : Application
                 services.AddTransient<GroupsViewModel>();
                 services.AddTransient<SharedMailboxViewModel>();
                 services.AddTransient<AuditViewModel>();
+                services.AddTransient<TenantHealthViewModel>();
                 services.AddTransient<SettingsViewModel>();
                 services.AddTransient<MainViewModel>();
                 services.AddSingleton<MainWindow>();
@@ -83,6 +86,8 @@ public partial class App : Application
 
         var monitor = Services.GetRequiredService<IConnectionStateMonitor>();
         monitor.Start();
+
+        TryApplySavedTheme();
 
         var main = Services.GetRequiredService<MainWindow>();
         main.Show();
@@ -112,6 +117,20 @@ public partial class App : Application
             Log.Error(args.Exception, "Unobserved task exception");
             args.SetObserved();
         };
+    }
+
+    private static void TryApplySavedTheme()
+    {
+        try
+        {
+            var store = Services.GetRequiredService<IPreferencesStore>();
+            var prefs = store.LoadAsync().GetAwaiter().GetResult();
+            ViewModels.SettingsViewModel.ApplyThemeFromPreferences(prefs.Theme);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "No se pudo aplicar tema guardado");
+        }
     }
 
     private static void TryImportLegacyConfig(string targetConfigDir)

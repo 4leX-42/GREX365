@@ -54,6 +54,15 @@
 
                         <CheckBox Content="Forzar tenant lock (rechazar conexión si no coincide)"
                                   IsChecked="{Binding EnforceTenantLock}" />
+
+                        <TextBlock Text="Tema" FontWeight="SemiBold" Margin="0,16,0,4" />
+                        <ComboBox SelectedValue="{Binding Theme}"
+                                  SelectedValuePath="Tag"
+                                  Width="160"
+                                  HorizontalAlignment="Left">
+                            <ComboBoxItem Content="Oscuro" Tag="Dark" />
+                            <ComboBoxItem Content="Claro" Tag="Light" />
+                        </ComboBox>
                     </StackPanel>
                 </Border>
 

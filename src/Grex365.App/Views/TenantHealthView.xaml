@@ -1,0 +1,99 @@
+<UserControl x:Class="Grex365.App.Views.TenantHealthView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
+             mc:Ignorable="d">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Salud del tenant"
+                   FontSize="24"
+                   FontWeight="SemiBold"
+                   Margin="0,0,0,4" />
+        <TextBlock Grid.Row="1"
+                   Text="Vista rápida: organización, conteo de usuarios/grupos y consumo de licencias"
+                   Opacity="0.7"
+                   Margin="0,0,0,16" />
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,16">
+            <ui:Button Content="Refrescar"
+                       Appearance="Primary"
+                       Margin="0,0,8,0"
+                       Command="{Binding RefreshCommand}" />
+            <ui:Button Content="Cancelar"
+                       Margin="0,0,8,0"
+                       Command="{Binding CancelCommand}" />
+            <ui:ProgressRing IsIndeterminate="True"
+                             Width="20" Height="20"
+                             Margin="8,0,8,0"
+                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}" />
+            <TextBlock VerticalAlignment="Center"
+                       Text="{Binding StatusMessage}"
+                       Opacity="0.8" />
+        </StackPanel>
+
+        <UniformGrid Grid.Row="3" Columns="3" Margin="0,0,0,12"
+                     Visibility="{Binding Health, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
+            <Border CornerRadius="8" Padding="12" Margin="0,0,8,0"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <StackPanel>
+                    <TextBlock Text="Organización" Opacity="0.7" />
+                    <TextBlock Text="{Binding Health.DisplayName, FallbackValue=—}"
+                               FontSize="18" FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Health.VerifiedDomain, FallbackValue=—}" Opacity="0.7" />
+                </StackPanel>
+            </Border>
+            <Border CornerRadius="8" Padding="12" Margin="0,0,8,0"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <StackPanel>
+                    <TextBlock Text="Usuarios" Opacity="0.7" />
+                    <TextBlock Text="{Binding Health.TotalUsers, FallbackValue=0}"
+                               FontSize="22" FontWeight="Bold" />
+                </StackPanel>
+            </Border>
+            <Border CornerRadius="8" Padding="12"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <StackPanel>
+                    <TextBlock Text="Grupos" Opacity="0.7" />
+                    <TextBlock Text="{Binding Health.TotalGroups, FallbackValue=0}"
+                               FontSize="22" FontWeight="Bold" />
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <Border Grid.Row="4" CornerRadius="8"
+                Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top"
+                           Text="Licencias"
+                           FontWeight="SemiBold"
+                           Margin="12,8" />
+                <ListView ItemsSource="{Binding Licenses}"
+                          Background="Transparent"
+                          BorderThickness="0">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="SKU"        Width="220" DisplayMemberBinding="{Binding SkuPartNumber}" />
+                            <GridViewColumn Header="Consumed"   Width="100" DisplayMemberBinding="{Binding Consumed}" />
+                            <GridViewColumn Header="Enabled"    Width="100" DisplayMemberBinding="{Binding Enabled}" />
+                            <GridViewColumn Header="Warning"    Width="100" DisplayMemberBinding="{Binding Warning}" />
+                            <GridViewColumn Header="Suspended"  Width="100" DisplayMemberBinding="{Binding Suspended}" />
+                            <GridViewColumn Header="SKU Id"     Width="320" DisplayMemberBinding="{Binding SkuId}" />
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

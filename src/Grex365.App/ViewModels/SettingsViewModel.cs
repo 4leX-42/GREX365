@@ -17,6 +17,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string? _expectedTenantId;
     [ObservableProperty] private string? _expectedTenantDomain;
     [ObservableProperty] private bool _enforceTenantLock;
+    [ObservableProperty] private string _theme = "Dark";
 
     [ObservableProperty] private string _certAppId = string.Empty;
     [ObservableProperty] private string _certTenantId = string.Empty;
@@ -48,6 +49,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         ExpectedTenantId = prefs.ExpectedTenantId;
         ExpectedTenantDomain = prefs.ExpectedTenantDomain;
         EnforceTenantLock = prefs.EnforceTenantLock;
+        Theme = string.IsNullOrWhiteSpace(prefs.Theme) ? "Dark" : prefs.Theme;
 
         var cert = await _certStore.LoadAsync().ConfigureAwait(true);
         if (cert is not null)
@@ -71,7 +73,10 @@ public sealed partial class SettingsViewModel : ObservableObject
             prefs.ExpectedTenantId = ExpectedTenantId;
             prefs.ExpectedTenantDomain = ExpectedTenantDomain;
             prefs.EnforceTenantLock = EnforceTenantLock;
+            prefs.Theme = Theme;
             await _prefsStore.SaveAsync(prefs).ConfigureAwait(true);
+
+            ApplyTheme(Theme);
 
             if (!string.IsNullOrWhiteSpace(CertAppId)
                 && !string.IsNullOrWhiteSpace(CertTenantId)
@@ -93,6 +98,16 @@ public sealed partial class SettingsViewModel : ObservableObject
             _log.Progress.Report(LogEntry.Error("Settings", ex.Message, ex));
         }
     }
+
+    private static void ApplyTheme(string theme)
+    {
+        var t = string.Equals(theme, "Light", StringComparison.OrdinalIgnoreCase)
+            ? Wpf.Ui.Appearance.ApplicationTheme.Light
+            : Wpf.Ui.Appearance.ApplicationTheme.Dark;
+        Wpf.Ui.Appearance.ApplicationThemeManager.Apply(t);
+    }
+
+    public static void ApplyThemeFromPreferences(string? theme) => ApplyTheme(theme ?? "Dark");
 
     [RelayCommand]
     private void ValidateCert()
