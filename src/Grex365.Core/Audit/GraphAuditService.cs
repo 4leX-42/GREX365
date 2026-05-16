@@ -61,8 +61,8 @@ public sealed class GraphAuditService : IAuditService
             ?? throw new InvalidOperationException("Graph no está conectado.");
 
         progress?.Report(LogEntry.Info("Audit", "Cargando grupos..."));
-        var findings = new List<AuditFinding>();
-        var processed = 0;
+        var findings = new System.Collections.Concurrent.ConcurrentBag<AuditFinding>();
+        var groups = new List<Group>();
 
         var response = await client.Groups.GetAsync(req =>
         {
@@ -77,20 +77,37 @@ public sealed class GraphAuditService : IAuditService
         var iterator = PageIterator<Group, GroupCollectionResponse>.CreatePageIterator(
             client,
             response!,
-            async group =>
+            group =>
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                await AnalyzeGroup(client, group, findings, cancellationToken).ConfigureAwait(false);
-                processed++;
+                groups.Add(group);
                 return true;
             });
-
         await iterator.IterateAsync(cancellationToken).ConfigureAwait(false);
-        progress?.Report(LogEntry.Ok("Audit", $"Procesados {processed} grupos; {findings.Count} hallazgos"));
-        return findings;
+
+        progress?.Report(LogEntry.Info("Audit", $"Analizando {groups.Count} grupos en paralelo..."));
+
+        using var sem = new System.Threading.SemaphoreSlim(8);
+        var tasks = groups.Select(async g =>
+        {
+            await sem.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await AnalyzeGroup(client, g, findings, cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                sem.Release();
+            }
+        });
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+
+        var sorted = findings.OrderBy(f => f.Category).ThenBy(f => f.Identity).ToList();
+        progress?.Report(LogEntry.Ok("Audit", $"Procesados {groups.Count} grupos; {sorted.Count} hallazgos"));
+        return sorted;
     }
 
-    private static async Task AnalyzeGroup(GraphServiceClient client, Group group, List<AuditFinding> findings, CancellationToken ct)
+    private static async Task AnalyzeGroup(GraphServiceClient client, Group group, System.Collections.Concurrent.ConcurrentBag<AuditFinding> findings, CancellationToken ct)
     {
         var id = group.Id ?? string.Empty;
         var name = group.DisplayName ?? "(sin nombre)";
