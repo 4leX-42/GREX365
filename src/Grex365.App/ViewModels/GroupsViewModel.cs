@@ -15,6 +15,7 @@ namespace Grex365.App.ViewModels;
 public sealed partial class GroupsViewModel : ObservableObject
 {
     private readonly IGroupsService _groups;
+    private readonly IDistributionListsService _dls;
     private readonly IUiLogSink _log;
     private CancellationTokenSource? _cts;
 
@@ -23,6 +24,7 @@ public sealed partial class GroupsViewModel : ObservableObject
     [ObservableProperty] private GroupMember? _selectedMember;
     [ObservableProperty] private string _newMembersText = string.Empty;
     [ObservableProperty] private string _bulkDomain = string.Empty;
+    [ObservableProperty] private bool _bulkTargetDl;
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private bool _isBusy;
 
@@ -31,9 +33,10 @@ public sealed partial class GroupsViewModel : ObservableObject
     public ObservableCollection<AddMemberResult> LastAddResults { get; } = new();
     public ObservableCollection<BulkGroupResult> BulkCreateResults { get; } = new();
 
-    public GroupsViewModel(IGroupsService groups, IUiLogSink log)
+    public GroupsViewModel(IGroupsService groups, IDistributionListsService dls, IUiLogSink log)
     {
         _groups = groups;
+        _dls = dls;
         _log = log;
     }
 
@@ -381,8 +384,9 @@ public sealed partial class GroupsViewModel : ObservableObject
         }
 
         var distinctGroups = rows.Select(r => r.GroupName).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+        var kind = BulkTargetDl ? "DL (Exchange)" : "M365";
         var confirm = System.Windows.MessageBox.Show(
-            $"Se crearán/actualizarán {distinctGroups} grupos M365 con {rows.Count} miembros sobre @{domain}.\n\n¿Continuar?",
+            $"Se crearán/actualizarán {distinctGroups} grupos {kind} con {rows.Count} miembros sobre @{domain}.\n\n¿Continuar?",
             "Confirmar creación masiva",
             System.Windows.MessageBoxButton.YesNo,
             System.Windows.MessageBoxImage.Question);
@@ -395,11 +399,13 @@ public sealed partial class GroupsViewModel : ObservableObject
         EnsureToken();
         IsBusy = true;
         CancelCommand.NotifyCanExecuteChanged();
-        StatusMessage = $"Creando {distinctGroups} grupos...";
+        StatusMessage = $"Creando {distinctGroups} grupos ({kind})...";
         BulkCreateResults.Clear();
         try
         {
-            var results = await _groups.CreateM365GroupsFromRowsAsync(rows, domain, _log.Progress, _cts!.Token).ConfigureAwait(true);
+            var results = BulkTargetDl
+                ? await _dls.CreateFromRowsAsync(rows, domain, _log.Progress, _cts!.Token).ConfigureAwait(true)
+                : await _groups.CreateM365GroupsFromRowsAsync(rows, domain, _log.Progress, _cts!.Token).ConfigureAwait(true);
             foreach (var r in results)
             {
                 BulkCreateResults.Add(r);

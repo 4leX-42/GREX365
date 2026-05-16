@@ -26,25 +26,31 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0"
-                       Text="Buscar grupos M365/DL y gestionar miembros · creación masiva M365 desde CSV"
+                       Text="Buscar grupos M365/DL y gestionar miembros · creación masiva M365 o DL desde CSV"
                        Opacity="0.7"
                        VerticalAlignment="Center" />
-            <TextBlock Grid.Column="1"
+            <CheckBox Grid.Column="1"
+                      Content="DL (Exchange) en vez de M365"
+                      IsChecked="{Binding BulkTargetDl}"
+                      VerticalAlignment="Center"
+                      Margin="0,0,12,0" />
+            <TextBlock Grid.Column="2"
                        Text="Dominio:"
                        VerticalAlignment="Center"
                        Margin="0,0,6,0"
                        Opacity="0.7" />
-            <ui:TextBox Grid.Column="2"
+            <ui:TextBox Grid.Column="3"
                         Width="180"
                         Text="{Binding BulkDomain, UpdateSourceTrigger=PropertyChanged}"
                         PlaceholderText="contoso.com" />
-            <ui:Button Grid.Column="3"
-                       Content="Crear grupos M365 desde CSV..."
+            <ui:Button Grid.Column="4"
+                       Content="Crear desde CSV..."
                        Margin="8,0,0,0"
                        Command="{Binding BulkCreateFromCsvCommand}" />
-            <ui:Button Grid.Column="4"
+            <ui:Button Grid.Column="5"
                        Content="Exportar log..."
                        Margin="8,0,0,0"
                        Command="{Binding ExportBulkCreateResultsCommand}" />
