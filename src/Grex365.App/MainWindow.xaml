@@ -176,6 +176,10 @@
                     <Run Text="{Binding Account, FallbackValue=—}" />
                 </TextBlock>
             </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <ui:Button Content="Desconectar todo"
+                           Command="{Binding DisconnectAllCommand}" />
+            </StatusBarItem>
         </StatusBar>
     </Grid>
 </ui:FluentWindow>

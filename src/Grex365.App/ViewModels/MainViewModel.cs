@@ -30,6 +30,9 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IServiceProvider _services;
     private readonly IUiLogSink _uiLog;
     private readonly IConnectionStateMonitor _monitor;
+    private readonly IPreferencesStore _prefs;
+    private readonly IGraphConnection _graph;
+    private readonly IExchangeConnection _exchange;
 
     [ObservableProperty] private NavigationItem? _selectedNavigation;
     [ObservableProperty] private ObservableObject? _currentPage;
@@ -48,12 +51,21 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ICollectionView LogView { get; }
 
-    public MainViewModel(IUiLogSink uiLog, IServiceProvider services, IConnectionStateMonitor monitor)
+    public MainViewModel(
+        IUiLogSink uiLog,
+        IServiceProvider services,
+        IConnectionStateMonitor monitor,
+        IPreferencesStore prefs,
+        IGraphConnection graph,
+        IExchangeConnection exchange)
     {
         _uiLog = uiLog;
         LogEntries = uiLog.Entries;
         _services = services;
         _monitor = monitor;
+        _prefs = prefs;
+        _graph = graph;
+        _exchange = exchange;
 
         _monitor.PropertyChanged += OnMonitorChanged;
         SyncFromMonitor();
@@ -75,12 +87,30 @@ public sealed partial class MainViewModel : ObservableObject
             new("DNS check",      "", typeof(DomainCheckViewModel)),
         };
 
-        SelectedNavigation = NavigationItems[0];
+        SelectedNavigation = LoadLastNavigation() ?? NavigationItems[0];
     }
 
     public ObservableCollection<NavigationItem> NavigationItems { get; }
 
     public ObservableCollection<LogEntry> LogEntries { get; }
+
+    private NavigationItem? LoadLastNavigation()
+    {
+        try
+        {
+            var prefs = _prefs.LoadAsync().GetAwaiter().GetResult();
+            if (string.IsNullOrWhiteSpace(prefs.LastSelectedNavigation))
+            {
+                return null;
+            }
+            return NavigationItems.FirstOrDefault(i =>
+                string.Equals(i.Title, prefs.LastSelectedNavigation, StringComparison.OrdinalIgnoreCase));
+        }
+        catch
+        {
+            return null;
+        }
+    }
 
     partial void OnSelectedNavigationChanged(NavigationItem? value)
     {
@@ -90,6 +120,25 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
         CurrentPage = (ObservableObject)_services.GetRequiredService(value.ViewModelType);
+        _ = PersistNavAsync(value.Title);
+    }
+
+    private async Task PersistNavAsync(string title)
+    {
+        try
+        {
+            var p = await _prefs.LoadAsync().ConfigureAwait(false);
+            if (string.Equals(p.LastSelectedNavigation, title, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+            p.LastSelectedNavigation = title;
+            await _prefs.SaveAsync(p).ConfigureAwait(false);
+        }
+        catch
+        {
+            // ignore persistence failures
+        }
     }
 
     private void OnMonitorChanged(object? sender, PropertyChangedEventArgs e)
@@ -121,6 +170,21 @@ public sealed partial class MainViewModel : ObservableObject
         var window = _services.GetRequiredService<SettingsWindow>();
         window.Owner = Application.Current?.MainWindow;
         window.ShowDialog();
+    }
+
+    [RelayCommand]
+    private async Task DisconnectAllAsync()
+    {
+        try
+        {
+            await _exchange.DisconnectAsync(_uiLog.Progress).ConfigureAwait(true);
+            await _graph.DisconnectAsync().ConfigureAwait(true);
+            _uiLog.Progress.Report(LogEntry.Info("Connect", "Desconectado de Graph y Exchange Online."));
+        }
+        catch (Exception ex)
+        {
+            _uiLog.Progress.Report(LogEntry.Error("Connect", ex.Message, ex));
+        }
     }
 
     [RelayCommand]

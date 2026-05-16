@@ -12,5 +12,6 @@ public sealed class UserPreferences
     public string Role { get; set; } = "operator";
     public string UIMode { get; set; } = "support";
     public string Theme { get; set; } = "Dark";
+    public string? LastSelectedNavigation { get; set; }
     public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.Now;
 }
