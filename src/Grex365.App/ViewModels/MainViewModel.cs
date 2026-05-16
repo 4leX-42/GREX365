@@ -82,6 +82,7 @@ public sealed partial class MainViewModel : ObservableObject
             new("Grupos",         "", typeof(GroupsViewModel)),
             new("Buzones",        "", typeof(SharedMailboxViewModel)),
             new("Auditoria",      "", typeof(AuditViewModel)),
+            new("Onboarding",     "", typeof(OnboardingViewModel)),
             new("Offboarding",    "", typeof(OffboardingViewModel)),
             new("Cert Wizard",    "", typeof(CertWizardViewModel)),
             new("DNS check",      "", typeof(DomainCheckViewModel)),

@@ -11,6 +11,7 @@ using Grex365.Core.DomainChecks;
 using Grex365.Core.Groups;
 using Grex365.Core.Health;
 using Grex365.Core.Offboarding;
+using Grex365.Core.Onboarding;
 using Grex365.Core.Preferences;
 using Grex365.Core.Users;
 using Grex365.PowerShell;
@@ -71,6 +72,7 @@ public partial class App : Application
                 services.AddSingleton<ITenantHealthService, GraphTenantHealthService>();
                 services.AddSingleton<IUsersService, GraphUsersService>();
                 services.AddSingleton<IOffboardingService, OffboardingService>();
+                services.AddSingleton<IOnboardingService, OnboardingService>();
                 services.AddSingleton<ICertificateGenerator, SelfSignedCertificateGenerator>();
                 services.AddSingleton<IDomainChecker, NslookupDomainChecker>();
 
@@ -87,6 +89,7 @@ public partial class App : Application
                 services.AddTransient<TenantHealthViewModel>();
                 services.AddTransient<UsersViewModel>();
                 services.AddTransient<OffboardingViewModel>();
+                services.AddTransient<OnboardingViewModel>();
                 services.AddTransient<CertWizardViewModel>();
                 services.AddTransient<DomainCheckViewModel>();
                 services.AddTransient<SettingsViewModel>();

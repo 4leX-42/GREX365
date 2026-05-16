@@ -4,7 +4,7 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting**
-- Tests: **89 passing** (xUnit + FluentAssertions)
+- Tests: **105 passing** (xUnit + FluentAssertions)
 - Última actualización: 2026-05-16
 
 > Nota stack: el plantamiento sugiere WinUI 3 como preferente y WPF como fallback aceptable. Se eligió **WPF + wpf-ui** por madurez, ecosistema y compatibilidad con Win10/11. Migración a WinUI 3 queda como posible Fase 7 si surge necesidad.
@@ -34,7 +34,7 @@
 - [x] Disconnect Graph + EXO + botón global "Desconectar todo"
 
 ### Fase 3 — UI moderna (WPF + Fluent) — **DONE**
-Navegación lateral con 10 módulos:
+Navegación lateral con 11 módulos:
 - [x] **Dashboard** — status cards (Graph/EXO/Tenant/Cuenta) + quick actions
 - [x] **Conexion** — cert auth Graph + EXO con feedback en vivo
 - [x] **Salud tenant** — org + counts usuarios/grupos + SKUs consumidos
@@ -42,6 +42,7 @@ Navegación lateral con 10 módulos:
 - [x] **Grupos** — buscar, miembros, añadir (texto/CSV), eliminar, exportar CSV, **bulk create M365 desde CSV (forward-fill GroupName)**
 - [x] **Buzones** — lookup + permisos actuales, Regular↔Shared, FullAccess/SendAs/SendOnBehalf, CSV import/export
 - [x] **Auditoria** — identidades (stale members/guests + disabled+licensed) + grupos (sin owner / vacíos), paralelizado 8x
+- [x] **Onboarding** — wizard compuesto (crear user + UsageLocation + asignar SKUs múltiples + añadir a grupos)
 - [x] **Offboarding** — wizard compuesto (deshabilitar + quitar licencias + convertir a shared)
 - [x] **Cert Wizard** — generar self-signed RSA 2048, instalar CurrentUser\My, exportar .cer
 - [x] **DNS check** — MX/TXT/SPF/DMARC (no requiere auth)
@@ -89,7 +90,6 @@ UX/QoL fase 3:
 - [ ] Set-OutOfOffice / forwarding rules en buzones
 - [ ] Calendar permission view/set
 - [ ] Mail flow rules viewer
-- [ ] **Onboarding wizard** (espejo del Offboarding: crear user + asignar licencia + agregar a grupos)
 - [ ] Bulk groups CSV — extender a Distribution Lists vía EXO runner (M365 ya hecho)
 - [ ] Auditoría: grupos sin actividad reciente, externos en grupos privados
 - [ ] Cert export PFX con password
@@ -122,6 +122,7 @@ UX/QoL fase 3:
 | OffboardingService | 6 | Empty UPN, missing user, per-flag, errores |
 | SkuInfo | 6 | Math available, ordering, display, fallback guid |
 | BulkGroupRowPreprocessor | 13 | Forward-fill, skip orphans, trim, IsEmail theory |
+| OnboardingValidator | 16 | UPN/password/usage/mail-nickname validation + derive |
 
 ---
 
@@ -151,9 +152,9 @@ Datos persistidos en `%LOCALAPPDATA%\Grex365\`:
 ## Próximo bloque planificado
 
 **Orden propuesto (mayor utilidad / menor riesgo primero):**
-1. Onboarding wizard — espejo del Offboarding, alta utilidad inmediata
-2. Set-OutOfOffice / forwarding — feature de buzón habitual
-3. DL bulk creation via EXO runner — completa el par con M365 bulk ya hecho
-4. License assignment bulk CSV — natural tras single ya shipped
-5. Charts en TenantHealth — polish visual
+1. Set-OutOfOffice / forwarding — feature de buzón habitual
+2. DL bulk creation via EXO runner — completa el par con M365 bulk ya hecho
+3. License assignment bulk CSV — natural tras single ya shipped
+4. Charts en TenantHealth — polish visual
+5. Toast notifications (Snackbar wpf-ui) — UX polish
 6. Fase 4 (plugin system MEF) — empezar arquitectura modular

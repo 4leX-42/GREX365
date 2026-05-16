@@ -17,4 +17,17 @@ public interface IUsersService
     Task AssignLicenseAsync(string userId, Guid skuId, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<SkuInfo>> ListSkusAsync(CancellationToken cancellationToken = default);
+
+    Task<UserSummary> CreateUserAsync(
+        NewUserSpec spec,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
 }
+
+public sealed record NewUserSpec(
+    string DisplayName,
+    string UserPrincipalName,
+    string MailNickname,
+    string Password,
+    string UsageLocation,
+    bool ForceChangePasswordNextSignIn = true);

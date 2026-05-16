@@ -163,6 +163,9 @@
             <DataTemplate DataType="{x:Type vm:OffboardingViewModel}">
                 <v:OffboardingView />
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:OnboardingViewModel}">
+                <v:OnboardingView />
+            </DataTemplate>
             <DataTemplate DataType="{x:Type vm:CertWizardViewModel}">
                 <v:CertWizardView />
             </DataTemplate>

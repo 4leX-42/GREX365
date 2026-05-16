@@ -147,6 +147,43 @@ public sealed class GraphUsersService : IUsersService
         progress?.Report(LogEntry.Ok("Users", $"Asignada licencia {skuId} a {userId}"));
     }
 
+    public async Task<UserSummary> CreateUserAsync(
+        NewUserSpec spec,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var body = new User
+        {
+            AccountEnabled = true,
+            DisplayName = spec.DisplayName,
+            MailNickname = spec.MailNickname,
+            UserPrincipalName = spec.UserPrincipalName,
+            UsageLocation = spec.UsageLocation,
+            PasswordProfile = new PasswordProfile
+            {
+                Password = spec.Password,
+                ForceChangePasswordNextSignIn = spec.ForceChangePasswordNextSignIn
+            }
+        };
+
+        var created = await Client.Users.PostAsync(body, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (created is null || string.IsNullOrEmpty(created.Id))
+        {
+            throw new InvalidOperationException("Graph no devolvió un usuario creado.");
+        }
+        progress?.Report(LogEntry.Ok("Users", $"Creado: {spec.UserPrincipalName} ({created.Id})"));
+
+        return new UserSummary(
+            Id: created.Id,
+            DisplayName: created.DisplayName ?? spec.DisplayName,
+            UserPrincipalName: created.UserPrincipalName ?? spec.UserPrincipalName,
+            Mail: created.Mail,
+            AccountEnabled: created.AccountEnabled ?? true,
+            IsGuest: false,
+            AssignedLicenseCount: 0,
+            LastSignIn: null);
+    }
+
     public async Task<IReadOnlyList<SkuInfo>> ListSkusAsync(CancellationToken cancellationToken = default)
     {
         var response = await Client.SubscribedSkus.GetAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
