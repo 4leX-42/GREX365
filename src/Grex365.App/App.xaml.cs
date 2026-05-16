@@ -68,6 +68,7 @@ public partial class App : Application
                 services.AddSingleton<ITenantLock, TenantLock>();
                 services.AddSingleton<IGroupsService, GraphGroupsService>();
                 services.AddSingleton<ISharedMailboxService, SharedMailboxService>();
+                services.AddSingleton<IMailboxRulesService, MailboxRulesService>();
                 services.AddSingleton<IAuditService, GraphAuditService>();
                 services.AddSingleton<ITenantHealthService, GraphTenantHealthService>();
                 services.AddSingleton<IUsersService, GraphUsersService>();
@@ -90,6 +91,7 @@ public partial class App : Application
                 services.AddTransient<UsersViewModel>();
                 services.AddTransient<OffboardingViewModel>();
                 services.AddTransient<OnboardingViewModel>();
+                services.AddTransient<MailboxRulesViewModel>();
                 services.AddTransient<CertWizardViewModel>();
                 services.AddTransient<DomainCheckViewModel>();
                 services.AddTransient<SettingsViewModel>();

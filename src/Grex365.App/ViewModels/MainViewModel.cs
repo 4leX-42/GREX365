@@ -81,6 +81,7 @@ public sealed partial class MainViewModel : ObservableObject
             new("Usuarios",       "", typeof(UsersViewModel)),
             new("Grupos",         "", typeof(GroupsViewModel)),
             new("Buzones",        "", typeof(SharedMailboxViewModel)),
+            new("Reglas buzon", "", typeof(MailboxRulesViewModel)),
             new("Auditoria",      "", typeof(AuditViewModel)),
             new("Onboarding",     "", typeof(OnboardingViewModel)),
             new("Offboarding",    "", typeof(OffboardingViewModel)),

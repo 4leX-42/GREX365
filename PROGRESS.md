@@ -4,7 +4,7 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting**
-- Tests: **105 passing** (xUnit + FluentAssertions)
+- Tests: **120 passing** (xUnit + FluentAssertions)
 - Última actualización: 2026-05-16
 
 > Nota stack: el plantamiento sugiere WinUI 3 como preferente y WPF como fallback aceptable. Se eligió **WPF + wpf-ui** por madurez, ecosistema y compatibilidad con Win10/11. Migración a WinUI 3 queda como posible Fase 7 si surge necesidad.
@@ -34,13 +34,14 @@
 - [x] Disconnect Graph + EXO + botón global "Desconectar todo"
 
 ### Fase 3 — UI moderna (WPF + Fluent) — **DONE**
-Navegación lateral con 11 módulos:
+Navegación lateral con 12 módulos:
 - [x] **Dashboard** — status cards (Graph/EXO/Tenant/Cuenta) + quick actions
 - [x] **Conexion** — cert auth Graph + EXO con feedback en vivo
 - [x] **Salud tenant** — org + counts usuarios/grupos + SKUs consumidos
 - [x] **Usuarios** — buscar, perfil, membresías, enable/disable, quitar licencias, **asignar licencia (SKU picker)**, bulk CSV
 - [x] **Grupos** — buscar, miembros, añadir (texto/CSV), eliminar, exportar CSV, **bulk create M365 desde CSV (forward-fill GroupName)**
 - [x] **Buzones** — lookup + permisos actuales, Regular↔Shared, FullAccess/SendAs/SendOnBehalf, CSV import/export
+- [x] **Reglas buzón** — Out-of-Office (Disabled/Enabled/Scheduled + mensajes interno/externo + rango fechas) y Forwarding (SMTP destino + DeliverToMailboxAndForward)
 - [x] **Auditoria** — identidades (stale members/guests + disabled+licensed) + grupos (sin owner / vacíos), paralelizado 8x
 - [x] **Onboarding** — wizard compuesto (crear user + UsageLocation + asignar SKUs múltiples + añadir a grupos)
 - [x] **Offboarding** — wizard compuesto (deshabilitar + quitar licencias + convertir a shared)
@@ -87,7 +88,6 @@ UX/QoL fase 3:
 
 ### Features útiles pendientes
 - [ ] Auth tradicional/UPN interactivo (MSAL) — alternativa al cert-based actual
-- [ ] Set-OutOfOffice / forwarding rules en buzones
 - [ ] Calendar permission view/set
 - [ ] Mail flow rules viewer
 - [ ] Bulk groups CSV — extender a Distribution Lists vía EXO runner (M365 ya hecho)
@@ -123,6 +123,7 @@ UX/QoL fase 3:
 | SkuInfo | 6 | Math available, ordering, display, fallback guid |
 | BulkGroupRowPreprocessor | 13 | Forward-fill, skip orphans, trim, IsEmail theory |
 | OnboardingValidator | 16 | UPN/password/usage/mail-nickname validation + derive |
+| MailboxRulesValidator | 15 | OOO state transitions, date ranges, forwarding SMTP shape |
 
 ---
 
@@ -152,9 +153,9 @@ Datos persistidos en `%LOCALAPPDATA%\Grex365\`:
 ## Próximo bloque planificado
 
 **Orden propuesto (mayor utilidad / menor riesgo primero):**
-1. Set-OutOfOffice / forwarding — feature de buzón habitual
-2. DL bulk creation via EXO runner — completa el par con M365 bulk ya hecho
-3. License assignment bulk CSV — natural tras single ya shipped
+1. DL bulk creation via EXO runner — completa el par con M365 bulk ya hecho
+2. License assignment bulk CSV — natural tras single ya shipped
+3. Calendar permission view/set — feature de buzón habitual
 4. Charts en TenantHealth — polish visual
 5. Toast notifications (Snackbar wpf-ui) — UX polish
 6. Fase 4 (plugin system MEF) — empezar arquitectura modular
