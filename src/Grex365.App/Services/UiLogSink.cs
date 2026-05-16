@@ -9,9 +9,11 @@ public sealed class UiLogSink : IUiLogSink
 {
     private const int MaxEntries = 5000;
     private readonly Progress<LogEntry> _progress;
+    private readonly INotifier? _notifier;
 
-    public UiLogSink()
+    public UiLogSink(INotifier? notifier = null)
     {
+        _notifier = notifier;
         Entries = new ObservableCollection<LogEntry>();
         _progress = new Progress<LogEntry>(OnEntry);
     }
@@ -38,12 +40,15 @@ public sealed class UiLogSink : IUiLogSink
         {
             case LogSeverity.Error:
                 Log.Error(entry.Exception, "[{Source}] {Message}", entry.Source, entry.Message);
+                _notifier?.Notify(entry.Source, entry.Message, entry.Severity);
                 break;
             case LogSeverity.Warning:
                 Log.Warning("[{Source}] {Message}", entry.Source, entry.Message);
+                _notifier?.Notify(entry.Source, entry.Message, entry.Severity);
                 break;
             case LogSeverity.Ok:
                 Log.Information("[{Source}] OK · {Message}", entry.Source, entry.Message);
+                _notifier?.Notify(entry.Source, entry.Message, entry.Severity);
                 break;
             case LogSeverity.Info:
                 Log.Information("[{Source}] {Message}", entry.Source, entry.Message);

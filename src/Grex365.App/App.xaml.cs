@@ -81,6 +81,8 @@ public partial class App : Application
                 services.AddSingleton<IPreferencesStore>(_ => new JsonPreferencesStore(configDir));
                 services.AddSingleton<ICertConfigStore>(_ => new JsonCertConfigStore(configDir));
 
+                services.AddSingleton<WpfUiNotifier>();
+                services.AddSingleton<INotifier>(sp => sp.GetRequiredService<WpfUiNotifier>());
                 services.AddSingleton<IUiLogSink, UiLogSink>();
 
                 services.AddTransient<ConnectViewModel>();

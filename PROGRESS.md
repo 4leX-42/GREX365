@@ -57,6 +57,7 @@ UX/QoL fase 3:
 - [x] ProgressRing en operaciones largas
 - [x] MessageBox confirm en destructivas (disable, remove licenses, remove member, offboarding, bulk create)
 - [x] Cert picker dialog (lista certs CurrentUser\My)
+- [x] Toast notifications (wpf-ui `SnackbarPresenter`) en Ok/Warn/Error desde `UiLogSink`
 
 ### Fase 4 — Arquitectura modular / plugins (MEF o Prism) — **PENDIENTE**
 - [ ] Definir contrato `IModule` (DisplayName, Icon, ViewModelType, ViewType)
@@ -98,7 +99,6 @@ UX/QoL fase 3:
 - [ ] Terminal PowerShell embebido (`EasyWindowsTerminalControl`)
 - [ ] Theme toggle accesible desde título / dashboard (ahora solo en Settings)
 - [ ] Disable nav items cuando Graph desconectado (gating UX)
-- [ ] Toast notifications (wpf-ui `Snackbar`) en éxitos/fallos largos
 
 ---
 
@@ -151,9 +151,8 @@ Datos persistidos en `%LOCALAPPDATA%\Grex365\`:
 ## Próximo bloque planificado
 
 **Orden propuesto (mayor utilidad / menor riesgo primero):**
-1. Toast notifications (Snackbar wpf-ui) — UX polish (rápido)
-2. Charts en TenantHealth — polish visual
-3. Fase 4 (plugin system MEF) — empezar arquitectura modular
-4. Fase 5 (MSIX packaging + AppInstaller auto-update)
-5. Fase 6 (Application Insights + audit DB)
-6. MSAL interactive auth (alternativa a cert-based)
+1. Charts en TenantHealth — polish visual (pie SKUs)
+2. Fase 4 (plugin system MEF) — empezar arquitectura modular
+3. Fase 5 (MSIX packaging + AppInstaller auto-update)
+4. Fase 6 (Application Insights + audit DB)
+5. MSAL interactive auth (alternativa a cert-based)
