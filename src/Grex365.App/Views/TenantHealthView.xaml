@@ -6,7 +6,7 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
-    <Grid Margin="24">
+    <Grid Margin="32,28,32,16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -15,76 +15,69 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   Text="Salud del tenant"
-                   FontSize="24"
-                   FontWeight="SemiBold"
-                   Margin="0,0,0,4" />
-        <TextBlock Grid.Row="1"
-                   Text="Vista rápida: organización, conteo de usuarios/grupos y consumo de licencias"
-                   Opacity="0.7"
-                   Margin="0,0,0,16" />
+        <TextBlock Grid.Row="0" Text="Salud del tenant" Style="{StaticResource PageTitleText}" />
+        <TextBlock Grid.Row="1" Style="{StaticResource PageSubtitleText}"
+                   Text="Vista rápida: organización, conteo de usuarios/grupos y consumo de licencias" />
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,16">
-            <ui:Button Content="Refrescar"
-                       Appearance="Primary"
-                       Margin="0,0,8,0"
-                       Command="{Binding RefreshCommand}" />
-            <ui:Button Content="Cancelar"
-                       Margin="0,0,8,0"
-                       Command="{Binding CancelCommand}" />
-            <ui:ProgressRing IsIndeterminate="True"
-                             Width="20" Height="20"
-                             Margin="8,0,8,0"
-                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}" />
-            <TextBlock VerticalAlignment="Center"
-                       Text="{Binding StatusMessage}"
-                       Opacity="0.8" />
-        </StackPanel>
+        <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,0,0,16">
+            <StackPanel Orientation="Horizontal">
+                <ui:Button Margin="0,0,8,0"
+                           Appearance="Primary"
+                           Command="{Binding RefreshCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
+                        <TextBlock Text="Refrescar" />
+                    </StackPanel>
+                </ui:Button>
+                <ui:Button Margin="0,0,8,0" Command="{Binding CancelCommand}" Content="Cancelar" />
+                <ui:ProgressRing IsIndeterminate="True" Width="20" Height="20" Margin="8,0,8,0"
+                                 Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}" />
+                <TextBlock VerticalAlignment="Center" Text="{Binding StatusMessage}" Opacity="0.85" />
+            </StackPanel>
+        </Border>
 
-        <UniformGrid Grid.Row="3" Columns="3" Margin="0,0,0,12"
+        <UniformGrid Grid.Row="3" Columns="3" Margin="0,0,0,16"
                      Visibility="{Binding Health, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
-            <Border CornerRadius="8" Padding="12" Margin="0,0,8,0"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <Border Style="{StaticResource MetricCard}">
                 <StackPanel>
-                    <TextBlock Text="Organización" Opacity="0.7" />
-                    <TextBlock Text="{Binding Health.DisplayName, FallbackValue=—}"
+                    <TextBlock Text="Organización" Opacity="0.75" FontSize="12" FontWeight="SemiBold" />
+                    <TextBlock Margin="0,8,0,0"
+                               Text="{Binding Health.DisplayName, FallbackValue=—}"
                                FontSize="18" FontWeight="SemiBold"
                                TextTrimming="CharacterEllipsis" />
-                    <TextBlock Text="{Binding Health.VerifiedDomain, FallbackValue=—}" Opacity="0.7" />
+                    <TextBlock Text="{Binding Health.VerifiedDomain, FallbackValue=—}"
+                               Style="{StaticResource CaptionText}" Margin="0,4,0,0" />
                 </StackPanel>
             </Border>
-            <Border CornerRadius="8" Padding="12" Margin="0,0,8,0"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <Border Style="{StaticResource MetricCard}">
                 <StackPanel>
-                    <TextBlock Text="Usuarios" Opacity="0.7" />
-                    <TextBlock Text="{Binding Health.TotalUsers, FallbackValue=0}"
-                               FontSize="22" FontWeight="Bold" />
+                    <TextBlock Text="Usuarios" Opacity="0.75" FontSize="12" FontWeight="SemiBold" />
+                    <TextBlock Style="{StaticResource MetricValueText}"
+                               Text="{Binding Health.TotalUsers, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource CaptionText}" Text="Total en el directorio" />
                 </StackPanel>
             </Border>
-            <Border CornerRadius="8" Padding="12"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <Border Style="{StaticResource MetricCard}" Margin="0,0,0,12">
                 <StackPanel>
-                    <TextBlock Text="Grupos" Opacity="0.7" />
-                    <TextBlock Text="{Binding Health.TotalGroups, FallbackValue=0}"
-                               FontSize="22" FontWeight="Bold" />
+                    <TextBlock Text="Grupos" Opacity="0.75" FontSize="12" FontWeight="SemiBold" />
+                    <TextBlock Style="{StaticResource MetricValueText}"
+                               Text="{Binding Health.TotalGroups, FallbackValue=0}" />
+                    <TextBlock Style="{StaticResource CaptionText}" Text="M365, DL y seguridad" />
                 </StackPanel>
             </Border>
         </UniformGrid>
 
-        <Border Grid.Row="4" CornerRadius="8"
-                Background="{DynamicResource ControlFillColorDefaultBrush}">
+        <Border Grid.Row="4" Style="{StaticResource Card}" Padding="0">
             <DockPanel>
-                <TextBlock DockPanel.Dock="Top"
-                           Text="Licencias"
-                           FontWeight="SemiBold"
-                           Margin="12,8" />
+                <TextBlock DockPanel.Dock="Top" Text="Licencias"
+                           Style="{StaticResource SectionTitleText}"
+                           Margin="16,14,16,8" />
                 <ListView ItemsSource="{Binding Licenses}"
                           Background="Transparent"
                           BorderThickness="0">
                     <ListView.View>
                         <GridView>
-                            <GridViewColumn Header="SKU"        Width="220" DisplayMemberBinding="{Binding SkuPartNumber}" />
+                            <GridViewColumn Header="SKU"        Width="240" DisplayMemberBinding="{Binding SkuPartNumber}" />
                             <GridViewColumn Header="Consumed"   Width="100" DisplayMemberBinding="{Binding Consumed}" />
                             <GridViewColumn Header="Enabled"    Width="100" DisplayMemberBinding="{Binding Enabled}" />
                             <GridViewColumn Header="Warning"    Width="100" DisplayMemberBinding="{Binding Warning}" />

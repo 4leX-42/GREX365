@@ -75,16 +75,16 @@ public sealed partial class MainViewModel : ObservableObject
 
         NavigationItems = new ObservableCollection<NavigationItem>
         {
-            new("Dashboard",      "", typeof(DashboardViewModel)),
-            new("Conexion",       "", typeof(ConnectViewModel)),
-            new("Salud tenant",   "", typeof(TenantHealthViewModel)),
-            new("Usuarios",       "", typeof(UsersViewModel)),
-            new("Grupos",         "", typeof(GroupsViewModel)),
-            new("Buzones",        "", typeof(SharedMailboxViewModel)),
-            new("Auditoria",      "", typeof(AuditViewModel)),
-            new("Offboarding",    "", typeof(OffboardingViewModel)),
-            new("Cert Wizard",    "", typeof(CertWizardViewModel)),
-            new("DNS check",      "", typeof(DomainCheckViewModel)),
+            new("Dashboard",      "", typeof(DashboardViewModel)),
+            new("Conexion",       "", typeof(ConnectViewModel)),
+            new("Salud tenant",   "", typeof(TenantHealthViewModel)),
+            new("Usuarios",       "", typeof(UsersViewModel)),
+            new("Grupos",         "", typeof(GroupsViewModel)),
+            new("Buzones",        "", typeof(SharedMailboxViewModel)),
+            new("Auditoria",      "", typeof(AuditViewModel)),
+            new("Offboarding",    "", typeof(OffboardingViewModel)),
+            new("Cert Wizard",    "", typeof(CertWizardViewModel)),
+            new("DNS check",      "", typeof(DomainCheckViewModel)),
         };
 
         SelectedNavigation = LoadLastNavigation() ?? NavigationItems[0];
@@ -137,7 +137,6 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch
         {
-            // ignore persistence failures
         }
     }
 

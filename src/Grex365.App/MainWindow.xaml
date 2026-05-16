@@ -7,9 +7,9 @@
         xmlns:vm="clr-namespace:Grex365.App.ViewModels"
         xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
         mc:Ignorable="d"
-        Title="GREX365 · Microsoft 365 toolkit"
-        Height="800" Width="1280"
-        MinHeight="600" MinWidth="1000"
+        Title="GREX365"
+        Height="820" Width="1320"
+        MinHeight="640" MinWidth="1100"
         WindowBackdropType="Mica"
         ExtendsContentIntoTitleBar="True"
         WindowStartupLocation="CenterScreen">
@@ -21,45 +21,66 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="GREX365" />
+        <ui:TitleBar Grid.Row="0" Title="GREX365 · Microsoft 365 toolkit" />
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="220" />
+                <ColumnDefinition Width="240" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <Border Grid.Column="0" Style="{StaticResource SidebarBorder}">
                 <DockPanel>
-                    <StackPanel DockPanel.Dock="Bottom" Margin="12">
-                        <ui:Button Content="Settings"
+                    <Border DockPanel.Dock="Top" Padding="16,18,16,12">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text=""
+                                       FontFamily="{StaticResource IconFontFamily}"
+                                       FontSize="22"
+                                       Margin="0,0,10,0"
+                                       Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="GREX365" FontSize="16" FontWeight="SemiBold" />
+                                <TextBlock Text="v0.2.0-alpha" FontSize="10" Opacity="0.55" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border DockPanel.Dock="Bottom" Padding="10,8,10,12">
+                        <ui:Button Content="Ajustes"
+                                   Icon=""
                                    HorizontalAlignment="Stretch"
                                    Command="{Binding OpenSettingsCommand}" />
-                    </StackPanel>
+                    </Border>
+
+                    <Border DockPanel.Dock="Top"
+                            Height="1"
+                            Background="{DynamicResource ControlStrokeColorDefaultBrush}"
+                            Margin="0,0,0,6" />
 
                     <ListBox ItemsSource="{Binding NavigationItems}"
                              SelectedItem="{Binding SelectedNavigation}"
                              Background="Transparent"
                              BorderThickness="0"
-                             Padding="8">
+                             ItemContainerStyle="{StaticResource NavListBoxItem}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:NavigationItem}">
-                                <Grid Margin="4,4">
+                                <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="28" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0"
                                                Text="{Binding Glyph}"
-                                               FontFamily="Segoe Fluent Icons,Segoe MDL2 Assets"
+                                               FontFamily="{StaticResource IconFontFamily}"
                                                FontSize="16"
-                                               Margin="0,0,8,0"
-                                               VerticalAlignment="Center" />
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Center" />
                                     <TextBlock Grid.Column="1"
                                                Text="{Binding Title}"
                                                VerticalAlignment="Center"
-                                               FontSize="14" />
+                                               FontSize="13" />
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -69,72 +90,98 @@
 
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="3*" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
+                    <RowDefinition Height="3*" MinHeight="280" />
+                    <RowDefinition Height="6" />
+                    <RowDefinition Height="*" MinHeight="120" />
                 </Grid.RowDefinitions>
 
                 <ContentControl Grid.Row="0"
                                 Content="{Binding CurrentPage}" />
 
                 <GridSplitter Grid.Row="1"
-                              Height="4"
+                              Height="6"
                               HorizontalAlignment="Stretch"
-                              Background="Transparent" />
+                              Background="Transparent"
+                              ShowsPreview="True" />
 
                 <Border Grid.Row="2"
-                        Margin="24,0,24,24"
-                        CornerRadius="8"
-                        Background="{DynamicResource ControlFillColorDefaultBrush}">
+                        Margin="24,0,24,16"
+                        Style="{StaticResource Card}"
+                        Padding="0">
                     <DockPanel>
-                        <Grid DockPanel.Dock="Top" Margin="12,8">
+                        <Grid DockPanel.Dock="Top" Margin="16,12,16,10">
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                <TextBlock Text="Log"
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text=""
+                                           FontFamily="{StaticResource IconFontFamily}"
+                                           FontSize="14"
+                                           Margin="0,0,8,0"
+                                           Opacity="0.85"
+                                           VerticalAlignment="Center" />
+                                <TextBlock Text="Log de actividad"
                                            FontWeight="SemiBold"
-                                           VerticalAlignment="Center"
-                                           Margin="0,0,16,0" />
-                                <CheckBox Content="Info" IsChecked="{Binding ShowInfo}" Margin="0,0,8,0" />
-                                <CheckBox Content="OK"   IsChecked="{Binding ShowOk}"   Margin="0,0,8,0" />
-                                <CheckBox Content="Warn" IsChecked="{Binding ShowWarn}" Margin="0,0,8,0" />
-                                <CheckBox Content="Err"  IsChecked="{Binding ShowError}" Margin="0,0,8,0" />
+                                           FontSize="14"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        Margin="20,0,0,0"
+                                        VerticalAlignment="Center">
+                                <CheckBox Content="Info" IsChecked="{Binding ShowInfo}" Margin="0,0,10,0" />
+                                <CheckBox Content="OK"   IsChecked="{Binding ShowOk}"   Margin="0,0,10,0" />
+                                <CheckBox Content="Warn" IsChecked="{Binding ShowWarn}" Margin="0,0,10,0" />
+                                <CheckBox Content="Err"  IsChecked="{Binding ShowError}" Margin="0,0,10,0" />
                                 <CheckBox Content="Dbg"  IsChecked="{Binding ShowDebug}" />
                             </StackPanel>
-                            <ui:Button Grid.Column="1"
+                            <ui:Button Grid.Column="2"
                                        Content="Limpiar"
+                                       Icon=""
                                        Command="{Binding ClearLogCommand}" />
                         </Grid>
                         <ListBox ItemsSource="{Binding LogView}"
                                  Background="Transparent"
                                  BorderThickness="0"
+                                 Padding="8,0,8,8"
                                  VirtualizingPanel.IsVirtualizing="True"
                                  ScrollViewer.VerticalScrollBarVisibility="Auto">
                             <ListBox.ItemTemplate>
                                 <DataTemplate DataType="{x:Type models:LogEntry}">
-                                    <Grid Margin="8,2">
+                                    <Grid Margin="8,3">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="140" />
-                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="150" />
+                                            <ColumnDefinition Width="64" />
                                             <ColumnDefinition Width="120" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0"
                                                    Text="{Binding Timestamp, StringFormat='yyyy-MM-dd HH:mm:ss'}"
-                                                   Opacity="0.6"
-                                                   FontFamily="Cascadia Mono,Consolas" />
+                                                   Opacity="0.55"
+                                                   FontFamily="Cascadia Mono,Consolas"
+                                                   FontSize="11" />
+                                        <Border Grid.Column="1"
+                                                CornerRadius="3"
+                                                Padding="6,1"
+                                                HorizontalAlignment="Left"
+                                                Background="{Binding Severity, Converter={StaticResource SeverityToBrushConverter}}"
+                                                Opacity="0.18" />
                                         <TextBlock Grid.Column="1"
                                                    Text="{Binding Severity}"
                                                    FontWeight="SemiBold"
+                                                   FontSize="11"
+                                                   Margin="6,1,0,0"
                                                    Foreground="{Binding Severity, Converter={StaticResource SeverityToBrushConverter}}" />
                                         <TextBlock Grid.Column="2"
                                                    Text="{Binding Source}"
-                                                   Opacity="0.8" />
+                                                   Opacity="0.8"
+                                                   FontSize="12" />
                                         <TextBlock Grid.Column="3"
                                                    Text="{Binding Message}"
-                                                   TextWrapping="Wrap" />
+                                                   TextWrapping="Wrap"
+                                                   FontSize="12" />
                                     </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
@@ -144,42 +191,59 @@
             </Grid>
         </Grid>
 
-        <StatusBar Grid.Row="2">
-            <StatusBarItem>
-                <TextBlock Text="GREX365 · v0.1.0-alpha" Opacity="0.6" />
-            </StatusBarItem>
-            <Separator />
-            <StatusBarItem>
-                <StackPanel Orientation="Horizontal">
-                    <Ellipse Width="8" Height="8" Margin="0,0,4,0"
+        <Border Grid.Row="2"
+                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                BorderThickness="0,1,0,0"
+                Background="{DynamicResource SolidBackgroundFillColorSecondaryBrush}">
+            <Grid Margin="16,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                    <Ellipse Style="{StaticResource StatusDot}"
                              Fill="{Binding GraphConnected, Converter={StaticResource BoolToBrushConverter}}" />
-                    <TextBlock Text="Graph" Opacity="0.7" />
+                    <TextBlock Text="Graph" FontSize="12" Opacity="0.85" VerticalAlignment="Center" />
                 </StackPanel>
-            </StatusBarItem>
-            <StatusBarItem>
-                <StackPanel Orientation="Horizontal">
-                    <Ellipse Width="8" Height="8" Margin="0,0,4,0"
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                    <Ellipse Style="{StaticResource StatusDot}"
                              Fill="{Binding ExchangeConnected, Converter={StaticResource BoolToBrushConverter}}" />
-                    <TextBlock Text="EXO" Opacity="0.7" />
+                    <TextBlock Text="Exchange Online" FontSize="12" Opacity="0.85" VerticalAlignment="Center" />
                 </StackPanel>
-            </StatusBarItem>
-            <Separator />
-            <StatusBarItem>
-                <TextBlock>
+
+                <Rectangle Grid.Column="2" Width="1" Margin="0,4,16,4"
+                           Fill="{DynamicResource ControlStrokeColorDefaultBrush}" />
+
+                <TextBlock Grid.Column="3" VerticalAlignment="Center" Margin="0,0,16,0" FontSize="12">
                     <Run Text="Tenant: " Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                     <Run Text="{Binding TenantDomain, FallbackValue=—}" />
                 </TextBlock>
-            </StatusBarItem>
-            <StatusBarItem>
-                <TextBlock>
+
+                <TextBlock Grid.Column="4" VerticalAlignment="Center" Margin="0,0,16,0" FontSize="12">
                     <Run Text="Cuenta: " Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                     <Run Text="{Binding Account, FallbackValue=—}" />
                 </TextBlock>
-            </StatusBarItem>
-            <StatusBarItem HorizontalAlignment="Right">
-                <ui:Button Content="Desconectar todo"
+
+                <TextBlock Grid.Column="5"
+                           Text="GREX365 · v0.2.0-alpha"
+                           Opacity="0.4"
+                           FontSize="11"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           Margin="0,0,16,0" />
+
+                <ui:Button Grid.Column="6"
+                           Content="Desconectar"
+                           Icon=""
                            Command="{Binding DisconnectAllCommand}" />
-            </StatusBarItem>
-        </StatusBar>
+            </Grid>
+        </Border>
     </Grid>
 </ui:FluentWindow>

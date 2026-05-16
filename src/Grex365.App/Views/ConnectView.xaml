@@ -6,87 +6,112 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
-    <Grid Margin="24">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <ScrollViewer Style="{StaticResource PageRoot}">
+        <StackPanel MaxWidth="900" HorizontalAlignment="Stretch">
+            <TextBlock Text="Conexión a Microsoft 365" Style="{StaticResource PageTitleText}" />
+            <TextBlock Text="Autenticación por certificado contra Microsoft Graph y Exchange Online"
+                       Style="{StaticResource PageSubtitleText}" />
 
-        <TextBlock Grid.Row="0"
-                   Text="Conexión a Microsoft 365"
-                   FontSize="24"
-                   FontWeight="SemiBold"
-                   Margin="0,0,0,16" />
-
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,16">
-            <Border CornerRadius="8" Padding="12,8" Margin="0,0,12,0"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}">
-                <StackPanel Orientation="Horizontal">
-                    <Ellipse Width="10" Height="10" Margin="0,0,8,0"
-                             Fill="{Binding GraphConnected, Converter={StaticResource BoolToBrushConverter}}" />
-                    <TextBlock Text="Microsoft Graph" FontWeight="SemiBold" />
-                    <TextBlock Margin="8,0,0,0"
-                               Text="{Binding GraphConnected, Converter={StaticResource BoolToOnOffConverter}}" />
-                </StackPanel>
-            </Border>
-
-            <Border CornerRadius="8" Padding="12,8"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}">
-                <StackPanel Orientation="Horizontal">
-                    <Ellipse Width="10" Height="10" Margin="0,0,8,0"
-                             Fill="{Binding ExchangeConnected, Converter={StaticResource BoolToBrushConverter}}" />
-                    <TextBlock Text="Exchange Online" FontWeight="SemiBold" />
-                    <TextBlock Margin="8,0,0,0"
-                               Text="{Binding ExchangeConnected, Converter={StaticResource BoolToOnOffConverter}}" />
-                </StackPanel>
-            </Border>
-        </StackPanel>
-
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,16">
-            <ui:Button Content="Connect"
-                       Appearance="Primary"
-                       Margin="0,0,8,0"
-                       Command="{Binding ConnectCommand}" />
-            <ui:Button Content="Cancel"
-                       Margin="0,0,8,0"
-                       Command="{Binding CancelCommand}" />
-            <ui:Button Content="Disconnect"
-                       Command="{Binding DisconnectCommand}" />
-            <TextBlock Margin="16,0,0,0"
-                       VerticalAlignment="Center"
-                       Text="{Binding StatusMessage}"
-                       Opacity="0.8" />
-        </StackPanel>
-
-        <Border Grid.Row="3"
-                CornerRadius="8"
-                Padding="0"
-                Background="{DynamicResource ControlFillColorDefaultBrush}">
-            <DockPanel>
-                <TextBlock DockPanel.Dock="Top"
-                           Text="Tenant"
-                           FontWeight="SemiBold"
-                           Margin="12,8" />
-                <Grid Margin="12,0,12,12">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Tenant ID" Opacity="0.7" />
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding TenantId, FallbackValue=—}" />
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Dominio" Opacity="0.7" />
-                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding TenantDomain, FallbackValue=—}" />
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Cuenta" Opacity="0.7" />
-                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Account, FallbackValue=—}" />
+
+                    <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text=""
+                                       FontFamily="{StaticResource IconFontFamily}"
+                                       FontSize="16"
+                                       Margin="0,0,8,0"
+                                       Foreground="{Binding GraphConnected, Converter={StaticResource BoolToBrushConverter}}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Microsoft Graph" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Style="{StaticResource StatusDot}"
+                                     Fill="{Binding GraphConnected, Converter={StaticResource BoolToBrushConverter}}" />
+                            <TextBlock Text="{Binding GraphConnected, Converter={StaticResource BoolToOnOffConverter}}"
+                                       VerticalAlignment="Center" Opacity="0.85" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text=""
+                                       FontFamily="{StaticResource IconFontFamily}"
+                                       FontSize="16"
+                                       Margin="0,0,8,0"
+                                       Foreground="{Binding ExchangeConnected, Converter={StaticResource BoolToBrushConverter}}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Exchange Online" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Style="{StaticResource StatusDot}"
+                                     Fill="{Binding ExchangeConnected, Converter={StaticResource BoolToBrushConverter}}" />
+                            <TextBlock Text="{Binding ExchangeConnected, Converter={StaticResource BoolToOnOffConverter}}"
+                                       VerticalAlignment="Center" Opacity="0.85" />
+                        </StackPanel>
+                    </StackPanel>
                 </Grid>
-            </DockPanel>
-        </Border>
-    </Grid>
+            </Border>
+
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Acciones" Style="{StaticResource SectionTitleText}" />
+                    <StackPanel Orientation="Horizontal">
+                        <ui:Button Margin="0,0,8,0"
+                                   Appearance="Primary"
+                                   Command="{Binding ConnectCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
+                                <TextBlock Text="Conectar" />
+                            </StackPanel>
+                        </ui:Button>
+                        <ui:Button Margin="0,0,8,0" Command="{Binding CancelCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
+                                <TextBlock Text="Cancelar" />
+                            </StackPanel>
+                        </ui:Button>
+                        <ui:Button Margin="0,0,8,0" Command="{Binding DisconnectCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
+                                <TextBlock Text="Desconectar" />
+                            </StackPanel>
+                        </ui:Button>
+                        <TextBlock Margin="16,0,0,0"
+                                   VerticalAlignment="Center"
+                                   Text="{Binding StatusMessage}"
+                                   Opacity="0.85"
+                                   FontSize="13" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Tenant" Style="{StaticResource SectionTitleText}" />
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Tenant ID" Opacity="0.7" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource MonoText}" Text="{Binding TenantId, FallbackValue=—}" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Dominio" Opacity="0.7" Margin="0,6,0,0" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding TenantDomain, FallbackValue=—}" Margin="0,6,0,0" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Cuenta" Opacity="0.7" Margin="0,6,0,0" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Account, FallbackValue=—}" Margin="0,6,0,0" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

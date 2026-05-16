@@ -5,103 +5,134 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              mc:Ignorable="d">
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid Margin="24">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+    <ScrollViewer Style="{StaticResource PageRoot}">
+        <StackPanel MaxWidth="1100" HorizontalAlignment="Stretch">
+            <TextBlock Text="Dashboard" Style="{StaticResource PageTitleText}" />
+            <TextBlock Text="Estado de la conexión y resumen del tenant"
+                       Style="{StaticResource PageSubtitleText}" />
 
-            <TextBlock Grid.Row="0"
-                       Text="Dashboard"
-                       FontSize="28"
-                       FontWeight="SemiBold"
-                       Margin="0,0,0,4" />
-            <TextBlock Grid.Row="1"
-                       Text="Estado de la conexión y resumen del tenant"
-                       Opacity="0.7"
-                       Margin="0,0,0,16" />
+            <Border Style="{StaticResource Card}" Padding="20" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="Acciones rápidas" Style="{StaticResource SectionTitleText}" />
+                    <WrapPanel Orientation="Horizontal">
+                        <ui:Button Margin="0,0,8,8"
+                                   Appearance="Primary"
+                                   Command="{Binding GoToCommand}"
+                                   CommandParameter="Conexion">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
+                                <TextBlock Text="Conectar" />
+                            </StackPanel>
+                        </ui:Button>
+                        <ui:Button Margin="0,0,8,8"
+                                   Command="{Binding GoToCommand}"
+                                   CommandParameter="Salud tenant">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
+                                <TextBlock Text="Salud tenant" />
+                            </StackPanel>
+                        </ui:Button>
+                        <ui:Button Margin="0,0,8,8"
+                                   Command="{Binding GoToCommand}"
+                                   CommandParameter="Usuarios">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
+                                <TextBlock Text="Buscar usuario" />
+                            </StackPanel>
+                        </ui:Button>
+                        <ui:Button Margin="0,0,8,8"
+                                   Command="{Binding GoToCommand}"
+                                   CommandParameter="Auditoria">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
+                                <TextBlock Text="Auditoría" />
+                            </StackPanel>
+                        </ui:Button>
+                        <ui:Button Margin="0,0,8,8"
+                                   Command="{Binding GoToCommand}"
+                                   CommandParameter="Offboarding">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
+                                <TextBlock Text="Offboarding" />
+                            </StackPanel>
+                        </ui:Button>
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
 
-            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,16">
-                <ui:Button Content="Conectar"
-                           Appearance="Primary"
-                           Margin="0,0,8,0"
-                           Command="{Binding GoToCommand}"
-                           CommandParameter="Conexion" />
-                <ui:Button Content="Ver salud tenant"
-                           Margin="0,0,8,0"
-                           Command="{Binding GoToCommand}"
-                           CommandParameter="Salud tenant" />
-                <ui:Button Content="Buscar usuario"
-                           Margin="0,0,8,0"
-                           Command="{Binding GoToCommand}"
-                           CommandParameter="Usuarios" />
-                <ui:Button Content="Auditoria"
-                           Command="{Binding GoToCommand}"
-                           CommandParameter="Auditoria" />
-            </StackPanel>
+            <TextBlock Text="Estado" Style="{StaticResource SectionTitleText}" />
 
-            <UniformGrid Grid.Row="3" Columns="3" Rows="2">
-                <Border CornerRadius="8" Padding="16" Margin="0,0,12,12"
-                        Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <UniformGrid Columns="2" Rows="2">
+                <Border Style="{StaticResource MetricCard}">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="12" Height="12" Margin="0,0,8,0"
-                                     Fill="{Binding GraphConnected, Converter={StaticResource BoolToBrushConverter}}" />
-                            <TextBlock Text="Microsoft Graph" FontWeight="SemiBold" FontSize="16" />
+                            <TextBlock Text=""
+                                       FontFamily="{StaticResource IconFontFamily}"
+                                       FontSize="14"
+                                       Margin="0,0,8,0"
+                                       Foreground="{Binding GraphConnected, Converter={StaticResource BoolToBrushConverter}}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Microsoft Graph"
+                                       FontWeight="SemiBold"
+                                       FontSize="13"
+                                       VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock Margin="0,8,0,0"
-                                   Text="{Binding GraphConnected, Converter={StaticResource BoolToOnOffConverter}}"
-                                   FontSize="24"
-                                   FontWeight="Bold" />
+                        <TextBlock Style="{StaticResource MetricValueText}"
+                                   Text="{Binding GraphConnected, Converter={StaticResource BoolToOnOffConverter}}" />
+                        <TextBlock Style="{StaticResource CaptionText}" Text="Conexión SDK + REST" Margin="0,2,0,0" />
                     </StackPanel>
                 </Border>
 
-                <Border CornerRadius="8" Padding="16" Margin="0,0,12,12"
-                        Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <Border Style="{StaticResource MetricCard}">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="12" Height="12" Margin="0,0,8,0"
-                                     Fill="{Binding ExchangeConnected, Converter={StaticResource BoolToBrushConverter}}" />
-                            <TextBlock Text="Exchange Online" FontWeight="SemiBold" FontSize="16" />
+                            <TextBlock Text=""
+                                       FontFamily="{StaticResource IconFontFamily}"
+                                       FontSize="14"
+                                       Margin="0,0,8,0"
+                                       Foreground="{Binding ExchangeConnected, Converter={StaticResource BoolToBrushConverter}}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Exchange Online"
+                                       FontWeight="SemiBold"
+                                       FontSize="13"
+                                       VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock Margin="0,8,0,0"
-                                   Text="{Binding ExchangeConnected, Converter={StaticResource BoolToOnOffConverter}}"
-                                   FontSize="24"
-                                   FontWeight="Bold" />
+                        <TextBlock Style="{StaticResource MetricValueText}"
+                                   Text="{Binding ExchangeConnected, Converter={StaticResource BoolToOnOffConverter}}" />
+                        <TextBlock Style="{StaticResource CaptionText}" Text="Cmdlets PowerShell remoto" Margin="0,2,0,0" />
                     </StackPanel>
                 </Border>
 
-                <Border CornerRadius="8" Padding="16" Margin="0,0,0,12"
-                        Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <Border Style="{StaticResource MetricCard}">
                     <StackPanel>
-                        <TextBlock Text="Tenant" FontWeight="SemiBold" FontSize="16" Opacity="0.85" />
+                        <TextBlock Text="Tenant" FontWeight="SemiBold" FontSize="13" Opacity="0.85" />
                         <TextBlock Margin="0,8,0,0"
-                                   Text="{Binding TenantDomain, FallbackValue=—}"
-                                   FontSize="18"
+                                   Text="{Binding TenantDomain, FallbackValue=Sin conexión}"
+                                   FontSize="20"
                                    FontWeight="Bold"
                                    TextTrimming="CharacterEllipsis" />
-                        <TextBlock Text="{Binding TenantId, FallbackValue=—}"
-                                   Opacity="0.6"
-                                   FontSize="11"
-                                   FontFamily="Cascadia Mono,Consolas"
+                        <TextBlock Style="{StaticResource MonoText}"
+                                   Text="{Binding TenantId, FallbackValue=—}"
+                                   Opacity="0.55"
+                                   Margin="0,2,0,0"
                                    TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                 </Border>
 
-                <Border CornerRadius="8" Padding="16" Margin="0,0,12,0"
-                        Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <Border Style="{StaticResource MetricCard}" Margin="0,0,0,12">
                     <StackPanel>
-                        <TextBlock Text="Cuenta" FontWeight="SemiBold" FontSize="16" Opacity="0.85" />
+                        <TextBlock Text="Cuenta" FontWeight="SemiBold" FontSize="13" Opacity="0.85" />
                         <TextBlock Margin="0,8,0,0"
-                                   Text="{Binding Account, FallbackValue=—}"
-                                   FontSize="14"
-                                   TextTrimming="CharacterEllipsis" />
+                                   Text="{Binding Account, FallbackValue=Sin conexión}"
+                                   FontSize="15"
+                                   TextTrimming="CharacterEllipsis"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Style="{StaticResource CaptionText}"
+                                   Text="App principal autenticada"
+                                   Margin="0,4,0,0" />
                     </StackPanel>
                 </Border>
             </UniformGrid>
-        </Grid>
+        </StackPanel>
     </ScrollViewer>
 </UserControl>
