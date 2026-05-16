@@ -16,6 +16,9 @@ public sealed partial class TenantHealthViewModel : ObservableObject
     [ObservableProperty] private TenantHealth? _health;
     [ObservableProperty] private string _statusMessage = "Pulsa 'Refrescar' para cargar.";
     [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private int _totalConsumed;
+    [ObservableProperty] private int _totalEnabled;
+    [ObservableProperty] private double _overallPercent;
 
     public ObservableCollection<LicenseSummary> Licenses { get; } = new();
 
@@ -39,11 +42,14 @@ public sealed partial class TenantHealthViewModel : ObservableObject
             var h = await _service.GetAsync(_log.Progress, _cts.Token).ConfigureAwait(true);
             Health = h;
             Licenses.Clear();
-            foreach (var l in h.Licenses)
+            foreach (var l in h.Licenses.OrderByDescending(x => x.Consumed))
             {
                 Licenses.Add(l);
             }
-            StatusMessage = $"{h.TotalUsers} usuarios · {h.TotalGroups} grupos · {h.Licenses.Count} SKUs";
+            TotalConsumed = h.Licenses.Sum(l => l.Consumed);
+            TotalEnabled = h.Licenses.Sum(l => l.Enabled);
+            OverallPercent = TotalEnabled > 0 ? (TotalConsumed * 100.0 / TotalEnabled) : 0;
+            StatusMessage = $"{h.TotalUsers} usuarios · {h.TotalGroups} grupos · {h.Licenses.Count} SKUs · {TotalConsumed}/{TotalEnabled} asientos consumidos";
         }
         catch (OperationCanceledException)
         {

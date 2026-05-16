@@ -69,23 +69,69 @@
 
         <Border Grid.Row="4" Style="{StaticResource Card}" Padding="0">
             <DockPanel>
-                <TextBlock DockPanel.Dock="Top" Text="Licencias"
-                           Style="{StaticResource SectionTitleText}"
-                           Margin="16,14,16,8" />
-                <ListView ItemsSource="{Binding Licenses}"
-                          Background="Transparent"
-                          BorderThickness="0">
-                    <ListView.View>
-                        <GridView>
-                            <GridViewColumn Header="SKU"        Width="240" DisplayMemberBinding="{Binding SkuPartNumber}" />
-                            <GridViewColumn Header="Consumed"   Width="100" DisplayMemberBinding="{Binding Consumed}" />
-                            <GridViewColumn Header="Enabled"    Width="100" DisplayMemberBinding="{Binding Enabled}" />
-                            <GridViewColumn Header="Warning"    Width="100" DisplayMemberBinding="{Binding Warning}" />
-                            <GridViewColumn Header="Suspended"  Width="100" DisplayMemberBinding="{Binding Suspended}" />
-                            <GridViewColumn Header="SKU Id"     Width="320" DisplayMemberBinding="{Binding SkuId}" />
-                        </GridView>
-                    </ListView.View>
-                </ListView>
+                <Grid DockPanel.Dock="Top" Margin="16,14,16,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Licencias"
+                               Style="{StaticResource SectionTitleText}" Margin="0" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                                Visibility="{Binding Health, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
+                        <TextBlock Text="Total: " Opacity="0.7" />
+                        <TextBlock>
+                            <Run Text="{Binding TotalConsumed, Mode=OneWay}" FontWeight="SemiBold" />
+                            <Run Text=" / " />
+                            <Run Text="{Binding TotalEnabled, Mode=OneWay}" />
+                            <Run Text="  · " Foreground="{DynamicResource TextFillColorDisabledBrush}" />
+                        </TextBlock>
+                        <TextBlock Text="{Binding OverallPercent, StringFormat={}{0:F1}%}" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Grid>
+                <ItemsControl ItemsSource="{Binding Licenses}"
+                              Background="Transparent"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              Margin="16,0,16,12">
+                    <ItemsControl.Template>
+                        <ControlTemplate>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ItemsPresenter />
+                            </ScrollViewer>
+                        </ControlTemplate>
+                    </ItemsControl.Template>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type models:LicenseSummary}">
+                            <Grid Margin="0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="260" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="140" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding SkuPartNumber}"
+                                           FontFamily="Cascadia Mono, Consolas"
+                                           FontSize="12"
+                                           VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis" />
+                                <ProgressBar Grid.Column="1"
+                                             Minimum="0"
+                                             Maximum="{Binding Enabled}"
+                                             Value="{Binding Consumed, Mode=OneWay}"
+                                             Height="14"
+                                             VerticalAlignment="Center"
+                                             Margin="0,0,12,0" />
+                                <TextBlock Grid.Column="2"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Right"
+                                           FontSize="12">
+                                    <Run Text="{Binding Consumed, Mode=OneWay}" FontWeight="SemiBold" />
+                                    <Run Text=" / " />
+                                    <Run Text="{Binding Enabled, Mode=OneWay}" />
+                                </TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </DockPanel>
         </Border>
     </Grid>

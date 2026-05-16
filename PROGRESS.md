@@ -151,8 +151,8 @@ Datos persistidos en `%LOCALAPPDATA%\Grex365\`:
 ## Próximo bloque planificado
 
 **Orden propuesto (mayor utilidad / menor riesgo primero):**
-1. Charts en TenantHealth — polish visual (pie SKUs)
-2. Fase 4 (plugin system MEF) — empezar arquitectura modular
-3. Fase 5 (MSIX packaging + AppInstaller auto-update)
-4. Fase 6 (Application Insights + audit DB)
-5. MSAL interactive auth (alternativa a cert-based)
+1. Fase 4 (plugin system MEF) — empezar arquitectura modular
+2. Fase 5 (MSIX packaging + AppInstaller auto-update)
+3. Fase 6 (Application Insights + audit DB)
+4. MSAL interactive auth (alternativa a cert-based)
+5. Auto-update App Registration permisos via Graph (legacy CertWizard hace 29 pasos)
