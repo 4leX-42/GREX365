@@ -13,4 +13,10 @@ public interface IGroupsService
         IReadOnlyCollection<string> userIdentifiers,
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default);
+
+    Task RemoveMemberAsync(
+        string groupId,
+        string memberId,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
 }

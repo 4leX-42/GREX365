@@ -102,13 +102,18 @@
                                    FontWeight="SemiBold"
                                    FontSize="16"
                                    VerticalAlignment="Center" />
-                        <ui:Button Grid.Column="1"
-                                   Content="Exportar miembros..."
-                                   Command="{Binding ExportMembersCommand}" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <ui:Button Content="Eliminar seleccionado"
+                                       Margin="0,0,8,0"
+                                       Command="{Binding RemoveSelectedMemberCommand}" />
+                            <ui:Button Content="Exportar miembros..."
+                                       Command="{Binding ExportMembersCommand}" />
+                        </StackPanel>
                     </Grid>
 
                     <ListBox Grid.Row="1"
                              ItemsSource="{Binding Members}"
+                             SelectedItem="{Binding SelectedMember}"
                              Background="Transparent"
                              BorderThickness="0"
                              VirtualizingPanel.IsVirtualizing="True">

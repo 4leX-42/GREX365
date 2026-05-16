@@ -19,6 +19,7 @@ public sealed partial class GroupsViewModel : ObservableObject
 
     [ObservableProperty] private string _searchQuery = string.Empty;
     [ObservableProperty] private GroupSummary? _selectedGroup;
+    [ObservableProperty] private GroupMember? _selectedMember;
     [ObservableProperty] private string _newMembersText = string.Empty;
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private bool _isBusy;
@@ -194,6 +195,41 @@ public sealed partial class GroupsViewModel : ObservableObject
         {
             StatusMessage = "Error: " + ex.Message;
             _log.Progress.Report(LogEntry.Error("Groups", ex.Message, ex));
+            DisposeToken();
+        }
+    }
+
+    [RelayCommand]
+    private async Task RemoveSelectedMemberAsync()
+    {
+        if (SelectedGroup is null || SelectedMember is null)
+        {
+            StatusMessage = "Selecciona un miembro.";
+            return;
+        }
+
+        EnsureToken();
+        IsBusy = true;
+        CancelCommand.NotifyCanExecuteChanged();
+        var target = SelectedMember;
+        StatusMessage = $"Eliminando {target.DisplayName ?? target.Id}...";
+        try
+        {
+            await _groups.RemoveMemberAsync(SelectedGroup.Id, target.Id, _log.Progress, _cts!.Token).ConfigureAwait(true);
+            Members.Remove(target);
+            StatusMessage = $"Eliminado: {target.DisplayName ?? target.Id}";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Groups", ex.Message, ex));
+        }
+        finally
+        {
             DisposeToken();
         }
     }

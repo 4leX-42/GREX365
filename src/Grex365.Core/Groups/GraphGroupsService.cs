@@ -150,6 +150,27 @@ public sealed class GraphGroupsService : IGroupsService
         return results;
     }
 
+    public async Task RemoveMemberAsync(
+        string groupId,
+        string memberId,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var client = RequireClient();
+        try
+        {
+            await client.Groups[groupId].Members[memberId].Ref
+                .DeleteAsync(cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+            progress?.Report(LogEntry.Ok("Groups", $"Eliminado del grupo: {memberId}"));
+        }
+        catch (Exception ex)
+        {
+            progress?.Report(LogEntry.Error("Groups", $"Error al eliminar {memberId}: {ex.Message}", ex));
+            throw;
+        }
+    }
+
     private static async Task<string?> ResolveUserIdAsync(GraphServiceClient client, string input, CancellationToken cancellationToken)
     {
         if (Guid.TryParse(input, out _))

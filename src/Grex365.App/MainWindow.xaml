@@ -148,6 +148,34 @@
             <StatusBarItem>
                 <TextBlock Text="GREX365 · v0.1.0-alpha" Opacity="0.6" />
             </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="8" Height="8" Margin="0,0,4,0"
+                             Fill="{Binding GraphConnected, Converter={StaticResource BoolToBrushConverter}}" />
+                    <TextBlock Text="Graph" Opacity="0.7" />
+                </StackPanel>
+            </StatusBarItem>
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="8" Height="8" Margin="0,0,4,0"
+                             Fill="{Binding ExchangeConnected, Converter={StaticResource BoolToBrushConverter}}" />
+                    <TextBlock Text="EXO" Opacity="0.7" />
+                </StackPanel>
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <TextBlock>
+                    <Run Text="Tenant: " Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <Run Text="{Binding TenantDomain, FallbackValue=—}" />
+                </TextBlock>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock>
+                    <Run Text="Cuenta: " Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <Run Text="{Binding Account, FallbackValue=—}" />
+                </TextBlock>
+            </StatusBarItem>
         </StatusBar>
     </Grid>
 </ui:FluentWindow>

@@ -1,11 +1,11 @@
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Grex365.App.Services;
+using Grex365.Core.Abstractions;
 using Grex365.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -29,9 +29,16 @@ public sealed partial class MainViewModel : ObservableObject
 {
     private readonly IServiceProvider _services;
     private readonly IUiLogSink _uiLog;
+    private readonly IConnectionStateMonitor _monitor;
 
     [ObservableProperty] private NavigationItem? _selectedNavigation;
     [ObservableProperty] private ObservableObject? _currentPage;
+
+    [ObservableProperty] private bool _graphConnected;
+    [ObservableProperty] private bool _exchangeConnected;
+    [ObservableProperty] private string? _tenantId;
+    [ObservableProperty] private string? _tenantDomain;
+    [ObservableProperty] private string? _account;
 
     [ObservableProperty] private bool _showInfo = true;
     [ObservableProperty] private bool _showOk = true;
@@ -41,11 +48,15 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ICollectionView LogView { get; }
 
-    public MainViewModel(IUiLogSink uiLog, IServiceProvider services)
+    public MainViewModel(IUiLogSink uiLog, IServiceProvider services, IConnectionStateMonitor monitor)
     {
         _uiLog = uiLog;
         LogEntries = uiLog.Entries;
         _services = services;
+        _monitor = monitor;
+
+        _monitor.PropertyChanged += OnMonitorChanged;
+        SyncFromMonitor();
 
         LogView = CollectionViewSource.GetDefaultView(uiLog.Entries);
         LogView.Filter = FilterLogEntry;
@@ -75,6 +86,29 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
         CurrentPage = (ObservableObject)_services.GetRequiredService(value.ViewModelType);
+    }
+
+    private void OnMonitorChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher is not null && !dispatcher.CheckAccess())
+        {
+            dispatcher.Invoke(SyncFromMonitor);
+        }
+        else
+        {
+            SyncFromMonitor();
+        }
+    }
+
+    private void SyncFromMonitor()
+    {
+        var s = _monitor.Current;
+        GraphConnected = s.GraphConnected;
+        ExchangeConnected = s.ExchangeConnected;
+        TenantId = s.TenantId;
+        TenantDomain = s.TenantDomain;
+        Account = s.Account;
     }
 
     [RelayCommand]
