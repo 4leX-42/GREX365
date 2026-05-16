@@ -119,5 +119,49 @@ public class SharedMailboxServiceTests
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
 
+    [Fact]
+    public async Task ConvertToShared_RunnerFails_Throws()
+    {
+        var sut = new SharedMailboxService(Runner(Failed("EXO blocked")).Object);
+        Func<Task> act = () => sut.ConvertToSharedAsync("u@a");
+        await act.Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [Fact]
+    public async Task GetPermissions_Empty_ReturnsEmptyList()
+    {
+        var sut = new SharedMailboxService(Runner(OkEmpty()).Object);
+        var perms = await sut.GetPermissionsAsync("m@a");
+        perms.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetPermissions_MapsEntries()
+    {
+        var fake1 = new FakePermission("FullAccess", "user1@a", "FullAccess");
+        var fake2 = new FakePermission("SendAs",     "user2@a", "SendAs");
+        var fake3 = new FakePermission("SendOnBehalf", "user3@a", "From Set-Mailbox");
+        var result = new Grex365.Core.Abstractions.PowerShellResult(true,
+            new object?[] { fake1, fake2, fake3 },
+            Array.Empty<string>());
+        var sut = new SharedMailboxService(Runner(result).Object);
+
+        var perms = await sut.GetPermissionsAsync("m@a");
+        perms.Should().HaveCount(3);
+        perms[0].Permission.Should().Be("FullAccess");
+        perms[1].Permission.Should().Be("SendAs");
+        perms[2].Permission.Should().Be("SendOnBehalf");
+        perms[2].Principal.Should().Be("user3@a");
+    }
+
+    [Fact]
+    public async Task GetPermissions_RunnerFails_Throws()
+    {
+        var sut = new SharedMailboxService(Runner(Failed("get failed")).Object);
+        Func<Task> act = () => sut.GetPermissionsAsync("m@a");
+        await act.Should().ThrowAsync<InvalidOperationException>();
+    }
+
     private sealed record FakeMailbox(string Identity, string DisplayName, string PrimarySmtpAddress, string RecipientTypeDetails);
+    private sealed record FakePermission(string Permission, string Principal, string Detail);
 }
