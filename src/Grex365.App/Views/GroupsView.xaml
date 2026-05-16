@@ -19,10 +19,36 @@
                    FontSize="24"
                    FontWeight="SemiBold"
                    Margin="0,0,0,4" />
-        <TextBlock Grid.Row="1"
-                   Text="Buscar grupos M365/DL y gestionar miembros"
-                   Opacity="0.7"
-                   Margin="0,0,0,16" />
+        <Grid Grid.Row="1" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0"
+                       Text="Buscar grupos M365/DL y gestionar miembros · creación masiva M365 desde CSV"
+                       Opacity="0.7"
+                       VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1"
+                       Text="Dominio:"
+                       VerticalAlignment="Center"
+                       Margin="0,0,6,0"
+                       Opacity="0.7" />
+            <ui:TextBox Grid.Column="2"
+                        Width="180"
+                        Text="{Binding BulkDomain, UpdateSourceTrigger=PropertyChanged}"
+                        PlaceholderText="contoso.com" />
+            <ui:Button Grid.Column="3"
+                       Content="Crear grupos M365 desde CSV..."
+                       Margin="8,0,0,0"
+                       Command="{Binding BulkCreateFromCsvCommand}" />
+            <ui:Button Grid.Column="4"
+                       Content="Exportar log..."
+                       Margin="8,0,0,0"
+                       Command="{Binding ExportBulkCreateResultsCommand}" />
+        </Grid>
 
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
@@ -166,28 +192,63 @@
             </Border>
         </Grid>
 
-        <Border Grid.Row="3" CornerRadius="8" Margin="0,12,0,0" Padding="12"
-                Background="{DynamicResource ControlFillColorDefaultBrush}"
-                Visibility="{Binding LastAddResults.Count, Converter={StaticResource CountToVisibilityConverter}, FallbackValue=Collapsed}">
-            <StackPanel>
-                <TextBlock Text="Últimos resultados" FontWeight="SemiBold" Margin="0,0,0,8" />
-                <ItemsControl ItemsSource="{Binding LastAddResults}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type models:AddMemberResult}">
-                            <Grid Margin="0,2">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="2*" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="3*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding Input}" />
-                                <TextBlock Grid.Column="1" Text="{Binding Status}" FontWeight="SemiBold" />
-                                <TextBlock Grid.Column="2" Text="{Binding Detail}" Opacity="0.7" />
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
-        </Border>
+        <StackPanel Grid.Row="3">
+            <Border CornerRadius="8" Margin="0,12,0,0" Padding="12"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}"
+                    Visibility="{Binding LastAddResults.Count, Converter={StaticResource CountToVisibilityConverter}, FallbackValue=Collapsed}">
+                <StackPanel>
+                    <TextBlock Text="Últimos resultados" FontWeight="SemiBold" Margin="0,0,0,8" />
+                    <ItemsControl ItemsSource="{Binding LastAddResults}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:AddMemberResult}">
+                                <Grid Margin="0,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="3*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Input}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Status}" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Detail}" Opacity="0.7" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <Border CornerRadius="8" Margin="0,12,0,0" Padding="12"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}"
+                    Visibility="{Binding BulkCreateResults.Count, Converter={StaticResource CountToVisibilityConverter}, FallbackValue=Collapsed}">
+                <StackPanel>
+                    <TextBlock Text="Creación masiva (último lote)" FontWeight="SemiBold" Margin="0,0,0,8" />
+                    <ItemsControl ItemsSource="{Binding BulkCreateResults}" MaxHeight="240">
+                        <ItemsControl.Template>
+                            <ControlTemplate>
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <ItemsPresenter />
+                                </ScrollViewer>
+                            </ControlTemplate>
+                        </ItemsControl.Template>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type models:BulkGroupResult}">
+                                <Grid Margin="0,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="2*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding GroupEmail}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Action}" FontWeight="SemiBold" />
+                                    <TextBlock Grid.Column="2" Text="{Binding UserEmail, FallbackValue=—}" />
+                                    <TextBlock Grid.Column="3" Text="{Binding Detail}" Opacity="0.7" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </StackPanel>
     </Grid>
 </UserControl>

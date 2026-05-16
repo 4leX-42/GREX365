@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using Grex365.App.Services;
 using Grex365.Core.Abstractions;
 using Grex365.Core.Csv;
+using Grex365.Core.Groups;
 using Grex365.Core.Models;
 using Microsoft.Win32;
 
@@ -21,12 +22,14 @@ public sealed partial class GroupsViewModel : ObservableObject
     [ObservableProperty] private GroupSummary? _selectedGroup;
     [ObservableProperty] private GroupMember? _selectedMember;
     [ObservableProperty] private string _newMembersText = string.Empty;
+    [ObservableProperty] private string _bulkDomain = string.Empty;
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private bool _isBusy;
 
     public ObservableCollection<GroupSummary> Groups { get; } = new();
     public ObservableCollection<GroupMember> Members { get; } = new();
     public ObservableCollection<AddMemberResult> LastAddResults { get; } = new();
+    public ObservableCollection<BulkGroupResult> BulkCreateResults { get; } = new();
 
     public GroupsViewModel(IGroupsService groups, IUiLogSink log)
     {
@@ -336,6 +339,129 @@ public sealed partial class GroupsViewModel : ObservableObject
             return '"' + v.Replace("\"", "\"\"") + '"';
         }
         return v;
+    }
+
+    [RelayCommand]
+    private async Task BulkCreateFromCsvAsync()
+    {
+        var domain = (BulkDomain ?? string.Empty).Trim().TrimStart('@');
+        if (string.IsNullOrEmpty(domain))
+        {
+            StatusMessage = "Indica el dominio (ej: contoso.com).";
+            return;
+        }
+
+        var dlg = new OpenFileDialog
+        {
+            Title = "CSV con Email + GroupName (forward-fill activo)",
+            Filter = "CSV (*.csv)|*.csv|Todos|*.*",
+            CheckFileExists = true
+        };
+        if (dlg.ShowDialog() != true)
+        {
+            return;
+        }
+
+        IReadOnlyList<BulkGroupRow> rows;
+        try
+        {
+            var raw = FlexibleCsvReader.Read(dlg.FileName);
+            rows = BulkGroupRowPreprocessor.Normalize(raw);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error CSV: " + ex.Message;
+            return;
+        }
+
+        if (rows.Count == 0)
+        {
+            StatusMessage = "CSV sin filas válidas (Email + GroupName).";
+            return;
+        }
+
+        var distinctGroups = rows.Select(r => r.GroupName).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+        var confirm = System.Windows.MessageBox.Show(
+            $"Se crearán/actualizarán {distinctGroups} grupos M365 con {rows.Count} miembros sobre @{domain}.\n\n¿Continuar?",
+            "Confirmar creación masiva",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Question);
+        if (confirm != System.Windows.MessageBoxResult.Yes)
+        {
+            StatusMessage = "Cancelado por el usuario.";
+            return;
+        }
+
+        EnsureToken();
+        IsBusy = true;
+        CancelCommand.NotifyCanExecuteChanged();
+        StatusMessage = $"Creando {distinctGroups} grupos...";
+        BulkCreateResults.Clear();
+        try
+        {
+            var results = await _groups.CreateM365GroupsFromRowsAsync(rows, domain, _log.Progress, _cts!.Token).ConfigureAwait(true);
+            foreach (var r in results)
+            {
+                BulkCreateResults.Add(r);
+            }
+            var created = results.Count(r => r.Action == "Created");
+            var existed = results.Count(r => r.Action == "Skipped");
+            var added = results.Count(r => r.Action == "MemberAdded");
+            var errors = results.Count(r => r.Action == "Error");
+            StatusMessage = $"Grupos: Nuevos={created}  YaEstaban={existed}  Miembros={added}  Err={errors}";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("BulkGroups", ex.Message, ex));
+        }
+        finally
+        {
+            DisposeToken();
+        }
+    }
+
+    [RelayCommand]
+    private void ExportBulkCreateResults()
+    {
+        if (BulkCreateResults.Count == 0)
+        {
+            StatusMessage = "Sin resultados que exportar.";
+            return;
+        }
+        var dlg = new SaveFileDialog
+        {
+            Title = "Guardar log de creación",
+            Filter = "CSV (*.csv)|*.csv",
+            FileName = $"new_groups_log_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
+        };
+        if (dlg.ShowDialog() != true)
+        {
+            return;
+        }
+        try
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("GroupName,GroupEmail,Action,UserEmail,Detail");
+            foreach (var r in BulkCreateResults)
+            {
+                sb.Append(Escape(r.GroupName)).Append(',');
+                sb.Append(Escape(r.GroupEmail)).Append(',');
+                sb.Append(Escape(r.Action)).Append(',');
+                sb.Append(Escape(r.UserEmail)).Append(',');
+                sb.Append(Escape(r.Detail)).AppendLine();
+            }
+            File.WriteAllText(dlg.FileName, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+            StatusMessage = $"Exportado: {Path.GetFileName(dlg.FileName)}";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+        }
     }
 
     [RelayCommand]

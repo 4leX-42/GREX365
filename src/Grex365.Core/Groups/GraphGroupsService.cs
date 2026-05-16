@@ -171,6 +171,163 @@ public sealed class GraphGroupsService : IGroupsService
         }
     }
 
+    public async Task<IReadOnlyList<BulkGroupResult>> CreateM365GroupsFromRowsAsync(
+        IReadOnlyList<BulkGroupRow> rows,
+        string domain,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var client = RequireClient();
+        var results = new List<BulkGroupResult>();
+        var cleanDomain = (domain ?? string.Empty).TrimStart('@').Trim();
+        if (string.IsNullOrEmpty(cleanDomain))
+        {
+            throw new ArgumentException("Dominio requerido.", nameof(domain));
+        }
+
+        var groups = rows.GroupBy(r => r.GroupName, StringComparer.OrdinalIgnoreCase);
+        foreach (var grp in groups)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var groupName = grp.Key.Trim();
+            var groupEmail = $"{groupName}@{cleanDomain}";
+
+            string? groupId;
+            try
+            {
+                groupId = await EnsureM365GroupAsync(client, groupName, groupEmail, results, progress, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                results.Add(new BulkGroupResult(groupName, groupEmail, "Error", null, "Creación fallida: " + ex.Message));
+                progress?.Report(LogEntry.Error("BulkGroups", $"{groupEmail}: {ex.Message}", ex));
+                continue;
+            }
+            if (groupId is null)
+            {
+                continue;
+            }
+
+            var existing = await LoadM365MemberKeysAsync(client, groupId, cancellationToken).ConfigureAwait(false);
+
+            foreach (var row in grp)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var email = row.Email.Trim();
+                if (!BulkGroupRowPreprocessor.IsEmail(email))
+                {
+                    results.Add(new BulkGroupResult(groupName, groupEmail, "Error", email, "Email inválido"));
+                    progress?.Report(LogEntry.Warn("BulkGroups", $"Email inválido: {email}"));
+                    continue;
+                }
+                if (existing.Contains(email.ToLowerInvariant()))
+                {
+                    results.Add(new BulkGroupResult(groupName, groupEmail, "MemberSkipped", email, "Ya pertenece"));
+                    continue;
+                }
+
+                try
+                {
+                    var userId = await ResolveUserIdAsync(client, email, cancellationToken).ConfigureAwait(false);
+                    if (userId is null)
+                    {
+                        results.Add(new BulkGroupResult(groupName, groupEmail, "Error", email, "Usuario no encontrado"));
+                        progress?.Report(LogEntry.Warn("BulkGroups", $"No resuelto: {email}"));
+                        continue;
+                    }
+
+                    var refBody = new ReferenceCreate
+                    {
+                        OdataId = $"https://graph.microsoft.com/v1.0/directoryObjects/{userId}"
+                    };
+                    await client.Groups[groupId].Members.Ref.PostAsync(refBody, cancellationToken: cancellationToken)
+                        .ConfigureAwait(false);
+                    existing.Add(email.ToLowerInvariant());
+                    results.Add(new BulkGroupResult(groupName, groupEmail, "MemberAdded", email, $"id={userId}"));
+                    progress?.Report(LogEntry.Ok("BulkGroups", $"{groupEmail} + {email}"));
+                }
+                catch (Microsoft.Graph.Models.ODataErrors.ODataError ex) when (
+                    string.Equals(ex.Error?.Code, "Request_BadRequest", StringComparison.OrdinalIgnoreCase)
+                    && (ex.Error?.Message?.Contains("already exist", StringComparison.OrdinalIgnoreCase) ?? false))
+                {
+                    results.Add(new BulkGroupResult(groupName, groupEmail, "MemberSkipped", email, "Ya pertenece"));
+                }
+                catch (Exception ex)
+                {
+                    results.Add(new BulkGroupResult(groupName, groupEmail, "Error", email, "Adición fallida: " + ex.Message));
+                    progress?.Report(LogEntry.Error("BulkGroups", $"{email}: {ex.Message}", ex));
+                }
+            }
+        }
+        return results;
+    }
+
+    private static async Task<string?> EnsureM365GroupAsync(
+        GraphServiceClient client,
+        string groupName,
+        string groupEmail,
+        List<BulkGroupResult> results,
+        IProgress<LogEntry>? progress,
+        CancellationToken cancellationToken)
+    {
+        var safe = groupEmail.Replace("'", "''");
+        var existing = await client.Groups.GetAsync(req =>
+        {
+            req.QueryParameters.Filter = $"mail eq '{safe}'";
+            req.QueryParameters.Select = ["id"];
+            req.QueryParameters.Top = 1;
+            req.Headers.Add("ConsistencyLevel", "eventual");
+        }, cancellationToken).ConfigureAwait(false);
+
+        var found = existing?.Value?.FirstOrDefault();
+        if (found is not null)
+        {
+            results.Add(new BulkGroupResult(groupName, groupEmail, "Skipped", null, "Ya existía"));
+            progress?.Report(LogEntry.Info("BulkGroups", $"Skip existente: {groupEmail}"));
+            return found.Id;
+        }
+
+        var alias = groupEmail.Split('@', 2)[0];
+        var body = new Group
+        {
+            DisplayName = groupName,
+            MailNickname = alias,
+            MailEnabled = true,
+            SecurityEnabled = false,
+            GroupTypes = ["Unified"],
+            Visibility = "Private"
+        };
+        var created = await client.Groups.PostAsync(body, cancellationToken: cancellationToken).ConfigureAwait(false);
+        results.Add(new BulkGroupResult(groupName, groupEmail, "Created", null, $"id={created?.Id}"));
+        progress?.Report(LogEntry.Ok("BulkGroups", $"Creado: {groupEmail}"));
+        return created?.Id;
+    }
+
+    private static async Task<HashSet<string>> LoadM365MemberKeysAsync(
+        GraphServiceClient client, string groupId, CancellationToken cancellationToken)
+    {
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var resp = await client.Groups[groupId].Members.GetAsync(req =>
+        {
+            req.QueryParameters.Top = 200;
+            req.QueryParameters.Select = ["id", "mail", "userPrincipalName"];
+        }, cancellationToken).ConfigureAwait(false);
+        if (resp?.Value is null)
+        {
+            return set;
+        }
+        foreach (var m in resp.Value)
+        {
+            if (m is User u)
+            {
+                if (!string.IsNullOrEmpty(u.Mail)) set.Add(u.Mail.ToLowerInvariant());
+                if (!string.IsNullOrEmpty(u.UserPrincipalName)) set.Add(u.UserPrincipalName.ToLowerInvariant());
+            }
+        }
+        return set;
+    }
+
     private static async Task<string?> ResolveUserIdAsync(GraphServiceClient client, string input, CancellationToken cancellationToken)
     {
         if (Guid.TryParse(input, out _))

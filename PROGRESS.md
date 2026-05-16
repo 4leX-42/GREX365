@@ -3,7 +3,7 @@
 Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`.
 Última actualización: 2026-05-16.
 
-> Última feature: License assignment UI (ComboBox SKU + Asignar).
+> Última feature: Bulk creation de grupos M365 desde CSV (Email + GroupName forward-fill).
 
 ## Done
 
@@ -29,7 +29,7 @@ Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`.
 - [x] Conexion — cert auth Graph + EXO
 - [x] Salud tenant — org + counts + SKUs consumidos
 - [x] Usuarios — buscar, perfil, membresías, enable/disable, quitar licencias, **asignar licencia (picker SKU)**, bulk CSV
-- [x] Grupos — buscar, miembros, añadir (texto/CSV), eliminar, exportar CSV
+- [x] Grupos — buscar, miembros, añadir (texto/CSV), eliminar, exportar CSV, **bulk create M365 desde CSV (forward-fill GroupName)**
 - [x] Buzones — lookup + permisos actuales, convertir Regular↔Shared, FullAccess/SendAs/SendOnBehalf, CSV import/export
 - [x] Auditoria — identidades (stale members/guests + disabled+licensed) + grupos (sin owner / vacíos), paralelizado 8x
 - [x] Offboarding — wizard compuesto (deshabilitar + quitar licencias + convertir a shared)
@@ -46,7 +46,7 @@ Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`.
 - [x] Tema Dark/Light persistido en `UserPreferences.Theme`
 - [x] Cert picker dialog desde Settings (lista certs `CurrentUser\My`)
 
-### Tests (76 passing)
+### Tests (89 passing)
 - [x] LogEntry, PreferencesStore, PowerShellRunner, CertValidator
 - [x] LegacyPreferencesImporter
 - [x] TenantLock (5 escenarios)
@@ -56,6 +56,7 @@ Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`.
 - [x] IdentityAuditAnalyzer (9: stale, disabled+lic, totales)
 - [x] OffboardingService (6: empty UPN, missing user, per-flag, errores)
 - [x] SkuInfo (6: math available, ordering, display, fallback guid)
+- [x] BulkGroupRowPreprocessor (13: forward-fill, skip orphans, trim, IsEmail theory)
 
 ## Pending
 
@@ -65,7 +66,7 @@ Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`.
 - [ ] Calendar permission view/set
 - [ ] Mail flow rules viewer
 - [ ] Audit: groups without recent activity, externos en grupos privados, etc.
-- [ ] Bulk groups operations CSV (crear grupos desde CSV — script legacy existe)
+- [ ] Bulk groups CSV: soportar también DL (Exchange Online — script legacy lo hace)
 - [ ] Cert export PFX con password
 - [ ] Auto-update App Registration permisos via Graph (legacy CertWizard hace los 29 pasos)
 
@@ -84,9 +85,9 @@ Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`.
 ## Por dónde voy
 
 **Capas estables.** Próximo bloque natural sería:
-1. Bulk groups creation desde CSV (legacy tiene `New-GroupsFromCsv.ps1`)
-2. Onboarding wizard (espejo del Offboarding: crear user + asignar licencia + agregar a grupos)
-3. Set-OutOfOffice / forwarding rules en buzones
+1. Onboarding wizard (espejo del Offboarding: crear user + asignar licencia + agregar a grupos)
+2. Set-OutOfOffice / forwarding rules en buzones
+3. Bulk groups CSV — extender a DL via EXO runner
 
 **Por validar:**
 - Render visual real (no he podido lanzar la UI desde sesión headless)

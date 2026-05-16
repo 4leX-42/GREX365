@@ -19,4 +19,10 @@ public interface IGroupsService
         string memberId,
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<BulkGroupResult>> CreateM365GroupsFromRowsAsync(
+        IReadOnlyList<BulkGroupRow> rows,
+        string domain,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
 }
