@@ -199,6 +199,48 @@ public sealed partial class GroupsViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ExportMembers()
+    {
+        if (SelectedGroup is null || Members.Count == 0)
+        {
+            StatusMessage = "Sin miembros para exportar.";
+            return;
+        }
+
+        var dlg = new SaveFileDialog
+        {
+            Title = "Guardar miembros",
+            Filter = "CSV (*.csv)|*.csv",
+            FileName = $"members_{SelectedGroup.DisplayName}_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
+        };
+        if (dlg.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Id,DisplayName,Mail,UserPrincipalName");
+            foreach (var m in Members)
+            {
+                sb.Append(Escape(m.Id)).Append(',');
+                sb.Append(Escape(m.DisplayName)).Append(',');
+                sb.Append(Escape(m.Mail)).Append(',');
+                sb.Append(Escape(m.UserPrincipalName)).AppendLine();
+            }
+            File.WriteAllText(dlg.FileName, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+            StatusMessage = $"Exportado: {Path.GetFileName(dlg.FileName)}";
+            _log.Progress.Report(LogEntry.Ok("Groups", "Miembros exportados: " + dlg.FileName));
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Groups", ex.Message, ex));
+        }
+    }
+
+    [RelayCommand]
     private void ExportResults()
     {
         if (LastAddResults.Count == 0)

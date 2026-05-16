@@ -92,11 +92,20 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0"
-                               Text="{Binding SelectedGroup.DisplayName, FallbackValue='Selecciona un grupo'}"
-                               FontWeight="SemiBold"
-                               FontSize="16"
-                               Margin="0,0,0,8" />
+                    <Grid Grid.Row="0" Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding SelectedGroup.DisplayName, FallbackValue='Selecciona un grupo'}"
+                                   FontWeight="SemiBold"
+                                   FontSize="16"
+                                   VerticalAlignment="Center" />
+                        <ui:Button Grid.Column="1"
+                                   Content="Exportar miembros..."
+                                   Command="{Binding ExportMembersCommand}" />
+                    </Grid>
 
                     <ListBox Grid.Row="1"
                              ItemsSource="{Binding Members}"

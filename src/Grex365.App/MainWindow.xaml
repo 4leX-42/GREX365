@@ -92,15 +92,22 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0"
-                                       Text="Log"
-                                       FontWeight="SemiBold"
-                                       VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                <TextBlock Text="Log"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,16,0" />
+                                <CheckBox Content="Info" IsChecked="{Binding ShowInfo}" Margin="0,0,8,0" />
+                                <CheckBox Content="OK"   IsChecked="{Binding ShowOk}"   Margin="0,0,8,0" />
+                                <CheckBox Content="Warn" IsChecked="{Binding ShowWarn}" Margin="0,0,8,0" />
+                                <CheckBox Content="Err"  IsChecked="{Binding ShowError}" Margin="0,0,8,0" />
+                                <CheckBox Content="Dbg"  IsChecked="{Binding ShowDebug}" />
+                            </StackPanel>
                             <ui:Button Grid.Column="1"
                                        Content="Limpiar"
                                        Command="{Binding ClearLogCommand}" />
                         </Grid>
-                        <ListBox ItemsSource="{Binding LogEntries}"
+                        <ListBox ItemsSource="{Binding LogView}"
                                  Background="Transparent"
                                  BorderThickness="0"
                                  VirtualizingPanel.IsVirtualizing="True"

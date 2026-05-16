@@ -1,5 +1,8 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Windows;
+using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Grex365.App.Services;
@@ -30,11 +33,22 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private NavigationItem? _selectedNavigation;
     [ObservableProperty] private ObservableObject? _currentPage;
 
+    [ObservableProperty] private bool _showInfo = true;
+    [ObservableProperty] private bool _showOk = true;
+    [ObservableProperty] private bool _showWarn = true;
+    [ObservableProperty] private bool _showError = true;
+    [ObservableProperty] private bool _showDebug;
+
+    public ICollectionView LogView { get; }
+
     public MainViewModel(IUiLogSink uiLog, IServiceProvider services)
     {
         _uiLog = uiLog;
         LogEntries = uiLog.Entries;
         _services = services;
+
+        LogView = CollectionViewSource.GetDefaultView(uiLog.Entries);
+        LogView.Filter = FilterLogEntry;
 
         NavigationItems = new ObservableCollection<NavigationItem>
         {
@@ -73,4 +87,27 @@ public sealed partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void ClearLog() => _uiLog.Clear();
+
+    partial void OnShowInfoChanged(bool value) => LogView.Refresh();
+    partial void OnShowOkChanged(bool value) => LogView.Refresh();
+    partial void OnShowWarnChanged(bool value) => LogView.Refresh();
+    partial void OnShowErrorChanged(bool value) => LogView.Refresh();
+    partial void OnShowDebugChanged(bool value) => LogView.Refresh();
+
+    private bool FilterLogEntry(object obj)
+    {
+        if (obj is not LogEntry e)
+        {
+            return false;
+        }
+        return e.Severity switch
+        {
+            LogSeverity.Info => ShowInfo,
+            LogSeverity.Ok => ShowOk,
+            LogSeverity.Warning => ShowWarn,
+            LogSeverity.Error => ShowError,
+            LogSeverity.Debug => ShowDebug,
+            _ => true
+        };
+    }
 }
