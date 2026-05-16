@@ -5,7 +5,26 @@
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting**
 - Tests: **145 passing** (xUnit + FluentAssertions)
-- Última actualización: 2026-05-16
+- Última actualización: 2026-05-17
+
+## Bitácora sesiones
+
+### 2026-05-16 / 2026-05-17 — Sesión grande (17 commits)
+Tests 70 → 145 (+75). Módulos UI 10 → 13. Plantamiento Fases 1-3 cerradas; Fase 4 foundation; Fase 5-6 in-progress.
+
+Features:
+- License assignment UI con SKU picker (single + bulk via `assign:<SkuPartNumber>`)
+- Bulk M365 groups + DL via EXO desde CSV (forward-fill GroupName)
+- Onboarding wizard (crear user + SKUs + grupos)
+- Reglas buzón — Out-of-Office + Forwarding + Permisos calendario
+- Audit extendido — guests en grupos M365 privados
+- Toasts wpf-ui Snackbar (Ok/Warn/Error)
+- TenantHealth — barras de progreso por SKU + agregado
+- Plugin system foundation — `IModule` + `PluginLoader` (AssemblyLoadContext)
+- CI workflow GitHub Actions + `PublishSingleFile` profile + `PACKAGING.md`
+- Audit trail JSONL persistente (`FileAuditLog`) + viewer UI
+
+Docs: Plantamiento añadido como North Star del repo. `deep-research-report.md` restaurado.
 
 > Nota stack: el plantamiento sugiere WinUI 3 como preferente y WPF como fallback aceptable. Se eligió **WPF + wpf-ui** por madurez, ecosistema y compatibilidad con Win10/11. Migración a WinUI 3 queda como posible Fase 7 si surge necesidad.
 
