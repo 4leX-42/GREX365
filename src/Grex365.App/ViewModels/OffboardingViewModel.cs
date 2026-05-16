@@ -38,6 +38,28 @@ public sealed partial class OffboardingViewModel : ObservableObject
             return;
         }
 
+        var actions = new List<string>();
+        if (DisableAccount) actions.Add("deshabilitar la cuenta");
+        if (RemoveLicenses) actions.Add("quitar todas las licencias");
+        if (ConvertMailboxToShared) actions.Add("convertir buzón a SharedMailbox");
+        if (actions.Count == 0)
+        {
+            StatusMessage = "Ninguna acción seleccionada.";
+            return;
+        }
+
+        var summary = string.Join(", ", actions);
+        var confirm = System.Windows.MessageBox.Show(
+            $"Offboarding de {Upn}:\n\n  {summary}\n\n¿Continuar?",
+            "Confirmar offboarding",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning);
+        if (confirm != System.Windows.MessageBoxResult.Yes)
+        {
+            StatusMessage = "Cancelado por el usuario.";
+            return;
+        }
+
         _cts = new CancellationTokenSource();
         IsBusy = true;
         RunCommand.NotifyCanExecuteChanged();

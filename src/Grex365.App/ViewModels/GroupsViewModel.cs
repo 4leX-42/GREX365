@@ -208,6 +208,17 @@ public sealed partial class GroupsViewModel : ObservableObject
             return;
         }
 
+        var confirm = System.Windows.MessageBox.Show(
+            $"Eliminar a {SelectedMember.DisplayName ?? SelectedMember.Id} del grupo {SelectedGroup.DisplayName}?",
+            "Confirmar eliminación",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning);
+        if (confirm != System.Windows.MessageBoxResult.Yes)
+        {
+            StatusMessage = "Cancelado por el usuario.";
+            return;
+        }
+
         EnsureToken();
         IsBusy = true;
         CancelCommand.NotifyCanExecuteChanged();

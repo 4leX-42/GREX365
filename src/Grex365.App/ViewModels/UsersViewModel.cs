@@ -116,6 +116,19 @@ public sealed partial class UsersViewModel : ObservableObject
             StatusMessage = "Selecciona un usuario.";
             return;
         }
+        if (!enabled)
+        {
+            var confirm = System.Windows.MessageBox.Show(
+                $"Deshabilitar la cuenta de {SelectedUser.DisplayName} ({SelectedUser.UserPrincipalName})?",
+                "Confirmar deshabilitación",
+                System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Warning);
+            if (confirm != System.Windows.MessageBoxResult.Yes)
+            {
+                StatusMessage = "Cancelado por el usuario.";
+                return;
+            }
+        }
         EnsureToken();
         IsBusy = true;
         StatusMessage = enabled ? "Habilitando..." : "Deshabilitando...";
@@ -153,6 +166,19 @@ public sealed partial class UsersViewModel : ObservableObject
         {
             StatusMessage = "Selecciona un usuario.";
             return;
+        }
+        if (SelectedUser.AssignedLicenseCount > 0)
+        {
+            var confirm = System.Windows.MessageBox.Show(
+                $"Quitar {SelectedUser.AssignedLicenseCount} licencias de {SelectedUser.DisplayName}?",
+                "Confirmar retirada de licencias",
+                System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Warning);
+            if (confirm != System.Windows.MessageBoxResult.Yes)
+            {
+                StatusMessage = "Cancelado por el usuario.";
+                return;
+            }
         }
         EnsureToken();
         IsBusy = true;
