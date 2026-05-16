@@ -96,6 +96,11 @@ public partial class App : Application
 
                 services.AddSingleton<WpfUiNotifier>();
                 services.AddSingleton<INotifier>(sp => sp.GetRequiredService<WpfUiNotifier>());
+
+                var auditDir = Path.Combine(DataDirectory, "audit");
+                Directory.CreateDirectory(auditDir);
+                services.AddSingleton<IAuditLog>(_ => new FileAuditLog(auditDir));
+
                 services.AddSingleton<IUiLogSink, UiLogSink>();
 
                 services.AddTransient<ConnectViewModel>();

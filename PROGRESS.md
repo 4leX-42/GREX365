@@ -4,7 +4,7 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting**
-- Tests: **141 passing** (xUnit + FluentAssertions)
+- Tests: **145 passing** (xUnit + FluentAssertions)
 - Última actualización: 2026-05-16
 
 > Nota stack: el plantamiento sugiere WinUI 3 como preferente y WPF como fallback aceptable. Se eligió **WPF + wpf-ui** por madurez, ecosistema y compatibilidad con Win10/11. Migración a WinUI 3 queda como posible Fase 7 si surge necesidad.
@@ -77,10 +77,13 @@ UX/QoL fase 3:
 - [ ] `.appinstaller` con auto-update apuntando a feed interno
 - [ ] Job CI de release (`tag v*`) que firma y publica MSIX
 
-### Fase 6 — Telemetría + features enterprise — **PENDIENTE**
+### Fase 6 — Telemetría + features enterprise — **IN PROGRESS**
+- [x] Audit trail JSONL persistente (`FileAuditLog`) en `%LOCALAPPDATA%\Grex365\audit\audit-YYYY-MM.jsonl`
+- [x] `UiLogSink` escribe Ok/Warn/Error a audit con `Environment.UserName` como actor
+- [x] Thread-safe via `SemaphoreSlim` y fire-and-forget desde sink
 - [ ] Application Insights wired (`Microsoft.ApplicationInsights.WorkerService`)
-- [ ] Audit DB local (SQLite con EF Core) para audit trail de acciones admin
-- [ ] Métricas: ejecuciones/día, tiempos por operación, errores frecuentes
+- [ ] Audit viewer UI (Settings → "Ver log de auditoría")
+- [ ] Métricas agregadas: ejecuciones/día, tiempos por operación, errores frecuentes
 - [ ] Niveles de logging DEBUG/INFO/WARN/ERROR configurables vía Settings
 - [ ] Permisos por rol (validar grupo AD/Entra del usuario actual)
 - [ ] Documentación técnica interna (arquitectura, manual operación)
@@ -125,6 +128,7 @@ UX/QoL fase 3:
 | MailboxRulesValidator | 15 | OOO state transitions, date ranges, forwarding SMTP shape |
 | BulkUserActionParser | 17 | enable/disable/remove-licenses + assign:&lt;SKU&gt; parse + lookup |
 | PluginLoader | 4 | empty dir / corrupt dll / whitespace path |
+| FileAuditLog | 4 | roundtrip / append-jsonl / missing-month / concurrent-writes |
 
 ---
 
@@ -154,8 +158,9 @@ Datos persistidos en `%LOCALAPPDATA%\Grex365\`:
 ## Próximo bloque planificado
 
 **Orden propuesto (mayor utilidad / menor riesgo primero):**
-1. Fase 6 (Application Insights + audit DB SQLite/EF Core)
+1. Audit viewer UI (Settings → leer audit JSONL del mes)
 2. MSIX `Package.appxmanifest` + release CI job (cierra Fase 5)
 3. Sample plugin externo (cierra Fase 4)
-4. MSAL interactive auth (alternativa a cert-based)
-5. Auto-update App Registration permisos via Graph (legacy CertWizard hace 29 pasos)
+4. Application Insights (telemetría runtime — opcional, requiere connection string)
+5. MSAL interactive auth (alternativa a cert-based)
+6. Auto-update App Registration permisos via Graph (legacy CertWizard hace 29 pasos)
