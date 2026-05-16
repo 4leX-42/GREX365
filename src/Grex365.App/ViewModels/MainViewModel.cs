@@ -66,6 +66,7 @@ public sealed partial class MainViewModel : ObservableObject
             new("Dashboard",      "", typeof(DashboardViewModel)),
             new("Conexion",       "", typeof(ConnectViewModel)),
             new("Salud tenant",   "", typeof(TenantHealthViewModel)),
+            new("Usuarios",       "", typeof(UsersViewModel)),
             new("Grupos",         "", typeof(GroupsViewModel)),
             new("Buzones",        "", typeof(SharedMailboxViewModel)),
             new("Auditoria",      "", typeof(AuditViewModel)),

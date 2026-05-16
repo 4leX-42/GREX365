@@ -9,6 +9,7 @@ using Grex365.Core.Connections;
 using Grex365.Core.Groups;
 using Grex365.Core.Health;
 using Grex365.Core.Preferences;
+using Grex365.Core.Users;
 using Grex365.PowerShell;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -65,6 +66,7 @@ public partial class App : Application
                 services.AddSingleton<ISharedMailboxService, SharedMailboxService>();
                 services.AddSingleton<IAuditService, GraphAuditService>();
                 services.AddSingleton<ITenantHealthService, GraphTenantHealthService>();
+                services.AddSingleton<IUsersService, GraphUsersService>();
 
                 services.AddSingleton<IPreferencesStore>(_ => new JsonPreferencesStore(configDir));
                 services.AddSingleton<ICertConfigStore>(_ => new JsonCertConfigStore(configDir));
@@ -77,6 +79,7 @@ public partial class App : Application
                 services.AddTransient<SharedMailboxViewModel>();
                 services.AddTransient<AuditViewModel>();
                 services.AddTransient<TenantHealthViewModel>();
+                services.AddTransient<UsersViewModel>();
                 services.AddTransient<SettingsViewModel>();
                 services.AddTransient<MainViewModel>();
                 services.AddSingleton<MainWindow>();
