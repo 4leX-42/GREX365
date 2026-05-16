@@ -49,7 +49,14 @@ public sealed partial class AuditViewModel : ObservableObject
             {
                 Findings.Add(f);
             }
-            StatusMessage = $"{summary.UsersTotal} usuarios analizados · {findings.Count} hallazgos";
+
+            var groupFindings = await _audit.RunGroupsAuditAsync(_log.Progress, _cts.Token).ConfigureAwait(true);
+            foreach (var f in groupFindings)
+            {
+                Findings.Add(f);
+            }
+
+            StatusMessage = $"{summary.UsersTotal} usuarios · {findings.Count + groupFindings.Count} hallazgos totales";
         }
         catch (OperationCanceledException)
         {
