@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, grex365-2.0]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -19,15 +19,26 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+          dotnet-quality: preview
+          include-prerelease: true
 
-      - name: Restore
-        run: dotnet restore src/Grex365.slnx
+      - name: Restore Core
+        run: dotnet restore src/Grex365.Core/Grex365.Core.csproj
 
-      - name: Build
-        run: dotnet build src/Grex365.slnx --configuration Release --no-restore
+      - name: Restore PowerShell
+        run: dotnet restore src/Grex365.PowerShell/Grex365.PowerShell.csproj
+
+      - name: Restore App
+        run: dotnet restore src/Grex365.App/Grex365.App.csproj
+
+      - name: Restore Tests
+        run: dotnet restore tests/Grex365.Core.Tests/Grex365.Core.Tests.csproj
+
+      - name: Build App (transitively builds Core + PowerShell)
+        run: dotnet build src/Grex365.App/Grex365.App.csproj --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test src/Grex365.slnx --configuration Release --no-build --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test tests/Grex365.Core.Tests/Grex365.Core.Tests.csproj --configuration Release --no-build --logger "trx;LogFileName=test-results.trx"
 
       - name: Upload test results
         if: always()
@@ -49,20 +60,18 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+          dotnet-quality: preview
+          include-prerelease: true
 
-      - name: Publish single-file exe
+      - name: Publish portable single-file EXE
         run: >
           dotnet publish src/Grex365.App/Grex365.App.csproj
           -c Release
-          -r win-x64
-          --self-contained
-          -p:PublishSingleFile=true
-          -p:IncludeAllContentForSelfExtract=true
-          -p:EnableCompressionInSingleFile=true
+          -p:PublishProfile=win-x64-portable
           -o publish
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Grex365-${{ github.ref_name }}
-          path: publish/Grex365.exe
+          path: publish/Grex365.App.exe
