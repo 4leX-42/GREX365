@@ -129,6 +129,12 @@
                         <ui:Button Content="Quitar licencias"
                                    Margin="0,0,8,0"
                                    Command="{Binding RemoveLicensesCommand}" />
+                        <ui:Button Content="Bulk CSV..."
+                                   Margin="0,0,8,0"
+                                   Command="{Binding ImportBulkCsvCommand}" />
+                        <ui:Button Content="Exportar bulk..."
+                                   Margin="0,0,8,0"
+                                   Command="{Binding ExportBulkResultsCommand}" />
                         <TextBlock VerticalAlignment="Center"
                                    Text="{Binding StatusMessage}"
                                    Opacity="0.8" />
