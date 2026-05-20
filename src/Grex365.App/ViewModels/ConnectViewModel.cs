@@ -43,6 +43,9 @@ public sealed partial class ConnectViewModel : ObservableObject
     [ObservableProperty] private string? _deviceCodeMessage;
     [ObservableProperty] private bool _deviceCodePromptVisible;
 
+    [ObservableProperty] private string _exoModuleStatus = "(no comprobado)";
+    [ObservableProperty] private bool _exoModuleAvailable;
+
     public ConnectViewModel(
         IGraphConnection graph,
         IExchangeConnection exchange,
@@ -222,6 +225,52 @@ public sealed partial class ConnectViewModel : ObservableObject
             ConnectCommand.NotifyCanExecuteChanged();
             ConnectDeviceCodeCommand.NotifyCanExecuteChanged();
             CancelCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    [RelayCommand]
+    private async Task ProbeExoModuleAsync()
+    {
+        try
+        {
+            var status = await _exchange.ProbeModuleAsync(_log.Progress).ConfigureAwait(true);
+            ExoModuleAvailable = status.Installed;
+            ExoModuleStatus = status.Installed
+                ? $"OK · ExchangeOnlineManagement {status.Version}"
+                : $"NO instalado ({status.Detail ?? "?"})";
+        }
+        catch (Exception ex)
+        {
+            ExoModuleStatus = "Probe error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("EXO", ex.Message, ex));
+        }
+    }
+
+    [RelayCommand]
+    private async Task InstallExoModuleAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+        IsBusy = true;
+        ExoModuleStatus = "Instalando ExchangeOnlineManagement (PSGallery)...";
+        try
+        {
+            var status = await _exchange.InstallModuleAsync(_log.Progress).ConfigureAwait(true);
+            ExoModuleAvailable = status.Installed;
+            ExoModuleStatus = status.Installed
+                ? $"Instalado · {status.Version}"
+                : $"Instalacion fallida: {status.Detail ?? "?"}";
+        }
+        catch (Exception ex)
+        {
+            ExoModuleStatus = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("EXO", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
 

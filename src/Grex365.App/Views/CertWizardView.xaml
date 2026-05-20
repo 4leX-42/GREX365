@@ -137,6 +137,39 @@
                             Padding="0,12,0,0"
                             Margin="0,12,0,0">
                         <StackPanel>
+                            <TextBlock Text="Auto-configurar App Registration en Azure AD"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,8" />
+                            <TextBlock Text="Requiere Graph conectado (usa 'Conectar (device code)' en Conexion como admin)."
+                                       Opacity="0.6"
+                                       FontSize="12"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,8" />
+                            <TextBlock Text="DisplayName" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4" />
+                            <ui:TextBox Text="{Binding AppRegDisplayName, UpdateSourceTrigger=PropertyChanged}"
+                                        PlaceholderText="Grex365"
+                                        Width="320"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,0,0,8" />
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <ui:Button Content="Crear App Registration + subir cert"
+                                           Appearance="Primary"
+                                           Margin="0,0,8,0"
+                                           Command="{Binding CreateAppRegistrationCommand}" />
+                                <ui:Button Content="Abrir admin consent"
+                                           Margin="0,0,8,0"
+                                           Command="{Binding OpenAdminConsentCommand}"
+                                           Visibility="{Binding AppRegResult, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding AppRegStatus}" Opacity="0.85" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                            BorderThickness="0,1,0,0"
+                            Padding="0,12,0,0"
+                            Margin="0,12,0,0">
+                        <StackPanel>
                             <TextBlock Text="Próximos pasos" FontWeight="SemiBold" Margin="0,0,0,4" />
                             <TextBlock TextWrapping="Wrap" Opacity="0.85">
                                 1. Subir el archivo .cer al App Registration en Azure AD (Certificates &amp; secrets → Certificates).<LineBreak />

@@ -12,6 +12,9 @@ public sealed partial class CertWizardViewModel : ObservableObject
 {
     private readonly ICertificateGenerator _generator;
     private readonly IUiLogSink _log;
+    private readonly IAppRegistrationService _appReg;
+    private readonly IGraphConnection _graph;
+    private readonly ICertConfigStore _certStore;
 
     [ObservableProperty] private string _commonName = "Grex365-Local";
     [ObservableProperty] private int _validDays = 365;
@@ -24,10 +27,22 @@ public sealed partial class CertWizardViewModel : ObservableObject
     [ObservableProperty] private string _pfxPath = string.Empty;
     [ObservableProperty] private string _pfxStatus = string.Empty;
 
-    public CertWizardViewModel(ICertificateGenerator generator, IUiLogSink log)
+    [ObservableProperty] private string _appRegDisplayName = "Grex365";
+    [ObservableProperty] private string _appRegStatus = string.Empty;
+    [ObservableProperty] private AppRegistrationResult? _appRegResult;
+
+    public CertWizardViewModel(
+        ICertificateGenerator generator,
+        IUiLogSink log,
+        IAppRegistrationService appReg,
+        IGraphConnection graph,
+        ICertConfigStore certStore)
     {
         _generator = generator;
         _log = log;
+        _appReg = appReg;
+        _graph = graph;
+        _certStore = certStore;
     }
 
     [RelayCommand]
@@ -105,6 +120,79 @@ public sealed partial class CertWizardViewModel : ObservableObject
         {
             PfxStatus = "Error: " + ex.Message;
             _log.Progress.Report(LogEntry.Error("Cert", ex.Message, ex));
+        }
+    }
+
+    [RelayCommand]
+    private async Task CreateAppRegistrationAsync()
+    {
+        if (Generated is null)
+        {
+            AppRegStatus = "Genera primero un certificado.";
+            return;
+        }
+        if (!_graph.IsConnected)
+        {
+            AppRegStatus = "Graph no esta conectado. Usa 'Conectar (device code)' en Conexion primero.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(AppRegDisplayName))
+        {
+            AppRegStatus = "DisplayName requerido.";
+            return;
+        }
+
+        IsBusy = true;
+        AppRegStatus = "Creando App Registration y subiendo cert...";
+        try
+        {
+            var cerBytes = await File.ReadAllBytesAsync(Generated.CerPath).ConfigureAwait(true);
+            var result = await _appReg.CreateAndConfigureAsync(
+                AppRegDisplayName.Trim(),
+                cerBytes,
+                Generated.Thumbprint,
+                _log.Progress).ConfigureAwait(true);
+            AppRegResult = result;
+
+            // Persist CertConfig so Connect by certificate works after admin consent.
+            await _certStore.SaveAsync(new CertConfig(
+                AppId: result.AppId,
+                TenantId: result.TenantId,
+                Organization: AppRegDisplayName.Trim(),
+                CertThumbprint: Generated.Thumbprint)).ConfigureAwait(true);
+
+            AppRegStatus = $"OK · AppId={result.AppId}. Abre el link de admin consent para conceder los permisos.";
+            _log.Progress.Report(LogEntry.Ok("AppReg", AppRegStatus));
+        }
+        catch (Exception ex)
+        {
+            AppRegStatus = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("AppReg", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private void OpenAdminConsent()
+    {
+        if (AppRegResult is null)
+        {
+            return;
+        }
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = AppRegResult.AdminConsentUrl,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            _log.Progress.Report(LogEntry.Error("AppReg", ex.Message, ex));
         }
     }
 

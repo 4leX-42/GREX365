@@ -114,6 +114,128 @@ public sealed class ExchangeConnection : IExchangeConnection
         return _lastProbeResult;
     }
 
+    public async Task<ExoModuleStatus> ProbeModuleAsync(
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        const string script = """
+            param([string]$Name)
+            $loaded = Get-Module -Name $Name | Sort-Object Version -Descending | Select-Object -First 1
+            if ($loaded) {
+                [PSCustomObject]@{ Installed = $true; Version = [string]$loaded.Version; Detail = 'loaded' }
+                return
+            }
+            $available = Get-Module -ListAvailable -Name $Name | Sort-Object Version -Descending | Select-Object -First 1
+            if ($available) {
+                [PSCustomObject]@{ Installed = $true; Version = [string]$available.Version; Detail = 'available' }
+            } else {
+                [PSCustomObject]@{ Installed = $false; Version = $null; Detail = 'not installed' }
+            }
+            """;
+
+        var result = await _runner.RunAsync(
+            script,
+            new Dictionary<string, object?> { ["Name"] = ModuleName },
+            progress,
+            cancellationToken).ConfigureAwait(false);
+
+        if (!result.Success || result.Output.Count == 0)
+        {
+            return new ExoModuleStatus(false, null, "probe failed: " + string.Join("; ", result.Errors));
+        }
+
+        if (result.Output[0] is System.Management.Automation.PSObject ps)
+        {
+            var installed = ps.Properties["Installed"]?.Value is bool b && b;
+            var version = ps.Properties["Version"]?.Value?.ToString();
+            var detail = ps.Properties["Detail"]?.Value?.ToString();
+            return new ExoModuleStatus(installed, version, detail);
+        }
+
+        return new ExoModuleStatus(false, null, "unknown probe output");
+    }
+
+    public async Task<ExoModuleStatus> InstallModuleAsync(
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        progress?.Report(LogEntry.Info("EXO", $"Instalando {ModuleName} en CurrentUser (proceso externo)..."));
+
+        // Run Install-Module in a SEPARATE pwsh.exe process to bypass the WindowsApps
+        // PackageManagement.dll access-denied issue that hits embedded runspaces.
+        var psi = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = ResolvePwshExe(),
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+        };
+        psi.ArgumentList.Add("-NoLogo");
+        psi.ArgumentList.Add("-NoProfile");
+        psi.ArgumentList.Add("-NonInteractive");
+        psi.ArgumentList.Add("-Command");
+        psi.ArgumentList.Add(
+            $"try {{ " +
+            $"  if (-not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue) -or (Get-PSRepository -Name PSGallery).InstallationPolicy -ne 'Trusted') {{ " +
+            $"    Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction SilentlyContinue " +
+            $"  }}; " +
+            $"  Install-Module -Name {ModuleName} -Scope CurrentUser -Force -AllowClobber -Confirm:$false -ErrorAction Stop; " +
+            $"  Write-Host 'INSTALLED' " +
+            $"}} catch {{ Write-Host 'ERROR:' $_.Exception.Message; exit 1 }}");
+
+        using var proc = new System.Diagnostics.Process { StartInfo = psi };
+        proc.OutputDataReceived += (_, e) =>
+        {
+            if (!string.IsNullOrEmpty(e.Data))
+            {
+                progress?.Report(LogEntry.Info("EXO-Install", e.Data));
+            }
+        };
+        proc.ErrorDataReceived += (_, e) =>
+        {
+            if (!string.IsNullOrEmpty(e.Data))
+            {
+                progress?.Report(LogEntry.Warn("EXO-Install", e.Data));
+            }
+        };
+
+        proc.Start();
+        proc.BeginOutputReadLine();
+        proc.BeginErrorReadLine();
+
+        await using (cancellationToken.Register(() =>
+        {
+            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
+        }).ConfigureAwait(false))
+        {
+            await proc.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        if (proc.ExitCode != 0)
+        {
+            return new ExoModuleStatus(false, null, $"pwsh exit code {proc.ExitCode}");
+        }
+
+        progress?.Report(LogEntry.Ok("EXO-Install", $"{ModuleName} instalado. Reprobando..."));
+        return await ProbeModuleAsync(progress, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static string ResolvePwshExe()
+    {
+        // Prefer pwsh.exe on PATH; fallback to legacy powershell.exe.
+        foreach (var name in new[] { "pwsh.exe", "powershell.exe" })
+        {
+            var path = Environment.GetEnvironmentVariable("PATH")?
+                .Split(Path.PathSeparator)
+                .Select(p => Path.Combine(p, name))
+                .FirstOrDefault(File.Exists);
+            if (!string.IsNullOrEmpty(path)) return path;
+        }
+        // Last resort: rely on shell resolution
+        return "powershell.exe";
+    }
+
     public async Task DisconnectAsync(
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
@@ -138,24 +260,26 @@ public sealed class ExchangeConnection : IExchangeConnection
 
     private async Task EnsureModuleAsync(IProgress<LogEntry>? progress, CancellationToken ct)
     {
-        const string script = """
+        // Probe-only: NO Install-Module desde la app (PackageManagement bajo WindowsApps
+        // tiene ACLs restrictivas y rompe en hosts embebidos). Si falta, instruir al user.
+        const string probeScript = """
             param([string]$Name)
-            if (-not (Get-Module -Name $Name)) {
-                if (-not (Get-Module -ListAvailable -Name $Name)) {
-                    try {
-                        $repo = Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue
-                        if ($repo -and $repo.InstallationPolicy -ne 'Trusted') {
-                            Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-                        }
-                    } catch {}
-                    Install-Module -Name $Name -Scope CurrentUser -Force -AllowClobber -Confirm:$false -ErrorAction Stop
-                }
-                Import-Module $Name -ErrorAction Stop -Verbose:$false
+            $loaded = Get-Module -Name $Name
+            if ($loaded) {
+                [PSCustomObject]@{ Loaded = $true; Available = $true; Version = [string]$loaded.Version }
+                return
             }
+            $available = Get-Module -ListAvailable -Name $Name | Sort-Object Version -Descending | Select-Object -First 1
+            if (-not $available) {
+                [PSCustomObject]@{ Loaded = $false; Available = $false; Version = $null }
+                return
+            }
+            Import-Module $Name -ErrorAction Stop -Verbose:$false
+            [PSCustomObject]@{ Loaded = $true; Available = $true; Version = [string]$available.Version }
             """;
 
         var result = await _runner.RunAsync(
-            script,
+            probeScript,
             new Dictionary<string, object?> { ["Name"] = ModuleName },
             progress,
             ct).ConfigureAwait(false);
@@ -163,7 +287,20 @@ public sealed class ExchangeConnection : IExchangeConnection
         if (!result.Success)
         {
             throw new InvalidOperationException(
-                $"No se pudo cargar el módulo {ModuleName}: " + string.Join("; ", result.Errors));
+                $"No se pudo importar {ModuleName}: " + string.Join("; ", result.Errors));
+        }
+
+        var available = false;
+        if (result.Output.Count > 0 && result.Output[0] is System.Management.Automation.PSObject ps)
+        {
+            available = ps.Properties["Available"]?.Value is bool b && b;
+        }
+
+        if (!available)
+        {
+            throw new InvalidOperationException(
+                $"Modulo {ModuleName} no esta instalado. Abre PowerShell (no admin) y ejecuta: " +
+                $"Install-Module {ModuleName} -Scope CurrentUser -Force; despues vuelve a Conectar.");
         }
     }
 }

@@ -105,6 +105,7 @@ public partial class App : Application
                 services.AddSingleton<IOffboardingService, OffboardingService>();
                 services.AddSingleton<IOnboardingService, OnboardingService>();
                 services.AddSingleton<ICertificateGenerator, SelfSignedCertificateGenerator>();
+                services.AddSingleton<IAppRegistrationService, GraphAppRegistrationService>();
                 services.AddSingleton<IDomainChecker, NslookupDomainChecker>();
 
                 services.AddSingleton<IPreferencesStore>(_ => new JsonPreferencesStore(configDir));
