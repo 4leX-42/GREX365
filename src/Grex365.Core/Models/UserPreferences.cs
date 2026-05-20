@@ -13,5 +13,6 @@ public sealed class UserPreferences
     public string UIMode { get; set; } = "support";
     public string Theme { get; set; } = "Dark";
     public string? LastSelectedNavigation { get; set; }
+    public List<string> DisabledPluginAssemblies { get; set; } = new();
     public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.Now;
 }

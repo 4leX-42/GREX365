@@ -57,5 +57,48 @@ public class PluginLoaderTests
         var report = PluginLoader.LoadFrom("   ");
         report.Plugins.Should().BeEmpty();
         report.Failures.Should().BeEmpty();
+        report.Disabled.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Disabled_Assembly_Is_Skipped_Without_Attempting_Load()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "grex365-plugins-disabled-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        // Even garbage bytes — if the loader were invoked, it would land in Failures.
+        var garbage = Path.Combine(dir, "muted.dll");
+        File.WriteAllBytes(garbage, new byte[] { 0x47, 0x52, 0x45, 0x58 });
+        try
+        {
+            var report = PluginLoader.LoadFrom(dir, disabledAssemblies: new[] { "muted.dll" });
+            report.Plugins.Should().BeEmpty();
+            report.Failures.Should().BeEmpty();
+            report.Disabled.Should().HaveCount(1);
+            report.Disabled[0].AssemblyFileName.Should().Be("muted.dll");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Disabled_Match_Is_Case_Insensitive()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "grex365-plugins-case-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        var garbage = Path.Combine(dir, "MyPlugin.dll");
+        File.WriteAllBytes(garbage, new byte[] { 0x47, 0x52, 0x45, 0x58 });
+        try
+        {
+            var report = PluginLoader.LoadFrom(dir, disabledAssemblies: new[] { "myplugin.dll" });
+            report.Plugins.Should().BeEmpty();
+            report.Failures.Should().BeEmpty();
+            report.Disabled.Should().ContainSingle().Which.AssemblyFileName.Should().Be("MyPlugin.dll");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
     }
 }

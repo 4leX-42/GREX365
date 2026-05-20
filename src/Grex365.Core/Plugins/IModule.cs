@@ -22,9 +22,12 @@ public sealed record DiscoveredPlugin(
 
 public sealed record PluginLoadFailure(string AssemblyPath, string Message);
 
+public sealed record DisabledPlugin(string AssemblyPath, string AssemblyFileName);
+
 public sealed record PluginLoadReport(
     IReadOnlyList<DiscoveredPlugin> Plugins,
-    IReadOnlyList<PluginLoadFailure> Failures)
+    IReadOnlyList<PluginLoadFailure> Failures,
+    IReadOnlyList<DisabledPlugin> Disabled)
 {
     public IEnumerable<IModule> AllModules => Plugins.SelectMany(p => p.Modules);
 }

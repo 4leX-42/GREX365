@@ -43,6 +43,32 @@ public class PreferencesStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task DisabledPluginAssemblies_Roundtrip()
+    {
+        var store = new JsonPreferencesStore(_tempDir);
+        var prefs = new UserPreferences
+        {
+            DisabledPluginAssemblies = new List<string> { "PluginA.dll", "PluginB.dll" }
+        };
+        await store.SaveAsync(prefs);
+
+        var loaded = await store.LoadAsync();
+        loaded.DisabledPluginAssemblies.Should().BeEquivalentTo("PluginA.dll", "PluginB.dll");
+    }
+
+    [Fact]
+    public async Task DisabledPluginAssemblies_Defaults_To_Empty_When_Missing()
+    {
+        var path = Path.Combine(_tempDir, "user_preferences.json");
+        await File.WriteAllTextAsync(path, "{\"Theme\":\"Light\"}");
+
+        var store = new JsonPreferencesStore(_tempDir);
+        var loaded = await store.LoadAsync();
+        loaded.Theme.Should().Be("Light");
+        loaded.DisabledPluginAssemblies.Should().NotBeNull().And.BeEmpty();
+    }
+
+    [Fact]
     public async Task CertConfig_Roundtrip()
     {
         var store = new JsonCertConfigStore(_tempDir);

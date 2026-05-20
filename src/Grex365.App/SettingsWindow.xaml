@@ -66,6 +66,51 @@
                     </StackPanel>
                 </Border>
 
+                <TextBlock Text="Plugins"
+                           FontSize="18"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,12" />
+
+                <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
+                        Background="{DynamicResource ControlFillColorDefaultBrush}">
+                    <StackPanel>
+                        <TextBlock Text="DLLs detectados en %LOCALAPPDATA%\Grex365\plugins. Los cambios se aplican al reiniciar la aplicacion."
+                                   Opacity="0.7"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,12" />
+                        <ItemsControl ItemsSource="{Binding Plugins}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <CheckBox Grid.Column="0"
+                                                  IsChecked="{Binding IsEnabled}"
+                                                  VerticalAlignment="Center"
+                                                  Margin="0,0,12,0" />
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding AssemblyFileName}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding Status}" Opacity="0.65" FontSize="12" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding ModuleCount, StringFormat='{}{0} modulo(s)'}"
+                                                   VerticalAlignment="Center"
+                                                   Opacity="0.7" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="Si no aparecen plugins, copia un .dll que implemente Grex365.Core.Plugins.IModule en esa carpeta y reinicia."
+                                   Opacity="0.55"
+                                   FontSize="12"
+                                   TextWrapping="Wrap"
+                                   Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+
                 <TextBlock Text="Certificado (App registration)"
                            FontSize="18"
                            FontWeight="SemiBold"

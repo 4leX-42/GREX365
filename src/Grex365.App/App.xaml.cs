@@ -55,7 +55,11 @@ public partial class App : Application
 
         var pluginsDir = Path.Combine(DataDirectory, "plugins");
         Directory.CreateDirectory(pluginsDir);
-        var pluginReport = PluginLoader.LoadFrom(pluginsDir);
+
+        var bootPrefs = TryLoadBootPreferences(configDir);
+        var pluginReport = PluginLoader.LoadFrom(
+            pluginsDir,
+            disabledAssemblies: bootPrefs.DisabledPluginAssemblies);
         foreach (var failure in pluginReport.Failures)
         {
             Log.Warning("Plugin descartado {Path}: {Reason}", failure.AssemblyPath, failure.Message);
@@ -63,6 +67,10 @@ public partial class App : Application
         foreach (var plugin in pluginReport.Plugins)
         {
             Log.Information("Plugin {Asm} aporta {Count} módulo(s)", plugin.AssemblyName, plugin.Modules.Count);
+        }
+        foreach (var off in pluginReport.Disabled)
+        {
+            Log.Information("Plugin deshabilitado por preferencias: {File}", off.AssemblyFileName);
         }
 
         _host = Host.CreateDefaultBuilder()
@@ -180,6 +188,20 @@ public partial class App : Application
             Log.Error(args.Exception, "Unobserved task exception");
             args.SetObserved();
         };
+    }
+
+    private static Grex365.Core.Models.UserPreferences TryLoadBootPreferences(string configDir)
+    {
+        try
+        {
+            var store = new Grex365.Core.Preferences.JsonPreferencesStore(configDir);
+            return store.LoadAsync().GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "No se pudieron leer preferencias para arranque de plugins; usando defaults");
+            return new Grex365.Core.Models.UserPreferences();
+        }
     }
 
     private static void TryApplySavedTheme()

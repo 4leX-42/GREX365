@@ -1,10 +1,29 @@
+using System.Collections.ObjectModel;
+using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Grex365.App.Services;
 using Grex365.Core.Abstractions;
 using Grex365.Core.Models;
+using Grex365.Core.Plugins;
 
 namespace Grex365.App.ViewModels;
+
+public sealed partial class PluginToggleItem : ObservableObject
+{
+    public string AssemblyFileName { get; }
+    public string Status { get; }
+    public int ModuleCount { get; }
+    [ObservableProperty] private bool _isEnabled;
+
+    public PluginToggleItem(string fileName, string status, int moduleCount, bool isEnabled)
+    {
+        AssemblyFileName = fileName;
+        Status = status;
+        ModuleCount = moduleCount;
+        IsEnabled = isEnabled;
+    }
+}
 
 public sealed partial class SettingsViewModel : ObservableObject
 {
@@ -12,6 +31,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly ICertConfigStore _certStore;
     private readonly ICertValidator _certValidator;
     private readonly IUiLogSink _log;
+    private readonly PluginLoadReport _pluginReport;
 
     [ObservableProperty] private string _connectionMethod = "cert";
     [ObservableProperty] private string? _expectedTenantId;
@@ -29,16 +49,20 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     [ObservableProperty] private string _saveStatus = string.Empty;
 
+    public ObservableCollection<PluginToggleItem> Plugins { get; } = new();
+
     public SettingsViewModel(
         IPreferencesStore prefsStore,
         ICertConfigStore certStore,
         ICertValidator certValidator,
-        IUiLogSink log)
+        IUiLogSink log,
+        PluginLoadReport pluginReport)
     {
         _prefsStore = prefsStore;
         _certStore = certStore;
         _certValidator = certValidator;
         _log = log;
+        _pluginReport = pluginReport;
     }
 
     [RelayCommand]
@@ -60,7 +84,37 @@ public sealed partial class SettingsViewModel : ObservableObject
             CertThumbprint = cert.CertThumbprint;
         }
 
+        RebuildPluginList(prefs);
         ValidateCert();
+    }
+
+    private void RebuildPluginList(UserPreferences prefs)
+    {
+        Plugins.Clear();
+        foreach (var p in _pluginReport.Plugins)
+        {
+            Plugins.Add(new PluginToggleItem(
+                Path.GetFileName(p.AssemblyPath),
+                "Cargado",
+                p.Modules.Count,
+                isEnabled: true));
+        }
+        foreach (var f in _pluginReport.Failures)
+        {
+            Plugins.Add(new PluginToggleItem(
+                Path.GetFileName(f.AssemblyPath),
+                "Error: " + f.Message,
+                0,
+                isEnabled: true));
+        }
+        foreach (var d in _pluginReport.Disabled)
+        {
+            Plugins.Add(new PluginToggleItem(
+                d.AssemblyFileName,
+                "Deshabilitado",
+                0,
+                isEnabled: false));
+        }
     }
 
     [RelayCommand]
@@ -74,6 +128,10 @@ public sealed partial class SettingsViewModel : ObservableObject
             prefs.ExpectedTenantDomain = ExpectedTenantDomain;
             prefs.EnforceTenantLock = EnforceTenantLock;
             prefs.Theme = Theme;
+            prefs.DisabledPluginAssemblies = Plugins
+                .Where(p => !p.IsEnabled)
+                .Select(p => p.AssemblyFileName)
+                .ToList();
             await _prefsStore.SaveAsync(prefs).ConfigureAwait(true);
 
             ApplyTheme(Theme);

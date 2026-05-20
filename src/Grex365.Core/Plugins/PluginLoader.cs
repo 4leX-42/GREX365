@@ -6,19 +6,35 @@ namespace Grex365.Core.Plugins;
 
 public static class PluginLoader
 {
-    public static PluginLoadReport LoadFrom(string directory, IProgress<LogEntry>? progress = null)
+    public static PluginLoadReport LoadFrom(
+        string directory,
+        IProgress<LogEntry>? progress = null,
+        IReadOnlyCollection<string>? disabledAssemblies = null)
     {
         var plugins = new List<DiscoveredPlugin>();
         var failures = new List<PluginLoadFailure>();
+        var disabled = new List<DisabledPlugin>();
+
+        var disabledSet = disabledAssemblies is null
+            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            : new HashSet<string>(disabledAssemblies, StringComparer.OrdinalIgnoreCase);
 
         if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
         {
-            return new PluginLoadReport(plugins, failures);
+            return new PluginLoadReport(plugins, failures, disabled);
         }
 
         var dlls = Directory.EnumerateFiles(directory, "*.dll", SearchOption.TopDirectoryOnly);
         foreach (var dll in dlls)
         {
+            var fileName = Path.GetFileName(dll);
+            if (disabledSet.Contains(fileName))
+            {
+                disabled.Add(new DisabledPlugin(dll, fileName));
+                progress?.Report(LogEntry.Info("Plugins", $"Plugin deshabilitado por preferencias: {fileName}"));
+                continue;
+            }
+
             try
             {
                 var ctx = new AssemblyLoadContext(name: Path.GetFileNameWithoutExtension(dll), isCollectible: false);
@@ -29,17 +45,17 @@ public static class PluginLoader
                 }
 
                 var modules = DiscoverModules(asm);
-                plugins.Add(new DiscoveredPlugin(dll, asm.GetName().Name ?? Path.GetFileName(dll), modules));
-                progress?.Report(LogEntry.Ok("Plugins", $"Cargado {Path.GetFileName(dll)} ({modules.Count} módulo(s))"));
+                plugins.Add(new DiscoveredPlugin(dll, asm.GetName().Name ?? fileName, modules));
+                progress?.Report(LogEntry.Ok("Plugins", $"Cargado {fileName} ({modules.Count} módulo(s))"));
             }
             catch (Exception ex)
             {
                 failures.Add(new PluginLoadFailure(dll, ex.Message));
-                progress?.Report(LogEntry.Warn("Plugins", $"Plugin descartado {Path.GetFileName(dll)}: {ex.Message}"));
+                progress?.Report(LogEntry.Warn("Plugins", $"Plugin descartado {fileName}: {ex.Message}"));
             }
         }
 
-        return new PluginLoadReport(plugins, failures);
+        return new PluginLoadReport(plugins, failures, disabled);
     }
 
     private static IReadOnlyList<IModule> DiscoverModules(Assembly assembly)
