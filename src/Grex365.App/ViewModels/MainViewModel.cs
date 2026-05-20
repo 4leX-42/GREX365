@@ -88,6 +88,7 @@ public sealed partial class MainViewModel : ObservableObject
             new("Grupos",         "", typeof(GroupsViewModel)),
             new("Buzones",        "", typeof(SharedMailboxViewModel)),
             new("Reglas buzon", "", typeof(MailboxRulesViewModel)),
+            new("Mail flow",      "", typeof(MailFlowRulesViewModel)),
             new("Auditoria",      "", typeof(AuditViewModel)),
             new("Audit log",    "", typeof(AuditLogViewModel)),
             new("Onboarding",     "", typeof(OnboardingViewModel)),
@@ -121,6 +122,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         "Buzones",
         "Reglas buzon",
+        "Mail flow",
     };
 
     private void ApplyConnectionRequirements()

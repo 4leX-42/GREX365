@@ -98,6 +98,7 @@ public partial class App : Application
                 services.AddSingleton<IDistributionListsService, DistributionListsService>();
                 services.AddSingleton<ISharedMailboxService, SharedMailboxService>();
                 services.AddSingleton<IMailboxRulesService, MailboxRulesService>();
+                services.AddSingleton<IMailFlowRulesService, MailFlowRulesService>();
                 services.AddSingleton<IAuditService, GraphAuditService>();
                 services.AddSingleton<ITenantHealthService, GraphTenantHealthService>();
                 services.AddSingleton<IUsersService, GraphUsersService>();
@@ -128,6 +129,7 @@ public partial class App : Application
                 services.AddTransient<OffboardingViewModel>();
                 services.AddTransient<OnboardingViewModel>();
                 services.AddTransient<MailboxRulesViewModel>();
+                services.AddTransient<MailFlowRulesViewModel>();
                 services.AddTransient<AuditLogViewModel>();
                 services.AddTransient<CertWizardViewModel>();
                 services.AddTransient<DomainCheckViewModel>();

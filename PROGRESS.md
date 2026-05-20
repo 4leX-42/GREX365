@@ -53,7 +53,7 @@ Docs: Plantamiento añadido como North Star del repo. `deep-research-report.md` 
 - [x] Disconnect Graph + EXO + botón global "Desconectar todo"
 
 ### Fase 3 — UI moderna (WPF + Fluent) — **DONE**
-Navegación lateral con 12 módulos:
+Navegación lateral con 14 módulos:
 - [x] **Dashboard** — status cards (Graph/EXO/Tenant/Cuenta) + quick actions
 - [x] **Conexion** — cert auth Graph + EXO con feedback en vivo
 - [x] **Salud tenant** — org + counts usuarios/grupos + SKUs consumidos con **barras de progreso por SKU + total agregado**
@@ -117,7 +117,7 @@ UX/QoL fase 3:
 
 ### Features útiles pendientes
 - [ ] Auth tradicional/UPN interactivo (MSAL) — alternativa al cert-based actual
-- [ ] Mail flow rules viewer
+- [x] **Mail flow rules viewer** — nuevo modulo de navegacion ("Mail flow") que lista `Get-TransportRule` de EXO (Name/State/Priority/Mode/Description) con filtro libre; gated por RequiresExchange
 - [ ] Auditoría: grupos sin actividad reciente (necesita /reports/getMicrosoft365GroupsActivity)
 - [x] **Cert export PFX con password** — `ICertificateGenerator.ExportPfx`, panel "Exportar PFX" en CertWizardView con PasswordBox + tests de validacion (no encontrado, password vacio, etc.)
 - [ ] Auto-update App Registration permisos vía Graph (legacy CertWizard hace 29 pasos)
