@@ -5,4 +5,8 @@ namespace Grex365.Core.Abstractions;
 public interface ICertificateGenerator
 {
     GeneratedCertificate GenerateAndStore(string commonName, int validDays, string exportDirectory, IProgress<LogEntry>? progress = null);
+
+    PfxExportResult ExportPfx(string thumbprint, string outputPath, string password, IProgress<LogEntry>? progress = null);
 }
+
+public sealed record PfxExportResult(string PfxPath, int BytesWritten);

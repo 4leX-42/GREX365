@@ -4,7 +4,7 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting**
-- Tests: **157 passing** (xUnit + FluentAssertions)
+- Tests: **161 passing** (xUnit + FluentAssertions)
 - Última actualización: 2026-05-20
 
 ## Bitácora sesiones
@@ -119,7 +119,7 @@ UX/QoL fase 3:
 - [ ] Auth tradicional/UPN interactivo (MSAL) — alternativa al cert-based actual
 - [ ] Mail flow rules viewer
 - [ ] Auditoría: grupos sin actividad reciente (necesita /reports/getMicrosoft365GroupsActivity)
-- [ ] Cert export PFX con password
+- [x] **Cert export PFX con password** — `ICertificateGenerator.ExportPfx`, panel "Exportar PFX" en CertWizardView con PasswordBox + tests de validacion (no encontrado, password vacio, etc.)
 - [ ] Auto-update App Registration permisos vía Graph (legacy CertWizard hace 29 pasos)
 
 ### Polish UI

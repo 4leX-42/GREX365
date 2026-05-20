@@ -104,6 +104,39 @@
                             Padding="0,12,0,0"
                             Margin="0,12,0,0">
                         <StackPanel>
+                            <TextBlock Text="Exportar PFX (clave privada protegida con password)"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,8" />
+                            <TextBlock Text="Solo si necesitas restaurar el certificado en otra estacion. NO lo subas a Azure (sube el .cer)."
+                                       Opacity="0.6"
+                                       FontSize="12"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,8" />
+                            <TextBlock Text="Ruta del .pfx" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4" />
+                            <ui:TextBox Text="{Binding PfxPath, UpdateSourceTrigger=PropertyChanged}"
+                                        PlaceholderText="C:\path\al\cert.pfx"
+                                        Margin="0,0,0,8" />
+                            <TextBlock Text="Password" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4" />
+                            <PasswordBox x:Name="PfxPasswordBox"
+                                         Width="280"
+                                         HorizontalAlignment="Left"
+                                         Margin="0,0,0,8" />
+                            <StackPanel Orientation="Horizontal">
+                                <ui:Button Content="Exportar .pfx"
+                                           Margin="0,0,8,0"
+                                           Click="ExportPfx_Click" />
+                                <TextBlock VerticalAlignment="Center"
+                                           Text="{Binding PfxStatus}"
+                                           Opacity="0.85" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                            BorderThickness="0,1,0,0"
+                            Padding="0,12,0,0"
+                            Margin="0,12,0,0">
+                        <StackPanel>
                             <TextBlock Text="Próximos pasos" FontWeight="SemiBold" Margin="0,0,0,4" />
                             <TextBlock TextWrapping="Wrap" Opacity="0.85">
                                 1. Subir el archivo .cer al App Registration en Azure AD (Certificates &amp; secrets → Certificates).<LineBreak />

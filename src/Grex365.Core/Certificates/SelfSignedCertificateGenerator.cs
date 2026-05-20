@@ -72,6 +72,59 @@ public sealed class SelfSignedCertificateGenerator : ICertificateGenerator
             CerPath: cerPath);
     }
 
+    public PfxExportResult ExportPfx(string thumbprint, string outputPath, string password, IProgress<LogEntry>? progress = null)
+    {
+        if (string.IsNullOrWhiteSpace(thumbprint))
+        {
+            throw new ArgumentException("Thumbprint requerido.", nameof(thumbprint));
+        }
+        if (string.IsNullOrWhiteSpace(outputPath))
+        {
+            throw new ArgumentException("Ruta de salida requerida.", nameof(outputPath));
+        }
+        if (string.IsNullOrEmpty(password))
+        {
+            throw new ArgumentException("Password requerido para el PFX.", nameof(password));
+        }
+
+        var cleaned = thumbprint.Replace(" ", string.Empty).Trim();
+
+        progress?.Report(LogEntry.Info("Cert", $"Buscando cert {cleaned} en CurrentUser\\My..."));
+        using var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+        store.Open(OpenFlags.ReadOnly);
+        var matches = store.Certificates.Find(X509FindType.FindByThumbprint, cleaned, validOnly: false);
+        try
+        {
+            if (matches.Count == 0)
+            {
+                throw new InvalidOperationException($"Certificado con thumbprint {cleaned} no encontrado en CurrentUser\\My.");
+            }
+            var cert = matches[0];
+            if (!cert.HasPrivateKey)
+            {
+                throw new InvalidOperationException("El certificado no tiene clave privada exportable.");
+            }
+
+            var dir = Path.GetDirectoryName(outputPath);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            var bytes = cert.Export(X509ContentType.Pfx, password);
+            File.WriteAllBytes(outputPath, bytes);
+            progress?.Report(LogEntry.Ok("Cert", $"PFX exportado a {outputPath} ({bytes.Length:N0} bytes)."));
+            return new PfxExportResult(outputPath, bytes.Length);
+        }
+        finally
+        {
+            foreach (var c in matches)
+            {
+                c.Dispose();
+            }
+        }
+    }
+
     private static string SanitizeFileName(string input)
     {
         foreach (var c in Path.GetInvalidFileNameChars())

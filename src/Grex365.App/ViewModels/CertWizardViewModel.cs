@@ -21,6 +21,8 @@ public sealed partial class CertWizardViewModel : ObservableObject
     [ObservableProperty] private GeneratedCertificate? _generated;
     [ObservableProperty] private string _statusMessage = "Configura CN/validez y pulsa Generar.";
     [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private string _pfxPath = string.Empty;
+    [ObservableProperty] private string _pfxStatus = string.Empty;
 
     public CertWizardViewModel(ICertificateGenerator generator, IUiLogSink log)
     {
@@ -59,6 +61,10 @@ public sealed partial class CertWizardViewModel : ObservableObject
             var result = await Task.Run(() => _generator.GenerateAndStore(cn, days, dir, _log.Progress)).ConfigureAwait(true);
             Generated = result;
             StatusMessage = $"Generado. Thumbprint={result.Thumbprint}";
+            if (string.IsNullOrWhiteSpace(PfxPath))
+            {
+                PfxPath = Path.Combine(dir, $"grex365-{result.Thumbprint}.pfx");
+            }
         }
         catch (Exception ex)
         {
@@ -68,6 +74,37 @@ public sealed partial class CertWizardViewModel : ObservableObject
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    public async Task ExportPfxAsync(string password)
+    {
+        if (Generated is null)
+        {
+            PfxStatus = "Genera primero un certificado.";
+            return;
+        }
+        if (string.IsNullOrEmpty(password))
+        {
+            PfxStatus = "Password requerido.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(PfxPath))
+        {
+            PfxStatus = "Ruta PFX requerida.";
+            return;
+        }
+
+        try
+        {
+            var result = await Task.Run(() => _generator.ExportPfx(Generated.Thumbprint, PfxPath, password, _log.Progress))
+                .ConfigureAwait(true);
+            PfxStatus = $"OK · {result.BytesWritten:N0} bytes en {result.PfxPath}";
+        }
+        catch (Exception ex)
+        {
+            PfxStatus = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Cert", ex.Message, ex));
         }
     }
 
