@@ -125,7 +125,7 @@ UX/QoL fase 3:
 ### Polish UI
 - [ ] Terminal PowerShell embebido (`EasyWindowsTerminalControl`)
 - [ ] Theme toggle accesible desde título / dashboard (ahora solo en Settings)
-- [ ] Disable nav items cuando Graph desconectado (gating UX)
+- [x] **Disable nav items cuando Graph/Exchange desconectado** — `NavigationItem.RequiresGraph/RequiresExchange`, `MainViewModel.UpdateNavEnabledStates` reactivo al `ConnectionStateMonitor`
 
 ---
 

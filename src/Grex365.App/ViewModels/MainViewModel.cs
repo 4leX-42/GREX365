@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Grex365.App.ViewModels;
 
-public sealed class NavigationItem
+public sealed partial class NavigationItem : ObservableObject
 {
     public NavigationItem(string title, string glyph, Type viewModelType)
     {
@@ -24,6 +24,10 @@ public sealed class NavigationItem
     public string Title { get; }
     public string Glyph { get; }
     public Type ViewModelType { get; }
+    public bool RequiresGraph { get; set; }
+    public bool RequiresExchange { get; set; }
+
+    [ObservableProperty] private bool _isEnabled = true;
 }
 
 public sealed partial class MainViewModel : ObservableObject
@@ -97,7 +101,51 @@ public sealed partial class MainViewModel : ObservableObject
             NavigationItems.Add(new NavigationItem(module.Title, module.Glyph, module.ViewModelType));
         }
 
+        ApplyConnectionRequirements();
+        UpdateNavEnabledStates();
+
         SelectedNavigation = LoadLastNavigation() ?? NavigationItems[0];
+    }
+
+    private static readonly HashSet<string> RequiresGraphTitles = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Salud tenant",
+        "Usuarios",
+        "Grupos",
+        "Auditoria",
+        "Onboarding",
+        "Offboarding",
+    };
+
+    private static readonly HashSet<string> RequiresExchangeTitles = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Buzones",
+        "Reglas buzon",
+    };
+
+    private void ApplyConnectionRequirements()
+    {
+        foreach (var item in NavigationItems)
+        {
+            if (RequiresGraphTitles.Contains(item.Title))
+            {
+                item.RequiresGraph = true;
+            }
+            if (RequiresExchangeTitles.Contains(item.Title))
+            {
+                item.RequiresExchange = true;
+            }
+        }
+    }
+
+    private void UpdateNavEnabledStates()
+    {
+        foreach (var item in NavigationItems)
+        {
+            item.IsEnabled =
+                (!item.RequiresGraph || GraphConnected) &&
+                (!item.RequiresExchange || ExchangeConnected);
+        }
     }
 
     public ObservableCollection<NavigationItem> NavigationItems { get; }
@@ -171,6 +219,7 @@ public sealed partial class MainViewModel : ObservableObject
         TenantId = s.TenantId;
         TenantDomain = s.TenantDomain;
         Account = s.Account;
+        UpdateNavEnabledStates();
     }
 
     [RelayCommand]

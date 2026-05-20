@@ -96,6 +96,7 @@
 
             <!-- Nav item: ListBoxItem styled with hover and selected -->
             <Style x:Key="NavListBoxItem" TargetType="ListBoxItem">
+                <Setter Property="IsEnabled" Value="{Binding IsEnabled}" />
                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                 <Setter Property="Padding" Value="0" />
                 <Setter Property="Margin" Value="6,2" />
