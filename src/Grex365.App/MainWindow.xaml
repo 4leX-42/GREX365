@@ -47,10 +47,21 @@
                     </Border>
 
                     <Border DockPanel.Dock="Bottom" Padding="10,8,10,12">
-                        <ui:Button Content="Ajustes"
-                                   Icon=""
-                                   HorizontalAlignment="Stretch"
-                                   Command="{Binding OpenSettingsCommand}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <ui:Button Grid.Column="0"
+                                       Content="Tema"
+                                       Margin="0,0,6,0"
+                                       ToolTip="Cambiar tema claro/oscuro"
+                                       Command="{Binding ToggleThemeCommand}" />
+                            <ui:Button Grid.Column="1"
+                                       Content="Ajustes"
+                                       HorizontalAlignment="Stretch"
+                                       Command="{Binding OpenSettingsCommand}" />
+                        </Grid>
                     </Border>
 
                     <Border DockPanel.Dock="Top"

@@ -124,7 +124,7 @@ UX/QoL fase 3:
 
 ### Polish UI
 - [ ] Terminal PowerShell embebido (`EasyWindowsTerminalControl`)
-- [ ] Theme toggle accesible desde título / dashboard (ahora solo en Settings)
+- [x] **Theme toggle desde sidebar** — botón "Tema" junto a "Ajustes" persiste y aplica al instante
 - [x] **Disable nav items cuando Graph/Exchange desconectado** — `NavigationItem.RequiresGraph/RequiresExchange`, `MainViewModel.UpdateNavEnabledStates` reactivo al `ConnectionStateMonitor`
 
 ---

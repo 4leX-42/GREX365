@@ -246,6 +246,25 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task ToggleThemeAsync()
+    {
+        try
+        {
+            var prefs = await _prefs.LoadAsync().ConfigureAwait(true);
+            var current = string.IsNullOrWhiteSpace(prefs.Theme) ? "Dark" : prefs.Theme;
+            var next = string.Equals(current, "Dark", StringComparison.OrdinalIgnoreCase) ? "Light" : "Dark";
+            prefs.Theme = next;
+            await _prefs.SaveAsync(prefs).ConfigureAwait(true);
+            SettingsViewModel.ApplyThemeFromPreferences(next);
+            _uiLog.Progress.Report(LogEntry.Info("Theme", "Tema cambiado a " + next));
+        }
+        catch (Exception ex)
+        {
+            _uiLog.Progress.Report(LogEntry.Error("Theme", ex.Message, ex));
+        }
+    }
+
+    [RelayCommand]
     private void ClearLog() => _uiLog.Clear();
 
     partial void OnShowInfoChanged(bool value) => LogView.Refresh();
