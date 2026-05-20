@@ -20,6 +20,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using Serilog.Core;
+using Serilog.Events;
 using Serilog.Extensions.Logging;
 
 namespace Grex365.App;
@@ -33,6 +35,8 @@ public partial class App : Application
     public static string DataDirectory { get; } =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Grex365");
 
+    public static LoggingLevelSwitch LogLevelSwitch { get; } = new(LogEventLevel.Information);
+
     protected override void OnStartup(StartupEventArgs e)
     {
         Directory.CreateDirectory(DataDirectory);
@@ -41,8 +45,11 @@ public partial class App : Application
         Directory.CreateDirectory(logsDir);
         Directory.CreateDirectory(configDir);
 
+        var bootPrefs = TryLoadBootPreferences(configDir);
+        LogLevelSwitch.MinimumLevel = ParseLogLevel(bootPrefs.LogLevel);
+
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Debug()
+            .MinimumLevel.ControlledBy(LogLevelSwitch)
             .WriteTo.File(
                 path: Path.Combine(logsDir, "grex365-.log"),
                 rollingInterval: RollingInterval.Day,
@@ -56,7 +63,6 @@ public partial class App : Application
         var pluginsDir = Path.Combine(DataDirectory, "plugins");
         Directory.CreateDirectory(pluginsDir);
 
-        var bootPrefs = TryLoadBootPreferences(configDir);
         var pluginReport = PluginLoader.LoadFrom(
             pluginsDir,
             disabledAssemblies: bootPrefs.DisabledPluginAssemblies);
@@ -78,6 +84,7 @@ public partial class App : Application
             {
                 services.AddSingleton<ILoggerFactory>(new SerilogLoggerFactory(Log.Logger, dispose: true));
                 services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
+                services.AddSingleton(LogLevelSwitch);
 
                 services.AddSingleton(_ => new RunspacePoolHost(minRunspaces: 1, maxRunspaces: 4));
                 services.AddSingleton<IPowerShellRunner, PowerShellRunner>();
@@ -189,6 +196,16 @@ public partial class App : Application
             args.SetObserved();
         };
     }
+
+    internal static LogEventLevel ParseLogLevel(string? value) => value?.Trim().ToLowerInvariant() switch
+    {
+        "debug" => LogEventLevel.Debug,
+        "warning" or "warn" => LogEventLevel.Warning,
+        "error" => LogEventLevel.Error,
+        "fatal" => LogEventLevel.Fatal,
+        "verbose" or "trace" => LogEventLevel.Verbose,
+        _ => LogEventLevel.Information,
+    };
 
     private static Grex365.Core.Models.UserPreferences TryLoadBootPreferences(string configDir)
     {

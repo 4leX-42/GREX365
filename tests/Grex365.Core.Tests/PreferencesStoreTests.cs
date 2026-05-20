@@ -69,6 +69,28 @@ public class PreferencesStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task LogLevel_Roundtrip()
+    {
+        var store = new JsonPreferencesStore(_tempDir);
+        var prefs = new UserPreferences { LogLevel = "Debug" };
+        await store.SaveAsync(prefs);
+
+        var loaded = await store.LoadAsync();
+        loaded.LogLevel.Should().Be("Debug");
+    }
+
+    [Fact]
+    public async Task LogLevel_Defaults_To_Information_When_Missing()
+    {
+        var path = Path.Combine(_tempDir, "user_preferences.json");
+        await File.WriteAllTextAsync(path, "{\"Theme\":\"Dark\"}");
+
+        var store = new JsonPreferencesStore(_tempDir);
+        var loaded = await store.LoadAsync();
+        loaded.LogLevel.Should().Be("Information");
+    }
+
+    [Fact]
     public async Task CertConfig_Roundtrip()
     {
         var store = new JsonCertConfigStore(_tempDir);

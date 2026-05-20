@@ -6,6 +6,7 @@ using Grex365.App.Services;
 using Grex365.Core.Abstractions;
 using Grex365.Core.Models;
 using Grex365.Core.Plugins;
+using Serilog.Core;
 
 namespace Grex365.App.ViewModels;
 
@@ -32,12 +33,14 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly ICertValidator _certValidator;
     private readonly IUiLogSink _log;
     private readonly PluginLoadReport _pluginReport;
+    private readonly LoggingLevelSwitch _logLevelSwitch;
 
     [ObservableProperty] private string _connectionMethod = "cert";
     [ObservableProperty] private string? _expectedTenantId;
     [ObservableProperty] private string? _expectedTenantDomain;
     [ObservableProperty] private bool _enforceTenantLock;
     [ObservableProperty] private string _theme = "Dark";
+    [ObservableProperty] private string _logLevel = "Information";
 
     [ObservableProperty] private string _certAppId = string.Empty;
     [ObservableProperty] private string _certTenantId = string.Empty;
@@ -56,13 +59,15 @@ public sealed partial class SettingsViewModel : ObservableObject
         ICertConfigStore certStore,
         ICertValidator certValidator,
         IUiLogSink log,
-        PluginLoadReport pluginReport)
+        PluginLoadReport pluginReport,
+        LoggingLevelSwitch logLevelSwitch)
     {
         _prefsStore = prefsStore;
         _certStore = certStore;
         _certValidator = certValidator;
         _log = log;
         _pluginReport = pluginReport;
+        _logLevelSwitch = logLevelSwitch;
     }
 
     [RelayCommand]
@@ -74,6 +79,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         ExpectedTenantDomain = prefs.ExpectedTenantDomain;
         EnforceTenantLock = prefs.EnforceTenantLock;
         Theme = string.IsNullOrWhiteSpace(prefs.Theme) ? "Dark" : prefs.Theme;
+        LogLevel = string.IsNullOrWhiteSpace(prefs.LogLevel) ? "Information" : prefs.LogLevel;
 
         var cert = await _certStore.LoadAsync().ConfigureAwait(true);
         if (cert is not null)
@@ -128,6 +134,8 @@ public sealed partial class SettingsViewModel : ObservableObject
             prefs.ExpectedTenantDomain = ExpectedTenantDomain;
             prefs.EnforceTenantLock = EnforceTenantLock;
             prefs.Theme = Theme;
+            prefs.LogLevel = LogLevel;
+            _logLevelSwitch.MinimumLevel = App.ParseLogLevel(LogLevel);
             prefs.DisabledPluginAssemblies = Plugins
                 .Where(p => !p.IsEnabled)
                 .Select(p => p.AssemblyFileName)

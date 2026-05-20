@@ -63,6 +63,21 @@
                             <ComboBoxItem Content="Oscuro" Tag="Dark" />
                             <ComboBoxItem Content="Claro" Tag="Light" />
                         </ComboBox>
+
+                        <TextBlock Text="Nivel de logging" FontWeight="SemiBold" Margin="0,16,0,4" />
+                        <ComboBox SelectedValue="{Binding LogLevel}"
+                                  SelectedValuePath="Tag"
+                                  Width="200"
+                                  HorizontalAlignment="Left">
+                            <ComboBoxItem Content="Debug (verboso)" Tag="Debug" />
+                            <ComboBoxItem Content="Information (recomendado)" Tag="Information" />
+                            <ComboBoxItem Content="Warning" Tag="Warning" />
+                            <ComboBoxItem Content="Error" Tag="Error" />
+                        </ComboBox>
+                        <TextBlock Text="Aplica al instante (Serilog LoggingLevelSwitch); no requiere reinicio."
+                                   Opacity="0.55"
+                                   FontSize="12"
+                                   Margin="0,4,0,0" />
                     </StackPanel>
                 </Border>
 
