@@ -87,14 +87,17 @@ UX/QoL fase 3:
 - [x] **Sample plugin externo** (`samples/Grex365.SamplePlugin`) — POC compilable y desplegable, con README de empaquetado correcto (no duplica deps del host)
 - [ ] Settings UI: enable/disable + reload (pendiente)
 
-### Fase 5 — Packaging y despliegue — **IN PROGRESS**
+### Fase 5 — Packaging y despliegue — **MSIX SCAFFOLD DONE**
 - [x] PublishSingleFile self-contained para `.exe` portable (`PublishProfiles/win-x64-portable.pubxml`)
 - [x] Pipeline CI (GitHub Actions): build + test multiplataforma (.github/workflows/ci.yml)
 - [x] Documentación de despliegue (`PACKAGING.md`) con Intune/SCCM/AppInstaller
-- [ ] Generar MSIX (single-project) con `Package.appxmanifest`
-- [ ] Firma de código (cert EV) en pipeline
-- [ ] `.appinstaller` con auto-update apuntando a feed interno
-- [ ] Job CI de release (`tag v*`) que firma y publica MSIX
+- [x] **`Package.appxmanifest`** + scaffold completo en `packaging/msix/` (Build-Msix.ps1, Generate-Assets.ps1, assets PNG placeholders)
+- [x] **`.appinstaller` plantilla** con `{{FEED_BASE_URI}}` / `{{VERSION}}` para auto-update
+- [x] **Job CI `msix`** triggered on tag `v*` (resuelve versión del tag, empaqueta, sube artifact)
+- [x] **Hook de firma opcional** en CI (secrets `SIGN_CERT_PFX_B64` + `SIGN_CERT_PASSWORD`; el step se salta si no están configurados)
+- [ ] Reemplazar PNG placeholders por arte definitivo de marca
+- [ ] Configurar variable `MSIX_FEED_BASE_URI` + secrets de firma en el repo
+- [ ] Smoke test de instalación end-to-end con un cert real
 
 ### Fase 6 — Telemetría + features enterprise — **IN PROGRESS**
 - [x] Audit trail JSONL persistente (`FileAuditLog`) en `%LOCALAPPDATA%\Grex365\audit\audit-YYYY-MM.jsonl`

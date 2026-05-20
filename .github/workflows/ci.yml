@@ -82,8 +82,75 @@ jobs:
           -p:PublishProfile=win-x64-portable
           -o publish
 
-      - name: Upload artifact
+      - name: Upload portable EXE
         uses: actions/upload-artifact@v4
         with:
-          name: Grex365-${{ github.ref_name }}
+          name: Grex365-${{ github.ref_name }}-portable
           path: publish/Grex365.App.exe
+
+  msix:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: preview
+          include-prerelease: true
+
+      - name: Resolve MSIX version from tag
+        id: ver
+        shell: pwsh
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $raw = $tag -replace '^v',''
+          $parts = $raw.Split('-')[0].Split('.')
+          while ($parts.Length -lt 4) { $parts += '0' }
+          $version = ($parts[0..3] -join '.')
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "MSIX version: $version"
+
+      - name: Build MSIX
+        shell: pwsh
+        run: pwsh -File packaging/msix/Build-Msix.ps1 -Version ${{ steps.ver.outputs.version }}
+
+      - name: Sign MSIX (optional)
+        if: env.SIGN_CERT_PFX_B64 != ''
+        shell: pwsh
+        env:
+          SIGN_CERT_PFX_B64: ${{ secrets.SIGN_CERT_PFX_B64 }}
+          SIGN_CERT_PASSWORD: ${{ secrets.SIGN_CERT_PASSWORD }}
+        run: |
+          $pfx = Join-Path $env:RUNNER_TEMP 'codesign.pfx'
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:SIGN_CERT_PFX_B64))
+          $signtool = (Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin' -Recurse -Filter signtool.exe |
+            Where-Object { $_.FullName -like '*\x64\*' } | Sort-Object FullName -Descending | Select-Object -First 1).FullName
+          & $signtool sign /fd SHA256 /f $pfx /p $env:SIGN_CERT_PASSWORD /tr http://timestamp.digicert.com /td SHA256 packaging/msix/out/Grex365.msix
+          if ($LASTEXITCODE -ne 0) { throw "signtool failed" }
+          Remove-Item $pfx -Force
+
+      - name: Render AppInstaller manifest
+        shell: pwsh
+        run: |
+          $version = '${{ steps.ver.outputs.version }}'
+          $feed = '${{ vars.MSIX_FEED_BASE_URI }}'
+          if (-not $feed) { $feed = 'https://example.invalid/grex365' }
+          $src = Get-Content packaging/msix/Grex365.appinstaller -Raw
+          $rendered = $src.Replace('{{FEED_BASE_URI}}', $feed).Replace('{{VERSION}}', $version)
+          $dst = 'packaging/msix/out/Grex365.appinstaller'
+          New-Item -ItemType Directory -Path (Split-Path $dst) -Force | Out-Null
+          Set-Content -Path $dst -Value $rendered -NoNewline -Encoding utf8
+
+      - name: Upload MSIX bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: Grex365-${{ github.ref_name }}-msix
+          path: |
+            packaging/msix/out/Grex365.msix
+            packaging/msix/out/Grex365.appinstaller

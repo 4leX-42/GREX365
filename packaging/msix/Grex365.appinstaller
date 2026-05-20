@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Plantilla de auto-update via App Installer.
+
+    Sustituye los marcadores antes de publicar a tu feed interno
+    (Azure Blob Storage, share UNC con HTTPS, Artifactory, etc.):
+
+        {{FEED_BASE_URI}}    URL HTTPS publica del feed (sin barra final).
+        {{VERSION}}          Version 4 octetos identica a Package.appxmanifest.
+
+    Coloca este XML y el .msix firmado en {{FEED_BASE_URI}}/.
+    Distribuye este .appinstaller (no el .msix) a los usuarios; el cliente
+    de Windows comprueba updates en cada arranque.
+-->
+<AppInstaller
+    Uri="{{FEED_BASE_URI}}/Grex365.appinstaller"
+    Version="{{VERSION}}"
+    xmlns="http://schemas.microsoft.com/appx/appinstaller/2018">
+
+  <MainPackage
+      Name="es.andersen.Grex365"
+      Publisher="CN=Andersen ES, OU=IT, O=Andersen Tax LLP, C=ES"
+      Version="{{VERSION}}"
+      ProcessorArchitecture="x64"
+      Uri="{{FEED_BASE_URI}}/Grex365_{{VERSION}}_x64.msix" />
+
+  <UpdateSettings>
+    <OnLaunch HoursBetweenUpdateChecks="24" UpdateBlocksActivation="false" ShowPrompt="true" />
+    <AutomaticBackgroundTask />
+  </UpdateSettings>
+
+</AppInstaller>

@@ -31,28 +31,60 @@ Salida: `src/Grex365.App/bin/Release/net10.0-windows/win-x64/publish/Grex365.App
 
 ## 3. MSIX (recomendado para Intune/AppLocker)
 
-> ⚠️ Pendiente de completar. Tracking en `PROGRESS.md` → Fase 5.
+El scaffold vive en `packaging/msix/`:
 
-Pasos previstos (no implementados aún):
-
-1. Crear proyecto `Grex365.App.Package` (Windows Application Packaging Project, `.wapproj`) en Visual Studio
-2. `Package.appxmanifest` con:
-   - `Identity Name="es.andersen.Grex365"` `Publisher="CN=Andersen, ..."`
-   - `Capabilities` mínimas (no se necesita `runFullTrust` salvo para RunspacePool en local)
-   - `Application` apuntando a `Grex365.App.exe`
-3. Firmar con certificado de código (EV preferible)
-4. Generar `.msix` y `.appinstaller` con feed URL interno
-5. Subir `.msix` y `.appinstaller` a un share interno o a Azure Blob Storage / GitHub Releases
-6. Distribuir vía **Intune** (App > Windows app (Win32) → MSIX) o **SCCM**
-
-Auto-update: el cliente App Installer comprueba el `.appinstaller` al iniciar y aplica updates de forma transparente. Configuración recomendada:
-
-```xml
-<UpdateSettings>
-  <OnLaunch HoursBetweenUpdateChecks="24" UpdateBlocksActivation="false" ShowPrompt="true" />
-  <AutomaticBackgroundTask />
-</UpdateSettings>
 ```
+packaging/msix/
+├── Package.appxmanifest      # manifest con Identity es.andersen.Grex365
+├── Grex365.appinstaller      # plantilla auto-update (placeholders {{FEED_BASE_URI}}, {{VERSION}})
+├── Generate-Assets.ps1       # crea PNGs (44, 150, 310x150, 50) — placeholders hasta tener arte definitivo
+├── Build-Msix.ps1            # publish single-file + makeappx pack
+└── assets/                   # tiles PNG generados
+```
+
+### Build local
+
+Requisitos: Windows 10/11 + Windows SDK >= 10.0.17763 (incluye `makeappx.exe` y `signtool.exe`).
+
+```powershell
+pwsh -File packaging/msix/Build-Msix.ps1 -Version 2.0.0.0
+# Salida: packaging/msix/out/Grex365.msix (sin firmar)
+```
+
+El script:
+1. Lanza `dotnet publish` con el perfil portable.
+2. Renombra `Grex365.App.exe` → `Grex365.exe` (lo declara así el manifest).
+3. Copia el output + manifest + assets a un staging temporal.
+4. Ejecuta `makeappx pack`.
+
+### Firma
+
+```powershell
+signtool sign /fd SHA256 /a /f cert.pfx /p <pwd> `
+  /tr http://timestamp.digicert.com /td SHA256 `
+  packaging/msix/out/Grex365.msix
+```
+
+El `Publisher` del `Package.appxmanifest` (`CN=Andersen ES, OU=IT, O=Andersen Tax LLP, C=ES`) **debe coincidir** con el `Subject` del certificado. Si firmas con otro Publisher, edita el manifest antes de empaquetar.
+
+### CI (release on tag `v*`)
+
+`.github/workflows/ci.yml` define el job `msix`:
+
+- Se dispara al pushear un tag con prefijo `v` (ej. `v2.0.0`).
+- Resuelve la versión del tag y la inyecta en el manifest.
+- Empaqueta sin firma; si los secrets `SIGN_CERT_PFX_B64` + `SIGN_CERT_PASSWORD` están configurados, firma con `signtool`.
+- Renderiza `Grex365.appinstaller` sustituyendo `{{FEED_BASE_URI}}` con la variable `MSIX_FEED_BASE_URI` del repo (Settings → Variables).
+- Sube `Grex365.msix` y `Grex365.appinstaller` como artifact.
+
+### Distribución
+
+Subir `.msix` + `.appinstaller` firmados a:
+
+- Azure Blob Storage / share UNC HTTPS / Artifactory / GitHub Releases.
+- Distribuir el `.appinstaller` (NO el `.msix` directamente); el cliente Windows comprueba updates al arrancar.
+
+Intune: **Apps → Windows app (Win32) → MSIX** apuntando al `.appinstaller`.
 
 ## 4. Plugins externos
 
