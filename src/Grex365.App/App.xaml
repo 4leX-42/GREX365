@@ -21,7 +21,7 @@
             <conv:NullToCollapsedConverter x:Key="NullToCollapsedConverter" />
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
 
-            <sys:String x:Key="IconFontFamily">Segoe Fluent Icons, Segoe MDL2 Assets</sys:String>
+            <FontFamily x:Key="IconFontFamily">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
 
             <!-- Typography -->
             <Style x:Key="PageTitleText" TargetType="TextBlock">
