@@ -11,6 +11,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -19,7 +20,108 @@
                    Text="Acciones registradas por el sink local (Ok/Warn/Error). JSONL por mes en %LOCALAPPDATA%\Grex365\audit\"
                    Opacity="0.7" Margin="0,0,0,16" />
 
-        <Border Grid.Row="2" CornerRadius="8" Padding="12" Margin="0,0,0,16"
+        <Border Grid.Row="2"
+                CornerRadius="8" Padding="16" Margin="0,0,0,16"
+                Background="{DynamicResource ControlFillColorDefaultBrush}"
+                Visibility="{Binding Summary, Converter={StaticResource NullToCollapsedConverter}}">
+            <StackPanel>
+                <TextBlock Text="Métricas del mes" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8" />
+                <WrapPanel>
+                    <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
+                            Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+                        <StackPanel>
+                            <TextBlock Text="Total" Opacity="0.7" FontSize="11" />
+                            <TextBlock Text="{Binding Summary.TotalCount}" FontSize="20" FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+                    <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
+                            Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+                        <StackPanel>
+                            <TextBlock Text="OK" Opacity="0.7" FontSize="11" />
+                            <TextBlock Text="{Binding Summary.OkCount}" FontSize="20" FontWeight="SemiBold" Foreground="#3FA34D" />
+                        </StackPanel>
+                    </Border>
+                    <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
+                            Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+                        <StackPanel>
+                            <TextBlock Text="WARN" Opacity="0.7" FontSize="11" />
+                            <TextBlock Text="{Binding Summary.WarnCount}" FontSize="20" FontWeight="SemiBold" Foreground="#E9A100" />
+                        </StackPanel>
+                    </Border>
+                    <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
+                            Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+                        <StackPanel>
+                            <TextBlock Text="ERROR" Opacity="0.7" FontSize="11" />
+                            <TextBlock Text="{Binding Summary.ErrorCount}" FontSize="20" FontWeight="SemiBold" Foreground="#E0524B" />
+                        </StackPanel>
+                    </Border>
+                    <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
+                            Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+                        <StackPanel>
+                            <TextBlock Text="Últimas 24h" Opacity="0.7" FontSize="11" />
+                            <TextBlock Text="{Binding Summary.Last24hCount}" FontSize="20" FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+                    <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
+                            Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+                        <StackPanel>
+                            <TextBlock Text="Tasa error" Opacity="0.7" FontSize="11" />
+                            <TextBlock Text="{Binding Summary.ErrorRate, StringFormat=P1}" FontSize="20" FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+                </WrapPanel>
+
+                <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                        <TextBlock Text="Top sources" FontWeight="SemiBold" FontSize="12" Opacity="0.85" Margin="0,0,0,4" />
+                        <ItemsControl ItemsSource="{Binding Summary.TopSources}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Source}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Count}" FontWeight="SemiBold" Opacity="0.85" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Errores recientes" FontWeight="SemiBold" FontSize="12" Opacity="0.85" Margin="0,0,0,4" />
+                        <ItemsControl ItemsSource="{Binding Summary.RecentErrors}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding Timestamp, StringFormat=HH:mm}"
+                                                   Opacity="0.6"
+                                                   FontSize="11"
+                                                   Margin="0,0,8,0"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Message}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="3" CornerRadius="8" Padding="12" Margin="0,0,0,16"
                 Background="{DynamicResource ControlFillColorDefaultBrush}">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -47,7 +149,7 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="3" CornerRadius="8" Padding="0"
+        <Border Grid.Row="4" CornerRadius="8" Padding="0"
                 Background="{DynamicResource ControlFillColorDefaultBrush}">
             <DockPanel>
                 <TextBlock DockPanel.Dock="Bottom" Margin="12,8" Opacity="0.8" Text="{Binding StatusMessage}" />

@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Grex365.App.Services;
 using Grex365.Core.Abstractions;
+using Grex365.Core.Audit;
 using Grex365.Core.Models;
 
 namespace Grex365.App.ViewModels;
@@ -19,6 +20,7 @@ public sealed partial class AuditLogViewModel : ObservableObject
     [ObservableProperty] private string _outcomeFilter = string.Empty;
     [ObservableProperty] private string _statusMessage = "Pulsa 'Cargar' para leer el mes seleccionado.";
     [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private AuditMetrics? _summary;
 
     private readonly List<AuditRecord> _all = new();
     public ObservableCollection<AuditRecord> Filtered { get; } = new();
@@ -40,6 +42,7 @@ public sealed partial class AuditLogViewModel : ObservableObject
             _all.Clear();
             _all.AddRange(records);
             ApplyFilters();
+            Summary = MetricsAggregator.Compute(records);
             StatusMessage = $"{records.Count} registros en {Month:yyyy-MM} · {Filtered.Count} filtrados";
         }
         catch (Exception ex)

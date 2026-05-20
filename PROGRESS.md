@@ -4,7 +4,7 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting**
-- Tests: **151 passing** (xUnit + FluentAssertions)
+- Tests: **157 passing** (xUnit + FluentAssertions)
 - Última actualización: 2026-05-20
 
 ## Bitácora sesiones
@@ -105,8 +105,8 @@ UX/QoL fase 3:
 - [x] Thread-safe via `SemaphoreSlim` y fire-and-forget desde sink
 - [x] Audit viewer UI (módulo "Audit log" en la navegación)
 - [x] **Niveles de logging DEBUG/INFO/WARN/ERROR configurables vía Settings** (Serilog `LoggingLevelSwitch`, aplica al instante sin reinicio)
+- [x] **Métricas agregadas** — `MetricsAggregator` puro (totales por outcome, error rate, last 24h, top sources, errores recientes); AuditLogView muestra panel resumen al cargar mes
 - [ ] Application Insights wired (`Microsoft.ApplicationInsights.WorkerService`)
-- [ ] Métricas agregadas: ejecuciones/día, tiempos por operación, errores frecuentes
 - [ ] Permisos por rol (validar grupo AD/Entra del usuario actual)
 - [ ] Documentación técnica interna (arquitectura, manual operación)
 - [ ] QA escenarios reales (100+ ops simultáneas)
