@@ -20,6 +20,7 @@ public sealed class MailboxRulesService : IMailboxRulesService
         CancellationToken cancellationToken = default)
     {
         const string script = """
+            param([string]$Identity)
             $cfg = Get-MailboxAutoReplyConfiguration -Identity $Identity -ErrorAction Stop
             [PSCustomObject]@{
                 State            = [string]$cfg.AutoReplyState
@@ -60,6 +61,7 @@ public sealed class MailboxRulesService : IMailboxRulesService
         }
 
         const string script = """
+            param([string]$Identity, [string]$State, [string]$InternalMessage, [string]$ExternalMessage, [string]$StartTime, [string]$EndTime)
             $params = @{
                 Identity        = $Identity
                 AutoReplyState  = $State
@@ -97,6 +99,7 @@ public sealed class MailboxRulesService : IMailboxRulesService
         CancellationToken cancellationToken = default)
     {
         const string script = """
+            param([string]$Identity)
             $m = Get-Mailbox -Identity $Identity -ErrorAction Stop
             [PSCustomObject]@{
                 ForwardingAddress              = [string]$m.ForwardingAddress
@@ -136,6 +139,7 @@ public sealed class MailboxRulesService : IMailboxRulesService
         }
 
         const string script = """
+            param([string]$Identity, [string]$Smtp, [bool]$Deliver)
             Set-Mailbox -Identity $Identity `
                 -ForwardingSmtpAddress $Smtp `
                 -DeliverToMailboxAndForward:$Deliver `
@@ -166,6 +170,7 @@ public sealed class MailboxRulesService : IMailboxRulesService
         CancellationToken cancellationToken = default)
     {
         const string script = """
+            param([string]$Identity)
             Set-Mailbox -Identity $Identity `
                 -ForwardingAddress $null `
                 -ForwardingSmtpAddress $null `
@@ -192,6 +197,7 @@ public sealed class MailboxRulesService : IMailboxRulesService
         CancellationToken cancellationToken = default)
     {
         const string script = """
+            param([string]$Identity)
             $folder = "{0}:\Calendar" -f $Identity
             $perms = @(Get-MailboxFolderPermission -Identity $folder -ErrorAction Stop)
             foreach ($p in $perms) {
@@ -246,6 +252,7 @@ public sealed class MailboxRulesService : IMailboxRulesService
         }
 
         const string script = """
+            param([string]$Identity, [string]$Principal, [string]$Rights)
             $folder = "{0}:\Calendar" -f $Identity
             $existing = Get-MailboxFolderPermission -Identity $folder -User $Principal -ErrorAction SilentlyContinue
             if ($existing) {
@@ -279,6 +286,7 @@ public sealed class MailboxRulesService : IMailboxRulesService
         CancellationToken cancellationToken = default)
     {
         const string script = """
+            param([string]$Identity, [string]$Principal)
             $folder = "{0}:\Calendar" -f $Identity
             Remove-MailboxFolderPermission -Identity $folder -User $Principal -Confirm:$false -ErrorAction Stop | Out-Null
             Write-Information "Calendar perm eliminado: $Principal"

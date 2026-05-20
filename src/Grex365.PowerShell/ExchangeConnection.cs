@@ -36,6 +36,7 @@ public sealed class ExchangeConnection : IExchangeConnection
 
         progress?.Report(LogEntry.Info("EXO", $"Connect-ExchangeOnline (cert) tenant={config.TenantId}"));
         const string script = """
+            param([string]$AppId, [string]$Thumbprint, [string]$Organization)
             Import-Module ExchangeOnlineManagement -ErrorAction Stop
             Connect-ExchangeOnline `
                 -AppId $AppId `
@@ -138,6 +139,7 @@ public sealed class ExchangeConnection : IExchangeConnection
     private async Task EnsureModuleAsync(IProgress<LogEntry>? progress, CancellationToken ct)
     {
         const string script = """
+            param([string]$Name)
             if (-not (Get-Module -Name $Name)) {
                 if (-not (Get-Module -ListAvailable -Name $Name)) {
                     try {

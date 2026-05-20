@@ -15,6 +15,7 @@ public sealed class SharedMailboxService : ISharedMailboxService
     public async Task<MailboxInfo?> GetMailboxAsync(string identity, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default)
     {
         const string script = """
+            param([string]$Identity)
             $m = Get-Mailbox -Identity $Identity -ErrorAction Stop
             [PSCustomObject]@{
                 Identity            = [string]$m.Identity
@@ -41,6 +42,7 @@ public sealed class SharedMailboxService : ISharedMailboxService
     public async Task<MailboxInfo?> ConvertToSharedAsync(string identity, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default)
     {
         const string script = """
+            param([string]$Identity)
             $current = Get-Mailbox -Identity $Identity -ErrorAction Stop
             if ($current.RecipientTypeDetails -eq 'SharedMailbox') {
                 [PSCustomObject]@{
@@ -97,6 +99,7 @@ public sealed class SharedMailboxService : ISharedMailboxService
     public async Task<MailboxInfo?> ConvertToRegularAsync(string identity, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default)
     {
         const string script = """
+            param([string]$Identity)
             $current = Get-Mailbox -Identity $Identity -ErrorAction Stop
             if ($current.RecipientTypeDetails -ne 'SharedMailbox') {
                 [PSCustomObject]@{
@@ -177,7 +180,7 @@ public sealed class SharedMailboxService : ISharedMailboxService
             return new MailboxPermissionResult(a, p, m, pr, "INVALIDO", "Mailbox/Principal vacío");
         }
 
-        var script = BuildPermissionScript(actionLower, p);
+        var script = "param([string]$Mailbox, [string]$Principal)\n" + BuildPermissionScript(actionLower, p);
 
         var result = await _runner.RunAsync(
             script,
@@ -225,6 +228,7 @@ public sealed class SharedMailboxService : ISharedMailboxService
         CancellationToken cancellationToken = default)
     {
         const string script = """
+            param([string]$Mailbox)
             $full = @(Get-MailboxPermission -Identity $Mailbox -ErrorAction Stop |
                 Where-Object { $_.AccessRights -contains 'FullAccess' -and -not $_.IsInherited -and $_.User -notlike 'NT AUTHORITY\\SELF' })
             $send = @(Get-RecipientPermission -Identity $Mailbox -ErrorAction SilentlyContinue |

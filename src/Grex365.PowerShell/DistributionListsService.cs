@@ -106,6 +106,7 @@ public sealed class DistributionListsService : IDistributionListsService
     private async Task<bool> ExistsAsync(string groupEmail, IProgress<LogEntry>? progress, CancellationToken ct)
     {
         const string script = """
+            param([string]$Identity)
             $g = Get-DistributionGroup -Identity $Identity -ErrorAction SilentlyContinue
             [PSCustomObject]@{ Found = [bool]$g }
             """;
@@ -124,6 +125,7 @@ public sealed class DistributionListsService : IDistributionListsService
     private async Task CreateAsync(string groupName, string groupEmail, IProgress<LogEntry>? progress, CancellationToken ct)
     {
         const string script = """
+            param([string]$Name, [string]$Smtp)
             New-DistributionGroup -Name $Name -PrimarySmtpAddress $Smtp -Type Distribution -ErrorAction Stop | Out-Null
             Write-Information "DL creada: $Smtp"
             """;
@@ -145,6 +147,7 @@ public sealed class DistributionListsService : IDistributionListsService
     private async Task<HashSet<string>> ListMembersAsync(string groupEmail, CancellationToken ct)
     {
         const string script = """
+            param([string]$Identity)
             $members = @(Get-DistributionGroupMember -Identity $Identity -ResultSize Unlimited -ErrorAction SilentlyContinue)
             foreach ($m in $members) {
                 if ($m.PrimarySmtpAddress) {
@@ -177,6 +180,7 @@ public sealed class DistributionListsService : IDistributionListsService
     private async Task AddMemberAsync(string groupEmail, string member, IProgress<LogEntry>? progress, CancellationToken ct)
     {
         const string script = """
+            param([string]$Identity, [string]$Member)
             Add-DistributionGroupMember -Identity $Identity -Member $Member -ErrorAction Stop | Out-Null
             """;
         var result = await _runner.RunAsync(
