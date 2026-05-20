@@ -9,6 +9,25 @@
 
 ## Bitácora sesiones
 
+### 2026-05-20 — Sesión 9 commits (Fase 4 cerrada, Fase 5 MSIX scaffold, Fase 6 avanza)
+
+Tests **149 → 161** (+12). Módulos UI **13 → 14** (Mail flow añadido).
+
+Commits:
+- `feat(plugins)` SamplePlugin POC (`samples/Grex365.SamplePlugin`) + CI build artifact
+- `build(fase5)` MSIX manifest + Build-Msix.ps1 + Generate-Assets.ps1 + appinstaller template + release CI job (`tag v*`) con firma opcional vía secrets
+- `feat(plugins)` Settings UI enable/disable plugins (`UserPreferences.DisabledPluginAssemblies` + PluginLoader honra lista + UI con CheckBox por plugin)
+- `feat(logging)` LogLevel configurable vía Settings con `Serilog.LoggingLevelSwitch` (aplica al instante)
+- `feat(audit)` MetricsAggregator (pura) + summary cards en AuditLogView (totales, error rate, last 24h, top sources, errores recientes)
+- `feat(ui)` Nav gating Graph/Exchange (NavigationItem.RequiresGraph/RequiresExchange + reactivo al ConnectionStateMonitor)
+- `feat(ui)` Botón Tema en sidebar (toggle Dark/Light al instante)
+- `feat(cert)` Export PFX con password desde CertWizard (PasswordBox + ICertificateGenerator.ExportPfx)
+- `feat(mailflow)` Nuevo módulo "Mail flow" — viewer Get-TransportRule de EXO
+
+Plantamiento status: Fase 4 **DONE** · Fase 5 **MSIX SCAFFOLD DONE** · Fase 6 **IN PROGRESS** (3/8 hechos)
+
+---
+
 ### 2026-05-16 / 2026-05-17 — Sesión grande (17 commits)
 Tests 70 → 145 (+75). Módulos UI 10 → 13. Plantamiento Fases 1-3 cerradas; Fase 4 foundation; Fase 5-6 in-progress.
 
