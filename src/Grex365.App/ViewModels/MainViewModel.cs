@@ -142,6 +142,10 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void UpdateNavEnabledStates()
     {
+        if (NavigationItems is null)
+        {
+            return;
+        }
         foreach (var item in NavigationItems)
         {
             item.IsEnabled =
