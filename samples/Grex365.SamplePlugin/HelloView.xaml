@@ -1,0 +1,25 @@
+<UserControl x:Class="Grex365.SamplePlugin.HelloView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+    <Grid Margin="24">
+        <StackPanel MaxWidth="780" HorizontalAlignment="Left">
+            <TextBlock Text="Sample Plugin"
+                       FontSize="22"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,4" />
+            <TextBlock Text="Modulo externo cargado desde %LOCALAPPDATA%\Grex365\plugins\"
+                       Opacity="0.7"
+                       Margin="0,0,0,16" />
+            <Border BorderBrush="#2A6CFF" BorderThickness="1" CornerRadius="6" Padding="16" Margin="0,0,0,16">
+                <TextBlock Text="{Binding Message}" FontSize="14" />
+            </Border>
+            <Button Content="Refrescar"
+                    Command="{Binding RefreshCommand}"
+                    Width="120"
+                    HorizontalAlignment="Left" />
+        </StackPanel>
+    </Grid>
+</UserControl>

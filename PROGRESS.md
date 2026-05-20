@@ -78,14 +78,14 @@ UX/QoL fase 3:
 - [x] Cert picker dialog (lista certs CurrentUser\My)
 - [x] Toast notifications (wpf-ui `SnackbarPresenter`) en Ok/Warn/Error desde `UiLogSink`
 
-### Fase 4 — Arquitectura modular / plugins — **FOUNDATION DONE**
+### Fase 4 — Arquitectura modular / plugins — **DONE (POC ready)**
 - [x] Contrato `IModule` (Title, Glyph, ViewModelType, ViewType, RegisterServices)
 - [x] `PluginLoader` con `AssemblyLoadContext` por DLL desde `%LOCALAPPDATA%\Grex365\plugins\*.dll`
 - [x] Discovery con tolerancia a fallos (corruptos/ReflectionTypeLoadException → log warn, no aborta)
 - [x] App.xaml.cs: plugins inyectan servicios en DI + registran ViewModels + DataTemplate dinámico
 - [x] MainViewModel: append nav entries por cada `IModule` descubierto
-- [ ] Sample plugin externo de referencia (POC desplegable)
-- [ ] Settings UI: enable/disable + reload
+- [x] **Sample plugin externo** (`samples/Grex365.SamplePlugin`) — POC compilable y desplegable, con README de empaquetado correcto (no duplica deps del host)
+- [ ] Settings UI: enable/disable + reload (pendiente)
 
 ### Fase 5 — Packaging y despliegue — **IN PROGRESS**
 - [x] PublishSingleFile self-contained para `.exe` portable (`PublishProfiles/win-x64-portable.pubxml`)

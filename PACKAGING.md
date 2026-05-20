@@ -77,6 +77,19 @@ Detalles:
 - Si el load falla (dependencia rota, mismatch de versión .NET), se loguea WARN y se ignora — la app sigue arrancando
 - Las dependencias del plugin deben copiarse junto al DLL (no se hace probing en el GAC)
 
+### POC de referencia: `samples/Grex365.SamplePlugin`
+
+POC completo y compilable. Ver `samples/Grex365.SamplePlugin/README.md` para instrucciones de build e instalación. Resumen:
+
+```powershell
+dotnet build samples/Grex365.SamplePlugin/Grex365.SamplePlugin.csproj -c Release
+$dst = Join-Path $env:LOCALAPPDATA 'Grex365\plugins'
+New-Item -ItemType Directory -Force -Path $dst | Out-Null
+Copy-Item samples/Grex365.SamplePlugin/bin/Release/net10.0-windows/Grex365.SamplePlugin.dll $dst -Force
+```
+
+Tras reiniciar la app aparece la entrada **Sample Hello** al final de la navegación lateral. El csproj demuestra el patrón correcto para empaquetar plugins sin duplicar el grafo transitivo del host (`CopyLocalLockFileAssemblies=false` + `ExcludeAssets=runtime` en `PackageReference`/`ProjectReference`).
+
 ## 5. CI/CD
 
 `.github/workflows/ci.yml` corre en cada push a `main` o `grex365-2.0`:

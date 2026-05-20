@@ -37,6 +37,18 @@ jobs:
       - name: Build App (transitively builds Core + PowerShell)
         run: dotnet build src/Grex365.App/Grex365.App.csproj --configuration Release --no-restore
 
+      - name: Restore sample plugin
+        run: dotnet restore samples/Grex365.SamplePlugin/Grex365.SamplePlugin.csproj
+
+      - name: Build sample plugin
+        run: dotnet build samples/Grex365.SamplePlugin/Grex365.SamplePlugin.csproj --configuration Release --no-restore
+
+      - name: Upload sample plugin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Grex365.SamplePlugin
+          path: samples/Grex365.SamplePlugin/bin/Release/net10.0-windows/Grex365.SamplePlugin.dll
+
       - name: Test
         run: dotnet test tests/Grex365.Core.Tests/Grex365.Core.Tests.csproj --configuration Release --no-build --logger "trx;LogFileName=test-results.trx"
 
