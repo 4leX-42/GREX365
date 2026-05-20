@@ -126,6 +126,10 @@
                                     </MultiTrigger.Conditions>
                                     <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentFillColorSecondaryBrush}" />
                                 </MultiTrigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="Bd" Property="Opacity" Value="0.35" />
+                                    <Setter TargetName="Bd" Property="ToolTip" Value="Requiere conexion (Graph o Exchange Online)" />
+                                </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
