@@ -38,6 +38,11 @@ public sealed partial class ConnectViewModel : ObservableObject
     [ObservableProperty]
     private bool _isBusy;
 
+    [ObservableProperty] private string? _deviceCodeUserCode;
+    [ObservableProperty] private string? _deviceCodeVerificationUri;
+    [ObservableProperty] private string? _deviceCodeMessage;
+    [ObservableProperty] private bool _deviceCodePromptVisible;
+
     public ConnectViewModel(
         IGraphConnection graph,
         IExchangeConnection exchange,
@@ -132,6 +137,92 @@ public sealed partial class ConnectViewModel : ObservableObject
     private void Cancel()
     {
         _cts?.Cancel();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanConnect))]
+    private async Task ConnectDeviceCodeAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        _cts = new CancellationTokenSource();
+        IsBusy = true;
+        ConnectCommand.NotifyCanExecuteChanged();
+        ConnectDeviceCodeCommand.NotifyCanExecuteChanged();
+        CancelCommand.NotifyCanExecuteChanged();
+        DeviceCodePromptVisible = false;
+
+        try
+        {
+            var config = await _certStore.LoadAsync(_cts.Token).ConfigureAwait(true);
+            var tenantHint = config?.TenantId;
+
+            StatusMessage = "Esperando codigo de dispositivo...";
+            await _graph.ConnectByDeviceCodeAsync(
+                tenantHint,
+                (prompt, ct) =>
+                {
+                    var dispatcher = System.Windows.Application.Current?.Dispatcher;
+                    void apply()
+                    {
+                        DeviceCodeUserCode = prompt.UserCode;
+                        DeviceCodeVerificationUri = prompt.VerificationUri;
+                        DeviceCodeMessage = prompt.Message;
+                        DeviceCodePromptVisible = true;
+                        StatusMessage = $"Pega el codigo {prompt.UserCode} en {prompt.VerificationUri}";
+                    }
+                    if (dispatcher is not null && !dispatcher.CheckAccess())
+                    {
+                        dispatcher.Invoke(apply);
+                    }
+                    else
+                    {
+                        apply();
+                    }
+                    return Task.CompletedTask;
+                },
+                _log.Progress,
+                _cts.Token).ConfigureAwait(true);
+
+            if (!string.IsNullOrWhiteSpace(_graph.TenantId))
+            {
+                try
+                {
+                    await _tenantLock.EnforceAsync(_graph.TenantId, _cts.Token).ConfigureAwait(true);
+                }
+                catch (TenantLockViolationException violation)
+                {
+                    _log.Progress.Report(LogEntry.Error("TenantLock", violation.Message, violation));
+                    await _graph.DisconnectAsync(_cts.Token).ConfigureAwait(true);
+                    StatusMessage = "Tenant lock: " + violation.Message;
+                    return;
+                }
+            }
+
+            DeviceCodePromptVisible = false;
+            StatusMessage = $"Conectado a Graph como {_graph.Account ?? "?"}.";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Connect", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+            DeviceCodePromptVisible = false;
+            _cts?.Dispose();
+            _cts = null;
+            ConnectCommand.NotifyCanExecuteChanged();
+            ConnectDeviceCodeCommand.NotifyCanExecuteChanged();
+            CancelCommand.NotifyCanExecuteChanged();
+        }
     }
 
     [RelayCommand]

@@ -9,6 +9,10 @@ namespace Grex365.Core.Connections;
 
 public sealed class GraphConnection : IGraphConnection
 {
+    // Azure CLI's public-client app — multi-tenant, allows device-code auth without pre-registration.
+    // Same trick used by Microsoft.Graph PowerShell module and Az CLI.
+    private const string DeviceCodeClientId = "04b07795-8ddb-461a-bbee-02f9e1bf7b46";
+
     private GraphServiceClient? _client;
     private string? _tenantId;
     private string? _account;
@@ -58,6 +62,64 @@ public sealed class GraphConnection : IGraphConnection
         _lastProbe = DateTimeOffset.Now;
         _lastProbeResult = true;
         progress?.Report(LogEntry.Ok("Graph", $"Conectado. Organización: {org?.DisplayName ?? "?"}"));
+    }
+
+    public async Task ConnectByDeviceCodeAsync(
+        string? tenantHint,
+        Func<DeviceCodePrompt, CancellationToken, Task> codeCallback,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(codeCallback);
+
+        var tenant = string.IsNullOrWhiteSpace(tenantHint) ? "organizations" : tenantHint;
+        progress?.Report(LogEntry.Info("Graph", $"Iniciando device-code auth tenant={tenant}..."));
+
+        var options = new DeviceCodeCredentialOptions
+        {
+            ClientId = DeviceCodeClientId,
+            TenantId = tenant,
+            DisableAutomaticAuthentication = false,
+            DeviceCodeCallback = async (info, ct) =>
+            {
+                var prompt = new DeviceCodePrompt(
+                    UserCode: info.UserCode,
+                    VerificationUri: info.VerificationUri.ToString(),
+                    Message: info.Message,
+                    ExpiresOn: info.ExpiresOn);
+                progress?.Report(LogEntry.Info("Graph", $"Codigo: {info.UserCode} — abre {info.VerificationUri}"));
+                await codeCallback(prompt, ct).ConfigureAwait(false);
+            }
+        };
+
+        var credential = new DeviceCodeCredential(options);
+        var client = new GraphServiceClient(credential, ["https://graph.microsoft.com/.default"]);
+
+        Organization? org;
+        User? me;
+        try
+        {
+            var orgResponse = await client.Organization
+                .GetAsync(cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+            org = orgResponse?.Value?.FirstOrDefault();
+
+            me = await client.Me
+                .GetAsync(cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            progress?.Report(LogEntry.Error("Graph", $"Auth fallo: {ex.Message}", ex));
+            throw;
+        }
+
+        _client = client;
+        _tenantId = org?.Id;
+        _account = me?.UserPrincipalName ?? me?.DisplayName ?? "(device-code)";
+        _lastProbe = DateTimeOffset.Now;
+        _lastProbeResult = true;
+        progress?.Report(LogEntry.Ok("Graph", $"Conectado como {_account} a {org?.DisplayName ?? "?"}"));
     }
 
     public async Task<bool> CheckLiveAsync(CancellationToken cancellationToken = default)
