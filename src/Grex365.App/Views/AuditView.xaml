@@ -38,6 +38,17 @@
                        Margin="0,0,8,0"
                        Command="{Binding RunExternalForwardingAuditCommand}"
                        ToolTip="Get-Mailbox + Get-AcceptedDomain: detecta ForwardingSmtpAddress hacia dominios fuera del tenant (indicador phishing). Requiere Exchange conectado." />
+            <ui:Button Content="Inbox rules"
+                       Margin="0,0,8,0"
+                       Command="{Binding RunInboxRulesAuditCommand}"
+                       ToolTip="Get-InboxRule por cada buzón: flagea reglas activas que borran, ocultan o reenvían externamente — patrón BEC clásico. Lento en tenants grandes." />
+            <TextBlock VerticalAlignment="Center" Text="Tope buzones:" Opacity="0.7" Margin="0,0,4,0" />
+            <ui:NumberBox Width="80"
+                          Margin="0,0,8,0"
+                          Value="{Binding InboxRuleScanCap}"
+                          Minimum="1"
+                          Maximum="5000"
+                          ToolTip="Cuántos buzones escanear (Get-InboxRule por cada uno es N+1, default 200)" />
             <TextBlock VerticalAlignment="Center" Text="Inactivos &gt;" Opacity="0.7" Margin="0,0,4,0" />
             <ui:NumberBox Width="80"
                           Margin="0,0,4,0"

@@ -68,4 +68,144 @@ public sealed class ExoForwardingAuditService : IExoForwardingAuditService
             $"{findings.Count} forwards externos detectados sobre {rows.Count} buzones."));
         return findings;
     }
+
+    public async Task<IReadOnlyList<AuditFinding>> ScanInboxRulesAsync(
+        int maxMailboxes = 200,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (maxMailboxes < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxMailboxes), "Debe ser >= 1.");
+        }
+
+        progress?.Report(LogEntry.Info("ExoAudit", "Get-AcceptedDomain..."));
+        const string domainsScript = """
+            param()
+            Get-AcceptedDomain -ErrorAction Stop |
+                Select-Object -ExpandProperty DomainName
+            """;
+        var domainsResult = await _runner.RunAsync(domainsScript, parameters: null, progress, cancellationToken).ConfigureAwait(false);
+        if (!domainsResult.Success)
+        {
+            throw new InvalidOperationException("Get-AcceptedDomain falló: " + string.Join("; ", domainsResult.Errors));
+        }
+        var acceptedDomains = domainsResult.Output
+            .Select(o => o?.ToString())
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s => s!)
+            .ToList();
+
+        progress?.Report(LogEntry.Info("ExoAudit",
+            $"Get-Mailbox -ResultSize {maxMailboxes} para inbox rules..."));
+
+        const string mailboxesScript = """
+            param([int]$Top)
+            Get-Mailbox -ResultSize $Top -RecipientTypeDetails UserMailbox -ErrorAction Stop |
+                Select-Object -ExpandProperty UserPrincipalName
+            """;
+        var mbResult = await _runner.RunAsync(
+            mailboxesScript,
+            new Dictionary<string, object?> { ["Top"] = maxMailboxes },
+            progress,
+            cancellationToken).ConfigureAwait(false);
+        if (!mbResult.Success)
+        {
+            throw new InvalidOperationException("Get-Mailbox falló: " + string.Join("; ", mbResult.Errors));
+        }
+
+        var upns = mbResult.Output
+            .Select(o => o?.ToString())
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s => s!)
+            .ToList();
+
+        progress?.Report(LogEntry.Info("ExoAudit",
+            $"{upns.Count} buzones; iterando Get-InboxRule (puede tardar)..."));
+
+        var allRules = new List<InboxRuleRow>();
+        var done = 0;
+        foreach (var upn in upns)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                var rules = await FetchRulesForMailboxAsync(upn, progress, cancellationToken).ConfigureAwait(false);
+                allRules.AddRange(rules);
+            }
+            catch (Exception ex)
+            {
+                progress?.Report(LogEntry.Warn("ExoAudit", $"Get-InboxRule {upn}: {ex.Message}"));
+            }
+            done++;
+            if (done % 25 == 0)
+            {
+                progress?.Report(LogEntry.Info("ExoAudit", $"Progreso: {done}/{upns.Count}"));
+            }
+        }
+
+        var findings = InboxRuleAnalyzer.Analyze(allRules, acceptedDomains);
+        progress?.Report(LogEntry.Ok("ExoAudit",
+            $"{findings.Count} reglas sospechosas sobre {allRules.Count} reglas / {upns.Count} buzones."));
+        return findings;
+    }
+
+    private async Task<IReadOnlyList<InboxRuleRow>> FetchRulesForMailboxAsync(
+        string upn,
+        IProgress<LogEntry>? progress,
+        CancellationToken cancellationToken)
+    {
+        const string script = """
+            param([string]$Identity)
+            Get-InboxRule -Mailbox $Identity -ErrorAction Stop |
+                Select-Object Name, Enabled, DeleteMessage, MoveToFolder,
+                              @{N='ForwardTo';E={ if ($_.ForwardTo) { @($_.ForwardTo | ForEach-Object { $_.ToString() }) } else { @() } }},
+                              @{N='ForwardAsAttachmentTo';E={ if ($_.ForwardAsAttachmentTo) { @($_.ForwardAsAttachmentTo | ForEach-Object { $_.ToString() }) } else { @() } }},
+                              @{N='RedirectTo';E={ if ($_.RedirectTo) { @($_.RedirectTo | ForEach-Object { $_.ToString() }) } else { @() } }},
+                              @{N='SubjectContainsWords';E={ if ($_.SubjectContainsWords) { @($_.SubjectContainsWords) } else { @() } }},
+                              @{N='BodyContainsWords';E={ if ($_.BodyContainsWords) { @($_.BodyContainsWords) } else { @() } }}
+            """;
+        var result = await _runner.RunAsync(
+            script,
+            new Dictionary<string, object?> { ["Identity"] = upn },
+            progress,
+            cancellationToken).ConfigureAwait(false);
+        if (!result.Success)
+        {
+            throw new InvalidOperationException(string.Join("; ", result.Errors));
+        }
+
+        return result.Output
+            .OfType<System.Management.Automation.PSObject>()
+            .Select(o => new InboxRuleRow(
+                MailboxUpn: upn,
+                RuleName: o.Properties["Name"]?.Value?.ToString() ?? "(sin nombre)",
+                Enabled: o.Properties["Enabled"]?.Value is bool b && b,
+                DeleteMessage: o.Properties["DeleteMessage"]?.Value is bool d && d,
+                MoveToFolder: o.Properties["MoveToFolder"]?.Value?.ToString(),
+                ForwardTo: ToList(o.Properties["ForwardTo"]?.Value),
+                ForwardAsAttachmentTo: ToList(o.Properties["ForwardAsAttachmentTo"]?.Value),
+                RedirectTo: ToList(o.Properties["RedirectTo"]?.Value),
+                SubjectContainsWords: ToList(o.Properties["SubjectContainsWords"]?.Value),
+                BodyContainsWords: ToList(o.Properties["BodyContainsWords"]?.Value)))
+            .ToList();
+    }
+
+    private static IReadOnlyList<string> ToList(object? value)
+    {
+        if (value is null) return Array.Empty<string>();
+        if (value is System.Collections.IEnumerable enumerable and not string)
+        {
+            var list = new List<string>();
+            foreach (var item in enumerable)
+            {
+                if (item is null) continue;
+                var s = item.ToString();
+                if (!string.IsNullOrWhiteSpace(s)) list.Add(s!);
+            }
+            return list;
+        }
+        var single = value.ToString();
+        return string.IsNullOrWhiteSpace(single) ? Array.Empty<string>() : new[] { single! };
+    }
 }

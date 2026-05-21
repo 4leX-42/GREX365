@@ -21,6 +21,7 @@ public sealed partial class AuditViewModel : ObservableObject
     [ObservableProperty] private string _statusMessage = "Pulsa 'Ejecutar' para auditar.";
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private int _inactivityDays = 90;
+    [ObservableProperty] private int _inboxRuleScanCap = 200;
 
     public ObservableCollection<AuditFinding> Findings { get; } = new();
 
@@ -79,6 +80,7 @@ public sealed partial class AuditViewModel : ObservableObject
             RunCommand.NotifyCanExecuteChanged();
             RunActivityAuditCommand.NotifyCanExecuteChanged();
             RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
+            RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
             CancelCommand.NotifyCanExecuteChanged();
         }
     }
@@ -132,6 +134,7 @@ public sealed partial class AuditViewModel : ObservableObject
             RunCommand.NotifyCanExecuteChanged();
             RunActivityAuditCommand.NotifyCanExecuteChanged();
             RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
+            RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
             CancelCommand.NotifyCanExecuteChanged();
         }
     }
@@ -180,6 +183,62 @@ public sealed partial class AuditViewModel : ObservableObject
             RunCommand.NotifyCanExecuteChanged();
             RunActivityAuditCommand.NotifyCanExecuteChanged();
             RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
+            RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
+            CancelCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRun))]
+    private async Task RunInboxRulesAuditAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+        if (InboxRuleScanCap < 1)
+        {
+            StatusMessage = "El tope de buzones debe ser >= 1.";
+            return;
+        }
+        _cts = new CancellationTokenSource();
+        IsBusy = true;
+        RunCommand.NotifyCanExecuteChanged();
+        RunActivityAuditCommand.NotifyCanExecuteChanged();
+        RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
+        RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
+        CancelCommand.NotifyCanExecuteChanged();
+        StatusMessage = $"Escaneando inbox rules (hasta {InboxRuleScanCap} buzones)...";
+        Findings.Clear();
+        Summary = null;
+        try
+        {
+            var findings = await _exoAudit
+                .ScanInboxRulesAsync(InboxRuleScanCap, _log.Progress, _cts.Token)
+                .ConfigureAwait(true);
+            foreach (var f in findings)
+            {
+                Findings.Add(f);
+            }
+            StatusMessage = $"{findings.Count} reglas sospechosas detectadas.";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("ExoAudit", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+            _cts?.Dispose();
+            _cts = null;
+            RunCommand.NotifyCanExecuteChanged();
+            RunActivityAuditCommand.NotifyCanExecuteChanged();
+            RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
+            RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
             CancelCommand.NotifyCanExecuteChanged();
         }
     }
