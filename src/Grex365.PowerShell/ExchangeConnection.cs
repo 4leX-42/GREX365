@@ -6,14 +6,11 @@ namespace Grex365.PowerShell;
 public sealed class ExchangeConnection : IExchangeConnection
 {
     private const string ModuleName = "ExchangeOnlineManagement";
-    private static readonly TimeSpan ProbeCacheTtl = TimeSpan.FromSeconds(10);
 
     private readonly IPowerShellRunner _runner;
     private bool _connected;
     private string? _tenantId;
     private string? _organization;
-    private DateTimeOffset _lastProbe = DateTimeOffset.MinValue;
-    private bool _lastProbeResult;
 
     public ExchangeConnection(IPowerShellRunner runner)
     {
@@ -73,45 +70,16 @@ public sealed class ExchangeConnection : IExchangeConnection
         _connected = true;
         _tenantId = config.TenantId;
         _organization = config.Organization;
-        _lastProbeResult = true;
-        _lastProbe = DateTimeOffset.Now;
 
         progress?.Report(LogEntry.Ok("EXO", "Exchange Online conectado."));
     }
 
-    public async Task<bool> CheckLiveAsync(CancellationToken cancellationToken = default)
+    public Task<bool> CheckLiveAsync(CancellationToken cancellationToken = default)
     {
-        if (!_connected)
-        {
-            return false;
-        }
-
-        var now = DateTimeOffset.Now;
-        if (now - _lastProbe < ProbeCacheTtl)
-        {
-            return _lastProbeResult;
-        }
-
-        try
-        {
-            const string script = """
-                $info = Get-ConnectionInformation -ErrorAction SilentlyContinue |
-                    Where-Object { $_.State -eq 'Connected' } | Select-Object -First 1
-                [bool]$info
-                """;
-            var result = await _runner.RunAsync(script, parameters: null, progress: null, cancellationToken).ConfigureAwait(false);
-            _lastProbeResult = result.Success
-                && result.Output.Count > 0
-                && result.Output[0] is bool b
-                && b;
-        }
-        catch
-        {
-            _lastProbeResult = false;
-        }
-
-        _lastProbe = now;
-        return _lastProbeResult;
+        // EXO sesion vive en el runspace donde Connect-ExchangeOnline corrio.
+        // Probar Get-ConnectionInformation desde un runspace nuevo del pool flippea a false
+        // (la sesion no es compartida). Confiamos en el flag _connected hasta Disconnect explicito.
+        return Task.FromResult(_connected);
     }
 
     public async Task<ExoModuleStatus> ProbeModuleAsync(
@@ -253,8 +221,6 @@ public sealed class ExchangeConnection : IExchangeConnection
         _connected = false;
         _tenantId = null;
         _organization = null;
-        _lastProbeResult = false;
-        _lastProbe = DateTimeOffset.MinValue;
         progress?.Report(LogEntry.Info("EXO", "Exchange Online desconectado."));
     }
 

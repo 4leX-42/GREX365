@@ -66,7 +66,23 @@ public sealed class PowerShellRunner : IPowerShellRunner
         var outList = new List<object?>(output.Count);
         foreach (var item in output)
         {
-            outList.Add(item?.BaseObject);
+            // Keep PSObject wrapping for PSCustomObject (dynamic property bag) so callers
+            // can still read .Properties[name].Value. For primitive base types (bool/int/string)
+            // unwrap so callers can pattern-match against the CLR type directly.
+            if (item is null)
+            {
+                outList.Add(null);
+                continue;
+            }
+            var baseObj = item.BaseObject;
+            if (baseObj is System.Management.Automation.PSCustomObject)
+            {
+                outList.Add(item);
+            }
+            else
+            {
+                outList.Add(baseObj);
+            }
         }
 
         return new PowerShellResult(
