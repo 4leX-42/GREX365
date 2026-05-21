@@ -11,6 +11,7 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
 {
     private readonly IMailboxRulesService _rules;
     private readonly IUiLogSink _log;
+    private readonly IRbacGuard _rbac;
     private CancellationTokenSource? _cts;
 
     [ObservableProperty] private string _identity = string.Empty;
@@ -37,10 +38,23 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
     public AutoReplyState[] AutoReplyStates { get; } =
         new[] { AutoReplyState.Disabled, AutoReplyState.Enabled, AutoReplyState.Scheduled };
 
-    public MailboxRulesViewModel(IMailboxRulesService rules, IUiLogSink log)
+    public MailboxRulesViewModel(IMailboxRulesService rules, IUiLogSink log, IRbacGuard rbac)
     {
         _rules = rules;
         _log = log;
+        _rbac = rbac;
+    }
+
+    private async Task<bool> RequireAuthorizedAsync(string contextName)
+    {
+        var decision = await _rbac.EvaluateAsync().ConfigureAwait(true);
+        if (decision.Allowed)
+        {
+            return true;
+        }
+        StatusMessage = decision.Reason;
+        _log.Progress.Report(LogEntry.Warn("RBAC", $"{contextName} bloqueado: {decision.Reason}"));
+        return false;
     }
 
     [RelayCommand]
@@ -113,6 +127,7 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
             StatusMessage = "Buzón vacío.";
             return;
         }
+        if (!await RequireAuthorizedAsync("Apply AutoReply").ConfigureAwait(true)) return;
         var config = new AutoReplyConfig(
             State: AutoReplyState,
             InternalMessage: string.IsNullOrWhiteSpace(InternalMessage) ? null : InternalMessage,
@@ -147,6 +162,7 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
             StatusMessage = "Buzón vacío.";
             return;
         }
+        if (!await RequireAuthorizedAsync("Apply forwarding").ConfigureAwait(true)) return;
         var confirm = System.Windows.MessageBox.Show(
             $"Aplicar reenvío de {Identity} hacia {ForwardingSmtp}?\nDeliver a buzón original: {DeliverToMailboxAndForward}",
             "Confirmar reenvío",
@@ -185,6 +201,7 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
             StatusMessage = "Buzón vacío.";
             return;
         }
+        if (!await RequireAuthorizedAsync("Clear forwarding").ConfigureAwait(true)) return;
         var confirm = System.Windows.MessageBox.Show(
             $"Quitar reenvío de {Identity}?",
             "Confirmar",
@@ -225,6 +242,7 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
             StatusMessage = "Indica buzón y principal.";
             return;
         }
+        if (!await RequireAuthorizedAsync("Apply calendar perm").ConfigureAwait(true)) return;
         EnsureToken();
         IsBusy = true;
         StatusMessage = $"Aplicando {CalendarAccess} a {CalendarPrincipal}...";
@@ -255,6 +273,7 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
             StatusMessage = "Selecciona un permiso.";
             return;
         }
+        if (!await RequireAuthorizedAsync("Remove calendar perm").ConfigureAwait(true)) return;
         var target = SelectedCalendarPermission;
         var confirm = System.Windows.MessageBox.Show(
             $"Quitar permiso calendario a {target.Principal} ({target.AccessRights})?",
