@@ -3,11 +3,29 @@
 > **Documento maestro de seguimiento.** Mapea el estado del proyecto contra `Plantamiento_arquitectura_de_la_herramienta.md` (roadmap arquitectónico) y `deep-research-report.md` (research técnico). Toda feature shipped y todo pendiente vive aquí.
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
-- Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting**
-- Tests: **161 passing** (xUnit + FluentAssertions)
-- Última actualización: 2026-05-20
+- Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
+- Tests: **174 passing** (xUnit + FluentAssertions)
+- Última actualización: 2026-05-21
 
 ## Bitácora sesiones
+
+### 2026-05-21 — Sesión "cert auto + audit + telemetry" (8 commits)
+
+Tests **161 → 174** (+13). Fase 6 ítem "Application Insights" cerrado. Auto-cert end-to-end.
+
+Commits:
+- `fix(ui)` IconFontFamily resource (String → FontFamily) — bloqueaba ya glyphs en nav
+- `fix(powershell)` todos los scripts PS declaran `param()` para que `AddParameter` enlace correctamente
+- `fix(ui)` feedback visual claro para nav items deshabilitados (Opacity 0.35 + tooltip "Conecta Graph/Exchange")
+- `feat(connect)` device-code auth para Microsoft Graph (cliente de Azure CLI, no requiere App Registration previa)
+- `feat(connect+certwizard)` auto-install EXO module (Start-Process `pwsh.exe` externo para evitar ACL WindowsApps) + auto-create App Registration con todos los permisos Graph/EXO + admin consent URL
+- `fix(powershell)` runspace pool sanity: drop probe cross-runspace de EXO (no compartida), unwrap PSObject solo para tipos primitivos, sanitizar `PSModulePath` quitando WindowsApps
+- `feat(audit)` grupos sin actividad reciente via `/reports/getOffice365GroupsActivityDetail` (period D7/D30/D90/D180); CSV parse puro + analyzer; UI con NumberBox umbral. Suma permiso `Reports.Read.All` al App Reg auto-create.
+- `feat(telemetry)` Application Insights opt-in: `ITelemetry`/`NullTelemetry` en Core, `ApplicationInsightsTelemetry` en App; conn string en Settings (vacío = NullTelemetry); UiLogSink envía cada Ok/Warn/Error como TrackEvent/TrackException.
+
+Plantamiento status: Fase 6 ahora **5/8 hechos** (App Insights, métricas, audit JSONL, viewer UI, log level configurable). Falta: permisos por rol, docs internas, QA escenarios.
+
+---
 
 ### 2026-05-20 — Sesión 9 commits (Fase 4 cerrada, Fase 5 MSIX scaffold, Fase 6 avanza)
 
@@ -125,7 +143,7 @@ UX/QoL fase 3:
 - [x] Audit viewer UI (módulo "Audit log" en la navegación)
 - [x] **Niveles de logging DEBUG/INFO/WARN/ERROR configurables vía Settings** (Serilog `LoggingLevelSwitch`, aplica al instante sin reinicio)
 - [x] **Métricas agregadas** — `MetricsAggregator` puro (totales por outcome, error rate, last 24h, top sources, errores recientes); AuditLogView muestra panel resumen al cargar mes
-- [ ] Application Insights wired (`Microsoft.ApplicationInsights.WorkerService`)
+- [x] **Application Insights wired** — `ITelemetry`/`NullTelemetry` en Core + `ApplicationInsightsTelemetry` opt-in vía conn string en Settings; `UiLogSink` reenvía Ok/Warn/Error como TrackEvent/TrackException
 - [ ] Permisos por rol (validar grupo AD/Entra del usuario actual)
 - [ ] Documentación técnica interna (arquitectura, manual operación)
 - [ ] QA escenarios reales (100+ ops simultáneas)
@@ -135,11 +153,12 @@ UX/QoL fase 3:
 ## Backlog funcional (no asociado a una fase concreta)
 
 ### Features útiles pendientes
-- [ ] Auth tradicional/UPN interactivo (MSAL) — alternativa al cert-based actual
+- [x] **Auth interactivo Graph sin cert preexistente** — device-code via cliente público de Azure CLI (`ConnectByDeviceCodeAsync`); valida acceso real con `Me` + `Organization` antes de marcar conectado
 - [x] **Mail flow rules viewer** — nuevo modulo de navegacion ("Mail flow") que lista `Get-TransportRule` de EXO (Name/State/Priority/Mode/Description) con filtro libre; gated por RequiresExchange
-- [ ] Auditoría: grupos sin actividad reciente (necesita /reports/getMicrosoft365GroupsActivity)
+- [x] **Auditoría: grupos sin actividad reciente** — `RunGroupActivityAuditAsync` consume `/reports/getOffice365GroupsActivityDetail` (period D7/D30/D90/D180), UI con NumberBox umbral, exporta junto al resto de findings
 - [x] **Cert export PFX con password** — `ICertificateGenerator.ExportPfx`, panel "Exportar PFX" en CertWizardView con PasswordBox + tests de validacion (no encontrado, password vacio, etc.)
-- [ ] Auto-update App Registration permisos vía Graph (legacy CertWizard hace 29 pasos)
+- [x] **Auto-create App Registration vía Graph** — `GraphAppRegistrationService.CreateAndConfigureAsync` aplica todos los AppRoles (User/Group/GroupMember/Organization/AuditLog/Directory + Exchange.ManageAsApp + Reports.Read.All), sube cert como `KeyCredential`, crea ServicePrincipal y devuelve admin-consent URL clickable. Reemplaza los 29 pasos manuales del legacy.
+- [x] **Auto-install módulo EXO** — `ExchangeConnection.InstallModuleAsync` lanza `pwsh.exe` externo (Start-Process) para esquivar el ACL de WindowsApps que niega `Microsoft.PackageManagement.dll` en runspaces embebidos. UI muestra estado del módulo + botones Comprobar/Instalar.
 
 ### Polish UI
 - [ ] Terminal PowerShell embebido (`EasyWindowsTerminalControl`)
@@ -148,7 +167,7 @@ UX/QoL fase 3:
 
 ---
 
-## Tests (89 passing)
+## Tests (174 passing)
 
 | Suite | Tests | Cubre |
 |-------|-------|-------|
@@ -162,6 +181,7 @@ UX/QoL fase 3:
 | FlexibleCsvReader | 8 | Delimitadores, quoted, BOM, edge cases |
 | ConnectionStateMonitor | 4 | Estado inicial, polling, fallos, dispose |
 | IdentityAuditAnalyzer | 9 | Stale, disabled+lic, totales |
+| GroupActivityAnalyzer | 10 | CSV parse (quoted/missing date) + analyze (cutoff strict-less, no-activity, deleted, guard) |
 | OffboardingService | 6 | Empty UPN, missing user, per-flag, errores |
 | SkuInfo | 6 | Math available, ordering, display, fallback guid |
 | BulkGroupRowPreprocessor | 13 | Forward-fill, skip orphans, trim, IsEmail theory |
@@ -170,6 +190,9 @@ UX/QoL fase 3:
 | BulkUserActionParser | 17 | enable/disable/remove-licenses + assign:&lt;SKU&gt; parse + lookup |
 | PluginLoader | 4 | empty dir / corrupt dll / whitespace path |
 | FileAuditLog | 4 | roundtrip / append-jsonl / missing-month / concurrent-writes |
+| MetricsAggregator | 6 | Totales, error rate, last 24h, top sources, recientes |
+| CertificateGenerator | 4 | Self-signed + ExportPfx |
+| NullTelemetry | 3 | IsEnabled=false + no-throw para TrackEvent/Exception/Flush |
 
 ---
 
@@ -199,9 +222,8 @@ Datos persistidos en `%LOCALAPPDATA%\Grex365\`:
 ## Próximo bloque planificado
 
 **Orden propuesto (mayor utilidad / menor riesgo primero):**
-1. Audit viewer UI (Settings → leer audit JSONL del mes)
-2. MSIX `Package.appxmanifest` + release CI job (cierra Fase 5)
-3. Sample plugin externo (cierra Fase 4)
-4. Application Insights (telemetría runtime — opcional, requiere connection string)
-5. MSAL interactive auth (alternativa a cert-based)
-6. Auto-update App Registration permisos via Graph (legacy CertWizard hace 29 pasos)
+1. **Permisos por rol** — `IRbacGuard` checa membership del current admin (device-code) contra un Object ID de grupo Entra configurable; gating UI de acciones destructivas (toast "modo restringido")
+2. **Documentación técnica interna** — arquitectura + manual operación (ARCHITECTURE.md + RUNBOOK.md)
+3. **Asset definitivo MSIX** — reemplazar PNG placeholders por branding + smoke test instalación end-to-end con cert real
+4. **QA escenarios reales** — 100+ ops simultáneas bajo carga + scripted bulk CSV grande
+5. **Terminal PowerShell embebido** (`EasyWindowsTerminalControl`) — útil para troubleshooting in-app
