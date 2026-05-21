@@ -4,7 +4,7 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **174 passing** (xUnit + FluentAssertions)
+- Tests: **182 passing** (xUnit + FluentAssertions)
 - Última actualización: 2026-05-21
 
 ## Bitácora sesiones
@@ -22,8 +22,9 @@ Commits:
 - `fix(powershell)` runspace pool sanity: drop probe cross-runspace de EXO (no compartida), unwrap PSObject solo para tipos primitivos, sanitizar `PSModulePath` quitando WindowsApps
 - `feat(audit)` grupos sin actividad reciente via `/reports/getOffice365GroupsActivityDetail` (period D7/D30/D90/D180); CSV parse puro + analyzer; UI con NumberBox umbral. Suma permiso `Reports.Read.All` al App Reg auto-create.
 - `feat(telemetry)` Application Insights opt-in: `ITelemetry`/`NullTelemetry` en Core, `ApplicationInsightsTelemetry` en App; conn string en Settings (vacío = NullTelemetry); UiLogSink envía cada Ok/Warn/Error como TrackEvent/TrackException.
+- `feat(rbac)` permisos por rol vía `Me.CheckMemberGroups`. `IRbacGuard` + `IMembershipChecker` (pure-testable); Settings textbox `AuthorizationGroupId`; Offboarding gateado con audit WARN; cache invalidado en Disconnect.
 
-Plantamiento status: Fase 6 ahora **5/8 hechos** (App Insights, métricas, audit JSONL, viewer UI, log level configurable). Falta: permisos por rol, docs internas, QA escenarios.
+Plantamiento status: Fase 6 ahora **6/8 hechos** (App Insights, métricas, audit JSONL, viewer UI, log level configurable, **RBAC vía membership Entra**). Falta: docs internas, QA escenarios.
 
 ---
 
@@ -144,7 +145,7 @@ UX/QoL fase 3:
 - [x] **Niveles de logging DEBUG/INFO/WARN/ERROR configurables vía Settings** (Serilog `LoggingLevelSwitch`, aplica al instante sin reinicio)
 - [x] **Métricas agregadas** — `MetricsAggregator` puro (totales por outcome, error rate, last 24h, top sources, errores recientes); AuditLogView muestra panel resumen al cargar mes
 - [x] **Application Insights wired** — `ITelemetry`/`NullTelemetry` en Core + `ApplicationInsightsTelemetry` opt-in vía conn string en Settings; `UiLogSink` reenvía Ok/Warn/Error como TrackEvent/TrackException
-- [ ] Permisos por rol (validar grupo AD/Entra del usuario actual)
+- [x] **Permisos por rol (RBAC)** — `IRbacGuard` + `IMembershipChecker` (`GraphMembershipChecker` envuelve `/me/checkMemberGroups`). Settings textbox `AuthorizationGroupId`. Offboarding gateado: si no autorizado → status + audit WARN, no ejecuta. Cache invalidado en Disconnect.
 - [ ] Documentación técnica interna (arquitectura, manual operación)
 - [ ] QA escenarios reales (100+ ops simultáneas)
 
@@ -193,6 +194,7 @@ UX/QoL fase 3:
 | MetricsAggregator | 6 | Totales, error rate, last 24h, top sources, recientes |
 | CertificateGenerator | 4 | Self-signed + ExportPfx |
 | NullTelemetry | 3 | IsEnabled=false + no-throw para TrackEvent/Exception/Flush |
+| RbacGuard | 8 | sin-grupo short-circuit, whitespace, miembro/no, checker-throws, cache, Invalidate, trim |
 
 ---
 
@@ -222,7 +224,7 @@ Datos persistidos en `%LOCALAPPDATA%\Grex365\`:
 ## Próximo bloque planificado
 
 **Orden propuesto (mayor utilidad / menor riesgo primero):**
-1. **Permisos por rol** — `IRbacGuard` checa membership del current admin (device-code) contra un Object ID de grupo Entra configurable; gating UI de acciones destructivas (toast "modo restringido")
+1. **Extender RBAC** al resto de acciones destructivas (Users Disable/RemoveLicense, Groups Delete, SharedMailbox Convert) — patrón ya validado en Offboarding
 2. **Documentación técnica interna** — arquitectura + manual operación (ARCHITECTURE.md + RUNBOOK.md)
 3. **Asset definitivo MSIX** — reemplazar PNG placeholders por branding + smoke test instalación end-to-end con cert real
 4. **QA escenarios reales** — 100+ ops simultáneas bajo carga + scripted bulk CSV grande
