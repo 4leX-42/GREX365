@@ -4,7 +4,7 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **205 passing** (xUnit + FluentAssertions)
+- Tests: **214 passing** (xUnit + FluentAssertions)
 - Última actualización: 2026-05-21
 
 ## Bitácora sesiones
@@ -26,6 +26,7 @@ Commits:
 - `feat(rbac)` extiende gate a Users/Groups/SharedMailbox y MailboxRules (OOO/forwarding/calendar perms) — patrón uniform `RequireAuthorizedAsync(context)`. Constructive ops (Enable, AssignLicense, AddMembers, Onboarding, CertWizard) sin gate.
 - `feat(audit)` detector forwarding externo (security signal): `MailboxForwardingAnalyzer` puro + `ExoForwardingAuditService` que combina `Get-AcceptedDomain` con `Get-Mailbox` para flagear `ForwardingSmtpAddress` hacia dominios fuera del tenant.
 - `feat(audit)` scanner de inbox rules (BEC indicator): `InboxRuleAnalyzer` puro detecta DeleteMessage, MoveToFolder en set sospechoso (Deleted/Junk/RSS/Archive…), Forward/Redirect externo. Keywords BEC en EN+ES elevan a WARN. `ScanInboxRulesAsync(maxMailboxes)` itera Get-InboxRule por buzón con tope configurable.
+- `feat(audit)` cobertura MFA: `MfaCoverageAnalyzer` puro + `RunMfaCoverageAuditAsync` consume `/reports/authenticationMethods/userRegistrationDetails`. Admin sin MFA = ERROR crítico, member sin MFA = WARN, guest sin MFA = INFO. Summary con admin coverage %.
 
 Plantamiento status: Fase 6 ahora **6/8 hechos** (App Insights, métricas, audit JSONL, viewer UI, log level configurable, **RBAC vía membership Entra**). Falta: docs internas, QA escenarios.
 
@@ -162,6 +163,7 @@ UX/QoL fase 3:
 - [x] **Auditoría: grupos sin actividad reciente** — `RunGroupActivityAuditAsync` consume `/reports/getOffice365GroupsActivityDetail` (period D7/D30/D90/D180), UI con NumberBox umbral, exporta junto al resto de findings
 - [x] **Auditoría: forwarding externo (security)** — `ExoForwardingAuditService` combina `Get-AcceptedDomain` + `Get-Mailbox -ResultSize Unlimited | Where ForwardingSmtpAddress` para flagear forward hacia dominios fuera del tenant (vector típico de phishing/exfiltración). Botón "Forwarding externo" en AuditView
 - [x] **Auditoría: inbox rules (BEC indicator)** — `InboxRuleAnalyzer` puro + `ScanInboxRulesAsync(maxMailboxes)`. Categorías: delete, hide (move-to Deleted/Junk/RSS/Archive…), external forward/redirect. Keywords BEC EN+ES (invoice/factura/wire/payment/password…) elevan a WARN. Botón "Inbox rules" + NumberBox tope buzones en AuditView
+- [x] **Auditoría: MFA coverage** — `MfaCoverageAnalyzer` puro + `RunMfaCoverageAuditAsync` consume `/reports/authenticationMethods/userRegistrationDetails`. Admin sin MFA = ERROR crítico, member = WARN, guest = INFO. Status muestra cobertura admin %. Requiere `Reports.Read.All`
 - [x] **Cert export PFX con password** — `ICertificateGenerator.ExportPfx`, panel "Exportar PFX" en CertWizardView con PasswordBox + tests de validacion (no encontrado, password vacio, etc.)
 - [x] **Auto-create App Registration vía Graph** — `GraphAppRegistrationService.CreateAndConfigureAsync` aplica todos los AppRoles (User/Group/GroupMember/Organization/AuditLog/Directory + Exchange.ManageAsApp + Reports.Read.All), sube cert como `KeyCredential`, crea ServicePrincipal y devuelve admin-consent URL clickable. Reemplaza los 29 pasos manuales del legacy.
 - [x] **Auto-install módulo EXO** — `ExchangeConnection.InstallModuleAsync` lanza `pwsh.exe` externo (Start-Process) para esquivar el ACL de WindowsApps que niega `Microsoft.PackageManagement.dll` en runspaces embebidos. UI muestra estado del módulo + botones Comprobar/Instalar.
@@ -173,7 +175,7 @@ UX/QoL fase 3:
 
 ---
 
-## Tests (205 passing)
+## Tests (214 passing)
 
 | Suite | Tests | Cubre |
 |-------|-------|-------|
@@ -202,6 +204,7 @@ UX/QoL fase 3:
 | RbacGuard | 8 | sin-grupo short-circuit, whitespace, miembro/no, checker-throws, cache, Invalidate, trim |
 | MailboxForwardingAnalyzer | 10 | sin-fwd, interno, externo flagged, SMTP prefix, case-insensitive, UPN vacío, malformado, ForwardingAddress no flagged, trailing dot, multi-rows |
 | InboxRuleAnalyzer | 13 | disabled skip, UPN vacío, delete plain/keyword, move-deleted/regular/RSS, forward externo/interno, redirect externo, SMTP en brackets, 3 findings combinados, keyword español |
+| MfaCoverageAnalyzer | 9 | empty, admin sin/con MFA, member sin MFA, guest sin MFA, UPN vacío, IsAdmin precedence, mixed pop, capable=false |
 
 ---
 
