@@ -145,7 +145,7 @@ UX/QoL fase 3:
 - [x] **Niveles de logging DEBUG/INFO/WARN/ERROR configurables vía Settings** (Serilog `LoggingLevelSwitch`, aplica al instante sin reinicio)
 - [x] **Métricas agregadas** — `MetricsAggregator` puro (totales por outcome, error rate, last 24h, top sources, errores recientes); AuditLogView muestra panel resumen al cargar mes
 - [x] **Application Insights wired** — `ITelemetry`/`NullTelemetry` en Core + `ApplicationInsightsTelemetry` opt-in vía conn string en Settings; `UiLogSink` reenvía Ok/Warn/Error como TrackEvent/TrackException
-- [x] **Permisos por rol (RBAC)** — `IRbacGuard` + `IMembershipChecker` (`GraphMembershipChecker` envuelve `/me/checkMemberGroups`). Settings textbox `AuthorizationGroupId`. Offboarding gateado: si no autorizado → status + audit WARN, no ejecuta. Cache invalidado en Disconnect.
+- [x] **Permisos por rol (RBAC)** — `IRbacGuard` + `IMembershipChecker` (`GraphMembershipChecker` envuelve `/me/checkMemberGroups`). Settings textbox `AuthorizationGroupId`. Gateado en TODAS las acciones destructivas: Offboarding, Users (Disable/RemoveLicenses/BulkCsv), SharedMailbox (Convert/ApplyPermission/BulkCsv), Groups (RemoveMember/BulkCreate). Acciones constructivas (Enable, AssignLicense, AddMembers) sin gate. Cache invalidado en Disconnect.
 - [ ] Documentación técnica interna (arquitectura, manual operación)
 - [ ] QA escenarios reales (100+ ops simultáneas)
 
@@ -224,8 +224,7 @@ Datos persistidos en `%LOCALAPPDATA%\Grex365\`:
 ## Próximo bloque planificado
 
 **Orden propuesto (mayor utilidad / menor riesgo primero):**
-1. **Extender RBAC** al resto de acciones destructivas (Users Disable/RemoveLicense, Groups Delete, SharedMailbox Convert) — patrón ya validado en Offboarding
-2. **Documentación técnica interna** — arquitectura + manual operación (ARCHITECTURE.md + RUNBOOK.md)
-3. **Asset definitivo MSIX** — reemplazar PNG placeholders por branding + smoke test instalación end-to-end con cert real
-4. **QA escenarios reales** — 100+ ops simultáneas bajo carga + scripted bulk CSV grande
-5. **Terminal PowerShell embebido** (`EasyWindowsTerminalControl`) — útil para troubleshooting in-app
+1. **Documentación técnica interna** — arquitectura + manual operación (ARCHITECTURE.md + RUNBOOK.md) [requiere petición explícita del usuario]
+2. **Asset definitivo MSIX** — reemplazar PNG placeholders por branding + smoke test instalación end-to-end con cert real
+3. **QA escenarios reales** — 100+ ops simultáneas bajo carga + scripted bulk CSV grande
+4. **Terminal PowerShell embebido** (`EasyWindowsTerminalControl`) — útil para troubleshooting in-app
