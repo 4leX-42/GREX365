@@ -15,6 +15,7 @@ public sealed partial class SharedMailboxViewModel : ObservableObject
 {
     private readonly ISharedMailboxService _service;
     private readonly IUiLogSink _log;
+    private readonly IRbacGuard _rbac;
 
     [ObservableProperty] private string _mailboxIdentity = string.Empty;
     [ObservableProperty] private MailboxInfo? _mailboxInfo;
@@ -28,10 +29,23 @@ public sealed partial class SharedMailboxViewModel : ObservableObject
     public ObservableCollection<MailboxPermissionResult> PermissionResults { get; } = new();
     public ObservableCollection<MailboxPermissionEntry> CurrentPermissions { get; } = new();
 
-    public SharedMailboxViewModel(ISharedMailboxService service, IUiLogSink log)
+    public SharedMailboxViewModel(ISharedMailboxService service, IUiLogSink log, IRbacGuard rbac)
     {
         _service = service;
         _log = log;
+        _rbac = rbac;
+    }
+
+    private async Task<bool> RequireAuthorizedAsync(string contextName)
+    {
+        var decision = await _rbac.EvaluateAsync().ConfigureAwait(true);
+        if (decision.Allowed)
+        {
+            return true;
+        }
+        StatusMessage = decision.Reason;
+        _log.Progress.Report(LogEntry.Warn("RBAC", $"{contextName} bloqueado: {decision.Reason}"));
+        return false;
     }
 
     [RelayCommand]
@@ -88,6 +102,7 @@ public sealed partial class SharedMailboxViewModel : ObservableObject
             StatusMessage = "Indica un buzón.";
             return;
         }
+        if (!await RequireAuthorizedAsync("Convert mailbox").ConfigureAwait(true)) return;
         IsBusy = true;
         StatusMessage = "Convirtiendo a UserMailbox...";
         try
@@ -122,6 +137,8 @@ public sealed partial class SharedMailboxViewModel : ObservableObject
         {
             return;
         }
+
+        if (!await RequireAuthorizedAsync("Bulk mailbox perms").ConfigureAwait(true)) return;
 
         IsBusy = true;
         StatusMessage = $"Procesando {Path.GetFileName(dlg.FileName)}...";
@@ -232,6 +249,7 @@ public sealed partial class SharedMailboxViewModel : ObservableObject
             StatusMessage = "Falta buzón o principal.";
             return;
         }
+        if (!await RequireAuthorizedAsync("Apply mailbox perm").ConfigureAwait(true)) return;
         IsBusy = true;
         StatusMessage = $"{PermAction} {PermPermission} {MailboxIdentity} ↔ {PermPrincipal}...";
         try

@@ -16,6 +16,7 @@ public sealed partial class UsersViewModel : ObservableObject
 {
     private readonly IUsersService _users;
     private readonly IUiLogSink _log;
+    private readonly IRbacGuard _rbac;
     private CancellationTokenSource? _cts;
 
     [ObservableProperty] private string _searchQuery = string.Empty;
@@ -29,10 +30,23 @@ public sealed partial class UsersViewModel : ObservableObject
     public ObservableCollection<BulkUserResult> BulkResults { get; } = new();
     public ObservableCollection<SkuInfo> AvailableSkus { get; } = new();
 
-    public UsersViewModel(IUsersService users, IUiLogSink log)
+    public UsersViewModel(IUsersService users, IUiLogSink log, IRbacGuard rbac)
     {
         _users = users;
         _log = log;
+        _rbac = rbac;
+    }
+
+    private async Task<bool> RequireAuthorizedAsync(string contextName)
+    {
+        var decision = await _rbac.EvaluateAsync().ConfigureAwait(true);
+        if (decision.Allowed)
+        {
+            return true;
+        }
+        StatusMessage = decision.Reason;
+        _log.Progress.Report(LogEntry.Warn("RBAC", $"{contextName} bloqueado: {decision.Reason}"));
+        return false;
     }
 
     partial void OnSelectedUserChanged(UserSummary? value)
@@ -121,6 +135,8 @@ public sealed partial class UsersViewModel : ObservableObject
         }
         if (!enabled)
         {
+            if (!await RequireAuthorizedAsync("Disable user").ConfigureAwait(true)) return;
+
             var confirm = System.Windows.MessageBox.Show(
                 $"Deshabilitar la cuenta de {SelectedUser.DisplayName} ({SelectedUser.UserPrincipalName})?",
                 "Confirmar deshabilitación",
@@ -258,6 +274,8 @@ public sealed partial class UsersViewModel : ObservableObject
         }
         if (SelectedUser.AssignedLicenseCount > 0)
         {
+            if (!await RequireAuthorizedAsync("Remove licenses").ConfigureAwait(true)) return;
+
             var confirm = System.Windows.MessageBox.Show(
                 $"Quitar {SelectedUser.AssignedLicenseCount} licencias de {SelectedUser.DisplayName}?",
                 "Confirmar retirada de licencias",
@@ -311,6 +329,8 @@ public sealed partial class UsersViewModel : ObservableObject
         {
             return;
         }
+
+        if (!await RequireAuthorizedAsync("Bulk users").ConfigureAwait(true)) return;
 
         EnsureToken();
         IsBusy = true;

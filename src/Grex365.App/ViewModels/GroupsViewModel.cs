@@ -17,6 +17,7 @@ public sealed partial class GroupsViewModel : ObservableObject
     private readonly IGroupsService _groups;
     private readonly IDistributionListsService _dls;
     private readonly IUiLogSink _log;
+    private readonly IRbacGuard _rbac;
     private CancellationTokenSource? _cts;
 
     [ObservableProperty] private string _searchQuery = string.Empty;
@@ -33,11 +34,24 @@ public sealed partial class GroupsViewModel : ObservableObject
     public ObservableCollection<AddMemberResult> LastAddResults { get; } = new();
     public ObservableCollection<BulkGroupResult> BulkCreateResults { get; } = new();
 
-    public GroupsViewModel(IGroupsService groups, IDistributionListsService dls, IUiLogSink log)
+    public GroupsViewModel(IGroupsService groups, IDistributionListsService dls, IUiLogSink log, IRbacGuard rbac)
     {
         _groups = groups;
         _dls = dls;
         _log = log;
+        _rbac = rbac;
+    }
+
+    private async Task<bool> RequireAuthorizedAsync(string contextName)
+    {
+        var decision = await _rbac.EvaluateAsync().ConfigureAwait(true);
+        if (decision.Allowed)
+        {
+            return true;
+        }
+        StatusMessage = decision.Reason;
+        _log.Progress.Report(LogEntry.Warn("RBAC", $"{contextName} bloqueado: {decision.Reason}"));
+        return false;
     }
 
     partial void OnSelectedGroupChanged(GroupSummary? value)
@@ -214,6 +228,8 @@ public sealed partial class GroupsViewModel : ObservableObject
             return;
         }
 
+        if (!await RequireAuthorizedAsync("Remove member").ConfigureAwait(true)) return;
+
         var confirm = System.Windows.MessageBox.Show(
             $"Eliminar a {SelectedMember.DisplayName ?? SelectedMember.Id} del grupo {SelectedGroup.DisplayName}?",
             "Confirmar eliminación",
@@ -382,6 +398,8 @@ public sealed partial class GroupsViewModel : ObservableObject
             StatusMessage = "CSV sin filas válidas (Email + GroupName).";
             return;
         }
+
+        if (!await RequireAuthorizedAsync("Bulk create groups").ConfigureAwait(true)) return;
 
         var distinctGroups = rows.Select(r => r.GroupName).Distinct(StringComparer.OrdinalIgnoreCase).Count();
         var kind = BulkTargetDl ? "DL (Exchange)" : "M365";
