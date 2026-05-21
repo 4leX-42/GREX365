@@ -15,5 +15,6 @@ public sealed class UserPreferences
     public string LogLevel { get; set; } = "Information";
     public string? LastSelectedNavigation { get; set; }
     public List<string> DisabledPluginAssemblies { get; set; } = new();
+    public string? ApplicationInsightsConnectionString { get; set; }
     public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.Now;
 }

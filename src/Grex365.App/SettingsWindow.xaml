@@ -78,6 +78,15 @@
                                    Opacity="0.55"
                                    FontSize="12"
                                    Margin="0,4,0,0" />
+
+                        <TextBlock Text="Application Insights — Connection String" FontWeight="SemiBold" Margin="0,16,0,4" />
+                        <ui:TextBox Text="{Binding ApplicationInsightsConnectionString, UpdateSourceTrigger=PropertyChanged}"
+                                    PlaceholderText="InstrumentationKey=xxxx;IngestionEndpoint=https://..."
+                                    Margin="0,0,0,4" />
+                        <TextBlock Text="Opcional. Vacío = telemetría deshabilitada (NullTelemetry). Requiere reinicio para tomar efecto. Se envían eventos por cada Ok/Warn/Error registrado."
+                                   Opacity="0.55"
+                                   FontSize="12"
+                                   TextWrapping="Wrap" />
                     </StackPanel>
                 </Border>
 

@@ -41,6 +41,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private bool _enforceTenantLock;
     [ObservableProperty] private string _theme = "Dark";
     [ObservableProperty] private string _logLevel = "Information";
+    [ObservableProperty] private string? _applicationInsightsConnectionString;
 
     [ObservableProperty] private string _certAppId = string.Empty;
     [ObservableProperty] private string _certTenantId = string.Empty;
@@ -80,6 +81,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         EnforceTenantLock = prefs.EnforceTenantLock;
         Theme = string.IsNullOrWhiteSpace(prefs.Theme) ? "Dark" : prefs.Theme;
         LogLevel = string.IsNullOrWhiteSpace(prefs.LogLevel) ? "Information" : prefs.LogLevel;
+        ApplicationInsightsConnectionString = prefs.ApplicationInsightsConnectionString;
 
         var cert = await _certStore.LoadAsync().ConfigureAwait(true);
         if (cert is not null)
@@ -135,6 +137,9 @@ public sealed partial class SettingsViewModel : ObservableObject
             prefs.EnforceTenantLock = EnforceTenantLock;
             prefs.Theme = Theme;
             prefs.LogLevel = LogLevel;
+            prefs.ApplicationInsightsConnectionString = string.IsNullOrWhiteSpace(ApplicationInsightsConnectionString)
+                ? null
+                : ApplicationInsightsConnectionString.Trim();
             _logLevelSwitch.MinimumLevel = App.ParseLogLevel(LogLevel);
             prefs.DisabledPluginAssemblies = Plugins
                 .Where(p => !p.IsEnabled)

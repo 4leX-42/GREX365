@@ -118,6 +118,26 @@ public partial class App : Application
                 Directory.CreateDirectory(auditDir);
                 services.AddSingleton<IAuditLog>(_ => new FileAuditLog(auditDir));
 
+                var aiConnectionString = bootPrefs.ApplicationInsightsConnectionString?.Trim();
+                if (!string.IsNullOrWhiteSpace(aiConnectionString))
+                {
+                    try
+                    {
+                        var aiClient = new ApplicationInsightsTelemetry(aiConnectionString);
+                        services.AddSingleton<ITelemetry>(aiClient);
+                        Log.Information("Application Insights habilitado");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "No se pudo inicializar Application Insights, usando NullTelemetry");
+                        services.AddSingleton<ITelemetry, NullTelemetry>();
+                    }
+                }
+                else
+                {
+                    services.AddSingleton<ITelemetry, NullTelemetry>();
+                }
+
                 services.AddSingleton<IUiLogSink, UiLogSink>();
 
                 services.AddTransient<ConnectViewModel>();
@@ -278,6 +298,13 @@ public partial class App : Application
 
             var pool = Services.GetService<RunspacePoolHost>();
             pool?.Dispose();
+
+            if (Services.GetService<ITelemetry>() is ApplicationInsightsTelemetry ai)
+            {
+                ai.Flush();
+                await Task.Delay(500).ConfigureAwait(false);
+                ai.Dispose();
+            }
 
             _host.Dispose();
         }
