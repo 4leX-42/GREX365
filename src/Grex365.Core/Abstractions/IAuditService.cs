@@ -1,3 +1,4 @@
+using Grex365.Core.Audit;
 using Grex365.Core.Models;
 
 namespace Grex365.Core.Abstractions;
@@ -14,6 +15,10 @@ public interface IAuditService
 
     Task<IReadOnlyList<AuditFinding>> RunGroupActivityAuditAsync(
         int inactivityDays = 90,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    Task<(MfaCoverageSummary Summary, IReadOnlyList<AuditFinding> Findings)> RunMfaCoverageAuditAsync(
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default);
 }

@@ -81,6 +81,7 @@ public sealed partial class AuditViewModel : ObservableObject
             RunActivityAuditCommand.NotifyCanExecuteChanged();
             RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
             RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
+            RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
             CancelCommand.NotifyCanExecuteChanged();
         }
     }
@@ -135,6 +136,7 @@ public sealed partial class AuditViewModel : ObservableObject
             RunActivityAuditCommand.NotifyCanExecuteChanged();
             RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
             RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
+            RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
             CancelCommand.NotifyCanExecuteChanged();
         }
     }
@@ -184,6 +186,64 @@ public sealed partial class AuditViewModel : ObservableObject
             RunActivityAuditCommand.NotifyCanExecuteChanged();
             RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
             RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
+            RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
+            CancelCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRun))]
+    private async Task RunMfaCoverageAuditAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+        _cts = new CancellationTokenSource();
+        IsBusy = true;
+        RunCommand.NotifyCanExecuteChanged();
+        RunActivityAuditCommand.NotifyCanExecuteChanged();
+        RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
+        RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
+        RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
+        CancelCommand.NotifyCanExecuteChanged();
+        StatusMessage = "Descargando userRegistrationDetails...";
+        Findings.Clear();
+        Summary = null;
+        try
+        {
+            var (summary, findings) = await _audit
+                .RunMfaCoverageAuditAsync(_log.Progress, _cts.Token)
+                .ConfigureAwait(true);
+            foreach (var f in findings)
+            {
+                Findings.Add(f);
+            }
+            var adminPct = summary.AdminsTotal > 0
+                ? (summary.AdminsTotal - summary.AdminsWithoutMfa) * 100.0 / summary.AdminsTotal
+                : 100.0;
+            StatusMessage = $"MFA: admins {summary.AdminsWithoutMfa}/{summary.AdminsTotal} sin MFA ({adminPct:F0}% cobertura) · " +
+                            $"miembros {summary.MembersWithoutMfa}/{summary.MembersTotal} · " +
+                            $"invitados {summary.GuestsWithoutMfa}/{summary.GuestsTotal}";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+            _cts?.Dispose();
+            _cts = null;
+            RunCommand.NotifyCanExecuteChanged();
+            RunActivityAuditCommand.NotifyCanExecuteChanged();
+            RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
+            RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
+            RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
             CancelCommand.NotifyCanExecuteChanged();
         }
     }
@@ -239,6 +299,7 @@ public sealed partial class AuditViewModel : ObservableObject
             RunActivityAuditCommand.NotifyCanExecuteChanged();
             RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
             RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
+            RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
             CancelCommand.NotifyCanExecuteChanged();
         }
     }

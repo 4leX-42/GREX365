@@ -107,6 +107,64 @@ public sealed class GraphAuditService : IAuditService
         return sorted;
     }
 
+    public async Task<(MfaCoverageSummary Summary, IReadOnlyList<AuditFinding> Findings)> RunMfaCoverageAuditAsync(
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var client = _connection.Client
+            ?? throw new InvalidOperationException("Graph no está conectado.");
+
+        progress?.Report(LogEntry.Info("Audit", "Descargando userRegistrationDetails..."));
+
+        Microsoft.Graph.Models.UserRegistrationDetailsCollectionResponse? response;
+        try
+        {
+            response = await client.Reports.AuthenticationMethods.UserRegistrationDetails
+                .GetAsync(req => req.QueryParameters.Top = 999, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            progress?.Report(LogEntry.Error(
+                "Audit",
+                $"userRegistrationDetails falló: {ex.Message}. ¿Reports.Read.All concedido?",
+                ex));
+            throw;
+        }
+
+        var rows = new List<MfaRegistrationRow>();
+        if (response is not null)
+        {
+            var iterator = Microsoft.Graph.PageIterator<
+                    Microsoft.Graph.Models.UserRegistrationDetails,
+                    Microsoft.Graph.Models.UserRegistrationDetailsCollectionResponse>
+                .CreatePageIterator(
+                    client,
+                    response,
+                    detail =>
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        rows.Add(new MfaRegistrationRow(
+                            UserPrincipalName: detail.UserPrincipalName ?? string.Empty,
+                            DisplayName: detail.UserDisplayName,
+                            UserType: detail.UserType?.ToString(),
+                            IsAdmin: detail.IsAdmin == true,
+                            IsMfaRegistered: detail.IsMfaRegistered == true,
+                            IsMfaCapable: detail.IsMfaCapable == true));
+                        return true;
+                    });
+            await iterator.IterateAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        var (summary, findings) = MfaCoverageAnalyzer.Analyze(rows);
+        progress?.Report(LogEntry.Ok(
+            "Audit",
+            $"MFA: {summary.AdminsTotal} admins ({summary.AdminsWithoutMfa} sin MFA), " +
+            $"{summary.MembersTotal} miembros ({summary.MembersWithoutMfa} sin MFA), " +
+            $"{summary.GuestsTotal} invitados ({summary.GuestsWithoutMfa} sin MFA)"));
+        return (summary, findings);
+    }
+
     public async Task<IReadOnlyList<AuditFinding>> RunGroupActivityAuditAsync(
         int inactivityDays = 90,
         IProgress<LogEntry>? progress = null,

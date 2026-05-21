@@ -42,6 +42,10 @@
                        Margin="0,0,8,0"
                        Command="{Binding RunInboxRulesAuditCommand}"
                        ToolTip="Get-InboxRule por cada buzón: flagea reglas activas que borran, ocultan o reenvían externamente — patrón BEC clásico. Lento en tenants grandes." />
+            <ui:Button Content="MFA coverage"
+                       Margin="0,0,8,0"
+                       Command="{Binding RunMfaCoverageAuditCommand}"
+                       ToolTip="/reports/authenticationMethods/userRegistrationDetails: cobertura MFA por admin / miembro / invitado. Admin sin MFA = ERROR crítico." />
             <TextBlock VerticalAlignment="Center" Text="Tope buzones:" Opacity="0.7" Margin="0,0,4,0" />
             <ui:NumberBox Width="80"
                           Margin="0,0,8,0"
