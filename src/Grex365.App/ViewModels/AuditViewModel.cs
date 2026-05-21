@@ -13,6 +13,7 @@ namespace Grex365.App.ViewModels;
 public sealed partial class AuditViewModel : ObservableObject
 {
     private readonly IAuditService _audit;
+    private readonly IExoForwardingAuditService _exoAudit;
     private readonly IUiLogSink _log;
     private CancellationTokenSource? _cts;
 
@@ -23,9 +24,10 @@ public sealed partial class AuditViewModel : ObservableObject
 
     public ObservableCollection<AuditFinding> Findings { get; } = new();
 
-    public AuditViewModel(IAuditService audit, IUiLogSink log)
+    public AuditViewModel(IAuditService audit, IExoForwardingAuditService exoAudit, IUiLogSink log)
     {
         _audit = audit;
+        _exoAudit = exoAudit;
         _log = log;
     }
 
@@ -76,6 +78,7 @@ public sealed partial class AuditViewModel : ObservableObject
             _cts = null;
             RunCommand.NotifyCanExecuteChanged();
             RunActivityAuditCommand.NotifyCanExecuteChanged();
+            RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
             CancelCommand.NotifyCanExecuteChanged();
         }
     }
@@ -128,6 +131,55 @@ public sealed partial class AuditViewModel : ObservableObject
             _cts = null;
             RunCommand.NotifyCanExecuteChanged();
             RunActivityAuditCommand.NotifyCanExecuteChanged();
+            RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
+            CancelCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRun))]
+    private async Task RunExternalForwardingAuditAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+        _cts = new CancellationTokenSource();
+        IsBusy = true;
+        RunCommand.NotifyCanExecuteChanged();
+        RunActivityAuditCommand.NotifyCanExecuteChanged();
+        RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
+        CancelCommand.NotifyCanExecuteChanged();
+        StatusMessage = "Escaneando buzones con forwarding externo...";
+        Findings.Clear();
+        Summary = null;
+        try
+        {
+            var findings = await _exoAudit
+                .ScanExternalForwardingAsync(_log.Progress, _cts.Token)
+                .ConfigureAwait(true);
+            foreach (var f in findings)
+            {
+                Findings.Add(f);
+            }
+            StatusMessage = $"{findings.Count} forwards externos detectados.";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("ExoAudit", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+            _cts?.Dispose();
+            _cts = null;
+            RunCommand.NotifyCanExecuteChanged();
+            RunActivityAuditCommand.NotifyCanExecuteChanged();
+            RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
             CancelCommand.NotifyCanExecuteChanged();
         }
     }

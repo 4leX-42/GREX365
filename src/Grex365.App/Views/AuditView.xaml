@@ -34,6 +34,10 @@
                        Margin="0,0,8,0"
                        Command="{Binding RunActivityAuditCommand}"
                        ToolTip="Descarga /reports/getOffice365GroupsActivityDetail (requiere Reports.Read.All)" />
+            <ui:Button Content="Forwarding externo"
+                       Margin="0,0,8,0"
+                       Command="{Binding RunExternalForwardingAuditCommand}"
+                       ToolTip="Get-Mailbox + Get-AcceptedDomain: detecta ForwardingSmtpAddress hacia dominios fuera del tenant (indicador phishing). Requiere Exchange conectado." />
             <TextBlock VerticalAlignment="Center" Text="Inactivos &gt;" Opacity="0.7" Margin="0,0,4,0" />
             <ui:NumberBox Width="80"
                           Margin="0,0,4,0"
