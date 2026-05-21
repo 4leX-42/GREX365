@@ -16,5 +16,6 @@ public sealed class UserPreferences
     public string? LastSelectedNavigation { get; set; }
     public List<string> DisabledPluginAssemblies { get; set; } = new();
     public string? ApplicationInsightsConnectionString { get; set; }
+    public string? AuthorizationGroupId { get; set; }
     public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.Now;
 }

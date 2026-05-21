@@ -87,6 +87,15 @@
                                    Opacity="0.55"
                                    FontSize="12"
                                    TextWrapping="Wrap" />
+
+                        <TextBlock Text="Permisos por rol (RBAC) — Object ID del grupo Entra autorizado" FontWeight="SemiBold" Margin="0,16,0,4" />
+                        <ui:TextBox Text="{Binding AuthorizationGroupId, UpdateSourceTrigger=PropertyChanged}"
+                                    PlaceholderText="00000000-0000-0000-0000-000000000000"
+                                    Margin="0,0,0,4" />
+                        <TextBlock Text="Opcional. Vacío = sin restricción. Si está configurado, las acciones destructivas (p.ej. offboarding) requieren que tu cuenta esté en ese grupo. Verificado via /me/checkMemberGroups."
+                                   Opacity="0.55"
+                                   FontSize="12"
+                                   TextWrapping="Wrap" />
                     </StackPanel>
                 </Border>
 

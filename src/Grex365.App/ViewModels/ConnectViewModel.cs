@@ -15,6 +15,7 @@ public sealed partial class ConnectViewModel : ObservableObject
     private readonly ICertValidator _certValidator;
     private readonly ITenantLock _tenantLock;
     private readonly IUiLogSink _log;
+    private readonly IRbacGuard _rbac;
     private CancellationTokenSource? _cts;
 
     [ObservableProperty]
@@ -53,7 +54,8 @@ public sealed partial class ConnectViewModel : ObservableObject
         ICertConfigStore certStore,
         ICertValidator certValidator,
         ITenantLock tenantLock,
-        IUiLogSink log)
+        IUiLogSink log,
+        IRbacGuard rbac)
     {
         _graph = graph;
         _exchange = exchange;
@@ -62,6 +64,7 @@ public sealed partial class ConnectViewModel : ObservableObject
         _certValidator = certValidator;
         _tenantLock = tenantLock;
         _log = log;
+        _rbac = rbac;
 
         _monitor.PropertyChanged += OnMonitorChanged;
         SyncFromMonitor();
@@ -281,6 +284,7 @@ public sealed partial class ConnectViewModel : ObservableObject
         {
             await _exchange.DisconnectAsync(_log.Progress).ConfigureAwait(true);
             await _graph.DisconnectAsync().ConfigureAwait(true);
+            _rbac.Invalidate();
             StatusMessage = "Desconectado.";
         }
         catch (Exception ex)

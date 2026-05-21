@@ -14,6 +14,7 @@ using Grex365.Core.Offboarding;
 using Grex365.Core.Onboarding;
 using Grex365.Core.Plugins;
 using Grex365.Core.Preferences;
+using Grex365.Core.Security;
 using Grex365.Core.Users;
 using Grex365.PowerShell;
 using Microsoft.Extensions.DependencyInjection;
@@ -107,6 +108,23 @@ public partial class App : Application
                 services.AddSingleton<ICertificateGenerator, SelfSignedCertificateGenerator>();
                 services.AddSingleton<IAppRegistrationService, GraphAppRegistrationService>();
                 services.AddSingleton<IDomainChecker, NslookupDomainChecker>();
+                services.AddSingleton<IMembershipChecker, GraphMembershipChecker>();
+                services.AddSingleton<IRbacGuard>(sp =>
+                {
+                    var checker = sp.GetRequiredService<IMembershipChecker>();
+                    var prefsStore = sp.GetRequiredService<IPreferencesStore>();
+                    return new RbacGuard(checker, () =>
+                    {
+                        try
+                        {
+                            return prefsStore.LoadAsync().GetAwaiter().GetResult().AuthorizationGroupId;
+                        }
+                        catch
+                        {
+                            return null;
+                        }
+                    });
+                });
 
                 services.AddSingleton<IPreferencesStore>(_ => new JsonPreferencesStore(configDir));
                 services.AddSingleton<ICertConfigStore>(_ => new JsonCertConfigStore(configDir));

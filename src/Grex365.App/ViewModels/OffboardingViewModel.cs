@@ -11,6 +11,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
 {
     private readonly IOffboardingService _service;
     private readonly IUiLogSink _log;
+    private readonly IRbacGuard _rbac;
     private CancellationTokenSource? _cts;
 
     [ObservableProperty] private string _upn = string.Empty;
@@ -23,10 +24,11 @@ public sealed partial class OffboardingViewModel : ObservableObject
 
     public ObservableCollection<OffboardingStep> Steps { get; } = new();
 
-    public OffboardingViewModel(IOffboardingService service, IUiLogSink log)
+    public OffboardingViewModel(IOffboardingService service, IUiLogSink log, IRbacGuard rbac)
     {
         _service = service;
         _log = log;
+        _rbac = rbac;
     }
 
     [RelayCommand(CanExecute = nameof(CanRun))]
@@ -45,6 +47,14 @@ public sealed partial class OffboardingViewModel : ObservableObject
         if (actions.Count == 0)
         {
             StatusMessage = "Ninguna acción seleccionada.";
+            return;
+        }
+
+        var decision = await _rbac.EvaluateAsync().ConfigureAwait(true);
+        if (!decision.Allowed)
+        {
+            StatusMessage = decision.Reason;
+            _log.Progress.Report(LogEntry.Warn("RBAC", $"Offboarding bloqueado: {decision.Reason}"));
             return;
         }
 
