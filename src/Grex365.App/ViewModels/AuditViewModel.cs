@@ -19,6 +19,7 @@ public sealed partial class AuditViewModel : ObservableObject
     [ObservableProperty] private AuditSummary? _summary;
     [ObservableProperty] private string _statusMessage = "Pulsa 'Ejecutar' para auditar.";
     [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private int _inactivityDays = 90;
 
     public ObservableCollection<AuditFinding> Findings { get; } = new();
 
@@ -38,6 +39,7 @@ public sealed partial class AuditViewModel : ObservableObject
         _cts = new CancellationTokenSource();
         IsBusy = true;
         RunCommand.NotifyCanExecuteChanged();
+        RunActivityAuditCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
         StatusMessage = "Ejecutando auditoría de identidades...";
         Findings.Clear();
@@ -73,6 +75,59 @@ public sealed partial class AuditViewModel : ObservableObject
             _cts?.Dispose();
             _cts = null;
             RunCommand.NotifyCanExecuteChanged();
+            RunActivityAuditCommand.NotifyCanExecuteChanged();
+            CancelCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRun))]
+    private async Task RunActivityAuditAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+        if (InactivityDays < 1)
+        {
+            StatusMessage = "Umbral de inactividad debe ser >= 1.";
+            return;
+        }
+
+        _cts = new CancellationTokenSource();
+        IsBusy = true;
+        RunCommand.NotifyCanExecuteChanged();
+        RunActivityAuditCommand.NotifyCanExecuteChanged();
+        CancelCommand.NotifyCanExecuteChanged();
+        StatusMessage = $"Descargando reporte actividad grupos (>{InactivityDays}d)...";
+        Findings.Clear();
+        Summary = null;
+        try
+        {
+            var findings = await _audit
+                .RunGroupActivityAuditAsync(InactivityDays, _log.Progress, _cts.Token)
+                .ConfigureAwait(true);
+            foreach (var f in findings)
+            {
+                Findings.Add(f);
+            }
+            StatusMessage = $"{findings.Count} grupos inactivos (>{InactivityDays}d).";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+            _cts?.Dispose();
+            _cts = null;
+            RunCommand.NotifyCanExecuteChanged();
+            RunActivityAuditCommand.NotifyCanExecuteChanged();
             CancelCommand.NotifyCanExecuteChanged();
         }
     }

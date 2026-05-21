@@ -11,4 +11,9 @@ public interface IAuditService
     Task<IReadOnlyList<AuditFinding>> RunGroupsAuditAsync(
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<AuditFinding>> RunGroupActivityAuditAsync(
+        int inactivityDays = 90,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
 }

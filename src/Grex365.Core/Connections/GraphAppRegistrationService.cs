@@ -17,6 +17,7 @@ public sealed class GraphAppRegistrationService : IAppRegistrationService
         ("498476ce-e0fe-48b0-b801-37ba7e2685c6", "Organization.Read.All"),
         ("b0afded3-3588-46d8-8b3d-9842eff778da", "AuditLog.Read.All"),
         ("19dbc75e-c2e2-444c-a770-ec69d8559fc7", "Directory.ReadWrite.All"),
+        ("230c1aed-a721-4c5d-9cb4-a90514e508ef", "Reports.Read.All"),
     };
 
     private static readonly (string Id, string Name)[] ExoAppRoles =

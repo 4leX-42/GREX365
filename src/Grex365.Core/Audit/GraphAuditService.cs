@@ -107,6 +107,67 @@ public sealed class GraphAuditService : IAuditService
         return sorted;
     }
 
+    public async Task<IReadOnlyList<AuditFinding>> RunGroupActivityAuditAsync(
+        int inactivityDays = 90,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (inactivityDays < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(inactivityDays), "Debe ser >= 1.");
+        }
+
+        var client = _connection.Client
+            ?? throw new InvalidOperationException("Graph no está conectado.");
+
+        // Map inactivityDays to the closest Graph report period bucket (D7/D30/D90/D180).
+        var period = inactivityDays switch
+        {
+            <= 7 => "D7",
+            <= 30 => "D30",
+            <= 90 => "D90",
+            _ => "D180",
+        };
+
+        progress?.Report(LogEntry.Info("Audit", $"Descargando reporte actividad grupos (period={period})..."));
+
+        Stream? csvStream;
+        try
+        {
+            csvStream = await client.Reports
+                .GetOffice365GroupsActivityDetailWithPeriod(period)
+                .GetAsync(cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            progress?.Report(LogEntry.Error(
+                "Audit",
+                $"Reports.GetOffice365GroupsActivityDetail falló: {ex.Message}. ¿Permiso 'Reports.Read.All' concedido?",
+                ex));
+            throw;
+        }
+
+        if (csvStream is null)
+        {
+            progress?.Report(LogEntry.Warn("Audit", "El reporte devolvió cuerpo vacío."));
+            return Array.Empty<AuditFinding>();
+        }
+
+        IReadOnlyList<GroupActivityRow> rows;
+        await using (csvStream.ConfigureAwait(false))
+        {
+            rows = GroupActivityAnalyzer.ParseCsv(csvStream);
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var findings = GroupActivityAnalyzer.Analyze(rows, today, inactivityDays);
+        progress?.Report(LogEntry.Ok(
+            "Audit",
+            $"Procesados {rows.Count} grupos en reporte; {findings.Count} inactivos (>{inactivityDays}d)"));
+        return findings;
+    }
+
     private static async Task AnalyzeGroup(GraphServiceClient client, Group group, System.Collections.Concurrent.ConcurrentBag<AuditFinding> findings, CancellationToken ct)
     {
         var id = group.Id ?? string.Empty;

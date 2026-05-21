@@ -30,6 +30,18 @@
                        Appearance="Primary"
                        Margin="0,0,8,0"
                        Command="{Binding RunCommand}" />
+            <ui:Button Content="Auditar actividad grupos"
+                       Margin="0,0,8,0"
+                       Command="{Binding RunActivityAuditCommand}"
+                       ToolTip="Descarga /reports/getOffice365GroupsActivityDetail (requiere Reports.Read.All)" />
+            <TextBlock VerticalAlignment="Center" Text="Inactivos &gt;" Opacity="0.7" Margin="0,0,4,0" />
+            <ui:NumberBox Width="80"
+                          Margin="0,0,4,0"
+                          Value="{Binding InactivityDays}"
+                          Minimum="1"
+                          Maximum="180"
+                          ToolTip="Días sin actividad para considerar grupo inactivo (1-180)" />
+            <TextBlock VerticalAlignment="Center" Text="días" Opacity="0.7" Margin="0,0,8,0" />
             <ui:Button Content="Cancelar"
                        Margin="0,0,8,0"
                        Command="{Binding CancelCommand}" />
