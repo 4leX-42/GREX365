@@ -4,7 +4,7 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **182 passing** (xUnit + FluentAssertions)
+- Tests: **192 passing** (xUnit + FluentAssertions)
 - Última actualización: 2026-05-21
 
 ## Bitácora sesiones
@@ -23,6 +23,8 @@ Commits:
 - `feat(audit)` grupos sin actividad reciente via `/reports/getOffice365GroupsActivityDetail` (period D7/D30/D90/D180); CSV parse puro + analyzer; UI con NumberBox umbral. Suma permiso `Reports.Read.All` al App Reg auto-create.
 - `feat(telemetry)` Application Insights opt-in: `ITelemetry`/`NullTelemetry` en Core, `ApplicationInsightsTelemetry` en App; conn string en Settings (vacío = NullTelemetry); UiLogSink envía cada Ok/Warn/Error como TrackEvent/TrackException.
 - `feat(rbac)` permisos por rol vía `Me.CheckMemberGroups`. `IRbacGuard` + `IMembershipChecker` (pure-testable); Settings textbox `AuthorizationGroupId`; Offboarding gateado con audit WARN; cache invalidado en Disconnect.
+- `feat(rbac)` extiende gate a Users/Groups/SharedMailbox y MailboxRules (OOO/forwarding/calendar perms) — patrón uniform `RequireAuthorizedAsync(context)`. Constructive ops (Enable, AssignLicense, AddMembers, Onboarding, CertWizard) sin gate.
+- `feat(audit)` detector forwarding externo (security signal): `MailboxForwardingAnalyzer` puro + `ExoForwardingAuditService` que combina `Get-AcceptedDomain` con `Get-Mailbox` para flagear `ForwardingSmtpAddress` hacia dominios fuera del tenant.
 
 Plantamiento status: Fase 6 ahora **6/8 hechos** (App Insights, métricas, audit JSONL, viewer UI, log level configurable, **RBAC vía membership Entra**). Falta: docs internas, QA escenarios.
 
@@ -157,6 +159,7 @@ UX/QoL fase 3:
 - [x] **Auth interactivo Graph sin cert preexistente** — device-code via cliente público de Azure CLI (`ConnectByDeviceCodeAsync`); valida acceso real con `Me` + `Organization` antes de marcar conectado
 - [x] **Mail flow rules viewer** — nuevo modulo de navegacion ("Mail flow") que lista `Get-TransportRule` de EXO (Name/State/Priority/Mode/Description) con filtro libre; gated por RequiresExchange
 - [x] **Auditoría: grupos sin actividad reciente** — `RunGroupActivityAuditAsync` consume `/reports/getOffice365GroupsActivityDetail` (period D7/D30/D90/D180), UI con NumberBox umbral, exporta junto al resto de findings
+- [x] **Auditoría: forwarding externo (security)** — `ExoForwardingAuditService` combina `Get-AcceptedDomain` + `Get-Mailbox -ResultSize Unlimited | Where ForwardingSmtpAddress` para flagear forward hacia dominios fuera del tenant (vector típico de phishing/exfiltración). Botón "Forwarding externo" en AuditView
 - [x] **Cert export PFX con password** — `ICertificateGenerator.ExportPfx`, panel "Exportar PFX" en CertWizardView con PasswordBox + tests de validacion (no encontrado, password vacio, etc.)
 - [x] **Auto-create App Registration vía Graph** — `GraphAppRegistrationService.CreateAndConfigureAsync` aplica todos los AppRoles (User/Group/GroupMember/Organization/AuditLog/Directory + Exchange.ManageAsApp + Reports.Read.All), sube cert como `KeyCredential`, crea ServicePrincipal y devuelve admin-consent URL clickable. Reemplaza los 29 pasos manuales del legacy.
 - [x] **Auto-install módulo EXO** — `ExchangeConnection.InstallModuleAsync` lanza `pwsh.exe` externo (Start-Process) para esquivar el ACL de WindowsApps que niega `Microsoft.PackageManagement.dll` en runspaces embebidos. UI muestra estado del módulo + botones Comprobar/Instalar.
@@ -168,7 +171,7 @@ UX/QoL fase 3:
 
 ---
 
-## Tests (174 passing)
+## Tests (192 passing)
 
 | Suite | Tests | Cubre |
 |-------|-------|-------|
@@ -195,6 +198,7 @@ UX/QoL fase 3:
 | CertificateGenerator | 4 | Self-signed + ExportPfx |
 | NullTelemetry | 3 | IsEnabled=false + no-throw para TrackEvent/Exception/Flush |
 | RbacGuard | 8 | sin-grupo short-circuit, whitespace, miembro/no, checker-throws, cache, Invalidate, trim |
+| MailboxForwardingAnalyzer | 10 | sin-fwd, interno, externo flagged, SMTP prefix, case-insensitive, UPN vacío, malformado, ForwardingAddress no flagged, trailing dot, multi-rows |
 
 ---
 
