@@ -102,6 +102,7 @@ public partial class App : Application
                 services.AddSingleton<IMailFlowRulesService, MailFlowRulesService>();
                 services.AddSingleton<IAuditService, GraphAuditService>();
                 services.AddSingleton<IExoForwardingAuditService, ExoForwardingAuditService>();
+                services.AddSingleton<IAuditFindingsStore, InMemoryAuditFindingsStore>();
                 services.AddSingleton<ITenantHealthService, GraphTenantHealthService>();
                 services.AddSingleton<IUsersService, GraphUsersService>();
                 services.AddSingleton<IOffboardingService, OffboardingService>();

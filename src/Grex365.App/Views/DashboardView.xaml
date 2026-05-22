@@ -133,6 +133,58 @@
                     </StackPanel>
                 </Border>
             </UniformGrid>
+
+            <TextBlock Text="Última auditoría"
+                       Style="{StaticResource SectionTitleText}"
+                       Margin="0,12,0,0"
+                       Visibility="{Binding HasLastAudit, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+            <Border Style="{StaticResource Card}"
+                    Padding="20"
+                    Margin="0,0,0,12"
+                    Visibility="{Binding HasLastAudit, Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{Binding LastAuditName, FallbackValue=—}"
+                                       FontWeight="SemiBold"
+                                       FontSize="16" />
+                            <TextBlock Style="{StaticResource CaptionText}"
+                                       Margin="0,4,0,0"
+                                       Text="{Binding LastAuditAt, StringFormat='Ejecutada {0:dd/MM/yyyy HH:mm} UTC'}" />
+                        </StackPanel>
+                        <ui:Button Grid.Column="1"
+                                   Content="Abrir Auditoría"
+                                   Command="{Binding GoToCommand}"
+                                   CommandParameter="Auditoria"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <Border Background="#22EF4444" CornerRadius="14" Padding="14,6" Margin="0,0,8,0">
+                            <TextBlock>
+                                <Run Text="ERROR " FontWeight="SemiBold" Foreground="#EF4444" />
+                                <Run Text="{Binding LastAuditErrors, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#EF4444" FontSize="16" />
+                            </TextBlock>
+                        </Border>
+                        <Border Background="#22F59E0B" CornerRadius="14" Padding="14,6" Margin="0,0,8,0">
+                            <TextBlock>
+                                <Run Text="WARN " FontWeight="SemiBold" Foreground="#F59E0B" />
+                                <Run Text="{Binding LastAuditWarnings, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#F59E0B" FontSize="16" />
+                            </TextBlock>
+                        </Border>
+                        <Border Background="#223B82F6" CornerRadius="14" Padding="14,6">
+                            <TextBlock>
+                                <Run Text="INFO " FontWeight="SemiBold" Foreground="#3B82F6" />
+                                <Run Text="{Binding LastAuditInfo, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#3B82F6" FontSize="16" />
+                            </TextBlock>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
