@@ -58,11 +58,14 @@
                         <TextBlock Text="Tema" FontWeight="SemiBold" Margin="0,16,0,4" />
                         <ComboBox SelectedValue="{Binding Theme}"
                                   SelectedValuePath="Tag"
-                                  Width="160"
+                                  Width="220"
                                   HorizontalAlignment="Left">
                             <ComboBoxItem Content="Oscuro" Tag="Dark" />
                             <ComboBoxItem Content="Claro" Tag="Light" />
+                            <ComboBoxItem Content="Auto (seguir sistema)" Tag="Auto" />
                         </ComboBox>
+                        <TextBlock Text="Auto detecta el tema del sistema y se actualiza al instante cuando cambia."
+                                   Opacity="0.55" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap" />
 
                         <TextBlock Text="Nivel de logging" FontWeight="SemiBold" Margin="0,16,0,4" />
                         <ComboBox SelectedValue="{Binding LogLevel}"

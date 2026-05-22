@@ -157,6 +157,7 @@ public partial class App : Application
                 services.AddSingleton<INotifier>(sp => sp.GetRequiredService<WpfUiNotifier>());
                 services.AddSingleton<IDialogService, WpfDialogService>();
                 services.AddSingleton<IClipboardService, WpfClipboardService>();
+                services.AddSingleton<ISystemThemeProvider, WindowsRegistryThemeProvider>();
 
                 var auditDir = Path.Combine(DataDirectory, "audit");
                 Directory.CreateDirectory(auditDir);
@@ -236,6 +237,10 @@ public partial class App : Application
 
         var monitor = Services.GetRequiredService<IConnectionStateMonitor>();
         monitor.Start();
+
+        // Wire system theme detection: provider for "Auto" + live re-apply on OS theme change.
+        ViewModels.SettingsViewModel.SystemThemeProvider = Services.GetRequiredService<ISystemThemeProvider>();
+        Microsoft.Win32.SystemEvents.UserPreferenceChanged += OnSystemUserPreferenceChanged;
 
         TryApplySavedTheme();
 
@@ -384,6 +389,31 @@ public partial class App : Application
         }
     }
 
+    private static void OnSystemUserPreferenceChanged(object? sender, Microsoft.Win32.UserPreferenceChangedEventArgs e)
+    {
+        if (e.Category != Microsoft.Win32.UserPreferenceCategory.General)
+        {
+            return;
+        }
+        // Only re-apply if user picked "Auto" — otherwise leave their explicit choice alone.
+        try
+        {
+            var store = Services.GetRequiredService<IPreferencesStore>();
+            var prefs = store.LoadAsync().GetAwaiter().GetResult();
+            if (!string.Equals(prefs.Theme, "Auto", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+            var dispatcher = Current?.Dispatcher;
+            if (dispatcher is null) return;
+            dispatcher.Invoke(() => ViewModels.SettingsViewModel.ApplyThemeFromPreferences("Auto"));
+        }
+        catch
+        {
+            // Non-critical; ignore.
+        }
+    }
+
     private static void TryApplySavedTheme()
     {
         try
@@ -428,6 +458,7 @@ public partial class App : Application
 
     protected override async void OnExit(ExitEventArgs e)
     {
+        Microsoft.Win32.SystemEvents.UserPreferenceChanged -= OnSystemUserPreferenceChanged;
         if (_host is not null)
         {
             var monitor = Services.GetService<IConnectionStateMonitor>();

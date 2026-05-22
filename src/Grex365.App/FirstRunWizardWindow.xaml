@@ -150,10 +150,18 @@
                                 </StackPanel>
                             </RadioButton>
                             <RadioButton GroupName="Theme"
-                                         IsChecked="{Binding Theme, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Light}">
+                                         IsChecked="{Binding Theme, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Light}"
+                                         Margin="0,0,0,8">
                                 <StackPanel>
                                     <TextBlock Text="Claro" FontWeight="SemiBold" />
                                     <TextBlock Text="Mica claro, mejor en entornos muy iluminados." Margin="0,4,0,0" Opacity="0.75" FontSize="12" />
+                                </StackPanel>
+                            </RadioButton>
+                            <RadioButton GroupName="Theme"
+                                         IsChecked="{Binding Theme, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Auto}">
+                                <StackPanel>
+                                    <TextBlock Text="Auto (seguir sistema)" FontWeight="SemiBold" />
+                                    <TextBlock Text="Lee la preferencia AppsUseLightTheme del registro de Windows y se actualiza al instante cuando cambia." Margin="0,4,0,0" Opacity="0.75" FontSize="12" TextWrapping="Wrap" />
                                 </StackPanel>
                             </RadioButton>
                         </StackPanel>

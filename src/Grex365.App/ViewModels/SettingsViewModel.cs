@@ -175,15 +175,41 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
     }
 
+    // Set by App at startup. Null fallback returns dark.
+    public static ISystemThemeProvider? SystemThemeProvider { get; set; }
+
     private static void ApplyTheme(string theme)
     {
-        var t = string.Equals(theme, "Light", StringComparison.OrdinalIgnoreCase)
-            ? Wpf.Ui.Appearance.ApplicationTheme.Light
-            : Wpf.Ui.Appearance.ApplicationTheme.Dark;
-        Wpf.Ui.Appearance.ApplicationThemeManager.Apply(t);
+        Wpf.Ui.Appearance.ApplicationTheme resolved;
+        if (string.Equals(theme, "Auto", StringComparison.OrdinalIgnoreCase))
+        {
+            var dark = SystemThemeProvider?.IsDarkTheme() ?? true;
+            resolved = dark
+                ? Wpf.Ui.Appearance.ApplicationTheme.Dark
+                : Wpf.Ui.Appearance.ApplicationTheme.Light;
+        }
+        else if (string.Equals(theme, "Light", StringComparison.OrdinalIgnoreCase))
+        {
+            resolved = Wpf.Ui.Appearance.ApplicationTheme.Light;
+        }
+        else
+        {
+            resolved = Wpf.Ui.Appearance.ApplicationTheme.Dark;
+        }
+        Wpf.Ui.Appearance.ApplicationThemeManager.Apply(resolved);
     }
 
     public static void ApplyThemeFromPreferences(string? theme) => ApplyTheme(theme ?? "Dark");
+
+    /// <summary>Resolves the concrete theme name applied for a given preference. "Auto" is resolved via SystemThemeProvider.</summary>
+    public static string ResolveActualTheme(string? theme)
+    {
+        if (string.Equals(theme, "Auto", StringComparison.OrdinalIgnoreCase))
+        {
+            return (SystemThemeProvider?.IsDarkTheme() ?? true) ? "Dark" : "Light";
+        }
+        return string.Equals(theme, "Light", StringComparison.OrdinalIgnoreCase) ? "Light" : "Dark";
+    }
 
     [RelayCommand]
     private void ValidateCert()
