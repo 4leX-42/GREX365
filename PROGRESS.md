@@ -4,7 +4,7 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **313 passing** (xUnit + FluentAssertions)
+- Tests: **326 passing** (xUnit + FluentAssertions)
 - Última actualización: 2026-05-22
 
 ## Bitácora sesiones
@@ -32,6 +32,8 @@ Commits:
 - `ux` Enter dispara búsqueda en Users / Groups / SharedMailbox / MailboxRules / DNS check (KeyBinding en TextBox.InputBindings).
 - `ux` log panel inferior **colapsable + oculto por defecto**. `UserPreferences.LogPanelVisible` persiste el estado. `MainViewModel.ToggleLogPanelCommand` + botón "Log" en status bar. RowDefinitions usan Style+DataTrigger para colapsar splitter y border cuando el panel está oculto.
 - `feat(groups)` elimina toggle manual "DL (Exchange)". `BulkGroupRow.GroupType` (default `M365`) + `BulkGroupRowPreprocessor` ahora detecta tipo desde columnas `GroupType`/`Type`/`Kind` del CSV (alias: m365/microsoft 365/unified/dl/distribution/exchange) con forward-fill como el nombre. `BulkCreateFromCsvAsync` divide rows por tipo y despacha a `_groups.CreateM365GroupsFromRowsAsync` y/o `_dls.CreateFromRowsAsync` según corresponda.
+- `feat(tenant-health)` rediseño completo de cards de licencias estilo portal M365. `SkuCatalog` (mapa curado de SKUs MS) resuelve `SkuPartNumber` → `FriendlyName` + `LicenseCategory` (Enterprise/Business/Frontline/Security/AppOrAddOn/Other) + `Priority`. `LicenseCard` VM presenter calcula utilización (Low/Medium/High/Critical) + colored brush. `UtilizationToBrushConverter` mapea a verde/azul/ámbar/rojo. Vista usa `CollectionViewSource` con `GroupDescription` por categoría y `SortDescription` por priority, `WrapPanel` muestra cards de 280px con header de categoría. 13 tests del catálogo (alias, fallback humanize, case-insensitive, priority order).
+- `ux(sidebar)` reestructura nav agrupado por categorías estilo CIPP: Tenant (Dashboard/Conexión/Salud), Identidad (Usuarios/Grupos/Onboarding/Offboarding), Mail (Buzones/Reglas/Mail flow), Seguridad (Auditoría/Audit log), Herramientas (Cert Wizard/DNS), Plugins (módulos externos). `NavigationItem.Category` + `NavigationItemsView` (CollectionViewSource) con `PropertyGroupDescription`. `ListBox.GroupStyle.HeaderTemplate` muestra header pequeño semibold opacity 0.55.
 - `refactor(audit-vm)` extrae `NotifyAllCommands()` helper en AuditViewModel — elimina ~80 líneas de notify chains repetidas y evita bugs cuando se añade un nuevo command.
 
 Plantamiento status: Fase 6 sigue **6/8 hechos**; backlog seguridad amplía cobertura M365 baseline. Toolbar fila 1 ahora con 8 audits Graph (Identidad+grupos, MFA, CA policies, Privileged roles, App credentials, Tenant defaults, OAuth grants, Actividad grupos) y fila 2 con 4 audits EXO (Forwarding externo, Inbox rules, Transport rules, Shared mailbox sign-in).
@@ -211,7 +213,7 @@ UX/QoL fase 3:
 
 ---
 
-## Tests (313 passing)
+## Tests (326 passing)
 
 | Suite | Tests | Cubre |
 |-------|-------|-------|
@@ -248,6 +250,7 @@ UX/QoL fase 3:
 | OAuthGrantAnalyzer | 13 | empty, low-risk only, tenant-wide high-risk (ERROR), user-consented (WARN), empty clientId skip, scope trim, case-insensitive, mixed scopes detail, name fallback, unique clients dedup, full_access_as_user, IsHighRiskScope helper, mixed counts |
 | TransportRuleAuditAnalyzer | 17 | empty, no-actions OK, forward externo (ERROR), forward interno OK, BCC externo, redirect externo, outbound connector (INFO), delete broad scope (WARN), delete narrow OK, modo Audit (INFO), disabled (INFO), disabled security keyword (WARN), smtp prefix strip, case-insensitive domain, no-domain skip, empty name, multi-findings same rule |
 | SharedMailboxSignInAnalyzer | 6 | empty, disabled OK, enabled (WARN), unknown (INFO), empty UPN skip, mixed counts |
+| SkuCatalog | 13 | resolve theory (E5/E3/SPB/F3/EntraID/Visio), fallback humanize, empty SKU graceful, case-insensitive, priority order Ent<Bus<Frontline<Sec, CategoryLabel mapping |
 
 ---
 
