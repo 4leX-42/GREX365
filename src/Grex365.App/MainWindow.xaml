@@ -38,32 +38,15 @@
 
             <Border Grid.Column="0" Style="{StaticResource SidebarBorder}">
                 <DockPanel>
-                    <Border DockPanel.Dock="Top" Padding="18,20,16,14">
+                    <Border DockPanel.Dock="Top" Padding="18,22,16,16">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Width="36" Height="36" CornerRadius="10"
-                                    Background="{StaticResource BrandAccentGradient}"
-                                    Margin="0,0,12,0"
-                                    Effect="{StaticResource AccentGlowSoftEffect}">
-                                <TextBlock Text=""
-                                           FontFamily="{StaticResource IconFontFamily}"
-                                           FontSize="18"
-                                           Foreground="White"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center" />
-                            </Border>
+                            <ContentControl Style="{StaticResource GxLogoMark}"
+                                            Margin="0,0,12,0" />
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="GREX365" FontSize="17" FontWeight="SemiBold" />
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock FontSize="10" Opacity="0.55">
-                                        <Run Text="v" /><Run Text="{x:Static local:App.AppVersion}" />
-                                    </TextBlock>
-                                    <Border Width="4" Height="4" CornerRadius="2"
-                                            Background="{StaticResource BrandAccentCyan}"
-                                            Margin="8,0,6,0"
-                                            VerticalAlignment="Center"
-                                            Effect="{StaticResource CyanGlowEffect}" />
-                                    <TextBlock Text="M365 toolkit" FontSize="10" Opacity="0.55" />
-                                </StackPanel>
+                                <TextBlock FontSize="10" Opacity="0.55">
+                                    <Run Text="M365 toolkit · v" /><Run Text="{x:Static local:App.AppVersion}" />
+                                </TextBlock>
                             </StackPanel>
                         </StackPanel>
                     </Border>

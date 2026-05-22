@@ -9,7 +9,7 @@ public sealed class BoolToBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        var key = value is bool b && b ? "BrushSemanticOk" : "BrushSemanticNeutral";
+        var key = value is bool b && b ? "BrandAccentSolid" : "BrushSemanticNeutral";
         if (Application.Current?.TryFindResource(key) is Brush brush) return brush;
         return new SolidColorBrush(Color.FromRgb(0x6B, 0x72, 0x80));
     }

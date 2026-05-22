@@ -21,12 +21,12 @@
                  ============================================================ -->
 
             <!-- Brand accent gradient (azul eléctrico → púrpura) — coherente light+dark -->
-            <Color x:Key="BrandAccentStart">#4F8CFF</Color>
-            <Color x:Key="BrandAccentMid">#6A6CFF</Color>
-            <Color x:Key="BrandAccentEnd">#9B6CFF</Color>
-            <Color x:Key="BrandAccentGlow">#664F8CFF</Color>
-            <Color x:Key="BrandCyan">#22D3EE</Color>
-            <Color x:Key="BrandPurple">#A78BFA</Color>
+            <Color x:Key="BrandAccentStart">#5B8DEF</Color>
+            <Color x:Key="BrandAccentMid">#7A78F0</Color>
+            <Color x:Key="BrandAccentEnd">#A66CF4</Color>
+            <Color x:Key="BrandAccentGlow">#665B8DEF</Color>
+            <Color x:Key="BrandCyan">#7AB7FF</Color>
+            <Color x:Key="BrandPurple">#B79DFB</Color>
 
             <SolidColorBrush x:Key="BrandAccentSolid" Color="{StaticResource BrandAccentStart}" />
             <SolidColorBrush x:Key="BrandAccentPurple" Color="{StaticResource BrandAccentEnd}" />
@@ -469,6 +469,40 @@
                 <Setter Property="Effect" Value="{StaticResource AccentGlowSoftEffect}" />
             </Style>
 
+            <!-- GX brand monogram (reusable) — gradient badge + custom-drawn G + X
+                 Usage:
+                    <ContentControl Style="{StaticResource GxLogoMark}" />
+                    <ContentControl Style="{StaticResource GxLogoMark}" Width="56" Height="56" /> -->
+            <Style x:Key="GxLogoMark" TargetType="ContentControl">
+                <Setter Property="Width" Value="40" />
+                <Setter Property="Height" Value="40" />
+                <Setter Property="Focusable" Value="False" />
+                <Setter Property="IsTabStop" Value="False" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ContentControl">
+                            <Border CornerRadius="11"
+                                    Background="{StaticResource BrandAccentGradient}"
+                                    BorderBrush="{StaticResource GlassBorderHighlight}"
+                                    BorderThickness="1"
+                                    Effect="{StaticResource AccentGlowSoftEffect}">
+                                <Viewbox Margin="6">
+                                    <Canvas Width="40" Height="28">
+                                        <Path Stroke="White" StrokeThickness="3.4"
+                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                              StrokeLineJoin="Round"
+                                              Data="M 14,3 A 11,11 0 1 0 14,25 L 20,25 L 20,16 L 14,16" />
+                                        <Path Stroke="White" StrokeThickness="3.4"
+                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                              Data="M 26,4 L 38,24 M 38,4 L 26,24" />
+                                    </Canvas>
+                                </Viewbox>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <!-- Global DataGrid theme-aware (legacy WPF default Foreground = black hardcoded; wpf-ui doesn't restyle DataGrid) -->
             <Style TargetType="DataGrid">
                 <Setter Property="Background" Value="Transparent" />
@@ -640,16 +674,9 @@
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
             </Style>
 
-            <!-- Sidebar glass surface with subtle accent gradient overlay -->
+            <!-- Sidebar glass surface — neutral, sin overlay coloreado (evita tint verde sobre Mica) -->
             <Style x:Key="SidebarBorder" TargetType="Border">
-                <Setter Property="Background">
-                    <Setter.Value>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#0C4F8CFF" Offset="0" />
-                            <GradientStop Color="#089B6CFF" Offset="1" />
-                        </LinearGradientBrush>
-                    </Setter.Value>
-                </Setter>
+                <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorSecondaryBrush}" />
                 <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
                 <Setter Property="BorderThickness" Value="0,0,1,0" />
             </Style>
