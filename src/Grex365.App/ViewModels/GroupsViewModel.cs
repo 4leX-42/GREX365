@@ -26,6 +26,7 @@ public sealed partial class GroupsViewModel : ObservableObject
     [ObservableProperty] private GroupMember? _selectedMember;
     [ObservableProperty] private string _newMembersText = string.Empty;
     [ObservableProperty] private string _bulkDomain = string.Empty;
+    [ObservableProperty] private string _bulkTypeChoice = "Auto"; // "Auto" | "M365" | "DL"
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private bool _isBusy;
 
@@ -401,6 +402,14 @@ public sealed partial class GroupsViewModel : ObservableObject
 
         if (!await RequireAuthorizedAsync("Bulk create groups").ConfigureAwait(true)) return;
 
+        // Override row.GroupType si el usuario eligió M365 o DL explícitamente desde la UI.
+        var forced = (BulkTypeChoice ?? "Auto").Trim();
+        if (string.Equals(forced, "M365", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(forced, "DL", StringComparison.OrdinalIgnoreCase))
+        {
+            rows = rows.Select(r => new BulkGroupRow(r.GroupName, r.Email, forced.ToUpperInvariant())).ToList();
+        }
+
         var m365Rows = rows.Where(r => string.Equals(r.GroupType, "M365", StringComparison.OrdinalIgnoreCase)).ToList();
         var dlRows = rows.Where(r => string.Equals(r.GroupType, "DL", StringComparison.OrdinalIgnoreCase)).ToList();
         var distinctM365 = m365Rows.Select(r => r.GroupName).Distinct(StringComparer.OrdinalIgnoreCase).Count();
@@ -411,8 +420,12 @@ public sealed partial class GroupsViewModel : ObservableObject
             distinctDl   > 0 ? $"{distinctDl} DL"   : null,
         }.Where(s => s is not null));
 
+        var typeHint = string.Equals(forced, "Auto", StringComparison.OrdinalIgnoreCase)
+            ? "Tipo detectado desde columna `GroupType` del CSV (default M365)."
+            : $"Forzado por usuario: TODOS los grupos como {forced}.";
+
         var ok = await _dialogs.ConfirmAsync(
-            $"Se crearán/actualizarán {breakdown} ({rows.Count} miembros) sobre @{domain}.\n\nTipo detectado desde columna `GroupType` del CSV (default M365).\n\n¿Continuar?",
+            $"Se crearán/actualizarán {breakdown} ({rows.Count} miembros) sobre @{domain}.\n\n{typeHint}\n\n¿Continuar?",
             "Confirmar creación masiva").ConfigureAwait(true);
         if (!ok)
         {

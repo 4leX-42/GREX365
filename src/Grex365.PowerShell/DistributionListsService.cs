@@ -30,8 +30,19 @@ public sealed class DistributionListsService : IDistributionListsService
         foreach (var grp in groups)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var groupName = grp.Key.Trim();
-            var groupEmail = $"{groupName}@{cleanDomain}";
+            var rawName = grp.Key.Trim();
+            string groupName;
+            string groupEmail;
+            if (rawName.Contains('@'))
+            {
+                groupEmail = rawName;
+                groupName = rawName.Split('@', 2)[0];
+            }
+            else
+            {
+                groupName = rawName;
+                groupEmail = $"{rawName}@{cleanDomain}";
+            }
 
             bool exists;
             try

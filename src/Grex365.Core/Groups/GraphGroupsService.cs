@@ -189,13 +189,25 @@ public sealed class GraphGroupsService : IGroupsService
         foreach (var grp in groups)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var groupName = grp.Key.Trim();
-            var groupEmail = $"{groupName}@{cleanDomain}";
+            var rawName = grp.Key.Trim();
+            string groupName;
+            string groupEmail;
+            if (rawName.Contains('@'))
+            {
+                groupEmail = rawName;
+                groupName = rawName.Split('@', 2)[0];
+            }
+            else
+            {
+                groupName = rawName;
+                groupEmail = $"{rawName}@{cleanDomain}";
+            }
 
             string? groupId;
+            bool justCreated;
             try
             {
-                groupId = await EnsureM365GroupAsync(client, groupName, groupEmail, results, progress, cancellationToken)
+                (groupId, justCreated) = await EnsureM365GroupAsync(client, groupName, groupEmail, results, progress, cancellationToken)
                     .ConfigureAwait(false);
             }
             catch (Exception ex)
@@ -209,7 +221,15 @@ public sealed class GraphGroupsService : IGroupsService
                 continue;
             }
 
-            var existing = await LoadM365MemberKeysAsync(client, groupId, cancellationToken).ConfigureAwait(false);
+            if (justCreated)
+            {
+                progress?.Report(LogEntry.Info("BulkGroups", $"Esperando replica Graph para {groupEmail}..."));
+            }
+
+            var existing = await WithGraphReplicaRetryAsync(
+                () => LoadM365MemberKeysAsync(client, groupId, cancellationToken),
+                justCreated ? 8 : 2,
+                cancellationToken).ConfigureAwait(false);
 
             foreach (var row in grp)
             {
@@ -241,8 +261,15 @@ public sealed class GraphGroupsService : IGroupsService
                     {
                         OdataId = $"https://graph.microsoft.com/v1.0/directoryObjects/{userId}"
                     };
-                    await client.Groups[groupId].Members.Ref.PostAsync(refBody, cancellationToken: cancellationToken)
-                        .ConfigureAwait(false);
+                    await WithGraphReplicaRetryAsync(
+                        async () =>
+                        {
+                            await client.Groups[groupId].Members.Ref.PostAsync(refBody, cancellationToken: cancellationToken)
+                                .ConfigureAwait(false);
+                            return true;
+                        },
+                        justCreated ? 6 : 2,
+                        cancellationToken).ConfigureAwait(false);
                     existing.Add(email.ToLowerInvariant());
                     results.Add(new BulkGroupResult(groupName, groupEmail, "MemberAdded", email, $"id={userId}"));
                     progress?.Report(LogEntry.Ok("BulkGroups", $"{groupEmail} + {email}"));
@@ -263,7 +290,7 @@ public sealed class GraphGroupsService : IGroupsService
         return results;
     }
 
-    private static async Task<string?> EnsureM365GroupAsync(
+    private static async Task<(string? id, bool justCreated)> EnsureM365GroupAsync(
         GraphServiceClient client,
         string groupName,
         string groupEmail,
@@ -285,7 +312,7 @@ public sealed class GraphGroupsService : IGroupsService
         {
             results.Add(new BulkGroupResult(groupName, groupEmail, "Skipped", null, "Ya existía"));
             progress?.Report(LogEntry.Info("BulkGroups", $"Skip existente: {groupEmail}"));
-            return found.Id;
+            return (found.Id, false);
         }
 
         var alias = groupEmail.Split('@', 2)[0];
@@ -301,7 +328,34 @@ public sealed class GraphGroupsService : IGroupsService
         var created = await client.Groups.PostAsync(body, cancellationToken: cancellationToken).ConfigureAwait(false);
         results.Add(new BulkGroupResult(groupName, groupEmail, "Created", null, $"id={created?.Id}"));
         progress?.Report(LogEntry.Ok("BulkGroups", $"Creado: {groupEmail}"));
-        return created?.Id;
+        return (created?.Id, true);
+    }
+
+    // Graph M365 group creation is eventually consistent — newly POSTed groups
+    // can take 5-30s before they accept member-ref reads/writes. Polly-style
+    // retry on Request_ResourceNotFound / ResourceNotFound with exponential backoff.
+    private static async Task<T> WithGraphReplicaRetryAsync<T>(
+        Func<Task<T>> op, int maxAttempts, CancellationToken ct)
+    {
+        Exception? last = null;
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            try
+            {
+                return await op().ConfigureAwait(false);
+            }
+            catch (Microsoft.Graph.Models.ODataErrors.ODataError ex) when (
+                string.Equals(ex.Error?.Code, "Request_ResourceNotFound", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(ex.Error?.Code, "ResourceNotFound", StringComparison.OrdinalIgnoreCase)
+                || (ex.Error?.Message?.Contains("does not exist", StringComparison.OrdinalIgnoreCase) ?? false))
+            {
+                last = ex;
+                if (attempt == maxAttempts - 1) break;
+                var delayMs = Math.Min(15000, 1500 * (int)Math.Pow(2, attempt));
+                await Task.Delay(delayMs, ct).ConfigureAwait(false);
+            }
+        }
+        throw last ?? new InvalidOperationException("Graph replica retry agotada.");
     }
 
     private static async Task<HashSet<string>> LoadM365MemberKeysAsync(
