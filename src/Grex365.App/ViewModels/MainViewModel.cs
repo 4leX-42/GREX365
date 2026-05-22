@@ -58,6 +58,7 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _showWarn = true;
     [ObservableProperty] private bool _showError = true;
     [ObservableProperty] private bool _showDebug;
+    [ObservableProperty] private bool _logPanelVisible;
 
     public ICollectionView LogView { get; }
 
@@ -83,6 +84,16 @@ public sealed partial class MainViewModel : ObservableObject
         _monitor.PropertyChanged += OnMonitorChanged;
         _auditStore.PropertyChanged += OnAuditStoreChanged;
         SyncFromMonitor();
+
+        try
+        {
+            var initialPrefs = _prefs.LoadAsync().GetAwaiter().GetResult();
+            _logPanelVisible = initialPrefs.LogPanelVisible;
+        }
+        catch
+        {
+            _logPanelVisible = false;
+        }
 
         LogView = CollectionViewSource.GetDefaultView(uiLog.Entries);
         LogView.Filter = FilterLogEntry;
@@ -303,6 +314,32 @@ public sealed partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void ClearLog() => _uiLog.Clear();
+
+    partial void OnLogPanelVisibleChanged(bool value)
+    {
+        _ = PersistLogPanelStateAsync(value);
+    }
+
+    private async Task PersistLogPanelStateAsync(bool visible)
+    {
+        try
+        {
+            var p = await _prefs.LoadAsync().ConfigureAwait(false);
+            if (p.LogPanelVisible == visible)
+            {
+                return;
+            }
+            p.LogPanelVisible = visible;
+            await _prefs.SaveAsync(p).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Ignore — preference is non-critical.
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleLogPanel() => LogPanelVisible = !LogPanelVisible;
 
     partial void OnShowInfoChanged(bool value) => LogView.Refresh();
     partial void OnShowOkChanged(bool value) => LogView.Refresh();

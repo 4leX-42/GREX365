@@ -118,9 +118,46 @@
 
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="3*" MinHeight="280" />
-                    <RowDefinition Height="6" />
-                    <RowDefinition Height="*" MinHeight="120" />
+                    <RowDefinition>
+                        <RowDefinition.Style>
+                            <Style TargetType="RowDefinition">
+                                <Setter Property="Height" Value="3*" />
+                                <Setter Property="MinHeight" Value="280" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding LogPanelVisible}" Value="False">
+                                        <Setter Property="Height" Value="*" />
+                                        <Setter Property="MinHeight" Value="0" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </RowDefinition.Style>
+                    </RowDefinition>
+                    <RowDefinition>
+                        <RowDefinition.Style>
+                            <Style TargetType="RowDefinition">
+                                <Setter Property="Height" Value="6" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding LogPanelVisible}" Value="False">
+                                        <Setter Property="Height" Value="0" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </RowDefinition.Style>
+                    </RowDefinition>
+                    <RowDefinition>
+                        <RowDefinition.Style>
+                            <Style TargetType="RowDefinition">
+                                <Setter Property="Height" Value="*" />
+                                <Setter Property="MinHeight" Value="120" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding LogPanelVisible}" Value="False">
+                                        <Setter Property="Height" Value="0" />
+                                        <Setter Property="MinHeight" Value="0" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </RowDefinition.Style>
+                    </RowDefinition>
                 </Grid.RowDefinitions>
 
                 <ContentControl Grid.Row="0"
@@ -130,12 +167,14 @@
                               Height="6"
                               HorizontalAlignment="Stretch"
                               Background="Transparent"
-                              ShowsPreview="True" />
+                              ShowsPreview="True"
+                              Visibility="{Binding LogPanelVisible, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}" />
 
                 <Border Grid.Row="2"
                         Margin="24,0,24,16"
                         Style="{StaticResource Card}"
-                        Padding="0">
+                        Padding="0"
+                        Visibility="{Binding LogPanelVisible, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">
                     <DockPanel>
                         <Grid DockPanel.Dock="Top" Margin="16,12,16,10">
                             <Grid.ColumnDefinitions>
@@ -267,10 +306,15 @@
                            HorizontalAlignment="Right"
                            Margin="0,0,16,0" />
 
-                <ui:Button Grid.Column="6"
-                           Content="Desconectar"
-                           Icon=""
-                           Command="{Binding DisconnectAllCommand}" />
+                <StackPanel Grid.Column="6" Orientation="Horizontal">
+                    <ui:Button Content="Log"
+                               Margin="0,0,8,0"
+                               Command="{Binding ToggleLogPanelCommand}"
+                               ToolTip="Mostrar/ocultar panel de log inferior" />
+                    <ui:Button Content="Desconectar"
+                               Icon=""
+                               Command="{Binding DisconnectAllCommand}" />
+                </StackPanel>
             </Grid>
         </Border>
 

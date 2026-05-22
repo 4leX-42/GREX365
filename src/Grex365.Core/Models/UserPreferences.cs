@@ -17,5 +17,6 @@ public sealed class UserPreferences
     public List<string> DisabledPluginAssemblies { get; set; } = new();
     public string? ApplicationInsightsConnectionString { get; set; }
     public string? AuthorizationGroupId { get; set; }
+    public bool LogPanelVisible { get; set; } = false;
     public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.Now;
 }
