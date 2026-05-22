@@ -185,22 +185,26 @@ public partial class App : Application
 
                 services.AddSingleton<IUiLogSink, UiLogSink>();
 
-                services.AddTransient<ConnectViewModel>();
-                services.AddTransient<DashboardViewModel>();
-                services.AddTransient<GroupsViewModel>();
-                services.AddTransient<SharedMailboxViewModel>();
-                services.AddTransient<AuditViewModel>();
-                services.AddTransient<TenantHealthViewModel>();
-                services.AddTransient<UsersViewModel>();
+                // Page VMs are SINGLETON so state persists across nav changes
+                // (search queries, selected item, last results, drafted input...).
+                // SettingsViewModel + FirstRunWizardViewModel keep Transient because
+                // they live in modal windows and should reset each time.
+                services.AddSingleton<ConnectViewModel>();
+                services.AddSingleton<DashboardViewModel>();
+                services.AddSingleton<GroupsViewModel>();
+                services.AddSingleton<SharedMailboxViewModel>();
+                services.AddSingleton<AuditViewModel>();
+                services.AddSingleton<TenantHealthViewModel>();
+                services.AddSingleton<UsersViewModel>();
                 services.AddSingleton<UserDetailsViewModel>();
-                services.AddTransient<OffboardingViewModel>();
-                services.AddTransient<OnboardingViewModel>();
-                services.AddTransient<MailboxRulesViewModel>();
-                services.AddTransient<MailFlowRulesViewModel>();
-                services.AddTransient<AuditLogViewModel>();
-                services.AddTransient<CertWizardViewModel>();
-                services.AddTransient<DomainCheckViewModel>();
-                services.AddTransient<PsConsoleViewModel>();
+                services.AddSingleton<OffboardingViewModel>();
+                services.AddSingleton<OnboardingViewModel>();
+                services.AddSingleton<MailboxRulesViewModel>();
+                services.AddSingleton<MailFlowRulesViewModel>();
+                services.AddSingleton<AuditLogViewModel>();
+                services.AddSingleton<CertWizardViewModel>();
+                services.AddSingleton<DomainCheckViewModel>();
+                services.AddSingleton<PsConsoleViewModel>();
                 services.AddTransient<SettingsViewModel>();
                 services.AddSingleton<MainViewModel>();
                 services.AddSingleton<MainWindow>();

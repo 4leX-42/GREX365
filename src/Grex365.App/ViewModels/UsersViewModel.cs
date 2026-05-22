@@ -19,6 +19,7 @@ public sealed partial class UsersViewModel : ObservableObject
     private readonly IRbacGuard _rbac;
     private readonly IDialogService _dialogs;
     private CancellationTokenSource? _cts;
+    private CancellationTokenSource? _debounceCts;
 
     [ObservableProperty] private string _searchQuery = string.Empty;
     [ObservableProperty] private UserSummary? _selectedUser;
@@ -490,6 +491,38 @@ public sealed partial class UsersViewModel : ObservableObject
 
     [RelayCommand(CanExecute = nameof(CanCancel))]
     private void Cancel() => _cts?.Cancel();
+
+    // Real-time typeahead: debounced 250ms; min 2 chars; cancels in-flight Graph call.
+    partial void OnSearchQueryChanged(string value)
+    {
+        _debounceCts?.Cancel();
+        _debounceCts = new CancellationTokenSource();
+        var token = _debounceCts.Token;
+        var snapshot = value ?? string.Empty;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(250, token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) { return; }
+
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
+            {
+                if (token.IsCancellationRequested) return;
+                if (!string.Equals(SearchQuery, snapshot, StringComparison.Ordinal)) return;
+                if (string.IsNullOrWhiteSpace(snapshot))
+                {
+                    Users.Clear();
+                    StatusMessage = string.Empty;
+                    return;
+                }
+                if (snapshot.Trim().Length < 2) return;
+                await SearchAsync().ConfigureAwait(true);
+            });
+        });
+    }
 
     private bool CanCancel() => IsBusy;
 
