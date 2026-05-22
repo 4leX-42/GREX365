@@ -369,6 +369,15 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void ToggleLogPanel() => LogPanelVisible = !LogPanelVisible;
 
+    [RelayCommand]
+    private void CloseUserDrawer()
+    {
+        if (UserDrawerOpen)
+        {
+            _userDetailsHost.RequestClose();
+        }
+    }
+
     partial void OnShowInfoChanged(bool value) => LogView.Refresh();
     partial void OnShowOkChanged(bool value) => LogView.Refresh();
     partial void OnShowWarnChanged(bool value) => LogView.Refresh();

@@ -14,6 +14,9 @@
         ExtendsContentIntoTitleBar="True"
         WindowStartupLocation="CenterScreen">
 
+    <ui:FluentWindow.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CloseUserDrawerCommand}" />
+    </ui:FluentWindow.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
