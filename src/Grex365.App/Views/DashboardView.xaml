@@ -7,7 +7,10 @@
              mc:Ignorable="d">
     <ScrollViewer Style="{StaticResource PageRoot}">
         <StackPanel MaxWidth="1100" HorizontalAlignment="Stretch">
-            <TextBlock Text="Dashboard" Style="{StaticResource PageTitleText}" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+            <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" FontSize="22" Margin="0,0,12,0" VerticalAlignment="Center" Opacity="0.85" />
+            <TextBlock Text="Dashboard" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center" />
+        </StackPanel>
             <TextBlock Text="Estado de la conexión y resumen del tenant"
                        Style="{StaticResource PageSubtitleText}" />
 
