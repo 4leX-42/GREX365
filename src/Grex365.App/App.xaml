@@ -595,6 +595,51 @@
                 <Setter Property="BorderThickness" Value="0" />
             </Style>
 
+            <!-- Native TextBox focus accent (wpf-ui ui:TextBox uses its own template;
+                 this catches plain TextBox in dialogs/legacy spots). -->
+            <Style TargetType="TextBox">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                <Setter Property="CaretBrush" Value="{StaticResource BrandAccentSolid}" />
+                <Setter Property="SelectionBrush" Value="{StaticResource BrandAccentSolid}" />
+                <Setter Property="SelectionOpacity" Value="0.35" />
+                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="8,6" />
+                <Style.Triggers>
+                    <Trigger Property="IsKeyboardFocused" Value="True">
+                        <Setter Property="BorderBrush" Value="{StaticResource BrandAccentSolid}" />
+                        <Setter Property="Effect" Value="{StaticResource AccentGlowSoftEffect}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- PasswordBox parity with TextBox -->
+            <Style TargetType="PasswordBox">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                <Setter Property="CaretBrush" Value="{StaticResource BrandAccentSolid}" />
+                <Setter Property="SelectionBrush" Value="{StaticResource BrandAccentSolid}" />
+                <Setter Property="SelectionOpacity" Value="0.35" />
+                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="8,6" />
+                <Style.Triggers>
+                    <Trigger Property="IsKeyboardFocused" Value="True">
+                        <Setter Property="BorderBrush" Value="{StaticResource BrandAccentSolid}" />
+                        <Setter Property="Effect" Value="{StaticResource AccentGlowSoftEffect}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- CheckBox accent (override stock blue) -->
+            <Style TargetType="CheckBox">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            </Style>
+
+            <!-- RadioButton accent -->
+            <Style TargetType="RadioButton">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            </Style>
+
             <!-- Sidebar glass surface with subtle accent gradient overlay -->
             <Style x:Key="SidebarBorder" TargetType="Border">
                 <Setter Property="Background">

@@ -16,29 +16,45 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Header: title + close -->
+        <!-- Header: avatar + title + close -->
         <Grid Grid.Row="0" Margin="24,20,16,8">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="0">
-                <TextBlock Text="Detalle de usuario"
-                           FontSize="11"
+            <Border Grid.Column="0"
+                    Width="52" Height="52" CornerRadius="26"
+                    Background="{StaticResource BrandAccentGradient}"
+                    BorderBrush="{StaticResource GlassBorderHighlight}"
+                    BorderThickness="1"
+                    Margin="0,0,14,0"
+                    VerticalAlignment="Top"
+                    Effect="{StaticResource AccentGlowSoftEffect}">
+                <TextBlock Text="{Binding User.DisplayName, Converter={StaticResource InitialsConverter}, FallbackValue='?'}"
+                           Foreground="White"
                            FontWeight="SemiBold"
-                           Opacity="0.55"
+                           FontSize="18"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+            </Border>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock Text="DETALLE DE USUARIO"
+                           FontSize="10"
+                           FontWeight="SemiBold"
+                           Opacity="0.5"
                            Margin="0,0,0,2" />
                 <TextBlock Text="{Binding User.DisplayName, FallbackValue=—}"
-                           FontSize="22"
+                           FontSize="20"
                            FontWeight="SemiBold"
                            TextTrimming="CharacterEllipsis" />
                 <TextBlock Text="{Binding User.UserPrincipalName, FallbackValue=—}"
                            Opacity="0.6"
-                           FontSize="13"
+                           FontSize="12"
                            Margin="0,2,0,0"
                            TextTrimming="CharacterEllipsis" />
             </StackPanel>
-            <ui:Button Grid.Column="1"
+            <ui:Button Grid.Column="2"
                        Content="Cerrar"
                        VerticalAlignment="Top"
                        Command="{Binding CloseCommand}" />
