@@ -21,4 +21,8 @@ public interface IAuditService
     Task<(MfaCoverageSummary Summary, IReadOnlyList<AuditFinding> Findings)> RunMfaCoverageAuditAsync(
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default);
+
+    Task<(CaPoliciesSummary Summary, IReadOnlyList<AuditFinding> Findings)> RunConditionalAccessAuditAsync(
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
 }

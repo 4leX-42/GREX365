@@ -165,6 +165,82 @@ public sealed class GraphAuditService : IAuditService
         return (summary, findings);
     }
 
+    public async Task<(CaPoliciesSummary Summary, IReadOnlyList<AuditFinding> Findings)> RunConditionalAccessAuditAsync(
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var client = _connection.Client
+            ?? throw new InvalidOperationException("Graph no está conectado.");
+
+        progress?.Report(LogEntry.Info("Audit", "Descargando Conditional Access policies..."));
+
+        Microsoft.Graph.Models.ConditionalAccessPolicyCollectionResponse? response;
+        try
+        {
+            response = await client.Identity.ConditionalAccess.Policies
+                .GetAsync(cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            progress?.Report(LogEntry.Error(
+                "Audit",
+                $"ConditionalAccess.Policies falló: {ex.Message}. ¿Policy.Read.All concedido?",
+                ex));
+            throw;
+        }
+
+        var snapshots = new List<CaPolicySnapshot>();
+        if (response is not null)
+        {
+            var iterator = Microsoft.Graph.PageIterator<
+                    Microsoft.Graph.Models.ConditionalAccessPolicy,
+                    Microsoft.Graph.Models.ConditionalAccessPolicyCollectionResponse>
+                .CreatePageIterator(
+                    client,
+                    response,
+                    policy =>
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        snapshots.Add(ToSnapshot(policy));
+                        return true;
+                    });
+            await iterator.IterateAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        var (summary, findings) = CaPolicyAnalyzer.Analyze(snapshots, DateTimeOffset.UtcNow);
+        progress?.Report(LogEntry.Ok(
+            "Audit",
+            $"CA: {summary.Total} policies · {summary.Enabled} enabled · " +
+            $"{summary.Disabled} disabled · {summary.ReportOnly} report-only · " +
+            $"{findings.Count} hallazgos"));
+        return (summary, findings);
+    }
+
+    private static CaPolicySnapshot ToSnapshot(Microsoft.Graph.Models.ConditionalAccessPolicy p)
+    {
+        var users = p.Conditions?.Users;
+        var apps = p.Conditions?.Applications;
+        var grant = p.GrantControls;
+
+        return new CaPolicySnapshot(
+            Id: p.Id ?? string.Empty,
+            DisplayName: p.DisplayName ?? string.Empty,
+            State: p.State?.ToString() ?? string.Empty,
+            CreatedDateTime: p.CreatedDateTime,
+            ModifiedDateTime: p.ModifiedDateTime,
+            IncludeUsers: users?.IncludeUsers?.ToList() ?? new List<string>(),
+            ExcludeUsers: users?.ExcludeUsers?.ToList() ?? new List<string>(),
+            IncludeGroups: users?.IncludeGroups?.ToList() ?? new List<string>(),
+            ExcludeGroups: users?.ExcludeGroups?.ToList() ?? new List<string>(),
+            IncludeRoles: users?.IncludeRoles?.ToList() ?? new List<string>(),
+            ExcludeRoles: users?.ExcludeRoles?.ToList() ?? new List<string>(),
+            IncludeApplications: apps?.IncludeApplications?.ToList() ?? new List<string>(),
+            BuiltInControls: grant?.BuiltInControls?.Select(c => c.ToString() ?? string.Empty).ToList()
+                ?? new List<string>(),
+            GrantOperator: grant?.Operator);
+    }
+
     public async Task<IReadOnlyList<AuditFinding>> RunGroupActivityAuditAsync(
         int inactivityDays = 90,
         IProgress<LogEntry>? progress = null,

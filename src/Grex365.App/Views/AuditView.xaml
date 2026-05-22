@@ -37,6 +37,10 @@
                            Margin="0,0,8,8"
                            Command="{Binding RunMfaCoverageAuditCommand}"
                            ToolTip="/reports/authenticationMethods/userRegistrationDetails: cobertura MFA. Admin sin MFA = ERROR crítico." />
+                <ui:Button Content="CA policies"
+                           Margin="0,0,8,8"
+                           Command="{Binding RunCaPoliciesAuditCommand}"
+                           ToolTip="/identity/conditionalAccess/policies: detecta policies disabled, report-only stale, sin MFA/compliantDevice, sin user scope, etc. Requiere Policy.Read.All." />
                 <ui:Button Content="Actividad grupos"
                            Margin="0,0,8,8"
                            Command="{Binding RunActivityAuditCommand}"
