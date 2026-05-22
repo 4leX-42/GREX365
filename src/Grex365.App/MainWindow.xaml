@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:vm="clr-namespace:Grex365.App.ViewModels"
+        xmlns:local="clr-namespace:Grex365.App"
         xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
         mc:Ignorable="d"
         Title="GREX365"
@@ -16,6 +17,9 @@
 
     <ui:FluentWindow.InputBindings>
         <KeyBinding Key="Escape" Command="{Binding CloseUserDrawerCommand}" />
+        <KeyBinding Key="OemComma" Modifiers="Control" Command="{Binding OpenSettingsCommand}" />
+        <KeyBinding Key="F1" Command="{Binding OpenAboutCommand}" />
+        <KeyBinding Key="L" Modifiers="Control" Command="{Binding ToggleLogPanelCommand}" />
     </ui:FluentWindow.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
@@ -44,7 +48,9 @@
                                        VerticalAlignment="Center" />
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="GREX365" FontSize="16" FontWeight="SemiBold" />
-                                <TextBlock Text="v0.2.0-alpha" FontSize="10" Opacity="0.55" />
+                                <TextBlock FontSize="10" Opacity="0.55">
+                                    <Run Text="v" /><Run Text="{x:Static local:App.AppVersion}" />
+                                </TextBlock>
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -63,6 +69,7 @@
                             <ui:Button Grid.Column="1"
                                        Content="Ajustes"
                                        HorizontalAlignment="Stretch"
+                                       ToolTip="Abrir Ajustes (Ctrl+,)"
                                        Command="{Binding OpenSettingsCommand}" />
                         </Grid>
                     </Border>
@@ -220,10 +227,15 @@
                                 <CheckBox Content="Err"  IsChecked="{Binding ShowError}" Margin="0,0,10,0" />
                                 <CheckBox Content="Dbg"  IsChecked="{Binding ShowDebug}" />
                             </StackPanel>
-                            <ui:Button Grid.Column="2"
-                                       Content="Limpiar"
-                                       Icon=""
-                                       Command="{Binding ClearLogCommand}" />
+                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                <ui:Button Content="Exportar"
+                                           Margin="0,0,8,0"
+                                           ToolTip="Guardar log filtrado a .txt o .csv"
+                                           Command="{Binding ExportLogCommand}" />
+                                <ui:Button Content="Limpiar"
+                                           Icon=""
+                                           Command="{Binding ClearLogCommand}" />
+                            </StackPanel>
                         </Grid>
                         <ListBox ItemsSource="{Binding LogView}"
                                  Background="Transparent"
@@ -315,18 +327,23 @@
                 </TextBlock>
 
                 <TextBlock Grid.Column="5"
-                           Text="GREX365 · v0.2.0-alpha"
                            Opacity="0.4"
                            FontSize="11"
                            VerticalAlignment="Center"
                            HorizontalAlignment="Right"
-                           Margin="0,0,16,0" />
+                           Margin="0,0,16,0">
+                    <Run Text="GREX365 · v" /><Run Text="{x:Static local:App.AppVersion}" />
+                </TextBlock>
 
                 <StackPanel Grid.Column="6" Orientation="Horizontal">
+                    <ui:Button Content="Acerca de"
+                               Margin="0,0,8,0"
+                               Command="{Binding OpenAboutCommand}"
+                               ToolTip="Acerca de GREX365 (F1)" />
                     <ui:Button Content="Log"
                                Margin="0,0,8,0"
                                Command="{Binding ToggleLogPanelCommand}"
-                               ToolTip="Mostrar/ocultar panel de log inferior" />
+                               ToolTip="Mostrar/ocultar panel de log inferior (Ctrl+L)" />
                     <ui:Button Content="Desconectar"
                                Icon=""
                                Command="{Binding DisconnectAllCommand}" />

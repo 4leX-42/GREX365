@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using Grex365.App.Services;
@@ -38,6 +39,25 @@ public partial class App : Application
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Grex365");
 
     public static LoggingLevelSwitch LogLevelSwitch { get; } = new(LogEventLevel.Information);
+
+    // Surfaced product version from Directory.Build.props (AssemblyInformationalVersion or fallback to FileVersion).
+    public static string AppVersion { get; } = ResolveVersion();
+
+    private static string ResolveVersion()
+    {
+        var asm = typeof(App).Assembly;
+        var info = asm.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+            .OfType<System.Reflection.AssemblyInformationalVersionAttribute>()
+            .FirstOrDefault()?.InformationalVersion;
+        if (!string.IsNullOrWhiteSpace(info))
+        {
+            // Strip build-metadata suffix introduced by SourceLink, if any.
+            var plus = info.IndexOf('+');
+            return plus >= 0 ? info.Substring(0, plus) : info;
+        }
+        var ver = asm.GetName().Version;
+        return ver?.ToString(3) ?? "0.0.0";
+    }
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -181,6 +201,7 @@ public partial class App : Application
                 services.AddSingleton<MainViewModel>();
                 services.AddSingleton<MainWindow>();
                 services.AddTransient<SettingsWindow>();
+                services.AddTransient<AboutWindow>();
 
                 services.AddSingleton(pluginReport);
                 foreach (var module in pluginReport.AllModules)

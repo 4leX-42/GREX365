@@ -18,5 +18,13 @@ public sealed class UserPreferences
     public string? ApplicationInsightsConnectionString { get; set; }
     public string? AuthorizationGroupId { get; set; }
     public bool LogPanelVisible { get; set; } = false;
+
+    // Window state restored on next launch. Null = use defaults.
+    public double? WindowWidth { get; set; }
+    public double? WindowHeight { get; set; }
+    public double? WindowLeft { get; set; }
+    public double? WindowTop { get; set; }
+    public bool WindowMaximized { get; set; }
+
     public DateTimeOffset LastUpdated { get; set; } = DateTimeOffset.Now;
 }

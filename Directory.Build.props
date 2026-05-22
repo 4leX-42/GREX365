@@ -1,0 +1,13 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Single source of truth for product version. Pickup by all csproj. -->
+    <Version>0.2.0-alpha</Version>
+    <AssemblyVersion>0.2.0.0</AssemblyVersion>
+    <FileVersion>0.2.0.0</FileVersion>
+    <Product>GREX365</Product>
+    <Company>GREX365</Company>
+    <Copyright>Copyright © 2026</Copyright>
+  </PropertyGroup>
+
+</Project>

@@ -318,6 +318,81 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void OpenAbout()
+    {
+        var window = _services.GetRequiredService<AboutWindow>();
+        window.Owner = Application.Current?.MainWindow;
+        window.ShowDialog();
+    }
+
+    [RelayCommand]
+    private async Task ExportLogAsync()
+    {
+        try
+        {
+            var stamp = DateTimeOffset.Now.ToString("yyyyMMdd-HHmmss");
+            var dlg = new Microsoft.Win32.SaveFileDialog
+            {
+                Title = "Exportar log",
+                FileName = $"grex365-log-{stamp}.txt",
+                DefaultExt = ".txt",
+                Filter = "Texto (*.txt)|*.txt|CSV (*.csv)|*.csv|Todos|*.*",
+                AddExtension = true
+            };
+            if (dlg.ShowDialog() != true)
+            {
+                return;
+            }
+
+            var path = dlg.FileName;
+            var entries = new List<LogEntry>();
+            foreach (var obj in LogView)
+            {
+                if (obj is LogEntry e)
+                {
+                    entries.Add(e);
+                }
+            }
+
+            var isCsv = path.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
+            using var writer = new System.IO.StreamWriter(path, append: false, System.Text.Encoding.UTF8);
+            if (isCsv)
+            {
+                await writer.WriteLineAsync("Timestamp,Severity,Source,Message").ConfigureAwait(false);
+                foreach (var e in entries)
+                {
+                    var ts = e.Timestamp.ToString("yyyy-MM-dd HH:mm:ss");
+                    await writer.WriteLineAsync(
+                        $"{ts},{e.Severity},{CsvEscape(e.Source)},{CsvEscape(e.Message)}").ConfigureAwait(false);
+                }
+            }
+            else
+            {
+                foreach (var e in entries)
+                {
+                    var ts = e.Timestamp.ToString("yyyy-MM-dd HH:mm:ss");
+                    await writer.WriteLineAsync($"{ts} [{e.Severity,-5}] {e.Source}: {e.Message}").ConfigureAwait(false);
+                }
+            }
+            _uiLog.Progress.Report(LogEntry.Ok("Log", $"Log exportado ({entries.Count} entradas) → {path}"));
+        }
+        catch (Exception ex)
+        {
+            _uiLog.Progress.Report(LogEntry.Error("Log", "Error exportando: " + ex.Message, ex));
+        }
+    }
+
+    private static string CsvEscape(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return string.Empty;
+        }
+        var needs = value.Contains(',') || value.Contains('"') || value.Contains('\n') || value.Contains('\r');
+        return needs ? "\"" + value.Replace("\"", "\"\"") + "\"" : value;
+    }
+
+    [RelayCommand]
     private async Task DisconnectAllAsync()
     {
         try
