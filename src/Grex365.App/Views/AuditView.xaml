@@ -6,6 +6,11 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
+    <UserControl.InputBindings>
+        <KeyBinding Key="R" Modifiers="Control" Command="{Binding RunCommand}" />
+        <KeyBinding Key="Escape" Command="{Binding CancelCommand}" />
+        <KeyBinding Key="E" Modifiers="Control" Command="{Binding ExportFindingsCommand}" />
+    </UserControl.InputBindings>
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -32,7 +37,7 @@
                            Appearance="Primary"
                            Margin="0,0,8,8"
                            Command="{Binding RunCommand}"
-                           ToolTip="Identity audit (stale members + disabled+licensed) + Groups audit (sin owner / vacíos / guests en privados)" />
+                           ToolTip="Identity audit (stale members + disabled+licensed) + Groups audit (sin owner / vacíos / guests en privados). Atajo: Ctrl+R" />
                 <ui:Button Content="MFA coverage"
                            Margin="0,0,8,8"
                            Command="{Binding RunMfaCoverageAuditCommand}"
@@ -102,10 +107,12 @@
             <WrapPanel Orientation="Horizontal">
                 <ui:Button Content="Cancelar"
                            Margin="0,0,8,0"
-                           Command="{Binding CancelCommand}" />
+                           Command="{Binding CancelCommand}"
+                           ToolTip="Cancelar audit en curso. Atajo: Esc" />
                 <ui:Button Content="Exportar CSV..."
                            Margin="0,0,8,0"
-                           Command="{Binding ExportFindingsCommand}" />
+                           Command="{Binding ExportFindingsCommand}"
+                           ToolTip="Exporta findings filtrados (respeta toggles ERROR/WARN/INFO + búsqueda). Atajo: Ctrl+E" />
                 <ui:ProgressRing IsIndeterminate="True"
                                  Width="20" Height="20"
                                  Margin="8,0,8,0"

@@ -671,7 +671,8 @@ public sealed partial class AuditViewModel : ObservableObject
         {
             var sb = new StringBuilder();
             sb.AppendLine("Categoria,Identity,Detalle,Severidad");
-            foreach (var f in Findings)
+            var rows = FindingsView.Cast<AuditFinding>().ToList();
+            foreach (var f in rows)
             {
                 sb.Append(Escape(f.Category)).Append(',');
                 sb.Append(Escape(f.Identity)).Append(',');
