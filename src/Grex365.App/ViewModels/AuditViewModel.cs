@@ -249,6 +249,64 @@ public sealed partial class AuditViewModel : ObservableObject
     }
 
     [RelayCommand(CanExecute = nameof(CanRun))]
+    private async Task RunPrivilegedRolesAuditAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+        _cts = new CancellationTokenSource();
+        IsBusy = true;
+        RunCommand.NotifyCanExecuteChanged();
+        RunActivityAuditCommand.NotifyCanExecuteChanged();
+        RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
+        RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
+        RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
+        RunCaPoliciesAuditCommand.NotifyCanExecuteChanged();
+        RunPrivilegedRolesAuditCommand.NotifyCanExecuteChanged();
+        CancelCommand.NotifyCanExecuteChanged();
+        StatusMessage = "Enumerando roles privilegiados y miembros...";
+        Findings.Clear();
+        Summary = null;
+        try
+        {
+            var (summary, findings) = await _audit
+                .RunPrivilegedRolesAuditAsync(_log.Progress, _cts.Token)
+                .ConfigureAwait(true);
+            foreach (var f in findings)
+            {
+                Findings.Add(f);
+            }
+            StatusMessage = $"Admins: {summary.UniqueAdmins} únicos · GA={summary.GlobalAdmins} · " +
+                            $"guests={summary.GuestsWithAdminRole} · disabled={summary.DisabledWithAdminRole} · " +
+                            $"SP={summary.ServicePrincipalsWithAdminRole}";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+            _cts?.Dispose();
+            _cts = null;
+            RunCommand.NotifyCanExecuteChanged();
+            RunActivityAuditCommand.NotifyCanExecuteChanged();
+            RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
+            RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
+            RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
+            RunCaPoliciesAuditCommand.NotifyCanExecuteChanged();
+            RunPrivilegedRolesAuditCommand.NotifyCanExecuteChanged();
+            CancelCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRun))]
     private async Task RunCaPoliciesAuditAsync()
     {
         if (IsBusy)

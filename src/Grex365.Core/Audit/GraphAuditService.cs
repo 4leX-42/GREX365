@@ -241,6 +241,146 @@ public sealed class GraphAuditService : IAuditService
             GrantOperator: grant?.Operator);
     }
 
+    public async Task<(PrivilegedRoleSummary Summary, IReadOnlyList<AuditFinding> Findings)> RunPrivilegedRolesAuditAsync(
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var client = _connection.Client
+            ?? throw new InvalidOperationException("Graph no está conectado.");
+
+        progress?.Report(LogEntry.Info("Audit", "Descargando directoryRoles activados..."));
+
+        Microsoft.Graph.Models.DirectoryRoleCollectionResponse? rolesResp;
+        try
+        {
+            rolesResp = await client.DirectoryRoles
+                .GetAsync(cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            progress?.Report(LogEntry.Error(
+                "Audit",
+                $"DirectoryRoles falló: {ex.Message}. ¿Directory.Read.All concedido?",
+                ex));
+            throw;
+        }
+
+        var roles = new List<DirectoryRole>();
+        if (rolesResp is not null)
+        {
+            var rIter = PageIterator<DirectoryRole, Microsoft.Graph.Models.DirectoryRoleCollectionResponse>
+                .CreatePageIterator(client, rolesResp, r =>
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    roles.Add(r);
+                    return true;
+                });
+            await rIter.IterateAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        progress?.Report(LogEntry.Info("Audit", $"{roles.Count} roles activados — enumerando miembros..."));
+
+        var assignments = new System.Collections.Concurrent.ConcurrentBag<PrivilegedRoleAssignment>();
+        using var sem = new System.Threading.SemaphoreSlim(8);
+        var tasks = roles.Select(async role =>
+        {
+            await sem.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                var roleId = role.Id ?? string.Empty;
+                var roleName = role.DisplayName ?? "(sin nombre)";
+                var template = role.RoleTemplateId;
+
+                var memResp = await client.DirectoryRoles[roleId].Members
+                    .GetAsync(req =>
+                    {
+                        req.QueryParameters.Select = new[]
+                        {
+                            "id", "displayName", "userPrincipalName", "userType", "accountEnabled"
+                        };
+                        req.QueryParameters.Top = 999;
+                    }, cancellationToken)
+                    .ConfigureAwait(false);
+                if (memResp is null)
+                {
+                    return;
+                }
+
+                var mIter = PageIterator<DirectoryObject, DirectoryObjectCollectionResponse>
+                    .CreatePageIterator(client, memResp, m =>
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        assignments.Add(ToAssignment(roleName, template, m));
+                        return true;
+                    });
+                await mIter.IterateAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                progress?.Report(LogEntry.Warn("Audit",
+                    $"No se pudo enumerar miembros de '{role.DisplayName}': {ex.Message}"));
+            }
+            finally
+            {
+                sem.Release();
+            }
+        });
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+
+        var (summary, findings) = PrivilegedRoleAuditAnalyzer.Analyze(assignments);
+        progress?.Report(LogEntry.Ok(
+            "Audit",
+            $"Privileged roles: {summary.GlobalAdmins} GA · {summary.UniqueAdmins} admins únicos · " +
+            $"{summary.GuestsWithAdminRole} guests · {summary.DisabledWithAdminRole} disabled · " +
+            $"{summary.ServicePrincipalsWithAdminRole} SP · {findings.Count} hallazgos"));
+        return (summary, findings);
+    }
+
+    private static PrivilegedRoleAssignment ToAssignment(string roleName, string? template, DirectoryObject member)
+    {
+        var id = member.Id ?? string.Empty;
+        return member switch
+        {
+            User u => new PrivilegedRoleAssignment(
+                RoleName: roleName,
+                RoleTemplateId: template,
+                MemberId: id,
+                MemberDisplayName: u.DisplayName,
+                MemberUpn: u.UserPrincipalName,
+                MemberType: "User",
+                MemberUserType: u.UserType,
+                MemberAccountEnabled: u.AccountEnabled ?? false),
+            ServicePrincipal sp => new PrivilegedRoleAssignment(
+                RoleName: roleName,
+                RoleTemplateId: template,
+                MemberId: id,
+                MemberDisplayName: sp.DisplayName,
+                MemberUpn: null,
+                MemberType: "ServicePrincipal",
+                MemberUserType: null,
+                MemberAccountEnabled: sp.AccountEnabled ?? true),
+            Group g => new PrivilegedRoleAssignment(
+                RoleName: roleName,
+                RoleTemplateId: template,
+                MemberId: id,
+                MemberDisplayName: g.DisplayName,
+                MemberUpn: g.Mail,
+                MemberType: "Group",
+                MemberUserType: null,
+                MemberAccountEnabled: true),
+            _ => new PrivilegedRoleAssignment(
+                RoleName: roleName,
+                RoleTemplateId: template,
+                MemberId: id,
+                MemberDisplayName: member.OdataType,
+                MemberUpn: null,
+                MemberType: member.OdataType,
+                MemberUserType: null,
+                MemberAccountEnabled: true),
+        };
+    }
+
     public async Task<IReadOnlyList<AuditFinding>> RunGroupActivityAuditAsync(
         int inactivityDays = 90,
         IProgress<LogEntry>? progress = null,

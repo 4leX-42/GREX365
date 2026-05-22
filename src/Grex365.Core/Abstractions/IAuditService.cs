@@ -25,4 +25,8 @@ public interface IAuditService
     Task<(CaPoliciesSummary Summary, IReadOnlyList<AuditFinding> Findings)> RunConditionalAccessAuditAsync(
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default);
+
+    Task<(PrivilegedRoleSummary Summary, IReadOnlyList<AuditFinding> Findings)> RunPrivilegedRolesAuditAsync(
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
 }

@@ -41,6 +41,10 @@
                            Margin="0,0,8,8"
                            Command="{Binding RunCaPoliciesAuditCommand}"
                            ToolTip="/identity/conditionalAccess/policies: detecta policies disabled, report-only stale, sin MFA/compliantDevice, sin user scope, etc. Requiere Policy.Read.All." />
+                <ui:Button Content="Privileged roles"
+                           Margin="0,0,8,8"
+                           Command="{Binding RunPrivilegedRolesAuditCommand}"
+                           ToolTip="/directoryRoles + members: detecta 0/1/&gt;5 Global Admins, guests con role admin, cuentas deshabilitadas con role, y service principals con admin." />
                 <ui:Button Content="Actividad grupos"
                            Margin="0,0,8,8"
                            Command="{Binding RunActivityAuditCommand}"
