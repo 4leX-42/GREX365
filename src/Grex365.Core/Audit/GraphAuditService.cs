@@ -521,6 +521,106 @@ public sealed class GraphAuditService : IAuditService
         return (summary, findings);
     }
 
+    public async Task<(OAuthGrantsSummary Summary, IReadOnlyList<AuditFinding> Findings)> RunOAuthGrantsAuditAsync(
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var client = _connection.Client
+            ?? throw new InvalidOperationException("Graph no está conectado.");
+
+        progress?.Report(LogEntry.Info("Audit", "Descargando /oauth2PermissionGrants..."));
+
+        Microsoft.Graph.Models.OAuth2PermissionGrantCollectionResponse? response;
+        try
+        {
+            response = await client.Oauth2PermissionGrants
+                .GetAsync(req => req.QueryParameters.Top = 999, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            progress?.Report(LogEntry.Error(
+                "Audit",
+                $"OAuth2PermissionGrants falló: {ex.Message}. ¿DelegatedPermissionGrant.ReadWrite.All o Directory.Read.All concedido?",
+                ex));
+            throw;
+        }
+
+        var rawGrants = new List<OAuth2PermissionGrant>();
+        if (response is not null)
+        {
+            var iter = PageIterator<OAuth2PermissionGrant, Microsoft.Graph.Models.OAuth2PermissionGrantCollectionResponse>
+                .CreatePageIterator(client, response, g =>
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    rawGrants.Add(g);
+                    return true;
+                });
+            await iter.IterateAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        var clientIds = rawGrants
+            .Select(g => g.ClientId)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct()
+            .ToList();
+        var resourceIds = rawGrants
+            .Select(g => g.ResourceId)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct()
+            .ToList();
+        var allIds = clientIds.Concat(resourceIds).Distinct().ToList();
+
+        progress?.Report(LogEntry.Info("Audit",
+            $"{rawGrants.Count} grants, {clientIds.Count} clients, {resourceIds.Count} resources — resolviendo nombres..."));
+
+        var spNames = new System.Collections.Concurrent.ConcurrentDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        using var sem = new System.Threading.SemaphoreSlim(8);
+        await Task.WhenAll(allIds.Select(async id =>
+        {
+            await sem.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                var sp = await client.ServicePrincipals[id]
+                    .GetAsync(req => req.QueryParameters.Select = new[] { "id", "displayName" }, cancellationToken)
+                    .ConfigureAwait(false);
+                if (sp?.DisplayName is { } name)
+                {
+                    spNames[id!] = name;
+                }
+            }
+            catch
+            {
+                // tolerate (SP may have been deleted)
+            }
+            finally
+            {
+                sem.Release();
+            }
+        })).ConfigureAwait(false);
+
+        var snapshots = rawGrants.Select(g => new OAuthGrantSnapshot(
+            GrantId: g.Id ?? string.Empty,
+            ClientId: g.ClientId ?? string.Empty,
+            ClientDisplayName: spNames.TryGetValue(g.ClientId ?? string.Empty, out var cName) ? cName : string.Empty,
+            ResourceId: g.ResourceId ?? string.Empty,
+            ResourceDisplayName: spNames.TryGetValue(g.ResourceId ?? string.Empty, out var rName) ? rName : (g.ResourceId ?? string.Empty),
+            ConsentType: g.ConsentType ?? string.Empty,
+            PrincipalId: g.PrincipalId,
+            Scopes: (g.Scope ?? string.Empty)
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList()))
+            .ToList();
+
+        var (summary, findings) = OAuthGrantAnalyzer.Analyze(snapshots);
+        progress?.Report(LogEntry.Ok(
+            "Audit",
+            $"OAuth grants: {summary.TotalGrants} totales · {summary.UniqueClients} apps únicas · " +
+            $"{summary.TenantWideHighRisk} tenant-wide alto-riesgo · " +
+            $"{summary.UserConsentedHighRisk} user-consented alto-riesgo"));
+        return (summary, findings);
+    }
+
     public async Task<IReadOnlyList<AuditFinding>> RunGroupActivityAuditAsync(
         int inactivityDays = 90,
         IProgress<LogEntry>? progress = null,

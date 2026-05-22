@@ -53,6 +53,10 @@
                            Margin="0,0,8,8"
                            Command="{Binding RunTenantDefaultsAuditCommand}"
                            ToolTip="/policies/authorizationPolicy + securityDefaults: detecta users-can-create-apps, users-can-create-tenants, invitesFrom=everyone, SSPR disabled, etc." />
+                <ui:Button Content="OAuth grants"
+                           Margin="0,0,8,8"
+                           Command="{Binding RunOAuthGrantsAuditCommand}"
+                           ToolTip="/oauth2PermissionGrants: detecta apps con scopes peligrosos (Mail/Files/Sites/Directory/full_access_as_user). Tenant-wide=ERROR, user-consented=WARN (posible phishing OAuth)." />
                 <ui:Button Content="Actividad grupos"
                            Margin="0,0,8,8"
                            Command="{Binding RunActivityAuditCommand}"

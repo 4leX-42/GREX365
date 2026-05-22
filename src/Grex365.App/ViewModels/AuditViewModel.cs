@@ -217,6 +217,51 @@ public sealed partial class AuditViewModel : ObservableObject
     }
 
     [RelayCommand(CanExecute = nameof(CanRun))]
+    private async Task RunOAuthGrantsAuditAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+        _cts = new CancellationTokenSource();
+        IsBusy = true;
+        NotifyAllCommands();
+        StatusMessage = "Descargando /oauth2PermissionGrants...";
+        Findings.Clear();
+        Summary = null;
+        try
+        {
+            var (summary, findings) = await _audit
+                .RunOAuthGrantsAuditAsync(_log.Progress, _cts.Token)
+                .ConfigureAwait(true);
+            foreach (var f in findings)
+            {
+                Findings.Add(f);
+            }
+            StatusMessage = $"OAuth grants: {summary.TotalGrants} totales · " +
+                            $"{summary.UniqueClients} apps · " +
+                            $"tenant-wide alto-riesgo={summary.TenantWideHighRisk} · " +
+                            $"user-consented alto-riesgo={summary.UserConsentedHighRisk}";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+            _cts?.Dispose();
+            _cts = null;
+            NotifyAllCommands();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRun))]
     private async Task RunAppCredentialsAuditAsync()
     {
         if (IsBusy)
@@ -314,6 +359,7 @@ public sealed partial class AuditViewModel : ObservableObject
         RunPrivilegedRolesAuditCommand.NotifyCanExecuteChanged();
         RunAppCredentialsAuditCommand.NotifyCanExecuteChanged();
         RunTenantDefaultsAuditCommand.NotifyCanExecuteChanged();
+        RunOAuthGrantsAuditCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
     }
 

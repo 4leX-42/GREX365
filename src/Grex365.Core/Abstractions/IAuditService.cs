@@ -37,4 +37,8 @@ public interface IAuditService
     Task<(TenantDefaultsSummary Summary, IReadOnlyList<AuditFinding> Findings)> RunTenantDefaultsAuditAsync(
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default);
+
+    Task<(OAuthGrantsSummary Summary, IReadOnlyList<AuditFinding> Findings)> RunOAuthGrantsAuditAsync(
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
 }
