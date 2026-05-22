@@ -58,6 +58,41 @@
 
 ## Bitácora sesiones
 
+### 2026-05-23 (Sprint L) — Visual overhaul futurista (light + dark)
+
+User directiva: dirección visual obligatoria — minimalista futurista premium tecnológico, glass surfaces, accent gradient azul→púrpura, cyan/neon hints, animaciones suaves, microinteracciones, depth premium. NO corporate gris muerto.
+
+**Paleta nueva (`App.xaml`)** — coherente light+dark:
+- `BrandAccentStart #4F8CFF` (azul eléctrico) · `BrandAccentMid #6A6CFF` · `BrandAccentEnd #9B6CFF` (púrpura) · `BrandCyan #22D3EE` (neon hint).
+- `BrandAccentGradient` (diagonal 0,0→1,1) + `BrandAccentGradientSoft` (alpha 0.18) + `BrandAccentGradientVertical` para rails.
+- Override de tokens wpf-ui `AccentFillColor*` y `AccentTextFillColor*` → toda la app hereda el azul eléctrico (botones Primary, items seleccionados).
+- `GlassBorderHighlight` LinearGradientBrush (accent → púrpura alpha) para bordes sutiles iluminados.
+- DropShadowEffects: `AccentGlowEffect` (blur 18, opacity 0.55), `AccentGlowSoftEffect` (blur 10, opacity 0.35), `CyanGlowEffect`, `CardElevation` (blur 24 ShadowDepth 2), `CardElevationSoft` (blur 12).
+
+**Estilos globales actualizados**:
+- `Card`: CornerRadius 10→12, añadido `CardElevationSoft` como Effect por defecto.
+- `CardHover`: Storyboard MouseEnter→TranslateTransform.Y=-2 (180ms CubicEase) + GlassBorderHighlight como borde + CardElevation profunda. MouseLeave revierte.
+- `MetricCard`: TranslateY=-3 + AccentGlowSoftEffect en hover.
+- `HeroCard` NUEVO: GlassBorderHighlight border + AccentGlowSoftEffect por defecto. Para landing/featured cards.
+- `NavListBoxItem`: rail con `BrandAccentGradientVertical` + glow + Opacity 0→1, animación TranslateX +2 en hover (150ms). Tooltip pasado a Español ("Requiere conexión").
+- `ProgressBar`: indicator usa `BrandAccentGradient` + glow soft + CornerRadius 4.
+- `SidebarBorder`: gradient overlay vertical alpha azul→púrpura (#0C / #08) sobre wpf-ui surface.
+- `StatusBarSurface` NUEVO: borde superior `GlassBorderHighlight` (línea acento sutil).
+- `BrandLogoGlyph` NUEVO: glyph con `BrandAccentSolid` + glow.
+
+**MainWindow shell**:
+- Logo del sidebar refactor a Border 36×36 con `BrandAccentGradient` background + glyph blanco + glow. Subtitle "M365 toolkit" con divisor cyan dot (glow).
+- Status bar conectores: ellipses reemplazados por Border CornerRadius=5 con accent glow soft. Labels FontWeight=SemiBold para legibilidad.
+- Page transition refactor: fade 280ms + TranslateY 10→0 + ScaleX/Y 0.985→1 (todo 320ms CubicEase). RenderTransformOrigin 0.5,0.4. Más sustancial que el anterior 180ms simple.
+
+**Dashboard hero**:
+- Header de página: Border 44×44 CornerRadius=12 con `BrandAccentGradientSoft` bg + `GlassBorderHighlight` border + `AccentGlowSoftEffect`. Glyph accent inside. Title 26px + subtitle inline.
+- Card de acciones rápidas convertida a `HeroCard` (glow base permanente).
+
+**Estado**: build clean 7 projects 0 errors. 469 tests siguen verdes (no rotos por refactor visual). Cards en todas las vistas heredan glow/elevation automáticamente vía `{StaticResource Card}`. ConnectView/TenantHealthView/AuditView/etc. mantienen headers existentes — el patrón Dashboard sirve de exemplar para futuras iteraciones de header hero.
+
+Pendiente iteración usuario: aplicar hero header a más views (ConnectView/AuditView/TenantHealthView), tune intensidad glow según feedback, posible focus-ring accent en TextBox/ComboBox.
+
 ### 2026-05-23 (Sprint K) — Audit JSON export + baseline diff
 
 **Sprint K** — Machine-readable export + drift detection contra baseline previo:

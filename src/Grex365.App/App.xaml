@@ -14,6 +14,99 @@
                 <ui:ControlsDictionary />
             </ResourceDictionary.MergedDictionaries>
 
+            <!-- ============================================================
+                 GREX365 — Futurista palette (Sprint L visual overhaul)
+                 Premium minimalist tech UI. Glass surfaces + accent glow.
+                 Override de tokens wpf-ui (AccentFill*) + nuevos custom.
+                 ============================================================ -->
+
+            <!-- Brand accent gradient (azul eléctrico → púrpura) — coherente light+dark -->
+            <Color x:Key="BrandAccentStart">#4F8CFF</Color>
+            <Color x:Key="BrandAccentMid">#6A6CFF</Color>
+            <Color x:Key="BrandAccentEnd">#9B6CFF</Color>
+            <Color x:Key="BrandAccentGlow">#664F8CFF</Color>
+            <Color x:Key="BrandCyan">#22D3EE</Color>
+            <Color x:Key="BrandPurple">#A78BFA</Color>
+
+            <SolidColorBrush x:Key="BrandAccentSolid" Color="{StaticResource BrandAccentStart}" />
+            <SolidColorBrush x:Key="BrandAccentPurple" Color="{StaticResource BrandAccentEnd}" />
+            <SolidColorBrush x:Key="BrandAccentCyan" Color="{StaticResource BrandCyan}" />
+
+            <LinearGradientBrush x:Key="BrandAccentGradient" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="{StaticResource BrandAccentStart}" Offset="0" />
+                <GradientStop Color="{StaticResource BrandAccentMid}" Offset="0.55" />
+                <GradientStop Color="{StaticResource BrandAccentEnd}" Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="BrandAccentGradientSoft" StartPoint="0,0" EndPoint="1,1" Opacity="0.18">
+                <GradientStop Color="{StaticResource BrandAccentStart}" Offset="0" />
+                <GradientStop Color="{StaticResource BrandAccentEnd}" Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="BrandAccentGradientVertical" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="{StaticResource BrandAccentStart}" Offset="0" />
+                <GradientStop Color="{StaticResource BrandAccentEnd}" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- Override wpf-ui accent for whole app (Buttons Primary, selected items, etc.) -->
+            <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="{StaticResource BrandAccentStart}" />
+            <SolidColorBrush x:Key="AccentFillColorSecondaryBrush" Color="{StaticResource BrandAccentMid}" />
+            <SolidColorBrush x:Key="AccentFillColorTertiaryBrush" Color="{StaticResource BrandAccentEnd}" />
+            <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="{StaticResource BrandAccentStart}" />
+            <SolidColorBrush x:Key="AccentTextFillColorSecondaryBrush" Color="{StaticResource BrandAccentMid}" />
+            <SolidColorBrush x:Key="AccentTextFillColorTertiaryBrush" Color="{StaticResource BrandAccentEnd}" />
+
+            <!-- Glass surfaces (semi-transparent over Mica backdrop) -->
+            <Color x:Key="GlassSurfaceDark">#A6161C28</Color>
+            <Color x:Key="GlassSurfaceDarkElevated">#CC1B2230</Color>
+            <Color x:Key="GlassSurfaceLight">#CCFFFFFF</Color>
+            <Color x:Key="GlassSurfaceLightElevated">#EEFAFBFE</Color>
+
+            <!-- Border highlight gradient (subtle iluminated edge) -->
+            <LinearGradientBrush x:Key="GlassBorderHighlight" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#664F8CFF" Offset="0" />
+                <GradientStop Color="#229B6CFF" Offset="1" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="GlassBorderSubtle" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#33FFFFFF" Offset="0" />
+                <GradientStop Color="#11FFFFFF" Offset="1" />
+            </LinearGradientBrush>
+
+            <!-- Accent glow drop-shadow (for hover/selected glow) -->
+            <DropShadowEffect x:Key="AccentGlowEffect"
+                              Color="{StaticResource BrandAccentStart}"
+                              BlurRadius="18"
+                              ShadowDepth="0"
+                              Opacity="0.55" />
+
+            <DropShadowEffect x:Key="AccentGlowSoftEffect"
+                              Color="{StaticResource BrandAccentStart}"
+                              BlurRadius="10"
+                              ShadowDepth="0"
+                              Opacity="0.35" />
+
+            <DropShadowEffect x:Key="CyanGlowEffect"
+                              Color="{StaticResource BrandCyan}"
+                              BlurRadius="14"
+                              ShadowDepth="0"
+                              Opacity="0.45" />
+
+            <DropShadowEffect x:Key="CardElevation"
+                              Color="#000000"
+                              BlurRadius="24"
+                              ShadowDepth="2"
+                              Direction="270"
+                              Opacity="0.18" />
+
+            <DropShadowEffect x:Key="CardElevationSoft"
+                              Color="#000000"
+                              BlurRadius="12"
+                              ShadowDepth="1"
+                              Direction="270"
+                              Opacity="0.10" />
+
+            <!-- Existing converters -->
             <conv:BoolToBrushConverter x:Key="BoolToBrushConverter" />
             <conv:BoolToOnOffConverter x:Key="BoolToOnOffConverter" />
             <conv:SeverityToBrushConverter x:Key="SeverityToBrushConverter" />
@@ -122,33 +215,102 @@
                 <Setter Property="FontSize" Value="12" />
             </Style>
 
-            <!-- Cards -->
+            <!-- Cards — glass + depth + subtle gradient border on hover -->
             <Style x:Key="Card" TargetType="Border">
-                <Setter Property="CornerRadius" Value="10" />
+                <Setter Property="CornerRadius" Value="12" />
                 <Setter Property="Padding" Value="20" />
                 <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
                 <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Effect" Value="{StaticResource CardElevationSoft}" />
             </Style>
 
-            <!-- Card with subtle hover lift (interactive cards) -->
+            <!-- Card with hover lift + accent border glow (interactive cards) -->
             <Style x:Key="CardHover" TargetType="Border" BasedOn="{StaticResource Card}">
+                <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+                <Setter Property="RenderTransform">
+                    <Setter.Value>
+                        <TranslateTransform Y="0" />
+                    </Setter.Value>
+                </Setter>
                 <Style.Triggers>
+                    <EventTrigger RoutedEvent="MouseEnter">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                                 To="-2" Duration="0:0:0.18">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                    <EventTrigger RoutedEvent="MouseLeave">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                                 To="0" Duration="0:0:0.18">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
-                        <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorSecondaryBrush}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource GlassBorderHighlight}" />
+                        <Setter Property="Effect" Value="{StaticResource CardElevation}" />
                     </Trigger>
                 </Style.Triggers>
             </Style>
 
             <Style x:Key="MetricCard" TargetType="Border" BasedOn="{StaticResource Card}">
-                <Setter Property="Padding" Value="16" />
+                <Setter Property="Padding" Value="18" />
                 <Setter Property="Margin" Value="0,0,12,12" />
+                <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+                <Setter Property="RenderTransform">
+                    <Setter.Value>
+                        <TranslateTransform Y="0" />
+                    </Setter.Value>
+                </Setter>
                 <Style.Triggers>
+                    <EventTrigger RoutedEvent="MouseEnter">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                                 To="-3" Duration="0:0:0.2">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                    <EventTrigger RoutedEvent="MouseLeave">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                                 To="0" Duration="0:0:0.18">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorTertiaryBrush}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource GlassBorderHighlight}" />
+                        <Setter Property="Effect" Value="{StaticResource AccentGlowSoftEffect}" />
                     </Trigger>
                 </Style.Triggers>
+            </Style>
+
+            <!-- HeroCard: featured card con gradient acentuado en borde -->
+            <Style x:Key="HeroCard" TargetType="Border" BasedOn="{StaticResource Card}">
+                <Setter Property="BorderBrush" Value="{StaticResource GlassBorderHighlight}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Effect" Value="{StaticResource AccentGlowSoftEffect}" />
             </Style>
 
             <!-- SettingsCard (PowerToys-style: icon + title/desc + control row) -->
@@ -218,7 +380,7 @@
                 <Setter Property="VerticalAlignment" Value="Center" />
             </Style>
 
-            <!-- Nav item: ListBoxItem styled with hover and selected -->
+            <!-- Nav item: gradient rail + glow + slide on hover/selected -->
             <Style x:Key="NavListBoxItem" TargetType="ListBoxItem">
                 <Setter Property="IsEnabled" Value="{Binding IsEnabled}" />
                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -230,7 +392,10 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ListBoxItem">
-                            <Grid>
+                            <Grid RenderTransformOrigin="0,0.5">
+                                <Grid.RenderTransform>
+                                    <TranslateTransform x:Name="NavSlide" X="0" />
+                                </Grid.RenderTransform>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="3" />
                                     <ColumnDefinition Width="*" />
@@ -238,25 +403,46 @@
                                 <Border x:Name="Rail"
                                         Grid.Column="0"
                                         Width="3"
-                                        Margin="0,6"
+                                        Margin="0,8"
                                         CornerRadius="2"
-                                        Background="Transparent" />
+                                        Background="Transparent"
+                                        Opacity="0" />
                                 <Border x:Name="Bd"
                                         Grid.Column="1"
                                         Background="{TemplateBinding Background}"
-                                        CornerRadius="6"
-                                        Margin="3,0,0,0"
-                                        Padding="10,8">
+                                        CornerRadius="8"
+                                        Margin="6,0,0,0"
+                                        Padding="12,9">
                                     <ContentPresenter VerticalAlignment="Center" />
                                 </Border>
                             </Grid>
                             <ControlTemplate.Triggers>
+                                <EventTrigger RoutedEvent="MouseEnter">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="NavSlide"
+                                                             Storyboard.TargetProperty="X"
+                                                             To="2" Duration="0:0:0.15" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                                <EventTrigger RoutedEvent="MouseLeave">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="NavSlide"
+                                                             Storyboard.TargetProperty="X"
+                                                             To="0" Duration="0:0:0.15" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
                                 </Trigger>
                                 <Trigger Property="IsSelected" Value="True">
                                     <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
-                                    <Setter TargetName="Rail" Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                                    <Setter TargetName="Rail" Property="Background" Value="{StaticResource BrandAccentGradientVertical}" />
+                                    <Setter TargetName="Rail" Property="Opacity" Value="1" />
+                                    <Setter TargetName="Rail" Property="Effect" Value="{StaticResource AccentGlowSoftEffect}" />
                                 </Trigger>
                                 <MultiTrigger>
                                     <MultiTrigger.Conditions>
@@ -267,12 +453,20 @@
                                 </MultiTrigger>
                                 <Trigger Property="IsEnabled" Value="False">
                                     <Setter TargetName="Bd" Property="Opacity" Value="0.35" />
-                                    <Setter TargetName="Bd" Property="ToolTip" Value="Requiere conexion (Graph o Exchange Online)" />
+                                    <Setter TargetName="Bd" Property="ToolTip" Value="Requiere conexión (Graph o Exchange Online)" />
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
+            </Style>
+
+            <!-- Sidebar logo glow -->
+            <Style x:Key="BrandLogoGlyph" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource IconFontFamily}" />
+                <Setter Property="FontSize" Value="22" />
+                <Setter Property="Foreground" Value="{StaticResource BrandAccentSolid}" />
+                <Setter Property="Effect" Value="{StaticResource AccentGlowSoftEffect}" />
             </Style>
 
             <!-- Global DataGrid theme-aware (legacy WPF default Foreground = black hardcoded; wpf-ui doesn't restyle DataGrid) -->
@@ -369,22 +563,24 @@
                 <Setter Property="BorderThickness" Value="0,0,0,1" />
             </Style>
 
-            <!-- Global ProgressBar — rounded modern look -->
+            <!-- Global ProgressBar — gradient indicator + glow -->
             <Style TargetType="ProgressBar">
                 <Setter Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}" />
                 <Setter Property="BorderThickness" Value="0" />
                 <Setter Property="MinHeight" Value="6" />
+                <Setter Property="Foreground" Value="{StaticResource BrandAccentGradient}" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ProgressBar">
-                            <Border CornerRadius="3"
+                            <Border CornerRadius="4"
                                     Background="{TemplateBinding Background}">
                                 <Grid ClipToBounds="True">
                                     <Border x:Name="PART_Track" />
                                     <Border x:Name="PART_Indicator"
                                             HorizontalAlignment="Left"
-                                            CornerRadius="3"
-                                            Background="{TemplateBinding Foreground}" />
+                                            CornerRadius="4"
+                                            Background="{TemplateBinding Foreground}"
+                                            Effect="{StaticResource AccentGlowSoftEffect}" />
                                 </Grid>
                             </Border>
                         </ControlTemplate>
@@ -399,11 +595,41 @@
                 <Setter Property="BorderThickness" Value="0" />
             </Style>
 
-            <!-- Sidebar background -->
+            <!-- Sidebar glass surface with subtle accent gradient overlay -->
             <Style x:Key="SidebarBorder" TargetType="Border">
-                <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorSecondaryBrush}" />
+                <Setter Property="Background">
+                    <Setter.Value>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#0C4F8CFF" Offset="0" />
+                            <GradientStop Color="#089B6CFF" Offset="1" />
+                        </LinearGradientBrush>
+                    </Setter.Value>
+                </Setter>
                 <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
                 <Setter Property="BorderThickness" Value="0,0,1,0" />
+            </Style>
+
+            <!-- Status bar bottom — glass + thin top gradient line -->
+            <Style x:Key="StatusBarSurface" TargetType="Border">
+                <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorSecondaryBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource GlassBorderHighlight}" />
+                <Setter Property="BorderThickness" Value="0,1,0,0" />
+            </Style>
+
+            <!-- Pill (severity / status badge) — uniform shape, glow on hover -->
+            <Style x:Key="SeverityPill" TargetType="Border">
+                <Setter Property="CornerRadius" Value="14" />
+                <Setter Property="Padding" Value="10,4" />
+                <Setter Property="BorderThickness" Value="1" />
+            </Style>
+
+            <!-- Futurista PrimaryButton override (ui:Button Appearance=Primary) -->
+            <Style x:Key="PrimaryActionButton" TargetType="Control">
+                <Setter Property="Background" Value="{StaticResource BrandAccentGradient}" />
+                <Setter Property="BorderBrush" Value="{StaticResource GlassBorderHighlight}" />
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="Padding" Value="14,8" />
+                <Setter Property="Effect" Value="{StaticResource AccentGlowSoftEffect}" />
             </Style>
 
             <!-- DataTemplates -->
