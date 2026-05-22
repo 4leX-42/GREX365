@@ -381,6 +381,146 @@ public sealed class GraphAuditService : IAuditService
         };
     }
 
+    public async Task<(AppCredentialsSummary Summary, IReadOnlyList<AuditFinding> Findings)> RunAppCredentialsAuditAsync(
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var client = _connection.Client
+            ?? throw new InvalidOperationException("Graph no está conectado.");
+
+        progress?.Report(LogEntry.Info("Audit", "Descargando /applications..."));
+
+        Microsoft.Graph.Models.ApplicationCollectionResponse? response;
+        try
+        {
+            response = await client.Applications.GetAsync(req =>
+            {
+                req.QueryParameters.Select = new[]
+                {
+                    "id", "appId", "displayName", "passwordCredentials", "keyCredentials"
+                };
+                req.QueryParameters.Top = 999;
+            }, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            progress?.Report(LogEntry.Error(
+                "Audit",
+                $"Applications.Get falló: {ex.Message}. ¿Application.Read.All o Directory.Read.All concedido?",
+                ex));
+            throw;
+        }
+
+        var snapshots = new List<AppCredentialSnapshot>();
+        if (response is not null)
+        {
+            var iter = PageIterator<Application, Microsoft.Graph.Models.ApplicationCollectionResponse>
+                .CreatePageIterator(client, response, app =>
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var appId = app.AppId ?? string.Empty;
+                    var name = app.DisplayName ?? "(sin nombre)";
+                    if (app.PasswordCredentials is { } pwds)
+                    {
+                        foreach (var pwd in pwds)
+                        {
+                            snapshots.Add(new AppCredentialSnapshot(
+                                AppId: appId,
+                                DisplayName: name,
+                                CredentialType: "Password",
+                                KeyId: pwd.KeyId?.ToString(),
+                                CredentialDisplayName: pwd.DisplayName,
+                                EndDateTime: pwd.EndDateTime));
+                        }
+                    }
+                    if (app.KeyCredentials is { } keys)
+                    {
+                        foreach (var key in keys)
+                        {
+                            snapshots.Add(new AppCredentialSnapshot(
+                                AppId: appId,
+                                DisplayName: name,
+                                CredentialType: "Key",
+                                KeyId: key.KeyId?.ToString(),
+                                CredentialDisplayName: key.DisplayName,
+                                EndDateTime: key.EndDateTime));
+                        }
+                    }
+                    return true;
+                });
+            await iter.IterateAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        var (summary, findings) = AppCredentialAuditAnalyzer.Analyze(snapshots, DateTimeOffset.UtcNow);
+        progress?.Report(LogEntry.Ok(
+            "Audit",
+            $"App creds: {summary.Total} totales · {summary.Expired} expired · " +
+            $"{summary.ExpiringSoon} expiring · {summary.LongLived} long-lived · {findings.Count} hallazgos"));
+        return (summary, findings);
+    }
+
+    public async Task<(TenantDefaultsSummary Summary, IReadOnlyList<AuditFinding> Findings)> RunTenantDefaultsAuditAsync(
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var client = _connection.Client
+            ?? throw new InvalidOperationException("Graph no está conectado.");
+
+        progress?.Report(LogEntry.Info("Audit", "Descargando /policies/authorizationPolicy..."));
+
+        Microsoft.Graph.Models.AuthorizationPolicy? authPolicy;
+        try
+        {
+            authPolicy = await client.Policies.AuthorizationPolicy
+                .GetAsync(cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            progress?.Report(LogEntry.Error(
+                "Audit",
+                $"AuthorizationPolicy falló: {ex.Message}. ¿Policy.Read.All concedido?",
+                ex));
+            throw;
+        }
+
+        if (authPolicy is null)
+        {
+            progress?.Report(LogEntry.Warn("Audit", "authorizationPolicy devolvió null."));
+            return (new TenantDefaultsSummary(false, 0), Array.Empty<AuditFinding>());
+        }
+
+        bool securityDefaults = false;
+        try
+        {
+            var sd = await client.Policies.IdentitySecurityDefaultsEnforcementPolicy
+                .GetAsync(cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+            securityDefaults = sd?.IsEnabled == true;
+        }
+        catch (Exception ex)
+        {
+            progress?.Report(LogEntry.Warn("Audit",
+                $"IdentitySecurityDefaultsEnforcementPolicy no disponible: {ex.Message}"));
+        }
+
+        var snapshot = new AuthorizationPolicySnapshot(
+            AllowedToSignUpEmailBasedSubscriptions: authPolicy.AllowedToSignUpEmailBasedSubscriptions ?? false,
+            AllowedToUseSspr: authPolicy.AllowedToUseSSPR ?? false,
+            AllowEmailVerifiedUsersToJoinOrganization: authPolicy.AllowEmailVerifiedUsersToJoinOrganization ?? false,
+            AllowInvitesFrom: authPolicy.AllowInvitesFrom?.ToString(),
+            DefaultUserCanCreateApps: authPolicy.DefaultUserRolePermissions?.AllowedToCreateApps ?? false,
+            DefaultUserCanCreateSecurityGroups: authPolicy.DefaultUserRolePermissions?.AllowedToCreateSecurityGroups ?? false,
+            DefaultUserCanCreateTenants: authPolicy.DefaultUserRolePermissions?.AllowedToCreateTenants ?? false,
+            DefaultUserCanReadOtherUsers: authPolicy.DefaultUserRolePermissions?.AllowedToReadOtherUsers ?? false);
+
+        var (summary, findings) = TenantDefaultsAnalyzer.Analyze(snapshot, securityDefaults);
+        progress?.Report(LogEntry.Ok(
+            "Audit",
+            $"Tenant defaults: SecurityDefaults={securityDefaults} · {findings.Count} hallazgos"));
+        return (summary, findings);
+    }
+
     public async Task<IReadOnlyList<AuditFinding>> RunGroupActivityAuditAsync(
         int inactivityDays = 90,
         IProgress<LogEntry>? progress = null,

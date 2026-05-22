@@ -29,4 +29,12 @@ public interface IAuditService
     Task<(PrivilegedRoleSummary Summary, IReadOnlyList<AuditFinding> Findings)> RunPrivilegedRolesAuditAsync(
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default);
+
+    Task<(AppCredentialsSummary Summary, IReadOnlyList<AuditFinding> Findings)> RunAppCredentialsAuditAsync(
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    Task<(TenantDefaultsSummary Summary, IReadOnlyList<AuditFinding> Findings)> RunTenantDefaultsAuditAsync(
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
 }
