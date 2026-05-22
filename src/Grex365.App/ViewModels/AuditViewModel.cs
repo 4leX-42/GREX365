@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Text;
+using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Grex365.App.Services;
@@ -15,6 +17,7 @@ public sealed partial class AuditViewModel : ObservableObject
     private readonly IAuditService _audit;
     private readonly IExoForwardingAuditService _exoAudit;
     private readonly IUiLogSink _log;
+    private readonly IAuditFindingsStore _findingsStore;
     private CancellationTokenSource? _cts;
 
     [ObservableProperty] private AuditSummary? _summary;
@@ -23,14 +26,83 @@ public sealed partial class AuditViewModel : ObservableObject
     [ObservableProperty] private int _inactivityDays = 90;
     [ObservableProperty] private int _inboxRuleScanCap = 200;
 
-    public ObservableCollection<AuditFinding> Findings { get; } = new();
+    [ObservableProperty] private bool _showErrors = true;
+    [ObservableProperty] private bool _showWarnings = true;
+    [ObservableProperty] private bool _showInfo = true;
+    [ObservableProperty] private string _findingsFilter = string.Empty;
+    [ObservableProperty] private int _errorCount;
+    [ObservableProperty] private int _warningCount;
+    [ObservableProperty] private int _infoCount;
 
-    public AuditViewModel(IAuditService audit, IExoForwardingAuditService exoAudit, IUiLogSink log)
+    public ObservableCollection<AuditFinding> Findings { get; } = new();
+    public ICollectionView FindingsView { get; }
+
+    public AuditViewModel(
+        IAuditService audit,
+        IExoForwardingAuditService exoAudit,
+        IUiLogSink log,
+        IAuditFindingsStore findingsStore)
     {
         _audit = audit;
         _exoAudit = exoAudit;
         _log = log;
+        _findingsStore = findingsStore;
+        FindingsView = CollectionViewSource.GetDefaultView(Findings);
+        FindingsView.Filter = FindingsFilterPredicate;
+        Findings.CollectionChanged += (_, _) => RecomputeCounts();
     }
+
+    private void PublishAuditResult(string auditName) =>
+        _findingsStore.Update(auditName, ErrorCount, WarningCount, InfoCount);
+
+    private bool FindingsFilterPredicate(object obj)
+    {
+        if (obj is not AuditFinding f)
+        {
+            return false;
+        }
+        var passesSeverity = (f.Severity ?? string.Empty).ToUpperInvariant() switch
+        {
+            "ERROR" => ShowErrors,
+            "WARN" => ShowWarnings,
+            "INFO" => ShowInfo,
+            _ => true,
+        };
+        if (!passesSeverity)
+        {
+            return false;
+        }
+        var q = FindingsFilter?.Trim();
+        if (string.IsNullOrEmpty(q))
+        {
+            return true;
+        }
+        return (f.Category?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (f.Identity?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (f.Detail?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false);
+    }
+
+    private void RecomputeCounts()
+    {
+        int err = 0, warn = 0, info = 0;
+        foreach (var f in Findings)
+        {
+            switch ((f.Severity ?? string.Empty).ToUpperInvariant())
+            {
+                case "ERROR": err++; break;
+                case "WARN": warn++; break;
+                case "INFO": info++; break;
+            }
+        }
+        ErrorCount = err;
+        WarningCount = warn;
+        InfoCount = info;
+    }
+
+    partial void OnShowErrorsChanged(bool value) => FindingsView.Refresh();
+    partial void OnShowWarningsChanged(bool value) => FindingsView.Refresh();
+    partial void OnShowInfoChanged(bool value) => FindingsView.Refresh();
+    partial void OnFindingsFilterChanged(string value) => FindingsView.Refresh();
 
     [RelayCommand(CanExecute = nameof(CanRun))]
     private async Task RunAsync()
@@ -50,7 +122,7 @@ public sealed partial class AuditViewModel : ObservableObject
             Summary = summary;
             var groupFindings = await _audit.RunGroupsAuditAsync(_log.Progress, _cts.Token).ConfigureAwait(true);
 
-            AddFindingsSorted(findings.Concat(groupFindings));
+            AddFindingsSorted("Identidad + grupos", findings.Concat(groupFindings));
 
             StatusMessage = $"{summary.UsersTotal} usuarios · {findings.Count + groupFindings.Count} hallazgos totales";
         }
@@ -96,7 +168,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var findings = await _audit
                 .RunGroupActivityAuditAsync(InactivityDays, _log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            AddFindingsSorted(findings);
+            AddFindingsSorted("Actividad grupos", findings);
             StatusMessage = $"{findings.Count} grupos inactivos (>{InactivityDays}d).";
         }
         catch (OperationCanceledException)
@@ -135,7 +207,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var findings = await _exoAudit
                 .ScanExternalForwardingAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            AddFindingsSorted(findings);
+            AddFindingsSorted("Forwarding externo", findings);
             StatusMessage = $"{findings.Count} forwards externos detectados.";
         }
         catch (OperationCanceledException)
@@ -174,7 +246,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var (summary, findings) = await _audit
                 .RunMfaCoverageAuditAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            AddFindingsSorted(findings);
+            AddFindingsSorted("MFA coverage", findings);
             var adminPct = summary.AdminsTotal > 0
                 ? (summary.AdminsTotal - summary.AdminsWithoutMfa) * 100.0 / summary.AdminsTotal
                 : 100.0;
@@ -218,7 +290,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var (summary, findings) = await _audit
                 .RunOAuthGrantsAuditAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            AddFindingsSorted(findings);
+            AddFindingsSorted("OAuth grants", findings);
             StatusMessage = $"OAuth grants: {summary.TotalGrants} totales · " +
                             $"{summary.UniqueClients} apps · " +
                             $"tenant-wide alto-riesgo={summary.TenantWideHighRisk} · " +
@@ -260,7 +332,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var (summary, findings) = await _audit
                 .RunAppCredentialsAuditAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            AddFindingsSorted(findings);
+            AddFindingsSorted("App credentials", findings);
             StatusMessage = $"App creds: {summary.Total} totales · " +
                             $"{summary.Expired} expired · {summary.ExpiringSoon} expiring · " +
                             $"{summary.LongLived} long-lived";
@@ -301,7 +373,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var (summary, findings) = await _audit
                 .RunTenantDefaultsAuditAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            AddFindingsSorted(findings);
+            AddFindingsSorted("Tenant defaults", findings);
             StatusMessage = $"Tenant defaults: SecurityDefaults={(summary.SecurityDefaultsEnabled ? "ON" : "OFF")} · " +
                             $"{findings.Count} hallazgos";
         }
@@ -323,7 +395,7 @@ public sealed partial class AuditViewModel : ObservableObject
         }
     }
 
-    private void AddFindingsSorted(IEnumerable<AuditFinding> findings)
+    private void AddFindingsSorted(string auditName, IEnumerable<AuditFinding> findings)
     {
         foreach (var f in findings
             .OrderBy(f => SeverityRank(f.Severity))
@@ -332,6 +404,7 @@ public sealed partial class AuditViewModel : ObservableObject
         {
             Findings.Add(f);
         }
+        PublishAuditResult(auditName);
     }
 
     private static int SeverityRank(string? severity) =>
@@ -378,7 +451,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var (summary, findings) = await _audit
                 .RunPrivilegedRolesAuditAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            AddFindingsSorted(findings);
+            AddFindingsSorted("Privileged roles", findings);
             StatusMessage = $"Admins: {summary.UniqueAdmins} únicos · GA={summary.GlobalAdmins} · " +
                             $"guests={summary.GuestsWithAdminRole} · disabled={summary.DisabledWithAdminRole} · " +
                             $"SP={summary.ServicePrincipalsWithAdminRole}";
@@ -419,7 +492,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var (summary, findings) = await _audit
                 .RunConditionalAccessAuditAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            AddFindingsSorted(findings);
+            AddFindingsSorted("CA policies", findings);
             StatusMessage = $"CA: {summary.Total} policies · " +
                             $"{summary.Enabled} enabled · {summary.Disabled} disabled · " +
                             $"{summary.ReportOnly} report-only · {findings.Count} hallazgos";
@@ -460,7 +533,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var (summary, findings) = await _exoAudit
                 .ScanSharedMailboxSignInAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            AddFindingsSorted(findings);
+            AddFindingsSorted("Shared mailbox sign-in", findings);
             StatusMessage = $"Shared boxes: {summary.Total} totales · " +
                             $"sign-in enabled={summary.SignInEnabled} · " +
                             $"disabled={summary.SignInDisabled} · unknown={summary.Unknown}";
@@ -501,7 +574,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var (summary, findings) = await _exoAudit
                 .ScanTransportRulesAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            AddFindingsSorted(findings);
+            AddFindingsSorted("Transport rules", findings);
             StatusMessage = $"Transport rules: {summary.Total} totales · {summary.Enabled} enabled · " +
                             $"fwd-ext={summary.WithExternalForward} bcc-ext={summary.WithExternalBcc} " +
                             $"redir-ext={summary.WithExternalRedirect} · {findings.Count} hallazgos";
@@ -547,7 +620,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var findings = await _exoAudit
                 .ScanInboxRulesAsync(InboxRuleScanCap, _log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            AddFindingsSorted(findings);
+            AddFindingsSorted("Inbox rules", findings);
             StatusMessage = $"{findings.Count} reglas sospechosas detectadas.";
         }
         catch (OperationCanceledException)
