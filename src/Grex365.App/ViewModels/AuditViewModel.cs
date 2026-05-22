@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Grex365.App.Services;
 using Grex365.Core.Abstractions;
+using Grex365.Core.Audit;
 using Grex365.Core.Models;
 using Microsoft.Win32;
 
@@ -18,6 +19,7 @@ public sealed partial class AuditViewModel : ObservableObject
     private readonly IExoForwardingAuditService _exoAudit;
     private readonly IUiLogSink _log;
     private readonly IAuditFindingsStore _findingsStore;
+    private readonly IGraphConnection? _graph;
     private CancellationTokenSource? _cts;
 
     [ObservableProperty] private AuditSummary? _summary;
@@ -41,12 +43,14 @@ public sealed partial class AuditViewModel : ObservableObject
         IAuditService audit,
         IExoForwardingAuditService exoAudit,
         IUiLogSink log,
-        IAuditFindingsStore findingsStore)
+        IAuditFindingsStore findingsStore,
+        IGraphConnection? graph = null)
     {
         _audit = audit;
         _exoAudit = exoAudit;
         _log = log;
         _findingsStore = findingsStore;
+        _graph = graph;
         FindingsView = CollectionViewSource.GetDefaultView(Findings);
         FindingsView.Filter = FindingsFilterPredicate;
         Findings.CollectionChanged += (_, _) => RecomputeCounts();
@@ -805,5 +809,45 @@ public sealed partial class AuditViewModel : ObservableObject
             return '"' + v.Replace("\"", "\"\"") + '"';
         }
         return v;
+    }
+
+    [RelayCommand]
+    private void ExportFindingsHtml()
+    {
+        if (Findings.Count == 0)
+        {
+            StatusMessage = "Sin hallazgos para exportar.";
+            return;
+        }
+
+        var dlg = new SaveFileDialog
+        {
+            Title = "Guardar informe HTML",
+            Filter = "HTML (*.html)|*.html",
+            FileName = $"audit_report_{DateTime.Now:yyyyMMdd_HHmmss}.html"
+        };
+        if (dlg.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            var rows = FindingsView.Cast<AuditFinding>().ToList();
+            var ctx = new AuditReportContext(
+                Title: "GREX365 — Informe de auditoría",
+                GeneratedAt: DateTime.Now,
+                TenantDomain: _graph?.TenantId,
+                GeneratedBy: Environment.UserName);
+            var html = AuditReportHtmlBuilder.Build(rows, ctx);
+            File.WriteAllText(dlg.FileName, html, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+            StatusMessage = $"Exportado: {Path.GetFileName(dlg.FileName)}";
+            _log.Progress.Report(LogEntry.Ok("Audit", "Informe HTML exportado: " + dlg.FileName));
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
+        }
     }
 }

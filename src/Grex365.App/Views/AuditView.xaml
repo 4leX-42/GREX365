@@ -150,6 +150,10 @@
                            Margin="0,0,8,0"
                            Command="{Binding ExportFindingsCommand}"
                            ToolTip="Exporta findings filtrados (respeta toggles ERROR/WARN/INFO + búsqueda). Atajo: Ctrl+E" />
+                <ui:Button Content="Exportar HTML..."
+                           Margin="0,0,8,0"
+                           Command="{Binding ExportFindingsHtmlCommand}"
+                           ToolTip="Informe HTML con tablas por severidad, totales y CSS embebido. Comparte con stakeholders." />
                 <ui:ProgressRing IsIndeterminate="True"
                                  Width="20" Height="20"
                                  Margin="8,0,8,0"

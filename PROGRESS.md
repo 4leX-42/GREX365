@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **326 passing** (xUnit + FluentAssertions)
-- Última actualización: 2026-05-22
+- Tests: **444 passing** (xUnit + FluentAssertions)
+- Última actualización: 2026-05-23
 
 ## Auditoría técnica integral 2026-05-22
 
@@ -57,6 +57,22 @@
 - Sweep final `grep "Foreground=\"#\|Background=\"#"`: cero matches restantes — paleta 100% via DynamicResource.
 
 ## Bitácora sesiones
+
+### 2026-05-23 (Sprint J) — Audit HTML report export
+
+User feedback "continúa" + memoria `feedback_keep_shipping`: trabajar backlog autónomo. Audit técnico previo: backlog `panel_overhaul_pending` ya **completamente shipped** en sesión 2026-05-22 (líneas PROGRESS 178-183) — memoria estale borrada del index.
+
+**Sprint J** — Audit HTML report builder (stakeholder-friendly):
+- `AuditReportHtmlBuilder` puro en `Grex365.Core.Audit`: `Build(IEnumerable<AuditFinding>, AuditReportContext) → string`. Standalone HTML con CSS embebido (light + `prefers-color-scheme: dark`), pills resumen (ERROR/WARN/INFO/TOTAL), tablas por severidad con conteos, escape HTML completo (`<`, `>`, `&`, `"`, `'`), filas omitidas si severidad vacía, empty state "Sin hallazgos".
+- `AuditReportContext` record: Title + GeneratedAt + TenantDomain (opcional) + GeneratedBy (opcional). Omite metadatos si null/whitespace.
+- `Esc(string?)` público (testeable) — usa StringBuilder con switch por char para perf.
+- `AuditViewModel.ExportFindingsHtml` command: respeta filtros (FindingsView), SaveFileDialog .html, persiste UTF-8 con BOM, log Ok en UiLogSink. Inyecta `IGraphConnection?` opcional para resolver TenantId en el header.
+- `AuditView.xaml` botón "Exportar HTML..." junto al CSV existente.
+- 18 tests `AuditReportHtmlBuilderTests`: empty/null findings, group by severity, hide section if empty, HTML entity escape theory (4 inputs), pills 4 counts, tenant+actor opcionales, severidad case-insensitive, timestamp invariant format, columns ×3, Esc helper edge cases, unknown severity excluded, embeds CSS dark.
+
+**Estado**: 444 tests verdes (361 Core +18 + 83 App). Build clean 7 projects 0 errors.
+
+PROGRESS backlog autónomo agotado: docs internas (necesita petición explícita), MSIX assets definitivos (necesita arte), QA escenarios reales (no automatizable sin tenant real). Trabajo futuro autonomous lo deja a discreción del usuario.
 
 ### 2026-05-23 (Sprint H + I) — Theme auto-system + AppReg refactor
 
