@@ -58,6 +58,27 @@
 
 ## Bitácora sesiones
 
+### 2026-05-22 (Sprint G) — First-run wizard + DataGrid real fix
+
+User feedback Sprint F: "Auditoría sigue fallando, color de mierda" → diagnosis: WPF `DataGridTextColumn` y `GridViewColumn.DisplayMemberBinding` generan TextBlocks con Foreground hardcoded a `SystemColors.WindowTextBrush` via internal `SyncColumnProperty` — global Style en DataGrid/ListView NO penetra esos TextBlocks generados.
+
+Real fix:
+- Nuevos x:Key Styles `DataCellText` + `DataMonoCellText` en App.xaml (Foreground=`TextFillColorPrimaryBrush` + VerticalCenter + Margin + TextTrimming).
+- `AuditLogView` 5 DataGridTextColumn: añade `ElementStyle="{StaticResource DataCellText}"`.
+- `MailFlowRulesView` 5 DataGridTextColumn: igual.
+- `AuditView` GridView Categoría/Identity/Detalle: reemplaza `DisplayMemberBinding` por `CellTemplate` con TextBlock styled.
+- `DomainCheckView` GridView Tipo/Estado/Valor: misma conversión.
+
+Sprint G: First-run wizard explícito (H2.9):
+- `FirstRunWizardWindow.xaml` FluentWindow modal 780x640 5 páginas + step indicator pills (semantic accent active).
+- `FirstRunWizardViewModel` state machine `FirstRunStep` enum + ConnectionMethod/EnforceTenantLock/ExpectedTenantId/ExpectedTenantDomain/Theme props + Next/Back/Skip/Finish commands con CanExecute.
+- Pages: Welcome (intro card) + Connection (RadioButton devicecode/cert) + TenantLock (CheckBox + ID/Dominio TextBoxes disabled cuando off) + Theme (Dark/Light RadioButton) + Summary (table valores elegidos).
+- Skip: solo set `FirstRunCompleted=true`. Finish: persiste todos los prefs.
+- Converters nuevos: `EnumToVisibilityConverter` + `StringEqualsConverter` (último para RadioButton IsChecked binding string).
+- `App.xaml.cs.OnStartup` chains `ShowFirstRunWizardIfNeededAsync` → `TryAutoConnectAsync` via ContinueWith UI scheduler. Re-aplica tema tras wizard close.
+
+Tests **401 verdes** (+10 FirstRunWizardViewModelTests: state machine, persistencia, skip, finish con trim, save error, labels). 326 Core + 75 App.
+
 ### 2026-05-22 (final) — Sprint F "UI polish a fondo"
 
 User reporta: "se ve muy verde, auditoría resultados como mensajes de error, modo oscuro texto oscuro y azul oscuro no se ve". 4 commits.
