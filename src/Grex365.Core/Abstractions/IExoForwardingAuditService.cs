@@ -17,4 +17,9 @@ public interface IExoForwardingAuditService
         ScanTransportRulesAsync(
             IProgress<LogEntry>? progress = null,
             CancellationToken cancellationToken = default);
+
+    Task<(Grex365.Core.Audit.SharedMailboxSignInSummary Summary, IReadOnlyList<AuditFinding> Findings)>
+        ScanSharedMailboxSignInAsync(
+            IProgress<LogEntry>? progress = null,
+            CancellationToken cancellationToken = default);
 }

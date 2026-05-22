@@ -85,6 +85,10 @@
                            Margin="0,0,8,8"
                            Command="{Binding RunTransportRulesAuditCommand}"
                            ToolTip="Get-TransportRule: flagea rules enabled con ForwardTo/BlindCopyTo/RedirectMessageTo a destinatarios externos (exfil), DeleteMessage sin scope, outbound connectors custom, modo Audit en producción, y rules disabled con nombre de seguridad." />
+                <ui:Button Content="Shared mailbox sign-in"
+                           Margin="0,0,8,8"
+                           Command="{Binding RunSharedMailboxSignInAuditCommand}"
+                           ToolTip="Get-Mailbox SharedMailbox + Get-User: detecta shared mailboxes con AccountDisabled=false (sign-in habilitado — vector password attack). Bloquéalas con Set-User -AccountDisabled \$true." />
                 <TextBlock VerticalAlignment="Center" Text="Tope buzones:" Opacity="0.7" Margin="0,0,4,8" />
                 <ui:NumberBox Width="80"
                               Margin="0,0,8,8"

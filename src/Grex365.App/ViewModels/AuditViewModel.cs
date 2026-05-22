@@ -361,6 +361,7 @@ public sealed partial class AuditViewModel : ObservableObject
         RunTenantDefaultsAuditCommand.NotifyCanExecuteChanged();
         RunOAuthGrantsAuditCommand.NotifyCanExecuteChanged();
         RunTransportRulesAuditCommand.NotifyCanExecuteChanged();
+        RunSharedMailboxSignInAuditCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
     }
 
@@ -442,6 +443,50 @@ public sealed partial class AuditViewModel : ObservableObject
         {
             StatusMessage = "Error: " + ex.Message;
             _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+            _cts?.Dispose();
+            _cts = null;
+            NotifyAllCommands();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRun))]
+    private async Task RunSharedMailboxSignInAuditAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+        _cts = new CancellationTokenSource();
+        IsBusy = true;
+        NotifyAllCommands();
+        StatusMessage = "Enumerando shared mailboxes + estado sign-in...";
+        Findings.Clear();
+        Summary = null;
+        try
+        {
+            var (summary, findings) = await _exoAudit
+                .ScanSharedMailboxSignInAsync(_log.Progress, _cts.Token)
+                .ConfigureAwait(true);
+            foreach (var f in findings)
+            {
+                Findings.Add(f);
+            }
+            StatusMessage = $"Shared boxes: {summary.Total} totales · " +
+                            $"sign-in enabled={summary.SignInEnabled} · " +
+                            $"disabled={summary.SignInDisabled} · unknown={summary.Unknown}";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("ExoAudit", ex.Message, ex));
         }
         finally
         {

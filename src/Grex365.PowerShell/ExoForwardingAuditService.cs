@@ -256,6 +256,60 @@ public sealed class ExoForwardingAuditService : IExoForwardingAuditService
         return (summary, findings);
     }
 
+    public async Task<(Grex365.Core.Audit.SharedMailboxSignInSummary Summary, IReadOnlyList<AuditFinding> Findings)>
+        ScanSharedMailboxSignInAsync(
+            IProgress<LogEntry>? progress = null,
+            CancellationToken cancellationToken = default)
+    {
+        progress?.Report(LogEntry.Info("ExoAudit", "Enumerando shared mailboxes y estado AccountDisabled..."));
+
+        const string script = """
+            param()
+            Get-Mailbox -RecipientTypeDetails SharedMailbox -ResultSize Unlimited -ErrorAction Stop |
+                ForEach-Object {
+                    $upn = $_.UserPrincipalName
+                    $disabled = $null
+                    try {
+                        $user = Get-User -Identity $upn -ErrorAction Stop
+                        $disabled = [bool]$user.AccountDisabled
+                    } catch {
+                        $disabled = $null
+                    }
+                    [PSCustomObject]@{
+                        UserPrincipalName = $upn
+                        DisplayName       = $_.DisplayName
+                        AccountDisabled   = $disabled
+                    }
+                }
+            """;
+
+        var result = await _runner.RunAsync(script, parameters: null, progress, cancellationToken).ConfigureAwait(false);
+        if (!result.Success)
+        {
+            throw new InvalidOperationException("Get-Mailbox SharedMailbox falló: " + string.Join("; ", result.Errors));
+        }
+
+        var rows = result.Output
+            .OfType<PSObject>()
+            .Select(o => new Grex365.Core.Audit.SharedMailboxSignInRow(
+                UserPrincipalName: o.Properties["UserPrincipalName"]?.Value?.ToString() ?? string.Empty,
+                DisplayName: o.Properties["DisplayName"]?.Value?.ToString(),
+                AccountDisabled: o.Properties["AccountDisabled"]?.Value switch
+                {
+                    bool b => b,
+                    null => null,
+                    _ => bool.TryParse(o.Properties["AccountDisabled"]?.Value?.ToString(), out var parsed) ? parsed : (bool?)null,
+                }))
+            .ToList();
+
+        var (summary, findings) = Grex365.Core.Audit.SharedMailboxSignInAnalyzer.Analyze(rows);
+        progress?.Report(LogEntry.Ok("ExoAudit",
+            $"Shared mailboxes: {summary.Total} totales · " +
+            $"sign-in enabled={summary.SignInEnabled} (WARN) · disabled={summary.SignInDisabled} · " +
+            $"unknown={summary.Unknown}"));
+        return (summary, findings);
+    }
+
     private static IReadOnlyList<string> ToList(object? value)
     {
         if (value is null) return Array.Empty<string>();
