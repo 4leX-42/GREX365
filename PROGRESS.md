@@ -7,6 +7,50 @@
 - Tests: **326 passing** (xUnit + FluentAssertions)
 - Última actualización: 2026-05-22
 
+## Auditoría técnica integral 2026-05-22
+
+**Alcance**: estructura proyecto + auth/permisos + dead code + naming + theme/paleta + module consistency. Tres pases en paralelo via Explore agents.
+
+### A. Estructura + dead code · OK
+- 3 proyectos: `Grex365.Core` (lib) / `Grex365.PowerShell` (helpers) / `Grex365.App` (WPF) + `Grex365.Core.Tests` (xUnit).
+- 9 converters todos referenciados desde XAML/App.xaml.
+- 14 ViewModels todos registrados en DI. `SettingsViewModel` no expuesto vía DataTemplate (intencional: window separado).
+- NuGet packages todos en uso (CommunityToolkit.Mvvm, Wpf.Ui, Microsoft.Graph, Serilog sinks, ApplicationInsights).
+- Config dir `GREX365/config/`: `user_preferences.json` + `exo-app-params.json`. Sin duplicados.
+
+### B. Auth / permisos · 2 hallazgos MEDIUM
+- AppReg auto-create permisos: 9 AppRoles Graph + 1 EXO (Exchange.ManageAsApp). Bien cubierto.
+- Tenant lock enforced en auto-connect + manual connect (cert + device-code). Pero **device-code allows `organizations` tenant** (multi-tenant login) — el TenantLock es el único safeguard, y puede ser BYPASS si `_graph.TenantId` es null tras login (ConnectViewModel.cs:227). Cerrar.
+- RBAC gateado en TODOS los comandos destructivos (Users/Groups/SharedMailbox/MailboxRules). App-only auth bypass RBAC (intencional — no hay contexto `me.CheckMemberGroups`).
+- Cert validator usa `validOnly: false` en store lookup, pero check NotBefore/NotAfter en validación — coherente.
+- No hardcoded secrets. Client ID Azure CLI hardcoded (intencional, public).
+
+### C. Theme palette / consistencia visual · CRÍTICO
+- App.xaml define **solo Dark theme** (`<ui:ThemesDictionary Theme="Dark" />`). Toggle vía `ApplicationThemeManager.Apply()` pero NO respeta hardcoded colors.
+- **16+ ubicaciones con colores hex hardcoded** en XAML — no responden al toggle Light/Dark.
+- **4 converters con RGB hardcoded** (SeverityToBrush, AuditSeverityToBrush, UtilizationToBrush, BoolToBrush) — congelados, no theme-aware.
+- Page title FontSize inconsistente: 24px (9 views) vs 28px (TenantHealth + Connect).
+- Page Grid Margin inconsistente: `24` plano vs `32,28,32,16` (PageRoot style).
+- NavigationItem titles mix Español/Inglés: Dashboard/Conexion/Salud tenant/Usuarios/Grupos/Buzones/Reglas buzon/Auditoria EN español pero "Mail flow"/"Audit log"/"Cert Wizard"/"DNS check" en inglés.
+
+### Plan de refactor (orden ejecución)
+1. Brushes semánticas Severity/Utilization en App.xaml + variantes light/dark via wpf-ui ApplicationTheme aware Color resources.
+2. Refactor converters a usar `Application.Current.Resources["BrushSemanticError"]` lookup (dynamic).
+3. Limpieza hardcoded en XAML — `DynamicResource` apunta a brushes semánticas.
+4. Normalizar nav titles a español 100%.
+5. Standardize page margins + FontSize (24px + 32,28,32,16 PageRoot).
+6. Cerrar bypass tenant lock device-code null tenant.
+
+### Refactor ejecutado 2026-05-22 (post-audit)
+- ✓ Paleta semántica unificada en App.xaml: Color + Brush resources `SemanticError/Warn/Info/Ok/Neutral/Debug` + Soft variants (alpha 0x55) + MutedText variants. 16 Color + 14 Brush keys.
+- ✓ 4 converters (SeverityToBrush, AuditSeverityToBrush, UtilizationToBrush, BoolToBrush) refactorizados — lookup dinámico vía `Application.Current.TryFindResource(key)` en lugar de hardcoded RGB. Theme toggle ahora afecta a colores derivados.
+- ✓ 19 reemplazos hardcoded → DynamicResource en MainWindow + AuditView + AuditLogView + DashboardView.
+- ✓ NavigationItem titles normalizados a español: "Mail flow" → "Flujo de correo", "Audit log" → "Registro de auditoría", "Cert Wizard" → "Asistente cert", "DNS check" → "Comprobación DNS". `RequiresExchangeTitles` set actualizado.
+- ✓ 10 views normalizadas: `Grid Margin="24"` / `StackPanel Margin="24"` → `32,28,32,16` (coherencia con `PageRoot` Padding).
+- ✓ Tenant lock bypass cerrado: `ConnectViewModel.ConnectByDeviceCodeAsync` ahora aborta si TenantId queda null tras login en lugar de continuar sin enforcement.
+
+326 tests siguen verdes. Build clean.
+
 ## Bitácora sesiones
 
 ### 2026-05-22 — Sesión "security audits sprint"

@@ -11,7 +11,7 @@
         <KeyBinding Key="Escape" Command="{Binding CancelCommand}" />
         <KeyBinding Key="E" Modifiers="Control" Command="{Binding ExportFindingsCommand}" />
     </UserControl.InputBindings>
-    <Grid Margin="24">
+    <Grid Margin="32,28,32,16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -218,29 +218,29 @@
                                 Orientation="Horizontal"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center">
-                        <Border Background="#55EF4444" CornerRadius="12" Padding="12,4" Margin="4,0" BorderBrush="#EF4444" BorderThickness="1">
+                        <Border Background="{DynamicResource BrushSemanticErrorSoft}" CornerRadius="12" Padding="12,4" Margin="4,0" BorderBrush="{DynamicResource BrushSemanticError}" BorderThickness="1">
                             <TextBlock VerticalAlignment="Center" FontSize="13">
-                                <Run Text="ERROR " FontWeight="Bold" Foreground="#FFEAEA" />
+                                <Run Text="ERROR " FontWeight="Bold" Foreground="{DynamicResource BrushSemanticErrorMutedText}" />
                                 <Run Text="{Binding ErrorCount, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#FFFFFF" />
                             </TextBlock>
                         </Border>
-                        <Border Background="#55F59E0B" CornerRadius="12" Padding="12,4" Margin="4,0" BorderBrush="#F59E0B" BorderThickness="1">
+                        <Border Background="{DynamicResource BrushSemanticWarnSoft}" CornerRadius="12" Padding="12,4" Margin="4,0" BorderBrush="{DynamicResource BrushSemanticWarn}" BorderThickness="1">
                             <TextBlock VerticalAlignment="Center" FontSize="13">
-                                <Run Text="WARN " FontWeight="Bold" Foreground="#FFF8E5" />
+                                <Run Text="WARN " FontWeight="Bold" Foreground="{DynamicResource BrushSemanticWarnMutedText}" />
                                 <Run Text="{Binding WarningCount, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#FFFFFF" />
                             </TextBlock>
                         </Border>
-                        <Border Background="#553B82F6" CornerRadius="12" Padding="12,4" Margin="4,0" BorderBrush="#3B82F6" BorderThickness="1">
+                        <Border Background="{DynamicResource BrushSemanticInfoSoft}" CornerRadius="12" Padding="12,4" Margin="4,0" BorderBrush="{DynamicResource BrushSemanticInfo}" BorderThickness="1">
                             <TextBlock VerticalAlignment="Center" FontSize="13">
-                                <Run Text="INFO " FontWeight="Bold" Foreground="#E6F0FF" />
+                                <Run Text="INFO " FontWeight="Bold" Foreground="{DynamicResource BrushSemanticInfoMutedText}" />
                                 <Run Text="{Binding InfoCount, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#FFFFFF" />
                             </TextBlock>
                         </Border>
                     </StackPanel>
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                        <CheckBox Content="ERROR" IsChecked="{Binding ShowErrors}" Margin="4,0" Foreground="#F87171" FontWeight="SemiBold" />
-                        <CheckBox Content="WARN" IsChecked="{Binding ShowWarnings}" Margin="4,0" Foreground="#FBBF24" FontWeight="SemiBold" />
-                        <CheckBox Content="INFO" IsChecked="{Binding ShowInfo}" Margin="4,0" Foreground="#60A5FA" FontWeight="SemiBold" />
+                        <CheckBox Content="ERROR" IsChecked="{Binding ShowErrors}" Margin="4,0" Foreground="{DynamicResource BrushSemanticError}" FontWeight="SemiBold" />
+                        <CheckBox Content="WARN" IsChecked="{Binding ShowWarnings}" Margin="4,0" Foreground="{DynamicResource BrushSemanticWarn}" FontWeight="SemiBold" />
+                        <CheckBox Content="INFO" IsChecked="{Binding ShowInfo}" Margin="4,0" Foreground="{DynamicResource BrushSemanticInfo}" FontWeight="SemiBold" />
                         <ui:TextBox Width="200"
                                     Margin="12,0,0,0"
                                     PlaceholderText="Filtrar categoría / identity / detalle..."

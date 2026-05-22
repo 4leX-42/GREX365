@@ -6,7 +6,7 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:abs="clr-namespace:Grex365.Core.Abstractions;assembly=Grex365.Core"
              mc:Ignorable="d">
-    <Grid Margin="24">
+    <Grid Margin="32,28,32,16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -41,21 +41,21 @@
                             Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                         <StackPanel>
                             <TextBlock Text="OK" Opacity="0.7" FontSize="11" />
-                            <TextBlock Text="{Binding Summary.OkCount}" FontSize="20" FontWeight="SemiBold" Foreground="#3FA34D" />
+                            <TextBlock Text="{Binding Summary.OkCount}" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource BrushSemanticOk}" />
                         </StackPanel>
                     </Border>
                     <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
                             Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                         <StackPanel>
                             <TextBlock Text="WARN" Opacity="0.7" FontSize="11" />
-                            <TextBlock Text="{Binding Summary.WarnCount}" FontSize="20" FontWeight="SemiBold" Foreground="#E9A100" />
+                            <TextBlock Text="{Binding Summary.WarnCount}" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource BrushSemanticWarn}" />
                         </StackPanel>
                     </Border>
                     <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
                             Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                         <StackPanel>
                             <TextBlock Text="ERROR" Opacity="0.7" FontSize="11" />
-                            <TextBlock Text="{Binding Summary.ErrorCount}" FontSize="20" FontWeight="SemiBold" Foreground="#E0524B" />
+                            <TextBlock Text="{Binding Summary.ErrorCount}" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource BrushSemanticError}" />
                         </StackPanel>
                     </Border>
                     <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"

@@ -167,19 +167,19 @@
                                    VerticalAlignment="Center" />
                     </Grid>
                     <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                        <Border Background="#22EF4444" CornerRadius="14" Padding="14,6" Margin="0,0,8,0">
+                        <Border Background="{DynamicResource BrushSemanticErrorSoft}" CornerRadius="14" Padding="14,6" Margin="0,0,8,0">
                             <TextBlock>
                                 <Run Text="ERROR " FontWeight="SemiBold" Foreground="#EF4444" />
                                 <Run Text="{Binding LastAuditErrors, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#EF4444" FontSize="16" />
                             </TextBlock>
                         </Border>
-                        <Border Background="#22F59E0B" CornerRadius="14" Padding="14,6" Margin="0,0,8,0">
+                        <Border Background="{DynamicResource BrushSemanticWarnSoft}" CornerRadius="14" Padding="14,6" Margin="0,0,8,0">
                             <TextBlock>
                                 <Run Text="WARN " FontWeight="SemiBold" Foreground="#F59E0B" />
                                 <Run Text="{Binding LastAuditWarnings, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#F59E0B" FontSize="16" />
                             </TextBlock>
                         </Border>
-                        <Border Background="#223B82F6" CornerRadius="14" Padding="14,6">
+                        <Border Background="{DynamicResource BrushSemanticInfoSoft}" CornerRadius="14" Padding="14,6">
                             <TextBlock>
                                 <Run Text="INFO " FontWeight="SemiBold" Foreground="#3B82F6" />
                                 <Run Text="{Binding LastAuditInfo, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#3B82F6" FontSize="16" />

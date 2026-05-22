@@ -120,11 +120,11 @@ public sealed partial class MainViewModel : ObservableObject
             new("Offboarding",   "", typeof(OffboardingViewModel),  "Identidad"),
             new("Buzones",       "", typeof(SharedMailboxViewModel), "Mail"),
             new("Reglas buzon",  "", typeof(MailboxRulesViewModel),  "Mail"),
-            new("Mail flow",     "", typeof(MailFlowRulesViewModel), "Mail"),
+            new("Flujo de correo","", typeof(MailFlowRulesViewModel), "Mail"),
             new("Auditoria",     "", typeof(AuditViewModel),         "Seguridad"),
-            new("Audit log",     "", typeof(AuditLogViewModel),      "Seguridad"),
-            new("Cert Wizard",   "", typeof(CertWizardViewModel),   "Herramientas"),
-            new("DNS check",     "", typeof(DomainCheckViewModel),  "Herramientas"),
+            new("Registro de auditoría","", typeof(AuditLogViewModel),      "Seguridad"),
+            new("Asistente cert","", typeof(CertWizardViewModel),   "Herramientas"),
+            new("Comprobación DNS","", typeof(DomainCheckViewModel),  "Herramientas"),
         };
 
         foreach (var module in pluginReport.AllModules)
@@ -155,7 +155,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         "Buzones",
         "Reglas buzon",
-        "Mail flow",
+        "Flujo de correo",
     };
 
     private void ApplyConnectionRequirements()

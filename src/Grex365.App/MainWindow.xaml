@@ -110,7 +110,7 @@
                                                VerticalAlignment="Center"
                                                FontSize="13" />
                                     <Border Grid.Column="2"
-                                            Background="#EF4444"
+                                            Background="{DynamicResource BrushSemanticError}"
                                             CornerRadius="9"
                                             MinWidth="18"
                                             Padding="6,1"

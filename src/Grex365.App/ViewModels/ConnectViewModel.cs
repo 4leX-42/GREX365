@@ -224,7 +224,18 @@ public sealed partial class ConnectViewModel : ObservableObject
                 _log.Progress,
                 _cts.Token).ConfigureAwait(true);
 
-            if (!string.IsNullOrWhiteSpace(_graph.TenantId))
+            // Tenant lock applies always tras device-code: si TenantId no se resolvió
+            // (multi-tenant 'organizations' + sin discovery), abortamos por seguridad
+            // en lugar de continuar sin enforcement.
+            if (string.IsNullOrWhiteSpace(_graph.TenantId))
+            {
+                _log.Progress.Report(LogEntry.Error(
+                    "TenantLock",
+                    "TenantId no resuelto tras device-code login — abortando por seguridad."));
+                await _graph.DisconnectAsync(_cts.Token).ConfigureAwait(true);
+                StatusMessage = "Tenant lock: TenantId no resuelto.";
+                return;
+            }
             {
                 try
                 {

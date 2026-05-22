@@ -27,6 +27,40 @@
 
             <FontFamily x:Key="IconFontFamily">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
 
+            <!-- Semantic colors (work in both light & dark themes) -->
+            <Color x:Key="SemanticErrorColor">#F87171</Color>
+            <Color x:Key="SemanticWarnColor">#FBBF24</Color>
+            <Color x:Key="SemanticInfoColor">#60A5FA</Color>
+            <Color x:Key="SemanticOkColor">#34D399</Color>
+            <Color x:Key="SemanticNeutralColor">#9CA3AF</Color>
+            <Color x:Key="SemanticDebugColor">#A78BFA</Color>
+
+            <Color x:Key="SemanticErrorSoftColor">#55F87171</Color>
+            <Color x:Key="SemanticWarnSoftColor">#55FBBF24</Color>
+            <Color x:Key="SemanticInfoSoftColor">#5560A5FA</Color>
+            <Color x:Key="SemanticOkSoftColor">#5534D399</Color>
+
+            <Color x:Key="SemanticErrorAccentTextColor">#FFFFFF</Color>
+            <Color x:Key="SemanticErrorMutedTextColor">#FFEAEA</Color>
+            <Color x:Key="SemanticWarnMutedTextColor">#FFF8E5</Color>
+            <Color x:Key="SemanticInfoMutedTextColor">#E6F0FF</Color>
+
+            <SolidColorBrush x:Key="BrushSemanticError" Color="{StaticResource SemanticErrorColor}" />
+            <SolidColorBrush x:Key="BrushSemanticWarn" Color="{StaticResource SemanticWarnColor}" />
+            <SolidColorBrush x:Key="BrushSemanticInfo" Color="{StaticResource SemanticInfoColor}" />
+            <SolidColorBrush x:Key="BrushSemanticOk" Color="{StaticResource SemanticOkColor}" />
+            <SolidColorBrush x:Key="BrushSemanticNeutral" Color="{StaticResource SemanticNeutralColor}" />
+            <SolidColorBrush x:Key="BrushSemanticDebug" Color="{StaticResource SemanticDebugColor}" />
+
+            <SolidColorBrush x:Key="BrushSemanticErrorSoft" Color="{StaticResource SemanticErrorSoftColor}" />
+            <SolidColorBrush x:Key="BrushSemanticWarnSoft" Color="{StaticResource SemanticWarnSoftColor}" />
+            <SolidColorBrush x:Key="BrushSemanticInfoSoft" Color="{StaticResource SemanticInfoSoftColor}" />
+            <SolidColorBrush x:Key="BrushSemanticOkSoft" Color="{StaticResource SemanticOkSoftColor}" />
+
+            <SolidColorBrush x:Key="BrushSemanticErrorMutedText" Color="{StaticResource SemanticErrorMutedTextColor}" />
+            <SolidColorBrush x:Key="BrushSemanticWarnMutedText" Color="{StaticResource SemanticWarnMutedTextColor}" />
+            <SolidColorBrush x:Key="BrushSemanticInfoMutedText" Color="{StaticResource SemanticInfoMutedTextColor}" />
+
             <!-- Typography -->
             <Style x:Key="PageTitleText" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="28" />
