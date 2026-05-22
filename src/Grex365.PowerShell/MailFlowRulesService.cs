@@ -18,16 +18,19 @@ public sealed class MailFlowRulesService : IMailFlowRulesService
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
+        // Bug ExchangeOnlineManagement (PS7 + EXO 3.x): si los properties se acceden lazy en
+        // un ForEach-Object posterior, EXO llama internamente HttpWebResponse.GetResponseHeader
+        // sobre un HttpResponseMessage -> NullReference/MethodNotFound.
+        // Workaround: forzar evaluación eager con Select-Object proyectando las propiedades
+        // directamente. Devuelve PSObjects con propiedades como strings/ints.
         const string script = """
-            Get-TransportRule -ErrorAction Stop | ForEach-Object {
-                [PSCustomObject]@{
-                    Name        = [string]$_.Name
-                    State       = [string]$_.State
-                    Priority    = [int]$_.Priority
-                    Mode        = [string]$_.Mode
-                    Description = [string]$_.Description
-                }
-            }
+            param()
+            Get-TransportRule -ErrorAction Stop |
+                Select-Object @{N='Name';E={[string]$_.Name}},
+                              @{N='State';E={[string]$_.State}},
+                              @{N='Priority';E={[int]$_.Priority}},
+                              @{N='Mode';E={[string]$_.Mode}},
+                              @{N='Description';E={[string]$_.Description}}
             """;
 
         var result = await _runner.RunAsync(
