@@ -58,6 +58,20 @@
 
 ## Bitácora sesiones
 
+### 2026-05-22 (noche) — Sesión "Sprint C completion + D + E"
+
+Continúa autonomous tras save. **6 commits**. Tests **326 → 391** (+65 App.Tests). Build clean 7 projects 0 errors.
+
+Commits:
+- `test(app)` Sprint C completion: añade `App.Tests` csproj a `src/Grex365.slnx` + escribe `UserDetailsViewModelTests` (16 tests). Patrón Harness con Mock<IUsersService> strict + TestDialog/Clipboard/UiLogSink/UserDetailsHost + WaitForAsync helper para fire-and-forget LoadAsync triggered by Host.OpenRequested. Cubre OpenRequested→populate / userNotFound / CloseRequested→reset / Toggle confirm-no/yes / RemoveLicense null/yes / AssignSelectedSku noUser/noSku/valid / ResetPassword confirm-no/yes (clipboard+show) / RevokeSessions / RemoveAllLicenses confirm-no/yes / Close command.
+- `test(app)` Sprint D parte 1: OffboardingViewModelTests (6) + UsersViewModelTests (15). RBAC denied / confirm-no / confirm-yes / DisableEnable / AssignLicense seat-available/no-seats / RemoveLicenses zero/positive licenses. Total App.Tests 37.
+- `test(app)` Sprint D parte 2: GroupsViewModelTests (5) + OnboardingViewModelTests (5). RemoveMember confirm paths + service-throws / OnboardingRun confirm-no/yes con verificación trim UPN + uppercase usageLocation + GroupIdentifiers split. AddSelectedSku dedup + RemoveSku. Total 47.
+- `test(app)` Sprint D parte 3: MailboxRulesViewModelTests (9). ApplyForwarding empty/RBAC/confirm-no/confirm-yes con trim. ClearForwarding confirm-yes resets fields + display. RemoveCalendarPermission noSelection/confirm-yes/no. Cierra cobertura parity de los 6 VMs refactorizados. Total 56 App.Tests.
+- `feat(ps-console)` Sprint E: nuevo módulo "Consola PS" en nav Herramientas. `PsConsoleViewModel` reusa `IPowerShellRunner` existente (RunspacePool-backed) — scripts ejecutan en mismo contexto que app (Graph/EXO en scope). Input multi-line + OutputText accumulator PS>-prefixed + Cancel + Clear + History navegable (Up/Down, MaxHistory=50, dedupe consecutivos) + IsBusy + ProgressRing. View con header CommandPrompt glyph + warning banner ("sin sandbox") + KeyBindings Ctrl+Enter→Run, Esc→Cancel. PsConsoleViewModelTests (9) con Mock<IPowerShellRunner>: empty input no-op / valid script appends output+history / errors [ERROR] markers / runner throws [EXCEPCION]+log / cancel [CANCELADO] / Clear empties / history dedup / Prev navigate-back stops oldest / Next advances + wraps past-end empty.
+- `fix(nav)` Inyecta glyph U+E756 (CommandPrompt) en nav item "Consola PS" via Python utf-8 r+w (PUA chars unreliable via Edit transport — patrón usado previamente en fix(nav) glyphs faltantes).
+
+**Estado final sesión:** 391 tests (326 Core + 65 App) verdes. Build 7 projects 0 errors. 6 VMs refactorizados (UserDetails/Users/Groups/Offboarding/Onboarding/MailboxRules) con cobertura tests parity completa. Nuevo módulo Consola PS funcional + testeado. Plantamiento §6 backlog "Terminal PowerShell embebido" CERRADO via PS Console module (reusa runner existente; menos invasivo que `EasyWindowsTerminalControl` integration).
+
 ### 2026-05-22 (tarde) — Sesión "polish + architectural cleanup"
 
 Sprints A + B completos, Sprint C en progreso (refactor done, tests pendientes). 4 commits. Build clean, 326 tests siguen verdes.
