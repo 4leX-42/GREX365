@@ -7,6 +7,7 @@ using Grex365.Core.Abstractions;
 using Grex365.Core.Audit;
 using Grex365.Core.Certificates;
 using Grex365.Core.Connections;
+using Grex365.Core.Models;
 using Grex365.Core.DomainChecks;
 using Grex365.Core.Groups;
 using Grex365.Core.Health;
@@ -215,7 +216,69 @@ public partial class App : Application
         var main = Services.GetRequiredService<MainWindow>();
         main.Show();
 
+        _ = TryAutoConnectAsync();
+
         base.OnStartup(e);
+    }
+
+    private async Task TryAutoConnectAsync()
+    {
+        try
+        {
+            var certStore = Services.GetRequiredService<ICertConfigStore>();
+            var certValidator = Services.GetRequiredService<ICertValidator>();
+            var graph = Services.GetRequiredService<IGraphConnection>();
+            var exchange = Services.GetRequiredService<IExchangeConnection>();
+            var tenantLock = Services.GetRequiredService<ITenantLock>();
+            var log = Services.GetRequiredService<IUiLogSink>();
+
+            var config = await certStore.LoadAsync().ConfigureAwait(false);
+            if (config is null)
+            {
+                Log.Information("Auto-connect skip: no cert config.");
+                return;
+            }
+            var validation = certValidator.Validate(config);
+            if (!validation.IsValid)
+            {
+                log.Progress.Report(LogEntry.Warn("AutoConnect", "Cert config presente pero inválido: " + validation.Message));
+                return;
+            }
+            log.Progress.Report(LogEntry.Info("AutoConnect", "Cert válido detectado, conectando automáticamente..."));
+
+            await graph.ConnectByCertificateAsync(config, log.Progress, CancellationToken.None).ConfigureAwait(false);
+
+            try
+            {
+                await tenantLock.EnforceAsync(graph.TenantId ?? config.TenantId, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (TenantLockViolationException violation)
+            {
+                log.Progress.Report(LogEntry.Error("AutoConnect", "Tenant lock: " + violation.Message, violation));
+                await graph.DisconnectAsync(CancellationToken.None).ConfigureAwait(false);
+                return;
+            }
+
+            try
+            {
+                await exchange.ConnectByCertificateAsync(config, log.Progress, CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                log.Progress.Report(LogEntry.Warn("AutoConnect", "Exchange Online no se conectó: " + ex.Message));
+            }
+            log.Progress.Report(LogEntry.Ok("AutoConnect", "Conectado automáticamente."));
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Auto-connect falló");
+            try
+            {
+                var log = Services.GetRequiredService<IUiLogSink>();
+                log.Progress.Report(LogEntry.Warn("AutoConnect", "Auto-conexión falló: " + ex.Message));
+            }
+            catch { }
+        }
     }
 
     private void WireGlobalExceptionHandlers()
