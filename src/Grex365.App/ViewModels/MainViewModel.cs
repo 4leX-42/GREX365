@@ -119,10 +119,10 @@ public sealed partial class MainViewModel : ObservableObject
             new("Onboarding",    "", typeof(OnboardingViewModel),   "Identidad"),
             new("Offboarding",   "", typeof(OffboardingViewModel),  "Identidad"),
             new("Buzones",       "", typeof(SharedMailboxViewModel), "Mail"),
-            new("Reglas buzon",  "", typeof(MailboxRulesViewModel),  "Mail"),
-            new("Flujo de correo","", typeof(MailFlowRulesViewModel), "Mail"),
+            new("Reglas buzon",  "", typeof(MailboxRulesViewModel),  "Mail"),
+            new("Flujo de correo","", typeof(MailFlowRulesViewModel), "Mail"),
             new("Auditoria",     "", typeof(AuditViewModel),         "Seguridad"),
-            new("Registro de auditoría","", typeof(AuditLogViewModel),      "Seguridad"),
+            new("Registro de auditoría","", typeof(AuditLogViewModel),      "Seguridad"),
             new("Asistente cert","", typeof(CertWizardViewModel),   "Herramientas"),
             new("Comprobación DNS","", typeof(DomainCheckViewModel),  "Herramientas"),
         };
