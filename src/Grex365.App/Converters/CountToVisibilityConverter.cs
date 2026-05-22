@@ -15,7 +15,9 @@ public sealed class CountToVisibilityConverter : IValueConverter
             null => 0,
             _ => 0
         };
-        return count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        var invert = string.Equals(parameter as string, "invert", StringComparison.OrdinalIgnoreCase);
+        var visible = invert ? count == 0 : count > 0;
+        return visible ? Visibility.Visible : Visibility.Collapsed;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

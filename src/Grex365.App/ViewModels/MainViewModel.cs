@@ -28,6 +28,10 @@ public sealed partial class NavigationItem : ObservableObject
     public bool RequiresExchange { get; set; }
 
     [ObservableProperty] private bool _isEnabled = true;
+    [ObservableProperty] private int _errorBadge;
+
+    public bool HasErrorBadge => ErrorBadge > 0;
+    partial void OnErrorBadgeChanged(int value) => OnPropertyChanged(nameof(HasErrorBadge));
 }
 
 public sealed partial class MainViewModel : ObservableObject
@@ -38,6 +42,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IPreferencesStore _prefs;
     private readonly IGraphConnection _graph;
     private readonly IExchangeConnection _exchange;
+    private readonly IAuditFindingsStore _auditStore;
 
     [ObservableProperty] private NavigationItem? _selectedNavigation;
     [ObservableProperty] private ObservableObject? _currentPage;
@@ -63,6 +68,7 @@ public sealed partial class MainViewModel : ObservableObject
         IPreferencesStore prefs,
         IGraphConnection graph,
         IExchangeConnection exchange,
+        IAuditFindingsStore auditStore,
         PluginLoadReport pluginReport)
     {
         _uiLog = uiLog;
@@ -72,8 +78,10 @@ public sealed partial class MainViewModel : ObservableObject
         _prefs = prefs;
         _graph = graph;
         _exchange = exchange;
+        _auditStore = auditStore;
 
         _monitor.PropertyChanged += OnMonitorChanged;
+        _auditStore.PropertyChanged += OnAuditStoreChanged;
         SyncFromMonitor();
 
         LogView = CollectionViewSource.GetDefaultView(uiLog.Entries);
@@ -226,6 +234,29 @@ public sealed partial class MainViewModel : ObservableObject
         TenantDomain = s.TenantDomain;
         Account = s.Account;
         UpdateNavEnabledStates();
+    }
+
+    private void OnAuditStoreChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher is not null && !dispatcher.CheckAccess())
+        {
+            dispatcher.Invoke(SyncAuditBadge);
+        }
+        else
+        {
+            SyncAuditBadge();
+        }
+    }
+
+    private void SyncAuditBadge()
+    {
+        var item = NavigationItems.FirstOrDefault(i =>
+            string.Equals(i.Title, "Auditoria", StringComparison.OrdinalIgnoreCase));
+        if (item is not null)
+        {
+            item.ErrorBadge = _auditStore.ErrorCount;
+        }
     }
 
     [RelayCommand]

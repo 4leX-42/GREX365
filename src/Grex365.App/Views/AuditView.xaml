@@ -203,10 +203,31 @@
                                     Text="{Binding FindingsFilter, UpdateSourceTrigger=PropertyChanged}" />
                     </StackPanel>
                 </Grid>
+                <Grid>
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Margin="0,40"
+                                Visibility="{Binding Findings.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=invert}">
+                        <TextBlock Text=""
+                                   FontFamily="{StaticResource IconFontFamily}"
+                                   FontSize="48"
+                                   HorizontalAlignment="Center"
+                                   Opacity="0.4" />
+                        <TextBlock Text="Sin hallazgos todavía"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,12,0,4"
+                                   Opacity="0.7" />
+                        <TextBlock Text="Lanza una auditoría desde la barra superior para empezar."
+                                   HorizontalAlignment="Center"
+                                   Opacity="0.5" />
+                    </StackPanel>
                 <ListView ItemsSource="{Binding FindingsView}"
                           Background="Transparent"
                           BorderThickness="0"
-                          ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                          Visibility="{Binding Findings.Count, Converter={StaticResource CountToVisibilityConverter}}">
                     <ListView.View>
                         <GridView>
                             <GridViewColumn Header="Categoría" Width="160" DisplayMemberBinding="{Binding Category}" />
@@ -233,6 +254,7 @@
                         </GridView>
                     </ListView.View>
                 </ListView>
+                </Grid>
             </DockPanel>
         </Border>
     </Grid>
