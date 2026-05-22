@@ -84,6 +84,59 @@
                 <Setter Property="Margin" Value="0,0,12,12" />
             </Style>
 
+            <!-- SettingsCard (PowerToys-style: icon + title/desc + control row) -->
+            <Style x:Key="SettingsCard" TargetType="Border">
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="Padding" Value="16,12" />
+                <Setter Property="MinHeight" Value="64" />
+                <Setter Property="Margin" Value="0,0,0,2" />
+                <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- SettingsGroup (container for grouped SettingsCards) -->
+            <Style x:Key="SettingsGroup" TargetType="StackPanel">
+                <Setter Property="Margin" Value="0,0,0,16" />
+            </Style>
+
+            <Style x:Key="SettingsGroupHeader" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="11" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Opacity" Value="0.55" />
+                <Setter Property="Margin" Value="2,16,0,8" />
+            </Style>
+
+            <!-- SettingsCardIcon glyph -->
+            <Style x:Key="SettingsCardIcon" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource IconFontFamily}" />
+                <Setter Property="FontSize" Value="20" />
+                <Setter Property="Width" Value="32" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="Margin" Value="0,0,16,0" />
+                <Setter Property="Opacity" Value="0.85" />
+            </Style>
+
+            <Style x:Key="SettingsCardTitle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            </Style>
+
+            <Style x:Key="SettingsCardDescription" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Opacity" Value="0.6" />
+                <Setter Property="Margin" Value="0,2,0,0" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
+
             <!-- Page root -->
             <Style x:Key="PageRoot" TargetType="ScrollViewer">
                 <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
@@ -110,25 +163,40 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ListBoxItem">
-                            <Border x:Name="Bd"
-                                    Background="{TemplateBinding Background}"
-                                    CornerRadius="6"
-                                    Padding="10,8">
-                                <ContentPresenter VerticalAlignment="Center" />
-                            </Border>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="Rail"
+                                        Grid.Column="0"
+                                        Width="3"
+                                        Margin="0,6"
+                                        CornerRadius="2"
+                                        Background="Transparent" />
+                                <Border x:Name="Bd"
+                                        Grid.Column="1"
+                                        Background="{TemplateBinding Background}"
+                                        CornerRadius="6"
+                                        Margin="3,0,0,0"
+                                        Padding="10,8">
+                                    <ContentPresenter VerticalAlignment="Center" />
+                                </Border>
+                            </Grid>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
                                 </Trigger>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+                                    <Setter TargetName="Rail" Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
                                 </Trigger>
                                 <MultiTrigger>
                                     <MultiTrigger.Conditions>
                                         <Condition Property="IsSelected" Value="True" />
                                         <Condition Property="IsMouseOver" Value="True" />
                                     </MultiTrigger.Conditions>
-                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentFillColorSecondaryBrush}" />
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
                                 </MultiTrigger>
                                 <Trigger Property="IsEnabled" Value="False">
                                     <Setter TargetName="Bd" Property="Opacity" Value="0.35" />

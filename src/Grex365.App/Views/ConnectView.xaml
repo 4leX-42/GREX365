@@ -152,37 +152,80 @@
                 </StackPanel>
             </Border>
 
-            <Border Style="{StaticResource Card}">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <TextBlock Text="Certificado" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />
-                        <Border CornerRadius="10" Padding="8,2" Margin="12,0,0,0"
-                                Background="{Binding CertIsValid, Converter={StaticResource BoolToBrushConverter}}" Opacity="0.85">
-                            <TextBlock Text="{Binding CertIsValid, Converter={StaticResource BoolToOnOffConverter}, ConverterParameter='válido/inválido'}"
-                                       FontSize="11" FontWeight="SemiBold" Foreground="White" />
-                        </Border>
+            <TextBlock Text="CERTIFICADO" Style="{StaticResource SettingsGroupHeader}" />
+
+            <Border Style="{StaticResource SettingsCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="" Style="{StaticResource SettingsCardIcon}" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Estado certificado" Style="{StaticResource SettingsCardTitle}" />
+                        <TextBlock Text="{Binding CertStatusMessage, FallbackValue=—}" Style="{StaticResource SettingsCardDescription}" />
                     </StackPanel>
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="140" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="App ID" Opacity="0.7" />
-                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource MonoText}" Text="{Binding CertAppId, FallbackValue=—}" />
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Thumbprint" Opacity="0.7" Margin="0,6,0,0" />
-                        <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource MonoText}" Text="{Binding CertThumbprint, FallbackValue=—}" Margin="0,6,0,0" TextTrimming="CharacterEllipsis" />
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Expira" Opacity="0.7" Margin="0,6,0,0" />
-                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CertExpiry, FallbackValue=—}" Margin="0,6,0,0" />
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Mensaje" Opacity="0.7" Margin="0,6,0,0" />
-                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CertStatusMessage, FallbackValue=—}" Margin="0,6,0,0" Opacity="0.85" />
-                    </Grid>
-                </StackPanel>
+                    <Border Grid.Column="2"
+                            CornerRadius="10" Padding="10,3"
+                            VerticalAlignment="Center"
+                            Background="{Binding CertIsValid, Converter={StaticResource BoolToBrushConverter}}"
+                            Opacity="0.9">
+                        <TextBlock Text="{Binding CertIsValid, Converter={StaticResource BoolToOnOffConverter}, ConverterParameter='válido/inválido'}"
+                                   FontSize="11" FontWeight="SemiBold" Foreground="White" />
+                    </Border>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource SettingsCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="" Style="{StaticResource SettingsCardIcon}" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="App ID" Style="{StaticResource SettingsCardTitle}" />
+                        <TextBlock Text="Application ID en Azure AD" Style="{StaticResource SettingsCardDescription}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Style="{StaticResource MonoText}" VerticalAlignment="Center" Text="{Binding CertAppId, FallbackValue=—}" />
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource SettingsCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="" Style="{StaticResource SettingsCardIcon}" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Thumbprint" Style="{StaticResource SettingsCardTitle}" />
+                        <TextBlock Text="SHA1 del certificado en CurrentUser\My" Style="{StaticResource SettingsCardDescription}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Style="{StaticResource MonoText}" VerticalAlignment="Center"
+                               MaxWidth="220" TextTrimming="CharacterEllipsis"
+                               Text="{Binding CertThumbprint, FallbackValue=—}" />
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource SettingsCard}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="" Style="{StaticResource SettingsCardIcon}" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Expiración" Style="{StaticResource SettingsCardTitle}" />
+                        <TextBlock Text="NotAfter del cert" Style="{StaticResource SettingsCardDescription}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" VerticalAlignment="Center" FontWeight="SemiBold"
+                               Text="{Binding CertExpiry, FallbackValue=—}" />
+                </Grid>
             </Border>
         </StackPanel>
     </ScrollViewer>
