@@ -27,7 +27,7 @@ public sealed class GraphUsersService : IUsersService
             req.QueryParameters.Select = new[]
             {
                 "id", "displayName", "userPrincipalName", "mail",
-                "accountEnabled", "userType", "assignedLicenses", "signInActivity"
+                "accountEnabled", "userType", "assignedLicenses"
             };
             req.QueryParameters.Top = 50;
             if (!string.IsNullOrEmpty(trimmed))
@@ -61,7 +61,7 @@ public sealed class GraphUsersService : IUsersService
                 req.QueryParameters.Select = new[]
                 {
                     "id", "displayName", "userPrincipalName", "mail",
-                    "accountEnabled", "userType", "assignedLicenses", "signInActivity"
+                    "accountEnabled", "userType", "assignedLicenses"
                 };
             }, cancellationToken).ConfigureAwait(false);
             return u is null ? null : Map(u);
@@ -218,7 +218,7 @@ public sealed class GraphUsersService : IUsersService
         AccountEnabled: u.AccountEnabled ?? false,
         IsGuest: string.Equals(u.UserType, "Guest", StringComparison.OrdinalIgnoreCase),
         AssignedLicenseCount: u.AssignedLicenses?.Count ?? 0,
-        LastSignIn: u.SignInActivity?.LastSignInDateTime);
+        LastSignIn: null);
 
     private static string ClassifyGroup(Group g)
     {
