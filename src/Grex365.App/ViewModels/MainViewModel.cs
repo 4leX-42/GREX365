@@ -123,6 +123,7 @@ public sealed partial class MainViewModel : ObservableObject
             new("Flujo de correo","", typeof(MailFlowRulesViewModel), "Mail"),
             new("Auditoría",     "", typeof(AuditViewModel),         "Seguridad"),
             new("Registro de auditoría","", typeof(AuditLogViewModel),      "Seguridad"),
+            new("Consola PS",   "", typeof(PsConsoleViewModel),     "Herramientas"),
             new("Asistente cert","", typeof(CertWizardViewModel),   "Herramientas"),
             new("Comprobación DNS","", typeof(DomainCheckViewModel),  "Herramientas"),
         };

@@ -199,6 +199,7 @@ public partial class App : Application
                 services.AddTransient<AuditLogViewModel>();
                 services.AddTransient<CertWizardViewModel>();
                 services.AddTransient<DomainCheckViewModel>();
+                services.AddTransient<PsConsoleViewModel>();
                 services.AddTransient<SettingsViewModel>();
                 services.AddSingleton<MainViewModel>();
                 services.AddSingleton<MainWindow>();
