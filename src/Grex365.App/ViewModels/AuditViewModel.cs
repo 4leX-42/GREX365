@@ -41,9 +41,7 @@ public sealed partial class AuditViewModel : ObservableObject
         }
         _cts = new CancellationTokenSource();
         IsBusy = true;
-        RunCommand.NotifyCanExecuteChanged();
-        RunActivityAuditCommand.NotifyCanExecuteChanged();
-        CancelCommand.NotifyCanExecuteChanged();
+        NotifyAllCommands();
         StatusMessage = "Ejecutando auditoría de identidades...";
         Findings.Clear();
         try
@@ -77,12 +75,7 @@ public sealed partial class AuditViewModel : ObservableObject
             IsBusy = false;
             _cts?.Dispose();
             _cts = null;
-            RunCommand.NotifyCanExecuteChanged();
-            RunActivityAuditCommand.NotifyCanExecuteChanged();
-            RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
-            RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
-            RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
-            CancelCommand.NotifyCanExecuteChanged();
+            NotifyAllCommands();
         }
     }
 
@@ -101,9 +94,7 @@ public sealed partial class AuditViewModel : ObservableObject
 
         _cts = new CancellationTokenSource();
         IsBusy = true;
-        RunCommand.NotifyCanExecuteChanged();
-        RunActivityAuditCommand.NotifyCanExecuteChanged();
-        CancelCommand.NotifyCanExecuteChanged();
+        NotifyAllCommands();
         StatusMessage = $"Descargando reporte actividad grupos (>{InactivityDays}d)...";
         Findings.Clear();
         Summary = null;
@@ -132,12 +123,7 @@ public sealed partial class AuditViewModel : ObservableObject
             IsBusy = false;
             _cts?.Dispose();
             _cts = null;
-            RunCommand.NotifyCanExecuteChanged();
-            RunActivityAuditCommand.NotifyCanExecuteChanged();
-            RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
-            RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
-            RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
-            CancelCommand.NotifyCanExecuteChanged();
+            NotifyAllCommands();
         }
     }
 
@@ -150,10 +136,7 @@ public sealed partial class AuditViewModel : ObservableObject
         }
         _cts = new CancellationTokenSource();
         IsBusy = true;
-        RunCommand.NotifyCanExecuteChanged();
-        RunActivityAuditCommand.NotifyCanExecuteChanged();
-        RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
-        CancelCommand.NotifyCanExecuteChanged();
+        NotifyAllCommands();
         StatusMessage = "Escaneando buzones con forwarding externo...";
         Findings.Clear();
         Summary = null;
@@ -182,12 +165,7 @@ public sealed partial class AuditViewModel : ObservableObject
             IsBusy = false;
             _cts?.Dispose();
             _cts = null;
-            RunCommand.NotifyCanExecuteChanged();
-            RunActivityAuditCommand.NotifyCanExecuteChanged();
-            RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
-            RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
-            RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
-            CancelCommand.NotifyCanExecuteChanged();
+            NotifyAllCommands();
         }
     }
 
@@ -200,12 +178,7 @@ public sealed partial class AuditViewModel : ObservableObject
         }
         _cts = new CancellationTokenSource();
         IsBusy = true;
-        RunCommand.NotifyCanExecuteChanged();
-        RunActivityAuditCommand.NotifyCanExecuteChanged();
-        RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
-        RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
-        RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
-        CancelCommand.NotifyCanExecuteChanged();
+        NotifyAllCommands();
         StatusMessage = "Descargando userRegistrationDetails...";
         Findings.Clear();
         Summary = null;
@@ -239,13 +212,109 @@ public sealed partial class AuditViewModel : ObservableObject
             IsBusy = false;
             _cts?.Dispose();
             _cts = null;
-            RunCommand.NotifyCanExecuteChanged();
-            RunActivityAuditCommand.NotifyCanExecuteChanged();
-            RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
-            RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
-            RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
-            CancelCommand.NotifyCanExecuteChanged();
+            NotifyAllCommands();
         }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRun))]
+    private async Task RunAppCredentialsAuditAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+        _cts = new CancellationTokenSource();
+        IsBusy = true;
+        NotifyAllCommands();
+        StatusMessage = "Descargando /applications + credenciales...";
+        Findings.Clear();
+        Summary = null;
+        try
+        {
+            var (summary, findings) = await _audit
+                .RunAppCredentialsAuditAsync(_log.Progress, _cts.Token)
+                .ConfigureAwait(true);
+            foreach (var f in findings)
+            {
+                Findings.Add(f);
+            }
+            StatusMessage = $"App creds: {summary.Total} totales · " +
+                            $"{summary.Expired} expired · {summary.ExpiringSoon} expiring · " +
+                            $"{summary.LongLived} long-lived";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+            _cts?.Dispose();
+            _cts = null;
+            NotifyAllCommands();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRun))]
+    private async Task RunTenantDefaultsAuditAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+        _cts = new CancellationTokenSource();
+        IsBusy = true;
+        NotifyAllCommands();
+        StatusMessage = "Descargando authorizationPolicy + securityDefaults...";
+        Findings.Clear();
+        Summary = null;
+        try
+        {
+            var (summary, findings) = await _audit
+                .RunTenantDefaultsAuditAsync(_log.Progress, _cts.Token)
+                .ConfigureAwait(true);
+            foreach (var f in findings)
+            {
+                Findings.Add(f);
+            }
+            StatusMessage = $"Tenant defaults: SecurityDefaults={(summary.SecurityDefaultsEnabled ? "ON" : "OFF")} · " +
+                            $"{findings.Count} hallazgos";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+            _cts?.Dispose();
+            _cts = null;
+            NotifyAllCommands();
+        }
+    }
+
+    private void NotifyAllCommands()
+    {
+        RunCommand.NotifyCanExecuteChanged();
+        RunActivityAuditCommand.NotifyCanExecuteChanged();
+        RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
+        RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
+        RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
+        RunCaPoliciesAuditCommand.NotifyCanExecuteChanged();
+        RunPrivilegedRolesAuditCommand.NotifyCanExecuteChanged();
+        RunAppCredentialsAuditCommand.NotifyCanExecuteChanged();
+        RunTenantDefaultsAuditCommand.NotifyCanExecuteChanged();
+        CancelCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand(CanExecute = nameof(CanRun))]
@@ -257,14 +326,7 @@ public sealed partial class AuditViewModel : ObservableObject
         }
         _cts = new CancellationTokenSource();
         IsBusy = true;
-        RunCommand.NotifyCanExecuteChanged();
-        RunActivityAuditCommand.NotifyCanExecuteChanged();
-        RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
-        RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
-        RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
-        RunCaPoliciesAuditCommand.NotifyCanExecuteChanged();
-        RunPrivilegedRolesAuditCommand.NotifyCanExecuteChanged();
-        CancelCommand.NotifyCanExecuteChanged();
+        NotifyAllCommands();
         StatusMessage = "Enumerando roles privilegiados y miembros...";
         Findings.Clear();
         Summary = null;
@@ -295,14 +357,7 @@ public sealed partial class AuditViewModel : ObservableObject
             IsBusy = false;
             _cts?.Dispose();
             _cts = null;
-            RunCommand.NotifyCanExecuteChanged();
-            RunActivityAuditCommand.NotifyCanExecuteChanged();
-            RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
-            RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
-            RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
-            RunCaPoliciesAuditCommand.NotifyCanExecuteChanged();
-            RunPrivilegedRolesAuditCommand.NotifyCanExecuteChanged();
-            CancelCommand.NotifyCanExecuteChanged();
+            NotifyAllCommands();
         }
     }
 
@@ -315,13 +370,7 @@ public sealed partial class AuditViewModel : ObservableObject
         }
         _cts = new CancellationTokenSource();
         IsBusy = true;
-        RunCommand.NotifyCanExecuteChanged();
-        RunActivityAuditCommand.NotifyCanExecuteChanged();
-        RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
-        RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
-        RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
-        RunCaPoliciesAuditCommand.NotifyCanExecuteChanged();
-        CancelCommand.NotifyCanExecuteChanged();
+        NotifyAllCommands();
         StatusMessage = "Descargando Conditional Access policies...";
         Findings.Clear();
         Summary = null;
@@ -352,13 +401,7 @@ public sealed partial class AuditViewModel : ObservableObject
             IsBusy = false;
             _cts?.Dispose();
             _cts = null;
-            RunCommand.NotifyCanExecuteChanged();
-            RunActivityAuditCommand.NotifyCanExecuteChanged();
-            RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
-            RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
-            RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
-            RunCaPoliciesAuditCommand.NotifyCanExecuteChanged();
-            CancelCommand.NotifyCanExecuteChanged();
+            NotifyAllCommands();
         }
     }
 
@@ -376,11 +419,7 @@ public sealed partial class AuditViewModel : ObservableObject
         }
         _cts = new CancellationTokenSource();
         IsBusy = true;
-        RunCommand.NotifyCanExecuteChanged();
-        RunActivityAuditCommand.NotifyCanExecuteChanged();
-        RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
-        RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
-        CancelCommand.NotifyCanExecuteChanged();
+        NotifyAllCommands();
         StatusMessage = $"Escaneando inbox rules (hasta {InboxRuleScanCap} buzones)...";
         Findings.Clear();
         Summary = null;
@@ -409,12 +448,7 @@ public sealed partial class AuditViewModel : ObservableObject
             IsBusy = false;
             _cts?.Dispose();
             _cts = null;
-            RunCommand.NotifyCanExecuteChanged();
-            RunActivityAuditCommand.NotifyCanExecuteChanged();
-            RunExternalForwardingAuditCommand.NotifyCanExecuteChanged();
-            RunInboxRulesAuditCommand.NotifyCanExecuteChanged();
-            RunMfaCoverageAuditCommand.NotifyCanExecuteChanged();
-            CancelCommand.NotifyCanExecuteChanged();
+            NotifyAllCommands();
         }
     }
 

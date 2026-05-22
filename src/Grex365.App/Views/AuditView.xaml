@@ -45,6 +45,14 @@
                            Margin="0,0,8,8"
                            Command="{Binding RunPrivilegedRolesAuditCommand}"
                            ToolTip="/directoryRoles + members: detecta 0/1/&gt;5 Global Admins, guests con role admin, cuentas deshabilitadas con role, y service principals con admin." />
+                <ui:Button Content="App credentials"
+                           Margin="0,0,8,8"
+                           Command="{Binding RunAppCredentialsAuditCommand}"
+                           ToolTip="/applications: flagea passwordCredentials/keyCredentials expirados (ERROR), expirando &lt;30d (WARN) y long-lived &gt;2y (INFO). Requiere Application.Read.All." />
+                <ui:Button Content="Tenant defaults"
+                           Margin="0,0,8,8"
+                           Command="{Binding RunTenantDefaultsAuditCommand}"
+                           ToolTip="/policies/authorizationPolicy + securityDefaults: detecta users-can-create-apps, users-can-create-tenants, invitesFrom=everyone, SSPR disabled, etc." />
                 <ui:Button Content="Actividad grupos"
                            Margin="0,0,8,8"
                            Command="{Binding RunActivityAuditCommand}"
