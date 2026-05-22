@@ -18,6 +18,10 @@ public interface IUsersService
 
     Task<IReadOnlyList<SkuInfo>> ListSkusAsync(CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<Guid>> GetAssignedLicensesAsync(string userId, CancellationToken cancellationToken = default);
+
+    Task RemoveLicenseAsync(string userId, Guid skuId, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default);
+
     Task<UserSummary> CreateUserAsync(
         NewUserSpec spec,
         IProgress<LogEntry>? progress = null,

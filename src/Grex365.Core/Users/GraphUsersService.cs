@@ -147,6 +147,31 @@ public sealed class GraphUsersService : IUsersService
         progress?.Report(LogEntry.Ok("Users", $"Asignada licencia {skuId} a {userId}"));
     }
 
+    public async Task<IReadOnlyList<Guid>> GetAssignedLicensesAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var user = await Client.Users[userId].GetAsync(req =>
+        {
+            req.QueryParameters.Select = new[] { "id", "assignedLicenses" };
+        }, cancellationToken).ConfigureAwait(false);
+
+        return user?.AssignedLicenses?
+            .Where(l => l.SkuId.HasValue)
+            .Select(l => l.SkuId!.Value)
+            .ToList()
+            ?? new List<Guid>();
+    }
+
+    public async Task RemoveLicenseAsync(string userId, Guid skuId, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default)
+    {
+        var body = new AssignLicensePostRequestBody
+        {
+            AddLicenses = new List<AssignedLicense>(),
+            RemoveLicenses = new List<Guid?> { skuId },
+        };
+        await Client.Users[userId].AssignLicense.PostAsync(body, cancellationToken: cancellationToken).ConfigureAwait(false);
+        progress?.Report(LogEntry.Ok("Users", $"Quitada licencia {skuId} de {userId}"));
+    }
+
     public async Task<UserSummary> CreateUserAsync(
         NewUserSpec spec,
         IProgress<LogEntry>? progress = null,
