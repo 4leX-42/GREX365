@@ -184,7 +184,40 @@
                 </Grid.RowDefinitions>
 
                 <ContentControl Grid.Row="0"
-                                Content="{Binding CurrentPage}" />
+                                Content="{Binding CurrentPage}">
+                    <ContentControl.Template>
+                        <ControlTemplate TargetType="ContentControl">
+                            <Border x:Name="PageHost">
+                                <Border.Triggers>
+                                    <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                 From="0" To="1"
+                                                                 Duration="0:0:0.18">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut" />
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                                                 From="6" To="0"
+                                                                 Duration="0:0:0.18">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <CubicEase EasingMode="EaseOut" />
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Border.Triggers>
+                                <Border.RenderTransform>
+                                    <TranslateTransform Y="0" />
+                                </Border.RenderTransform>
+                                <ContentPresenter />
+                            </Border>
+                        </ControlTemplate>
+                    </ContentControl.Template>
+                </ContentControl>
 
                 <GridSplitter Grid.Row="1"
                               Height="6"
