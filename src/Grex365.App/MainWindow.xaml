@@ -341,7 +341,7 @@
                               VerticalAlignment="Bottom"
                               Margin="0,0,16,24" />
 
-        <!-- User details drawer overlay -->
+        <!-- User details drawer overlay (animated slide-in from right) -->
         <Border Grid.Row="1"
                 Width="460"
                 HorizontalAlignment="Right"
@@ -349,7 +349,42 @@
                 BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
                 BorderThickness="1,0,0,0"
                 Panel.ZIndex="999"
-                Visibility="{Binding UserDrawerOpen, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">
+                IsHitTestVisible="{Binding UserDrawerOpen}">
+            <Border.RenderTransform>
+                <TranslateTransform X="460" />
+            </Border.RenderTransform>
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding UserDrawerOpen}" Value="True">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                                         To="0" Duration="0:0:0.22">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                            <DataTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                                         To="460" Duration="0:0:0.18">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseIn" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.ExitActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
             <ContentControl Content="{Binding UserDetailsVm}" />
         </Border>
     </Grid>

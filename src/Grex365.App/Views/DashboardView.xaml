@@ -21,7 +21,7 @@
                         <ui:Button Margin="0,0,8,8"
                                    Appearance="Primary"
                                    Command="{Binding GoToCommand}"
-                                   CommandParameter="Conexion">
+                                   CommandParameter="Conexión">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
                                 <TextBlock Text="Conectar" />
@@ -45,7 +45,7 @@
                         </ui:Button>
                         <ui:Button Margin="0,0,8,8"
                                    Command="{Binding GoToCommand}"
-                                   CommandParameter="Auditoria">
+                                   CommandParameter="Auditoría">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
                                 <TextBlock Text="Auditoría" />
@@ -163,7 +163,7 @@
                         <ui:Button Grid.Column="1"
                                    Content="Abrir Auditoría"
                                    Command="{Binding GoToCommand}"
-                                   CommandParameter="Auditoria"
+                                   CommandParameter="Auditoría"
                                    VerticalAlignment="Center" />
                     </Grid>
                     <StackPanel Orientation="Horizontal" Margin="0,12,0,0">

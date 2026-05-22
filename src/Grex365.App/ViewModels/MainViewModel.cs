@@ -112,16 +112,16 @@ public sealed partial class MainViewModel : ObservableObject
         NavigationItems = new ObservableCollection<NavigationItem>
         {
             new("Dashboard",     "", typeof(DashboardViewModel),     "Tenant"),
-            new("Conexion",      "", typeof(ConnectViewModel),       "Tenant"),
+            new("Conexión",      "", typeof(ConnectViewModel),       "Tenant"),
             new("Salud tenant",  "", typeof(TenantHealthViewModel),  "Tenant"),
             new("Usuarios",      "", typeof(UsersViewModel),         "Identidad"),
             new("Grupos",        "", typeof(GroupsViewModel),        "Identidad"),
             new("Onboarding",    "", typeof(OnboardingViewModel),   "Identidad"),
             new("Offboarding",   "", typeof(OffboardingViewModel),  "Identidad"),
             new("Buzones",       "", typeof(SharedMailboxViewModel), "Mail"),
-            new("Reglas buzon",  "", typeof(MailboxRulesViewModel),  "Mail"),
+            new("Reglas de buzón","", typeof(MailboxRulesViewModel),  "Mail"),
             new("Flujo de correo","", typeof(MailFlowRulesViewModel), "Mail"),
-            new("Auditoria",     "", typeof(AuditViewModel),         "Seguridad"),
+            new("Auditoría",     "", typeof(AuditViewModel),         "Seguridad"),
             new("Registro de auditoría","", typeof(AuditLogViewModel),      "Seguridad"),
             new("Asistente cert","", typeof(CertWizardViewModel),   "Herramientas"),
             new("Comprobación DNS","", typeof(DomainCheckViewModel),  "Herramientas"),
@@ -146,7 +146,7 @@ public sealed partial class MainViewModel : ObservableObject
         "Salud tenant",
         "Usuarios",
         "Grupos",
-        "Auditoria",
+        "Auditoría",
         "Onboarding",
         "Offboarding",
     };
@@ -154,8 +154,16 @@ public sealed partial class MainViewModel : ObservableObject
     private static readonly HashSet<string> RequiresExchangeTitles = new(StringComparer.OrdinalIgnoreCase)
     {
         "Buzones",
-        "Reglas buzon",
+        "Reglas de buzón",
         "Flujo de correo",
+    };
+
+    // Old → new title rename map. Lets users that had old nav persisted keep their last selection.
+    private static readonly Dictionary<string, string> RenamedNavTitles = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Conexion"] = "Conexión",
+        ["Auditoria"] = "Auditoría",
+        ["Reglas buzon"] = "Reglas de buzón",
     };
 
     private void ApplyConnectionRequirements()
@@ -201,8 +209,11 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 return null;
             }
+            var target = RenamedNavTitles.TryGetValue(prefs.LastSelectedNavigation, out var renamed)
+                ? renamed
+                : prefs.LastSelectedNavigation;
             return NavigationItems.FirstOrDefault(i =>
-                string.Equals(i.Title, prefs.LastSelectedNavigation, StringComparison.OrdinalIgnoreCase));
+                string.Equals(i.Title, target, StringComparison.OrdinalIgnoreCase));
         }
         catch
         {
@@ -291,7 +302,7 @@ public sealed partial class MainViewModel : ObservableObject
     private void SyncAuditBadge()
     {
         var item = NavigationItems.FirstOrDefault(i =>
-            string.Equals(i.Title, "Auditoria", StringComparison.OrdinalIgnoreCase));
+            string.Equals(i.Title, "Auditoría", StringComparison.OrdinalIgnoreCase));
         if (item is not null)
         {
             item.ErrorBadge = _auditStore.ErrorCount;

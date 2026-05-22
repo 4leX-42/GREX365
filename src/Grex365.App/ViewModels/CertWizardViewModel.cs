@@ -133,7 +133,7 @@ public sealed partial class CertWizardViewModel : ObservableObject
         }
         if (!_graph.IsConnected)
         {
-            AppRegStatus = "Graph no esta conectado. Usa 'Conectar (device code)' en Conexion primero.";
+            AppRegStatus = "Graph no está conectado. Usa 'Conectar (device code)' en Conexión primero.";
             return;
         }
         if (string.IsNullOrWhiteSpace(AppRegDisplayName))
