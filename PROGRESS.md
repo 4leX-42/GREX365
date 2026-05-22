@@ -4,23 +4,24 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **265 passing** (xUnit + FluentAssertions)
+- Tests: **278 passing** (xUnit + FluentAssertions)
 - Última actualización: 2026-05-22
 
 ## Bitácora sesiones
 
 ### 2026-05-22 — Sesión "security audits sprint"
 
-Tests **214 → 265** (+51). Cuatro auditorías de seguridad nuevas + refactor notify.
+Tests **214 → 278** (+64). Cinco auditorías de seguridad nuevas + refactor notify.
 
 Commits:
 - `feat(audit)` Conditional Access policies audit: `CaPolicyAnalyzer` puro + `RunConditionalAccessAuditAsync` consume `/identity/conditionalAccess/policies`. Categorías: disabled (INFO), report-only stale ≥30d (WARN), report-only fresh (INFO), enabled sin builtInControls (ERROR), enabled con controls débiles (WARN), enabled con `All` users sin exclusiones (WARN), enabled sin user scope (ERROR), tenant sin policies (ERROR). Suma `Policy.Read.All` al App Reg auto-create.
 - `feat(audit)` Privileged role assignments audit: `PrivilegedRoleAuditAnalyzer` puro + `RunPrivilegedRolesAuditAsync` enumera `/directoryRoles` + members en paralelo (8x). Categorías: guests con role admin (ERROR), cuentas deshabilitadas con role (ERROR), service principals con role (INFO), 0 Global Admins (ERROR), 1 Global Admin (WARN — sin backup), >5 Global Admins (WARN — sprawl). Identifica GA via templateId `62e90394-69f5-4237-9190-012177145e10`.
 - `feat(audit)` App credentials expiry audit: `AppCredentialAuditAnalyzer` puro + `RunAppCredentialsAuditAsync` itera `/applications` y agrega `passwordCredentials` + `keyCredentials`. Severidades: expired (ERROR), expirando ≤30d (WARN), long-lived >2y (INFO). Suma `Application.Read.All` al App Reg auto-create.
 - `feat(audit)` Tenant defaults audit: `TenantDefaultsAnalyzer` puro + `RunTenantDefaultsAuditAsync` consume `/policies/authorizationPolicy` + `/policies/identitySecurityDefaultsEnforcementPolicy`. Categorías: users-can-create-apps (WARN), users-can-create-tenants (WARN), email-verified self-join (WARN), allowInvitesFrom=everyone (WARN), SSPR disabled (INFO), email-based subscriptions (INFO), SecurityDefaults on (INFO).
+- `feat(audit)` OAuth consent grants audit: `OAuthGrantAnalyzer` puro + `RunOAuthGrantsAuditAsync` enumera `/oauth2PermissionGrants` y resuelve nombres de clientes/recursos via `/servicePrincipals` (8x paralelo). Severidades: AllPrincipals + scope alto-riesgo (ERROR — admin consent peligroso), Principal + scope alto-riesgo (WARN — posible phishing OAuth). Set alto-riesgo: Mail.*/Files.*/Sites.*/Directory.*/User.*/Group.*/Calendars.*/Contacts.*/full_access_as_user/Notes.ReadWrite.All. Cubierto por `Directory.ReadWrite.All` existente.
 - `refactor(audit-vm)` extrae `NotifyAllCommands()` helper en AuditViewModel — elimina ~80 líneas de notify chains repetidas y evita bugs cuando se añade un nuevo command.
 
-Plantamiento status: Fase 6 sigue **6/8 hechos**; backlog seguridad amplía cobertura M365 baseline. Toolbar fila 1 ahora con 7 audits Graph: Identidad+grupos, MFA, CA policies, Privileged roles, App credentials, Tenant defaults, Actividad grupos.
+Plantamiento status: Fase 6 sigue **6/8 hechos**; backlog seguridad amplía cobertura M365 baseline. Toolbar fila 1 ahora con 8 audits Graph: Identidad+grupos, MFA, CA policies, Privileged roles, App credentials, Tenant defaults, OAuth grants, Actividad grupos.
 
 ---
 
@@ -183,6 +184,7 @@ UX/QoL fase 3:
 - [x] **Auditoría: Privileged role assignments** — `PrivilegedRoleAuditAnalyzer` puro + `RunPrivilegedRolesAuditAsync` enumera `/directoryRoles` y members en paralelo. Detecta guests con role admin (ERROR), cuentas deshabilitadas con role (ERROR), service principals con role (INFO), 0 Global Admins (ERROR), 1 GA (WARN — sin backup), >5 GAs (WARN — sprawl). Cubierto por `Directory.ReadWrite.All` existente
 - [x] **Auditoría: App credentials expiry** — `AppCredentialAuditAnalyzer` puro + `RunAppCredentialsAuditAsync` itera `/applications` y agrega `passwordCredentials` + `keyCredentials`. Severidades: expired (ERROR), expirando ≤30d (WARN), long-lived >2y (INFO). Requiere `Application.Read.All`
 - [x] **Auditoría: Tenant defaults / authorization policy** — `TenantDefaultsAnalyzer` puro + `RunTenantDefaultsAuditAsync` consume `/policies/authorizationPolicy` + `/policies/identitySecurityDefaultsEnforcementPolicy`. Detecta users-can-create-apps (WARN), users-can-create-tenants (WARN), allowInvitesFrom=everyone (WARN), email-verified self-join (WARN), SSPR disabled (INFO), SecurityDefaults on (INFO). Requiere `Policy.Read.All`
+- [x] **Auditoría: OAuth consent grants** — `OAuthGrantAnalyzer` puro + `RunOAuthGrantsAuditAsync` enumera `/oauth2PermissionGrants` y resuelve nombres de clientes/recursos via `/servicePrincipals`. AllPrincipals + scope alto-riesgo (ERROR — admin consent), Principal + scope alto-riesgo (WARN — posible phishing OAuth). Set alto-riesgo cubre Mail/Files/Sites/Directory/User/Group/Calendars/Contacts/Notes + full_access_as_user. Cubierto por `Directory.ReadWrite.All`
 - [x] **Cert export PFX con password** — `ICertificateGenerator.ExportPfx`, panel "Exportar PFX" en CertWizardView con PasswordBox + tests de validacion (no encontrado, password vacio, etc.)
 - [x] **Auto-create App Registration vía Graph** — `GraphAppRegistrationService.CreateAndConfigureAsync` aplica todos los AppRoles (User/Group/GroupMember/Organization/AuditLog/Directory + Exchange.ManageAsApp + Reports.Read.All), sube cert como `KeyCredential`, crea ServicePrincipal y devuelve admin-consent URL clickable. Reemplaza los 29 pasos manuales del legacy.
 - [x] **Auto-install módulo EXO** — `ExchangeConnection.InstallModuleAsync` lanza `pwsh.exe` externo (Start-Process) para esquivar el ACL de WindowsApps que niega `Microsoft.PackageManagement.dll` en runspaces embebidos. UI muestra estado del módulo + botones Comprobar/Instalar.
@@ -194,7 +196,7 @@ UX/QoL fase 3:
 
 ---
 
-## Tests (265 passing)
+## Tests (278 passing)
 
 | Suite | Tests | Cubre |
 |-------|-------|-------|
@@ -228,6 +230,7 @@ UX/QoL fase 3:
 | PrivilegedRoleAuditAnalyzer | 14 | empty (no GA), 1 GA (backup warn), 2 GAs OK, >5 GAs (sprawl), guest admin (ERROR), disabled admin (ERROR), SP admin (INFO), disabled-SP no false positive, multi-roles same user, guest in 2 roles, empty memberId, no-GA-other-role, template case-insensitive, identity from displayName |
 | AppCredentialAuditAnalyzer | 11 | empty, expired (ERROR), expiring soon (WARN), not-soon OK, long-lived (INFO), null endDate, empty appId, credential name in detail, mixed counts, Key type, threshold exact |
 | TenantDefaultsAnalyzer | 10 | safe baseline, create-apps (WARN), create-tenants (WARN), email-verified join, invitesFrom=everyone, invitesFrom=adminsOnly OK, SSPR disabled, email-based subs, SecurityDefaults on, case-insensitive invitesFrom |
+| OAuthGrantAnalyzer | 13 | empty, low-risk only, tenant-wide high-risk (ERROR), user-consented (WARN), empty clientId skip, scope trim, case-insensitive, mixed scopes detail, name fallback, unique clients dedup, full_access_as_user, IsHighRiskScope helper, mixed counts |
 
 ---
 
