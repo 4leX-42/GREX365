@@ -58,6 +58,33 @@
 
 ## Bitácora sesiones
 
+### 2026-05-22 (tarde) — Sesión "polish + architectural cleanup"
+
+Sprints A + B completos, Sprint C en progreso (refactor done, tests pendientes). 4 commits. Build clean, 326 tests siguen verdes.
+
+Commits:
+- `ux(nav+drawer)` Acentos consistentes en nav titles ("Conexión"/"Auditoría"/"Reglas de buzón") + dict de migración para `LastSelectedNavigation` persistido. Sets `RequiresGraphTitles`/`RequiresExchangeTitles` + `SyncAuditBadge` + `DashboardView.CommandParameter` + strings CertWizard actualizados. Drawer user lateral con slide animation (TranslateTransform X 460↔0, 220ms EaseOut entrada / 180ms EaseIn salida) + `IsHitTestVisible` bound a `UserDrawerOpen` evita hits off-screen. Reemplaza Visibility toggle hard.
+- `docs` Sync `ROADMAP.md` + `MIGRATION.md` + `ARCHITECTURE.md` al estado 2026-05-22 (7 días stale). ROADMAP gana snapshot header + H1/H2 sub-items refrescados (1.2.6/1.2.7/1.2.8/1.2.9/1.3.7/1.4.7/1.6.3/1.6.4 marcados ✅). H3 colapsado a tabla single con todos features ported. H4 marcado mostly-done. H5 con MSIX scaffold ✅ + assets/firma pendientes. Decision tracker D4/D9 resolved, D1/D2 marcados de-facto. "What next" actualizado al backlog real (MSIX assets, QA load, test gap, terminal embebido, first-run wizard). MIGRATION añade sección con 13 security audits nuevos (no estaban en legacy PS). ARCHITECTURE mueve Plugin/AppInsights/MSIX de "NOT taken" a nueva sección "Stack decisions later reversed".
+- `feat(polish)` Bundle SemVer + About + Window restore + Log export + global shortcuts. `Directory.Build.props` raíz con `<Version>0.2.0-alpha</Version>` (single source). `App.AppVersion` static lee `AssemblyInformationalVersionAttribute`. Sidebar header + status bar bindados via `{x:Static local:App.AppVersion}`. `AboutWindow.FluentWindow` con name + version + runtime + data dir + "Abrir carpeta" (Process.Start). Wired en DI + `MainViewModel.OpenAboutCommand` + botón "Acerca de" en status bar + F1 keybinding. `UserPreferences` gana `WindowWidth/Height/Left/Top/Maximized`. `MainWindow.xaml.cs` Loaded restaura con guard `IsOnScreen` (VirtualScreen check) + Closing persiste; skip size/pos si maximized. `MainViewModel.ExportLogCommand` abre `SaveFileDialog` (.txt default, .csv option), itera `LogView` (respeta filtros severity) y escribe UTF-8 timestamped + CSV escape. Botón "Exportar" junto a "Limpiar". KeyBindings nuevos: Ctrl+, → Settings, F1 → About, Ctrl+L → ToggleLogPanel. Tooltips actualizados.
+- `refactor` Extract `IDialogService` + `IClipboardService` a `Grex365.Core.Abstractions`. WPF impls (`WpfDialogService` mapea `DialogIcon` → `MessageBoxImage`; `WpfClipboardService` swallows shell/RDP throws). Registrados Singleton en DI. 6 VMs refactorizadas (`UserDetails`/`Users`/`Groups`/`Offboarding`/`Onboarding`/`MailboxRules`): 17 `MessageBox.Show` + 1 `Clipboard.SetText` extraídos. Cero direct WPF refs en VMs (verificado grep). Restaura regla arquitectónica de `ARCHITECTURE.md` (VMs UI-agnostic). Scaffold `tests/Grex365.App.Tests/Grex365.App.Tests.csproj` (net10.0-windows + WPF + ref App + xUnit/Moq/FluentAssertions) + `TestFakes.cs` (`TestDialogService`/`TestClipboardService`/`TestUiLogSink`/`TestUserDetailsHost`). **NO incluido en `src/Grex365.slnx` aún** — próxima sesión añade + escribe tests.
+
+### Próximo paso (continúa Sprint C)
+
+1. Añadir `<Project Path="../tests/Grex365.App.Tests/Grex365.App.Tests.csproj" />` a `src/Grex365.slnx`.
+2. Escribir `UserDetailsViewModelTests`:
+   - LoadAsync popula User + Memberships + AssignedLicenses cuando `OpenRequested`
+   - LoadAsync user-not-found set `StatusMessage = "Usuario no encontrado."`
+   - Reset clears collections + state cuando `CloseRequested`
+   - ToggleAccount con `ConfirmResult=false` → no calls al service
+   - ToggleAccount con `ConfirmResult=true` → `SetAccountEnabledAsync(uid, !User.AccountEnabled, ...)` + reload
+   - RemoveLicense con `null row` → no-op
+   - RemoveLicense con row + confirm yes → `RemoveLicenseAsync(uid, skuId)` + reload
+   - AssignSelectedSku con no User → no-op; con sku + user → `AssignLicenseAsync` + reload
+   - ResetPassword copia a clipboard + show dialog
+   - RevokeSessions con confirm yes → `RevokeSignInSessionsAsync`
+3. Tests adicionales (opcional Sprint D): `GroupsViewModelTests`, `OffboardingViewModelTests`.
+4. Verificar `dotnet test src/Grex365.slnx` corre ambos test projects.
+
 ### 2026-05-22 — Sesión "security audits sprint"
 
 Tests **214 → 301** (+87). Siete auditorías de seguridad nuevas + refactor notify.
