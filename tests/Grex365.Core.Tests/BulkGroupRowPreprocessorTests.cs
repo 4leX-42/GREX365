@@ -5,12 +5,57 @@ namespace Grex365.Core.Tests;
 
 public class BulkGroupRowPreprocessorTests
 {
-    private static Dictionary<string, string> Row(string? group, string? email)
+    private static Dictionary<string, string> Row(string? group, string? email, string? type = null)
     {
         var d = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         if (group is not null) d["GroupName"] = group;
         if (email is not null) d["Email"] = email;
+        if (type is not null) d["GroupType"] = type;
         return d;
+    }
+
+    [Theory]
+    [InlineData("M365", "M365")]
+    [InlineData("Microsoft 365", "M365")]
+    [InlineData("unified", "M365")]
+    [InlineData("DL", "DL")]
+    [InlineData("Distribution", "DL")]
+    [InlineData("distributionlist", "DL")]
+    [InlineData("Distribution List", "DL")]
+    [InlineData("Exchange", "DL")]
+    [InlineData("nonsense", "M365")]
+    [InlineData("", "M365")]
+    public void NormalizeType_MapsAliases(string input, string expected) =>
+        BulkGroupRowPreprocessor.NormalizeType(input).Should().Be(expected);
+
+    [Fact]
+    public void Normalize_DetectsGroupType_FromColumn()
+    {
+        var raw = new[]
+        {
+            Row("Ventas",  "a@x.com", "M365"),
+            Row("Soporte", "b@x.com", "DL"),
+            Row("Otros",   "c@x.com"),
+        };
+        var rows = BulkGroupRowPreprocessor.Normalize(raw);
+        rows.Should().HaveCount(3);
+        rows[0].GroupType.Should().Be("M365");
+        rows[1].GroupType.Should().Be("DL");
+        rows[2].GroupType.Should().Be("M365");
+    }
+
+    [Fact]
+    public void Normalize_ForwardFillsGroupType_AlongWithName()
+    {
+        var raw = new[]
+        {
+            Row("Soporte", "a@x.com", "DL"),
+            Row("",        "b@x.com"),
+            Row("",        "c@x.com"),
+        };
+        var rows = BulkGroupRowPreprocessor.Normalize(raw);
+        rows.Should().HaveCount(3);
+        rows.Select(r => r.GroupType).Should().AllBe("DL");
     }
 
     [Fact]

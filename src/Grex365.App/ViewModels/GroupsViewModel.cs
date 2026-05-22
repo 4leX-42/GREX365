@@ -25,7 +25,6 @@ public sealed partial class GroupsViewModel : ObservableObject
     [ObservableProperty] private GroupMember? _selectedMember;
     [ObservableProperty] private string _newMembersText = string.Empty;
     [ObservableProperty] private string _bulkDomain = string.Empty;
-    [ObservableProperty] private bool _bulkTargetDl;
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private bool _isBusy;
 
@@ -401,10 +400,18 @@ public sealed partial class GroupsViewModel : ObservableObject
 
         if (!await RequireAuthorizedAsync("Bulk create groups").ConfigureAwait(true)) return;
 
-        var distinctGroups = rows.Select(r => r.GroupName).Distinct(StringComparer.OrdinalIgnoreCase).Count();
-        var kind = BulkTargetDl ? "DL (Exchange)" : "M365";
+        var m365Rows = rows.Where(r => string.Equals(r.GroupType, "M365", StringComparison.OrdinalIgnoreCase)).ToList();
+        var dlRows = rows.Where(r => string.Equals(r.GroupType, "DL", StringComparison.OrdinalIgnoreCase)).ToList();
+        var distinctM365 = m365Rows.Select(r => r.GroupName).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+        var distinctDl = dlRows.Select(r => r.GroupName).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+        var breakdown = string.Join(" + ", new[]
+        {
+            distinctM365 > 0 ? $"{distinctM365} M365" : null,
+            distinctDl   > 0 ? $"{distinctDl} DL"   : null,
+        }.Where(s => s is not null));
+
         var confirm = System.Windows.MessageBox.Show(
-            $"Se crearán/actualizarán {distinctGroups} grupos {kind} con {rows.Count} miembros sobre @{domain}.\n\n¿Continuar?",
+            $"Se crearán/actualizarán {breakdown} ({rows.Count} miembros) sobre @{domain}.\n\nTipo detectado desde columna `GroupType` del CSV (default M365).\n\n¿Continuar?",
             "Confirmar creación masiva",
             System.Windows.MessageBoxButton.YesNo,
             System.Windows.MessageBoxImage.Question);
@@ -417,21 +424,29 @@ public sealed partial class GroupsViewModel : ObservableObject
         EnsureToken();
         IsBusy = true;
         CancelCommand.NotifyCanExecuteChanged();
-        StatusMessage = $"Creando {distinctGroups} grupos ({kind})...";
+        StatusMessage = $"Creando {breakdown}...";
         BulkCreateResults.Clear();
         try
         {
-            var results = BulkTargetDl
-                ? await _dls.CreateFromRowsAsync(rows, domain, _log.Progress, _cts!.Token).ConfigureAwait(true)
-                : await _groups.CreateM365GroupsFromRowsAsync(rows, domain, _log.Progress, _cts!.Token).ConfigureAwait(true);
-            foreach (var r in results)
+            var allResults = new List<BulkGroupResult>();
+            if (m365Rows.Count > 0)
+            {
+                var r1 = await _groups.CreateM365GroupsFromRowsAsync(m365Rows, domain, _log.Progress, _cts!.Token).ConfigureAwait(true);
+                allResults.AddRange(r1);
+            }
+            if (dlRows.Count > 0)
+            {
+                var r2 = await _dls.CreateFromRowsAsync(dlRows, domain, _log.Progress, _cts!.Token).ConfigureAwait(true);
+                allResults.AddRange(r2);
+            }
+            foreach (var r in allResults)
             {
                 BulkCreateResults.Add(r);
             }
-            var created = results.Count(r => r.Action == "Created");
-            var existed = results.Count(r => r.Action == "Skipped");
-            var added = results.Count(r => r.Action == "MemberAdded");
-            var errors = results.Count(r => r.Action == "Error");
+            var created = allResults.Count(r => r.Action == "Created");
+            var existed = allResults.Count(r => r.Action == "Skipped");
+            var added = allResults.Count(r => r.Action == "MemberAdded");
+            var errors = allResults.Count(r => r.Action == "Error");
             StatusMessage = $"Grupos: Nuevos={created}  YaEstaban={existed}  Miembros={added}  Err={errors}";
         }
         catch (OperationCanceledException)

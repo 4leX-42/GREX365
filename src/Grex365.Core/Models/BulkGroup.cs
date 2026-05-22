@@ -1,6 +1,6 @@
 namespace Grex365.Core.Models;
 
-public sealed record BulkGroupRow(string GroupName, string Email);
+public sealed record BulkGroupRow(string GroupName, string Email, string GroupType = "M365");
 
 public sealed record BulkGroupResult(
     string GroupName,
