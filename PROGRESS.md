@@ -4,10 +4,21 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **214 passing** (xUnit + FluentAssertions)
-- Última actualización: 2026-05-21
+- Tests: **230 passing** (xUnit + FluentAssertions)
+- Última actualización: 2026-05-22
 
 ## Bitácora sesiones
+
+### 2026-05-22 — Sesión "CA policies audit"
+
+Tests **214 → 230** (+16). Nueva auditoría de seguridad: Conditional Access policies.
+
+Commits:
+- `feat(audit)` Conditional Access policies audit: `CaPolicyAnalyzer` puro + `RunConditionalAccessAuditAsync` consume `/identity/conditionalAccess/policies`. Categorías: disabled (INFO), report-only stale ≥30d (WARN), report-only fresh (INFO), enabled sin builtInControls (ERROR), enabled con controls débiles (WARN), enabled con `All` users sin exclusiones (WARN), enabled sin user scope (ERROR), tenant sin policies (ERROR). Suma `Policy.Read.All` al App Reg auto-create.
+
+Plantamiento status: Fase 6 sigue **6/8 hechos**; backlog seguridad amplía cobertura M365 baseline.
+
+---
 
 ### 2026-05-21 — Sesión "cert auto + audit + telemetry" (8 commits)
 
@@ -164,6 +175,7 @@ UX/QoL fase 3:
 - [x] **Auditoría: forwarding externo (security)** — `ExoForwardingAuditService` combina `Get-AcceptedDomain` + `Get-Mailbox -ResultSize Unlimited | Where ForwardingSmtpAddress` para flagear forward hacia dominios fuera del tenant (vector típico de phishing/exfiltración). Botón "Forwarding externo" en AuditView
 - [x] **Auditoría: inbox rules (BEC indicator)** — `InboxRuleAnalyzer` puro + `ScanInboxRulesAsync(maxMailboxes)`. Categorías: delete, hide (move-to Deleted/Junk/RSS/Archive…), external forward/redirect. Keywords BEC EN+ES (invoice/factura/wire/payment/password…) elevan a WARN. Botón "Inbox rules" + NumberBox tope buzones en AuditView
 - [x] **Auditoría: MFA coverage** — `MfaCoverageAnalyzer` puro + `RunMfaCoverageAuditAsync` consume `/reports/authenticationMethods/userRegistrationDetails`. Admin sin MFA = ERROR crítico, member = WARN, guest = INFO. Status muestra cobertura admin %. Requiere `Reports.Read.All`
+- [x] **Auditoría: Conditional Access policies** — `CaPolicyAnalyzer` puro + `RunConditionalAccessAuditAsync` consume `/identity/conditionalAccess/policies`. Detecta policies disabled (INFO), report-only stale ≥30d (WARN), enabled sin builtInControls (ERROR), enabled con controls débiles sin MFA/compliantDevice/block (WARN), enabled con includeUsers=All sin exclusiones (WARN), enabled sin user scope (ERROR), y tenant sin policies (ERROR). Requiere `Policy.Read.All`
 - [x] **Cert export PFX con password** — `ICertificateGenerator.ExportPfx`, panel "Exportar PFX" en CertWizardView con PasswordBox + tests de validacion (no encontrado, password vacio, etc.)
 - [x] **Auto-create App Registration vía Graph** — `GraphAppRegistrationService.CreateAndConfigureAsync` aplica todos los AppRoles (User/Group/GroupMember/Organization/AuditLog/Directory + Exchange.ManageAsApp + Reports.Read.All), sube cert como `KeyCredential`, crea ServicePrincipal y devuelve admin-consent URL clickable. Reemplaza los 29 pasos manuales del legacy.
 - [x] **Auto-install módulo EXO** — `ExchangeConnection.InstallModuleAsync` lanza `pwsh.exe` externo (Start-Process) para esquivar el ACL de WindowsApps que niega `Microsoft.PackageManagement.dll` en runspaces embebidos. UI muestra estado del módulo + botones Comprobar/Instalar.
@@ -175,7 +187,7 @@ UX/QoL fase 3:
 
 ---
 
-## Tests (214 passing)
+## Tests (230 passing)
 
 | Suite | Tests | Cubre |
 |-------|-------|-------|
@@ -205,6 +217,7 @@ UX/QoL fase 3:
 | MailboxForwardingAnalyzer | 10 | sin-fwd, interno, externo flagged, SMTP prefix, case-insensitive, UPN vacío, malformado, ForwardingAddress no flagged, trailing dot, multi-rows |
 | InboxRuleAnalyzer | 13 | disabled skip, UPN vacío, delete plain/keyword, move-deleted/regular/RSS, forward externo/interno, redirect externo, SMTP en brackets, 3 findings combinados, keyword español |
 | MfaCoverageAnalyzer | 9 | empty, admin sin/con MFA, member sin MFA, guest sin MFA, UPN vacío, IsAdmin precedence, mixed pop, capable=false |
+| CaPolicyAnalyzer | 16 | empty (ERROR), enabled strong OK, disabled, report-only stale/fresh, sin controls, weak controls, All sin exclusions, exclusions valid, sin user scope, empty name, unknown state, compliantDevice/block strong, case-insensitive, mixed |
 
 ---
 
