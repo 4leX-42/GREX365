@@ -17,6 +17,7 @@
             <conv:BoolToBrushConverter x:Key="BoolToBrushConverter" />
             <conv:BoolToOnOffConverter x:Key="BoolToOnOffConverter" />
             <conv:SeverityToBrushConverter x:Key="SeverityToBrushConverter" />
+            <conv:AuditSeverityToBrushConverter x:Key="AuditSeverityToBrushConverter" />
             <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
             <conv:NullToCollapsedConverter x:Key="NullToCollapsedConverter" />
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />

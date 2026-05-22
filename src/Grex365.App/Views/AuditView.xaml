@@ -173,7 +173,15 @@
                             <GridViewColumn Header="Categoría" Width="160" DisplayMemberBinding="{Binding Category}" />
                             <GridViewColumn Header="Identity"  Width="260" DisplayMemberBinding="{Binding Identity}" />
                             <GridViewColumn Header="Detalle"   Width="380" DisplayMemberBinding="{Binding Detail}" />
-                            <GridViewColumn Header="Severidad" Width="100" DisplayMemberBinding="{Binding Severity}" />
+                            <GridViewColumn Header="Severidad" Width="100">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Severity}"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{Binding Severity, Converter={StaticResource AuditSeverityToBrushConverter}}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
                         </GridView>
                     </ListView.View>
                 </ListView>

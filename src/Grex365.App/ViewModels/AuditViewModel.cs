@@ -48,16 +48,9 @@ public sealed partial class AuditViewModel : ObservableObject
         {
             var (summary, findings) = await _audit.RunIdentityAuditAsync(_log.Progress, _cts.Token).ConfigureAwait(true);
             Summary = summary;
-            foreach (var f in findings)
-            {
-                Findings.Add(f);
-            }
-
             var groupFindings = await _audit.RunGroupsAuditAsync(_log.Progress, _cts.Token).ConfigureAwait(true);
-            foreach (var f in groupFindings)
-            {
-                Findings.Add(f);
-            }
+
+            AddFindingsSorted(findings.Concat(groupFindings));
 
             StatusMessage = $"{summary.UsersTotal} usuarios · {findings.Count + groupFindings.Count} hallazgos totales";
         }
@@ -103,10 +96,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var findings = await _audit
                 .RunGroupActivityAuditAsync(InactivityDays, _log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            foreach (var f in findings)
-            {
-                Findings.Add(f);
-            }
+            AddFindingsSorted(findings);
             StatusMessage = $"{findings.Count} grupos inactivos (>{InactivityDays}d).";
         }
         catch (OperationCanceledException)
@@ -145,10 +135,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var findings = await _exoAudit
                 .ScanExternalForwardingAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            foreach (var f in findings)
-            {
-                Findings.Add(f);
-            }
+            AddFindingsSorted(findings);
             StatusMessage = $"{findings.Count} forwards externos detectados.";
         }
         catch (OperationCanceledException)
@@ -187,10 +174,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var (summary, findings) = await _audit
                 .RunMfaCoverageAuditAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            foreach (var f in findings)
-            {
-                Findings.Add(f);
-            }
+            AddFindingsSorted(findings);
             var adminPct = summary.AdminsTotal > 0
                 ? (summary.AdminsTotal - summary.AdminsWithoutMfa) * 100.0 / summary.AdminsTotal
                 : 100.0;
@@ -234,10 +218,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var (summary, findings) = await _audit
                 .RunOAuthGrantsAuditAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            foreach (var f in findings)
-            {
-                Findings.Add(f);
-            }
+            AddFindingsSorted(findings);
             StatusMessage = $"OAuth grants: {summary.TotalGrants} totales · " +
                             $"{summary.UniqueClients} apps · " +
                             $"tenant-wide alto-riesgo={summary.TenantWideHighRisk} · " +
@@ -279,10 +260,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var (summary, findings) = await _audit
                 .RunAppCredentialsAuditAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            foreach (var f in findings)
-            {
-                Findings.Add(f);
-            }
+            AddFindingsSorted(findings);
             StatusMessage = $"App creds: {summary.Total} totales · " +
                             $"{summary.Expired} expired · {summary.ExpiringSoon} expiring · " +
                             $"{summary.LongLived} long-lived";
@@ -323,10 +301,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var (summary, findings) = await _audit
                 .RunTenantDefaultsAuditAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            foreach (var f in findings)
-            {
-                Findings.Add(f);
-            }
+            AddFindingsSorted(findings);
             StatusMessage = $"Tenant defaults: SecurityDefaults={(summary.SecurityDefaultsEnabled ? "ON" : "OFF")} · " +
                             $"{findings.Count} hallazgos";
         }
@@ -347,6 +322,26 @@ public sealed partial class AuditViewModel : ObservableObject
             NotifyAllCommands();
         }
     }
+
+    private void AddFindingsSorted(IEnumerable<AuditFinding> findings)
+    {
+        foreach (var f in findings
+            .OrderBy(f => SeverityRank(f.Severity))
+            .ThenBy(f => f.Category, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(f => f.Identity, StringComparer.OrdinalIgnoreCase))
+        {
+            Findings.Add(f);
+        }
+    }
+
+    private static int SeverityRank(string? severity) =>
+        severity?.ToUpperInvariant() switch
+        {
+            "ERROR" => 0,
+            "WARN" => 1,
+            "INFO" => 2,
+            _ => 3,
+        };
 
     private void NotifyAllCommands()
     {
@@ -383,10 +378,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var (summary, findings) = await _audit
                 .RunPrivilegedRolesAuditAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            foreach (var f in findings)
-            {
-                Findings.Add(f);
-            }
+            AddFindingsSorted(findings);
             StatusMessage = $"Admins: {summary.UniqueAdmins} únicos · GA={summary.GlobalAdmins} · " +
                             $"guests={summary.GuestsWithAdminRole} · disabled={summary.DisabledWithAdminRole} · " +
                             $"SP={summary.ServicePrincipalsWithAdminRole}";
@@ -427,10 +419,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var (summary, findings) = await _audit
                 .RunConditionalAccessAuditAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            foreach (var f in findings)
-            {
-                Findings.Add(f);
-            }
+            AddFindingsSorted(findings);
             StatusMessage = $"CA: {summary.Total} policies · " +
                             $"{summary.Enabled} enabled · {summary.Disabled} disabled · " +
                             $"{summary.ReportOnly} report-only · {findings.Count} hallazgos";
@@ -471,10 +460,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var (summary, findings) = await _exoAudit
                 .ScanSharedMailboxSignInAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            foreach (var f in findings)
-            {
-                Findings.Add(f);
-            }
+            AddFindingsSorted(findings);
             StatusMessage = $"Shared boxes: {summary.Total} totales · " +
                             $"sign-in enabled={summary.SignInEnabled} · " +
                             $"disabled={summary.SignInDisabled} · unknown={summary.Unknown}";
@@ -515,10 +501,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var (summary, findings) = await _exoAudit
                 .ScanTransportRulesAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            foreach (var f in findings)
-            {
-                Findings.Add(f);
-            }
+            AddFindingsSorted(findings);
             StatusMessage = $"Transport rules: {summary.Total} totales · {summary.Enabled} enabled · " +
                             $"fwd-ext={summary.WithExternalForward} bcc-ext={summary.WithExternalBcc} " +
                             $"redir-ext={summary.WithExternalRedirect} · {findings.Count} hallazgos";
@@ -564,10 +547,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var findings = await _exoAudit
                 .ScanInboxRulesAsync(InboxRuleScanCap, _log.Progress, _cts.Token)
                 .ConfigureAwait(true);
-            foreach (var f in findings)
-            {
-                Findings.Add(f);
-            }
+            AddFindingsSorted(findings);
             StatusMessage = $"{findings.Count} reglas sospechosas detectadas.";
         }
         catch (OperationCanceledException)
