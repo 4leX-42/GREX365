@@ -32,8 +32,13 @@ public sealed class ExchangeConnection : IExchangeConnection
         await EnsureModuleAsync(progress, cancellationToken).ConfigureAwait(false);
 
         progress?.Report(LogEntry.Info("EXO", $"Connect-ExchangeOnline (cert) tenant={config.TenantId}"));
+        // Workaround para el bug "HttpResponseMessage does not contain method GetResponseHeader"
+        // que afecta a Get-TransportRule / Get-Mailbox / Get-InboxRule cuando EXO 3.x usa REST
+        // session embebida en un runspace PowerShell SDK. Forzamos legacy REST output mode:
         const string script = """
             param([string]$AppId, [string]$Thumbprint, [string]$Organization)
+            $env:DISABLE_REST_API_USE_BY_DEFAULT = "true"
+            $PSDefaultParameterValues['Out-Default:OutVariable'] = $null
             Import-Module ExchangeOnlineManagement -ErrorAction Stop
             Connect-ExchangeOnline `
                 -AppId $AppId `
