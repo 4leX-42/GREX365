@@ -17,6 +17,7 @@ public sealed partial class UsersViewModel : ObservableObject
     private readonly IUsersService _users;
     private readonly IUiLogSink _log;
     private readonly IRbacGuard _rbac;
+    private readonly IDialogService _dialogs;
     private CancellationTokenSource? _cts;
 
     [ObservableProperty] private string _searchQuery = string.Empty;
@@ -30,11 +31,12 @@ public sealed partial class UsersViewModel : ObservableObject
     public ObservableCollection<BulkUserResult> BulkResults { get; } = new();
     public ObservableCollection<SkuInfo> AvailableSkus { get; } = new();
 
-    public UsersViewModel(IUsersService users, IUiLogSink log, IRbacGuard rbac)
+    public UsersViewModel(IUsersService users, IUiLogSink log, IRbacGuard rbac, IDialogService dialogs)
     {
         _users = users;
         _log = log;
         _rbac = rbac;
+        _dialogs = dialogs;
     }
 
     private async Task<bool> RequireAuthorizedAsync(string contextName)
@@ -137,12 +139,11 @@ public sealed partial class UsersViewModel : ObservableObject
         {
             if (!await RequireAuthorizedAsync("Disable user").ConfigureAwait(true)) return;
 
-            var confirm = System.Windows.MessageBox.Show(
+            var ok = await _dialogs.ConfirmAsync(
                 $"Deshabilitar la cuenta de {SelectedUser.DisplayName} ({SelectedUser.UserPrincipalName})?",
                 "Confirmar deshabilitación",
-                System.Windows.MessageBoxButton.YesNo,
-                System.Windows.MessageBoxImage.Warning);
-            if (confirm != System.Windows.MessageBoxResult.Yes)
+                DialogIcon.Warning).ConfigureAwait(true);
+            if (!ok)
             {
                 StatusMessage = "Cancelado por el usuario.";
                 return;
@@ -224,12 +225,11 @@ public sealed partial class UsersViewModel : ObservableObject
         }
         if (SelectedSku.Available <= 0)
         {
-            var confirm = System.Windows.MessageBox.Show(
+            var ok = await _dialogs.ConfirmAsync(
                 $"El SKU {SelectedSku.SkuPartNumber} no tiene asientos libres ({SelectedSku.Available}/{SelectedSku.Enabled}). Continuar?",
                 "Confirmar asignación",
-                System.Windows.MessageBoxButton.YesNo,
-                System.Windows.MessageBoxImage.Warning);
-            if (confirm != System.Windows.MessageBoxResult.Yes)
+                DialogIcon.Warning).ConfigureAwait(true);
+            if (!ok)
             {
                 StatusMessage = "Cancelado por el usuario.";
                 return;
@@ -276,12 +276,11 @@ public sealed partial class UsersViewModel : ObservableObject
         {
             if (!await RequireAuthorizedAsync("Remove licenses").ConfigureAwait(true)) return;
 
-            var confirm = System.Windows.MessageBox.Show(
+            var ok = await _dialogs.ConfirmAsync(
                 $"Quitar {SelectedUser.AssignedLicenseCount} licencias de {SelectedUser.DisplayName}?",
                 "Confirmar retirada de licencias",
-                System.Windows.MessageBoxButton.YesNo,
-                System.Windows.MessageBoxImage.Warning);
-            if (confirm != System.Windows.MessageBoxResult.Yes)
+                DialogIcon.Warning).ConfigureAwait(true);
+            if (!ok)
             {
                 StatusMessage = "Cancelado por el usuario.";
                 return;

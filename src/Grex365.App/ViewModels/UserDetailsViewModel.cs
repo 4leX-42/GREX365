@@ -18,6 +18,8 @@ public sealed partial class UserDetailsViewModel : ObservableObject
     private readonly IUsersService _users;
     private readonly IUserDetailsHost _host;
     private readonly IUiLogSink _log;
+    private readonly IDialogService _dialogs;
+    private readonly IClipboardService _clipboard;
     private CancellationTokenSource? _cts;
     private List<SkuInfo> _allSkus = new();
 
@@ -32,11 +34,18 @@ public sealed partial class UserDetailsViewModel : ObservableObject
     public ObservableCollection<AssignedLicenseRow> AssignedLicenses { get; } = new();
     public ObservableCollection<SkuInfo> AssignableSkus { get; } = new();
 
-    public UserDetailsViewModel(IUsersService users, IUserDetailsHost host, IUiLogSink log)
+    public UserDetailsViewModel(
+        IUsersService users,
+        IUserDetailsHost host,
+        IUiLogSink log,
+        IDialogService dialogs,
+        IClipboardService clipboard)
     {
         _users = users;
         _host = host;
         _log = log;
+        _dialogs = dialogs;
+        _clipboard = clipboard;
         _host.OpenRequested += (_, id) => _ = LoadAsync(id);
         _host.CloseRequested += (_, _) => Reset();
     }
@@ -151,12 +160,10 @@ public sealed partial class UserDetailsViewModel : ObservableObject
     {
         if (User is null || string.IsNullOrEmpty(User.Id)) return;
         var newState = !User.AccountEnabled;
-        var confirm = System.Windows.MessageBox.Show(
+        var ok = await _dialogs.ConfirmAsync(
             (newState ? "Habilitar" : "Deshabilitar") + $" la cuenta {User.UserPrincipalName}?",
-            "Confirmar",
-            System.Windows.MessageBoxButton.YesNo,
-            System.Windows.MessageBoxImage.Question);
-        if (confirm != System.Windows.MessageBoxResult.Yes) return;
+            "Confirmar").ConfigureAwait(true);
+        if (!ok) return;
 
         IsBusy = true;
         StatusMessage = newState ? "Habilitando..." : "Deshabilitando...";
@@ -180,12 +187,10 @@ public sealed partial class UserDetailsViewModel : ObservableObject
     private async Task RemoveLicenseAsync(AssignedLicenseRow? row)
     {
         if (row is null || User is null || string.IsNullOrEmpty(User.Id)) return;
-        var confirm = System.Windows.MessageBox.Show(
+        var ok = await _dialogs.ConfirmAsync(
             $"Quitar la licencia '{row.FriendlyName}' ({row.SkuPartNumber}) de {User.UserPrincipalName}?",
-            "Confirmar",
-            System.Windows.MessageBoxButton.YesNo,
-            System.Windows.MessageBoxImage.Question);
-        if (confirm != System.Windows.MessageBoxResult.Yes) return;
+            "Confirmar").ConfigureAwait(true);
+        if (!ok) return;
 
         IsBusy = true;
         StatusMessage = $"Quitando {row.FriendlyName}...";
@@ -234,24 +239,20 @@ public sealed partial class UserDetailsViewModel : ObservableObject
     private async Task ResetPasswordAsync()
     {
         if (User is null || string.IsNullOrEmpty(User.Id)) return;
-        var confirm = System.Windows.MessageBox.Show(
+        var ok = await _dialogs.ConfirmAsync(
             $"Restablecer la contraseña de {User.UserPrincipalName}?\n\nSe generará una nueva contraseña aleatoria y se forzará cambio en el siguiente inicio de sesión.",
-            "Confirmar reset password",
-            System.Windows.MessageBoxButton.YesNo,
-            System.Windows.MessageBoxImage.Question);
-        if (confirm != System.Windows.MessageBoxResult.Yes) return;
+            "Confirmar reset password").ConfigureAwait(true);
+        if (!ok) return;
 
         IsBusy = true;
         StatusMessage = "Reseteando password...";
         try
         {
             var newPwd = await _users.ResetPasswordAsync(User.Id, true, _log.Progress).ConfigureAwait(true);
-            System.Windows.Clipboard.SetText(newPwd);
-            System.Windows.MessageBox.Show(
+            _clipboard.SetText(newPwd);
+            await _dialogs.ShowAsync(
                 $"Password temporal:\n\n{newPwd}\n\n(Copiada al portapapeles.)",
-                "Password reseteada",
-                System.Windows.MessageBoxButton.OK,
-                System.Windows.MessageBoxImage.Information);
+                "Password reseteada").ConfigureAwait(true);
             StatusMessage = "Password reseteada. (Forzará cambio próximo inicio.)";
         }
         catch (Exception ex)
@@ -269,12 +270,11 @@ public sealed partial class UserDetailsViewModel : ObservableObject
     private async Task RevokeSessionsAsync()
     {
         if (User is null || string.IsNullOrEmpty(User.Id)) return;
-        var confirm = System.Windows.MessageBox.Show(
+        var ok = await _dialogs.ConfirmAsync(
             $"Revocar TODAS las sign-in sessions de {User.UserPrincipalName}?\n\nForzará re-autenticación en cualquier sesión activa (web, Teams, Outlook, etc).",
             "Confirmar revoke sessions",
-            System.Windows.MessageBoxButton.YesNo,
-            System.Windows.MessageBoxImage.Warning);
-        if (confirm != System.Windows.MessageBoxResult.Yes) return;
+            DialogIcon.Warning).ConfigureAwait(true);
+        if (!ok) return;
 
         IsBusy = true;
         StatusMessage = "Revocando sessions...";
@@ -298,12 +298,11 @@ public sealed partial class UserDetailsViewModel : ObservableObject
     private async Task RemoveAllLicensesAsync()
     {
         if (User is null || string.IsNullOrEmpty(User.Id)) return;
-        var confirm = System.Windows.MessageBox.Show(
+        var ok = await _dialogs.ConfirmAsync(
             $"Quitar TODAS las licencias asignadas a {User.UserPrincipalName}?",
             "Confirmar",
-            System.Windows.MessageBoxButton.YesNo,
-            System.Windows.MessageBoxImage.Warning);
-        if (confirm != System.Windows.MessageBoxResult.Yes) return;
+            DialogIcon.Warning).ConfigureAwait(true);
+        if (!ok) return;
 
         IsBusy = true;
         StatusMessage = "Quitando licencias...";

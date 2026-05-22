@@ -12,6 +12,7 @@ public sealed partial class OnboardingViewModel : ObservableObject
     private readonly IOnboardingService _onboarding;
     private readonly IUsersService _users;
     private readonly IUiLogSink _log;
+    private readonly IDialogService _dialogs;
     private CancellationTokenSource? _cts;
 
     [ObservableProperty] private string _displayName = string.Empty;
@@ -30,11 +31,12 @@ public sealed partial class OnboardingViewModel : ObservableObject
     public ObservableCollection<SkuInfo> AvailableSkus { get; } = new();
     public ObservableCollection<SkuInfo> SelectedSkus { get; } = new();
 
-    public OnboardingViewModel(IOnboardingService onboarding, IUsersService users, IUiLogSink log)
+    public OnboardingViewModel(IOnboardingService onboarding, IUsersService users, IUiLogSink log, IDialogService dialogs)
     {
         _onboarding = onboarding;
         _users = users;
         _log = log;
+        _dialogs = dialogs;
     }
 
     [RelayCommand]
@@ -108,12 +110,10 @@ public sealed partial class OnboardingViewModel : ObservableObject
         summary.Add($"Crear {options.Upn}");
         if (options.SkuIds.Count > 0) summary.Add($"{options.SkuIds.Count} licencia(s)");
         if (options.GroupIdentifiers.Count > 0) summary.Add($"{options.GroupIdentifiers.Count} grupo(s)");
-        var confirm = System.Windows.MessageBox.Show(
+        var ok = await _dialogs.ConfirmAsync(
             $"Onboarding:\n\n  {string.Join(", ", summary)}\n\n¿Continuar?",
-            "Confirmar onboarding",
-            System.Windows.MessageBoxButton.YesNo,
-            System.Windows.MessageBoxImage.Question);
-        if (confirm != System.Windows.MessageBoxResult.Yes)
+            "Confirmar onboarding").ConfigureAwait(true);
+        if (!ok)
         {
             StatusMessage = "Cancelado por el usuario.";
             return;

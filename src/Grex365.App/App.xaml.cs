@@ -155,6 +155,8 @@ public partial class App : Application
 
                 services.AddSingleton<WpfUiNotifier>();
                 services.AddSingleton<INotifier>(sp => sp.GetRequiredService<WpfUiNotifier>());
+                services.AddSingleton<IDialogService, WpfDialogService>();
+                services.AddSingleton<IClipboardService, WpfClipboardService>();
 
                 var auditDir = Path.Combine(DataDirectory, "audit");
                 Directory.CreateDirectory(auditDir);

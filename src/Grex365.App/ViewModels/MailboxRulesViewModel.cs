@@ -12,6 +12,7 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
     private readonly IMailboxRulesService _rules;
     private readonly IUiLogSink _log;
     private readonly IRbacGuard _rbac;
+    private readonly IDialogService _dialogs;
     private CancellationTokenSource? _cts;
 
     [ObservableProperty] private string _identity = string.Empty;
@@ -38,11 +39,12 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
     public AutoReplyState[] AutoReplyStates { get; } =
         new[] { AutoReplyState.Disabled, AutoReplyState.Enabled, AutoReplyState.Scheduled };
 
-    public MailboxRulesViewModel(IMailboxRulesService rules, IUiLogSink log, IRbacGuard rbac)
+    public MailboxRulesViewModel(IMailboxRulesService rules, IUiLogSink log, IRbacGuard rbac, IDialogService dialogs)
     {
         _rules = rules;
         _log = log;
         _rbac = rbac;
+        _dialogs = dialogs;
     }
 
     private async Task<bool> RequireAuthorizedAsync(string contextName)
@@ -163,12 +165,10 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
             return;
         }
         if (!await RequireAuthorizedAsync("Apply forwarding").ConfigureAwait(true)) return;
-        var confirm = System.Windows.MessageBox.Show(
+        var ok = await _dialogs.ConfirmAsync(
             $"Aplicar reenvío de {Identity} hacia {ForwardingSmtp}?\nDeliver a buzón original: {DeliverToMailboxAndForward}",
-            "Confirmar reenvío",
-            System.Windows.MessageBoxButton.YesNo,
-            System.Windows.MessageBoxImage.Question);
-        if (confirm != System.Windows.MessageBoxResult.Yes)
+            "Confirmar reenvío").ConfigureAwait(true);
+        if (!ok)
         {
             StatusMessage = "Cancelado por el usuario.";
             return;
@@ -202,12 +202,11 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
             return;
         }
         if (!await RequireAuthorizedAsync("Clear forwarding").ConfigureAwait(true)) return;
-        var confirm = System.Windows.MessageBox.Show(
+        var ok = await _dialogs.ConfirmAsync(
             $"Quitar reenvío de {Identity}?",
             "Confirmar",
-            System.Windows.MessageBoxButton.YesNo,
-            System.Windows.MessageBoxImage.Warning);
-        if (confirm != System.Windows.MessageBoxResult.Yes)
+            DialogIcon.Warning).ConfigureAwait(true);
+        if (!ok)
         {
             StatusMessage = "Cancelado por el usuario.";
             return;
@@ -275,12 +274,11 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
         }
         if (!await RequireAuthorizedAsync("Remove calendar perm").ConfigureAwait(true)) return;
         var target = SelectedCalendarPermission;
-        var confirm = System.Windows.MessageBox.Show(
+        var ok = await _dialogs.ConfirmAsync(
             $"Quitar permiso calendario a {target.Principal} ({target.AccessRights})?",
             "Confirmar",
-            System.Windows.MessageBoxButton.YesNo,
-            System.Windows.MessageBoxImage.Warning);
-        if (confirm != System.Windows.MessageBoxResult.Yes)
+            DialogIcon.Warning).ConfigureAwait(true);
+        if (!ok)
         {
             StatusMessage = "Cancelado por el usuario.";
             return;

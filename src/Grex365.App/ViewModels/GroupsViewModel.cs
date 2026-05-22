@@ -18,6 +18,7 @@ public sealed partial class GroupsViewModel : ObservableObject
     private readonly IDistributionListsService _dls;
     private readonly IUiLogSink _log;
     private readonly IRbacGuard _rbac;
+    private readonly IDialogService _dialogs;
     private CancellationTokenSource? _cts;
 
     [ObservableProperty] private string _searchQuery = string.Empty;
@@ -33,12 +34,13 @@ public sealed partial class GroupsViewModel : ObservableObject
     public ObservableCollection<AddMemberResult> LastAddResults { get; } = new();
     public ObservableCollection<BulkGroupResult> BulkCreateResults { get; } = new();
 
-    public GroupsViewModel(IGroupsService groups, IDistributionListsService dls, IUiLogSink log, IRbacGuard rbac)
+    public GroupsViewModel(IGroupsService groups, IDistributionListsService dls, IUiLogSink log, IRbacGuard rbac, IDialogService dialogs)
     {
         _groups = groups;
         _dls = dls;
         _log = log;
         _rbac = rbac;
+        _dialogs = dialogs;
     }
 
     private async Task<bool> RequireAuthorizedAsync(string contextName)
@@ -229,12 +231,11 @@ public sealed partial class GroupsViewModel : ObservableObject
 
         if (!await RequireAuthorizedAsync("Remove member").ConfigureAwait(true)) return;
 
-        var confirm = System.Windows.MessageBox.Show(
+        var ok = await _dialogs.ConfirmAsync(
             $"Eliminar a {SelectedMember.DisplayName ?? SelectedMember.Id} del grupo {SelectedGroup.DisplayName}?",
             "Confirmar eliminación",
-            System.Windows.MessageBoxButton.YesNo,
-            System.Windows.MessageBoxImage.Warning);
-        if (confirm != System.Windows.MessageBoxResult.Yes)
+            DialogIcon.Warning).ConfigureAwait(true);
+        if (!ok)
         {
             StatusMessage = "Cancelado por el usuario.";
             return;
@@ -410,12 +411,10 @@ public sealed partial class GroupsViewModel : ObservableObject
             distinctDl   > 0 ? $"{distinctDl} DL"   : null,
         }.Where(s => s is not null));
 
-        var confirm = System.Windows.MessageBox.Show(
+        var ok = await _dialogs.ConfirmAsync(
             $"Se crearán/actualizarán {breakdown} ({rows.Count} miembros) sobre @{domain}.\n\nTipo detectado desde columna `GroupType` del CSV (default M365).\n\n¿Continuar?",
-            "Confirmar creación masiva",
-            System.Windows.MessageBoxButton.YesNo,
-            System.Windows.MessageBoxImage.Question);
-        if (confirm != System.Windows.MessageBoxResult.Yes)
+            "Confirmar creación masiva").ConfigureAwait(true);
+        if (!ok)
         {
             StatusMessage = "Cancelado por el usuario.";
             return;

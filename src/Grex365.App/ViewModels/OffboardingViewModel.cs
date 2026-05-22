@@ -12,6 +12,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
     private readonly IOffboardingService _service;
     private readonly IUiLogSink _log;
     private readonly IRbacGuard _rbac;
+    private readonly IDialogService _dialogs;
     private CancellationTokenSource? _cts;
 
     [ObservableProperty] private string _upn = string.Empty;
@@ -24,11 +25,12 @@ public sealed partial class OffboardingViewModel : ObservableObject
 
     public ObservableCollection<OffboardingStep> Steps { get; } = new();
 
-    public OffboardingViewModel(IOffboardingService service, IUiLogSink log, IRbacGuard rbac)
+    public OffboardingViewModel(IOffboardingService service, IUiLogSink log, IRbacGuard rbac, IDialogService dialogs)
     {
         _service = service;
         _log = log;
         _rbac = rbac;
+        _dialogs = dialogs;
     }
 
     [RelayCommand(CanExecute = nameof(CanRun))]
@@ -59,12 +61,11 @@ public sealed partial class OffboardingViewModel : ObservableObject
         }
 
         var summary = string.Join(", ", actions);
-        var confirm = System.Windows.MessageBox.Show(
+        var ok = await _dialogs.ConfirmAsync(
             $"Offboarding de {Upn}:\n\n  {summary}\n\n¿Continuar?",
             "Confirmar offboarding",
-            System.Windows.MessageBoxButton.YesNo,
-            System.Windows.MessageBoxImage.Warning);
-        if (confirm != System.Windows.MessageBoxResult.Yes)
+            DialogIcon.Warning).ConfigureAwait(true);
+        if (!ok)
         {
             StatusMessage = "Cancelado por el usuario.";
             return;
