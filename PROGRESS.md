@@ -4,7 +4,7 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **301 passing** (xUnit + FluentAssertions)
+- Tests: **313 passing** (xUnit + FluentAssertions)
 - Última actualización: 2026-05-22
 
 ## Bitácora sesiones
@@ -28,6 +28,10 @@ Commits:
 - `ux(sidebar)` badge rojo con count de ERROR findings en la nav item "Auditoría". `NavigationItem` gana `ErrorBadge` + `HasErrorBadge`; `MainViewModel` subscribe a `IAuditFindingsStore` y empuja `_auditStore.ErrorCount` al item correspondiente. Visible globalmente desde cualquier módulo.
 - `ux(audit)` empty state con glyph FavoritesList U+E930 + mensaje "Sin hallazgos todavía" cuando `Findings.Count == 0`. `CountToVisibilityConverter` extendido con parámetro `invert` para mostrar/ocultar inverso. Mejora primera impresión antes de lanzar primer audit.
 - `ux(audit)` keyboard shortcuts en AuditView via InputBindings: `Ctrl+R` lanza identidad+grupos, `Esc` cancela, `Ctrl+E` exporta CSV. Tooltips actualizados. Export ahora itera `FindingsView` (respeta filtros ERROR/WARN/INFO + búsqueda) en lugar de toda la colección.
+- `fix(users)` quita `signInActivity` del `$select` en `GraphUsersService.SearchAsync`/`GetByIdAsync` — provocaba `AuditLog.Read.All required` cuando se buscaba un usuario. Audit identity sí lo sigue usando (sólo donde es imprescindible para stale-detection).
+- `ux` Enter dispara búsqueda en Users / Groups / SharedMailbox / MailboxRules / DNS check (KeyBinding en TextBox.InputBindings).
+- `ux` log panel inferior **colapsable + oculto por defecto**. `UserPreferences.LogPanelVisible` persiste el estado. `MainViewModel.ToggleLogPanelCommand` + botón "Log" en status bar. RowDefinitions usan Style+DataTrigger para colapsar splitter y border cuando el panel está oculto.
+- `feat(groups)` elimina toggle manual "DL (Exchange)". `BulkGroupRow.GroupType` (default `M365`) + `BulkGroupRowPreprocessor` ahora detecta tipo desde columnas `GroupType`/`Type`/`Kind` del CSV (alias: m365/microsoft 365/unified/dl/distribution/exchange) con forward-fill como el nombre. `BulkCreateFromCsvAsync` divide rows por tipo y despacha a `_groups.CreateM365GroupsFromRowsAsync` y/o `_dls.CreateFromRowsAsync` según corresponda.
 - `refactor(audit-vm)` extrae `NotifyAllCommands()` helper en AuditViewModel — elimina ~80 líneas de notify chains repetidas y evita bugs cuando se añade un nuevo command.
 
 Plantamiento status: Fase 6 sigue **6/8 hechos**; backlog seguridad amplía cobertura M365 baseline. Toolbar fila 1 ahora con 8 audits Graph (Identidad+grupos, MFA, CA policies, Privileged roles, App credentials, Tenant defaults, OAuth grants, Actividad grupos) y fila 2 con 4 audits EXO (Forwarding externo, Inbox rules, Transport rules, Shared mailbox sign-in).
@@ -207,7 +211,7 @@ UX/QoL fase 3:
 
 ---
 
-## Tests (301 passing)
+## Tests (313 passing)
 
 | Suite | Tests | Cubre |
 |-------|-------|-------|
@@ -224,7 +228,7 @@ UX/QoL fase 3:
 | GroupActivityAnalyzer | 10 | CSV parse (quoted/missing date) + analyze (cutoff strict-less, no-activity, deleted, guard) |
 | OffboardingService | 6 | Empty UPN, missing user, per-flag, errores |
 | SkuInfo | 6 | Math available, ordering, display, fallback guid |
-| BulkGroupRowPreprocessor | 13 | Forward-fill, skip orphans, trim, IsEmail theory |
+| BulkGroupRowPreprocessor | 25 | Forward-fill, skip orphans, trim, IsEmail theory, NormalizeType (M365/DL aliases case-insensitive), GroupType detection from CSV column, forward-fill type |
 | OnboardingValidator | 16 | UPN/password/usage/mail-nickname validation + derive |
 | MailboxRulesValidator | 15 | OOO state transitions, date ranges, forwarding SMTP shape |
 | BulkUserActionParser | 17 | enable/disable/remove-licenses + assign:&lt;SKU&gt; parse + lookup |
