@@ -47,7 +47,11 @@
                         </Grid.ColumnDefinitions>
                         <ui:TextBox Grid.Column="0"
                                     Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="Nombre, UPN o email" />
+                                    PlaceholderText="Nombre, UPN o email">
+                            <ui:TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding SearchCommand}" />
+                            </ui:TextBox.InputBindings>
+                        </ui:TextBox>
                         <ui:Button Grid.Column="1"
                                    Content="Buscar"
                                    Margin="8,0,0,0"

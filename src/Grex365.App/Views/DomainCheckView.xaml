@@ -33,7 +33,11 @@
             </Grid.ColumnDefinitions>
             <ui:TextBox Grid.Column="0"
                         Text="{Binding Domain, UpdateSourceTrigger=PropertyChanged}"
-                        PlaceholderText="contoso.com" />
+                        PlaceholderText="contoso.com">
+                <ui:TextBox.InputBindings>
+                    <KeyBinding Key="Enter" Command="{Binding RunCommand}" />
+                </ui:TextBox.InputBindings>
+            </ui:TextBox>
             <ui:Button Grid.Column="1"
                        Content="Comprobar"
                        Appearance="Primary"

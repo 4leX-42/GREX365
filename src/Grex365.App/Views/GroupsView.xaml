@@ -29,14 +29,9 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0"
-                       Text="Buscar grupos M365/DL y gestionar miembros · creación masiva M365 o DL desde CSV"
+                       Text="Buscar grupos M365/DL · creación masiva CSV (tipo auto-detectado desde columna GroupType, default M365)"
                        Opacity="0.7"
                        VerticalAlignment="Center" />
-            <CheckBox Grid.Column="1"
-                      Content="DL (Exchange) en vez de M365"
-                      IsChecked="{Binding BulkTargetDl}"
-                      VerticalAlignment="Center"
-                      Margin="0,0,12,0" />
             <TextBlock Grid.Column="2"
                        Text="Dominio:"
                        VerticalAlignment="Center"
@@ -79,7 +74,11 @@
                         </Grid.ColumnDefinitions>
                         <ui:TextBox Grid.Column="0"
                                     Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="Nombre o email del grupo" />
+                                    PlaceholderText="Nombre o email del grupo">
+                            <ui:TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding SearchCommand}" />
+                            </ui:TextBox.InputBindings>
+                        </ui:TextBox>
                         <ui:Button Grid.Column="1"
                                    Content="Buscar"
                                    Margin="8,0,0,0"

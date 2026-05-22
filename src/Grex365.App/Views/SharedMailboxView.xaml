@@ -28,7 +28,11 @@
                         </Grid.ColumnDefinitions>
                         <ui:TextBox Grid.Column="0"
                                     Text="{Binding MailboxIdentity, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="user@contoso.com / UPN / SMTP" />
+                                    PlaceholderText="user@contoso.com / UPN / SMTP">
+                            <ui:TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding LookupCommand}" />
+                            </ui:TextBox.InputBindings>
+                        </ui:TextBox>
                         <ui:Button Grid.Column="1"
                                    Content="Consultar"
                                    Margin="8,0,0,0"
