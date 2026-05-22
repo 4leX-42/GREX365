@@ -58,6 +58,41 @@
 
 ## Bitácora sesiones
 
+### 2026-05-23 (sesión tarde) — Sprints M-O · UX overhaul + bug stomping
+
+**Sprint M** — Sally UX pass (desaturar verde + restraint):
+- BoolToBrushConverter: `BrushSemanticOk` (verde) → `BrandAccentSolid` (azul). Connection dots ya no verdes.
+- Paleta brand re-tuned: `#5B8DEF → #A66CF4` (menos saturado). `BrandCyan` teal `#22D3EE` → sky `#7AB7FF`.
+- Sidebar gradient overlay quitado (tintaba Mica verdoso).
+- Glass borders + glow effects retirados de status dots, ProgressBar, severity pills. Glow reservado a focus TextBox/PasswordBox + hover interactivos.
+- Card radius 12→8, padding 20→14. PageRoot 32,28→22,18. MetricCard sin hover translate.
+- HeroCard colapsa a alias Card. CardHover sin animación translate.
+- Page transition 320ms fade+slide+scale → 120ms fade only.
+- 14 views: hero badge → eyebrow + título Light pattern (Linear/Raycast estilo). Dashboard también tonado.
+- Sidebar logo: bare GX 22px monochrome (sigue TextFillColorPrimary) + wordmark + version Cascadia Mono. NO pill, NO glow, NO gradient.
+- Nuevo `GxLogoBadge` style retiene el pill gradient solo para AboutWindow/splash.
+- GX path refinado: G como D estirada stub 60% altura, X cruce off-center 55%.
+
+**Sprint N** — Bulk groups bugs (3):
+- `GroupName` con `@` (SMTP completo, ej. `Testeo774@es.andersen.com`) → doble `@` al concatenar dominio. Fix: si `rawName` contiene `@`, lo usa como email y deriva displayName del local part. Aplica M365 + DL paths.
+- Graph eventual consistency: tras `POST /groups`, members read/write fallaba con `Resource ... does not exist`. Nuevo `WithGraphReplicaRetryAsync` exponential backoff (1.5s→3s→6s→12s→15s cap). 8 reintentos `justCreated=true`, 2 en grupos existentes. Captura `Request_ResourceNotFound`, `ResourceNotFound`, msg "does not exist".
+- UI: RadioButtons `Auto / M365 / DL` en GroupsView header bulk. `BulkTypeChoice` property en VM. Override per-row GroupType si user elige M365/DL.
+
+**Sprint state persistence + typeahead**:
+- 15 page VMs `AddTransient` → `AddSingleton` en `App.xaml.cs`. State (query, results, selección, drafts) ahora persiste entre tabs. Settings + FirstRun siguen Transient (modales one-shot).
+- `OnSearchQueryChanged` debounce 250ms en `UsersViewModel` + `GroupsViewModel`. Cancela previous con `CancellationTokenSource`. Min 2 chars antes de pegar a Graph. Snapshot guard descarta callbacks stale. Backend ya usaba startswith.
+- Killed 4 instancias zombie de Grex365.exe que retenían DLLs bloqueadas — el código Singleton llevaba sin ejecutarse desde el commit anterior.
+
+**Sprint O** — Licencias module overhaul:
+- Nav rename `Salud tenant` → `Licencias`. RenamedNavTitles migration map para preferencias guardadas.
+- Auto-load: `TenantHealthViewModel` inyecta `IConnectionStateMonitor`. PropertyChanged listener + `_autoLoadAttempted` flag → refresh automático al conectar Graph.
+- View-driven trigger fallback: `TenantHealthView.xaml.cs` Loaded event llama `vm.TriggerLoadIfNeeded()`. Garantiza fetch cuando entras al módulo con lista vacía + Graph conectado, sin depender solo del monitor PropertyChanged.
+- Search lupa: TextBox con glyph search + `×` clear button. `LicenseFilter` property + `LicensesView.Filter` predicate match FriendlyName + SkuPartNumber + CategoryLabel case-insensitive. `OnLicenseFilterChanged` refresca la view.
+- Gestionar button → `GoToUsersCommand` resuelve `MainViewModel` singleton, switch a Usuarios.
+- Header refactor a eyebrow pattern (`LICENCIAS / Licencias del tenant`).
+
+**Estado**: build clean 7 projects 0 errors. 469 tests verdes (386 Core + 83 App). Commits pushed origin/grex365-2.0 (8 commits sesión tarde).
+
 ### 2026-05-23 (Sprint L) — Visual overhaul futurista (light + dark)
 
 User directiva: dirección visual obligatoria — minimalista futurista premium tecnológico, glass surfaces, accent gradient azul→púrpura, cyan/neon hints, animaciones suaves, microinteracciones, depth premium. NO corporate gris muerto.
