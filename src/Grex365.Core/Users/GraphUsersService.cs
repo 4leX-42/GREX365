@@ -172,6 +172,63 @@ public sealed class GraphUsersService : IUsersService
         progress?.Report(LogEntry.Ok("Users", $"Quitada licencia {skuId} de {userId}"));
     }
 
+    public async Task<string> ResetPasswordAsync(string userId, bool forceChangeNextSignIn = true, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default)
+    {
+        var newPassword = GenerateTempPassword();
+        var body = new User
+        {
+            PasswordProfile = new PasswordProfile
+            {
+                Password = newPassword,
+                ForceChangePasswordNextSignIn = forceChangeNextSignIn,
+            },
+        };
+        await Client.Users[userId].PatchAsync(body, cancellationToken: cancellationToken).ConfigureAwait(false);
+        progress?.Report(LogEntry.Ok("Users", $"Password reset para {userId} (force change: {forceChangeNextSignIn})"));
+        return newPassword;
+    }
+
+    public async Task RevokeSignInSessionsAsync(string userId, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default)
+    {
+        await Client.Users[userId].RevokeSignInSessions.PostAsRevokeSignInSessionsPostResponseAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        progress?.Report(LogEntry.Ok("Users", $"Sign-in sessions revocadas para {userId}"));
+    }
+
+    private static string GenerateTempPassword()
+    {
+        // 16 chars: mayúsculas + minúsculas + dígitos + símbolos. Sin caracteres ambiguos.
+        const string upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        const string lower = "abcdefghijkmnpqrstuvwxyz";
+        const string digits = "23456789";
+        const string symbols = "!@#$%^&*";
+        var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        var pool = upper + lower + digits + symbols;
+        var pwd = new char[16];
+        // Ensure each category present at positions 0..3
+        pwd[0] = upper[NextInt(rng, upper.Length)];
+        pwd[1] = lower[NextInt(rng, lower.Length)];
+        pwd[2] = digits[NextInt(rng, digits.Length)];
+        pwd[3] = symbols[NextInt(rng, symbols.Length)];
+        for (int i = 4; i < pwd.Length; i++)
+        {
+            pwd[i] = pool[NextInt(rng, pool.Length)];
+        }
+        // Shuffle
+        for (int i = pwd.Length - 1; i > 0; i--)
+        {
+            var j = NextInt(rng, i + 1);
+            (pwd[i], pwd[j]) = (pwd[j], pwd[i]);
+        }
+        return new string(pwd);
+    }
+
+    private static int NextInt(System.Security.Cryptography.RandomNumberGenerator rng, int exclusiveMax)
+    {
+        var bytes = new byte[4];
+        rng.GetBytes(bytes);
+        return (int)(BitConverter.ToUInt32(bytes, 0) % (uint)exclusiveMax);
+    }
+
     public async Task<UserSummary> CreateUserAsync(
         NewUserSpec spec,
         IProgress<LogEntry>? progress = null,

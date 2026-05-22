@@ -67,9 +67,17 @@
                        Content="Habilitar / Deshabilitar"
                        ToolTip="Cambia AccountEnabled del usuario" />
             <ui:Button Margin="0,0,8,8"
+                       Command="{Binding ResetPasswordCommand}"
+                       Content="Reset password"
+                       ToolTip="Genera password temporal + force change next sign-in. Copia al portapapeles." />
+            <ui:Button Margin="0,0,8,8"
+                       Command="{Binding RevokeSessionsCommand}"
+                       Content="Revocar sessions"
+                       ToolTip="POST /users/{id}/revokeSignInSessions: fuerza re-auth en todas las sesiones activas" />
+            <ui:Button Margin="0,0,8,8"
                        Command="{Binding RemoveAllLicensesCommand}"
-                       Content="Quitar licencias"
-                       ToolTip="Quita TODAS las licencias asignadas" />
+                       Content="Quitar todas"
+                       ToolTip="Quita TODAS las licencias asignadas (usa la lista de abajo para granular)" />
         </WrapPanel>
 
         <!-- Body -->

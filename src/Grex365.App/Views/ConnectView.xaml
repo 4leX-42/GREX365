@@ -8,7 +8,15 @@
              mc:Ignorable="d">
     <ScrollViewer Style="{StaticResource PageRoot}">
         <StackPanel MaxWidth="900" HorizontalAlignment="Stretch">
-            <TextBlock Text="Conexión a Microsoft 365" Style="{StaticResource PageTitleText}" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                <TextBlock Text=""
+                           FontFamily="{StaticResource IconFontFamily}"
+                           FontSize="22"
+                           Margin="0,0,12,0"
+                           VerticalAlignment="Center"
+                           Opacity="0.85" />
+                <TextBlock Text="Conexión a Microsoft 365" FontSize="28" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </StackPanel>
             <TextBlock Text="Autenticación por certificado contra Microsoft Graph y Exchange Online"
                        Style="{StaticResource PageSubtitleText}" />
 
@@ -121,7 +129,7 @@
                 </StackPanel>
             </Border>
 
-            <Border Style="{StaticResource Card}">
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
                 <StackPanel>
                     <TextBlock Text="Tenant" Style="{StaticResource SectionTitleText}" />
                     <Grid>
@@ -140,6 +148,39 @@
                         <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding TenantDomain, FallbackValue=—}" Margin="0,6,0,0" />
                         <TextBlock Grid.Row="2" Grid.Column="0" Text="Cuenta" Opacity="0.7" Margin="0,6,0,0" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Account, FallbackValue=—}" Margin="0,6,0,0" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="Certificado" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <Border CornerRadius="10" Padding="8,2" Margin="12,0,0,0"
+                                Background="{Binding CertIsValid, Converter={StaticResource BoolToBrushConverter}}" Opacity="0.85">
+                            <TextBlock Text="{Binding CertIsValid, Converter={StaticResource BoolToOnOffConverter}, ConverterParameter='válido/inválido'}"
+                                       FontSize="11" FontWeight="SemiBold" Foreground="White" />
+                        </Border>
+                    </StackPanel>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="App ID" Opacity="0.7" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource MonoText}" Text="{Binding CertAppId, FallbackValue=—}" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Thumbprint" Opacity="0.7" Margin="0,6,0,0" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource MonoText}" Text="{Binding CertThumbprint, FallbackValue=—}" Margin="0,6,0,0" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Expira" Opacity="0.7" Margin="0,6,0,0" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CertExpiry, FallbackValue=—}" Margin="0,6,0,0" />
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Mensaje" Opacity="0.7" Margin="0,6,0,0" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CertStatusMessage, FallbackValue=—}" Margin="0,6,0,0" Opacity="0.85" />
                     </Grid>
                 </StackPanel>
             </Border>

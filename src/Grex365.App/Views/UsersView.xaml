@@ -62,29 +62,72 @@
                                    Command="{Binding CancelCommand}" />
                     </Grid>
 
-                    <ListBox Grid.Row="2"
-                             ItemsSource="{Binding Users}"
-                             SelectedItem="{Binding SelectedUser}"
-                             Background="Transparent"
-                             BorderThickness="0">
-                        <ListBox.ItemContainerStyle>
-                            <Style TargetType="ListBoxItem">
-                                <EventSetter Event="MouseDoubleClick" Handler="UserItem_DoubleClick" />
-                            </Style>
-                        </ListBox.ItemContainerStyle>
-                        <ListBox.ItemTemplate>
-                            <DataTemplate DataType="{x:Type models:UserSummary}">
-                                <StackPanel Margin="4,6">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Ellipse Width="8" Height="8" Margin="0,0,8,0"
-                                                 Fill="{Binding AccountEnabled, Converter={StaticResource BoolToBrushConverter}}" />
-                                        <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" />
-                                    </StackPanel>
-                                    <TextBlock Text="{Binding UserPrincipalName}" Opacity="0.7" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+                    <Grid Grid.Row="2">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Margin="0,24"
+                                    Visibility="{Binding Users.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=invert}">
+                            <TextBlock Text=""
+                                       FontFamily="{StaticResource IconFontFamily}"
+                                       FontSize="48"
+                                       HorizontalAlignment="Center"
+                                       Opacity="0.4" />
+                            <TextBlock Text="Busca un usuario"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,12,0,4"
+                                       Opacity="0.7" />
+                            <TextBlock Text="UPN, nombre o email — pulsa Enter"
+                                       FontSize="12"
+                                       HorizontalAlignment="Center"
+                                       Opacity="0.5" />
+                        </StackPanel>
+                        <ListBox ItemsSource="{Binding Users}"
+                                 SelectedItem="{Binding SelectedUser}"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 Visibility="{Binding Users.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <EventSetter Event="MouseDoubleClick" Handler="UserItem_DoubleClick" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:UserSummary}">
+                                    <Grid Margin="0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0"
+                                                Width="32" Height="32"
+                                                CornerRadius="16"
+                                                Margin="0,0,10,0"
+                                                Background="{DynamicResource AccentFillColorDefaultBrush}">
+                                            <TextBlock Text="{Binding DisplayName, Converter={StaticResource InitialsConverter}}"
+                                                       Foreground="White"
+                                                       FontWeight="SemiBold"
+                                                       FontSize="12"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding UserPrincipalName}" Opacity="0.65" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <Ellipse Grid.Column="2"
+                                                 Width="8" Height="8"
+                                                 VerticalAlignment="Center"
+                                                 Margin="8,0,4,0"
+                                                 Fill="{Binding AccountEnabled, Converter={StaticResource BoolToBrushConverter}}"
+                                                 ToolTip="{Binding AccountEnabled, Converter={StaticResource BoolToOnOffConverter}, ConverterParameter='Habilitado/Deshabilitado'}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
                 </Grid>
             </Border>
 

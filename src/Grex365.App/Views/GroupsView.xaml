@@ -91,24 +91,70 @@
                                          Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}" />
                     </Grid>
 
-                    <ListBox Grid.Row="2"
-                             ItemsSource="{Binding Groups}"
-                             SelectedItem="{Binding SelectedGroup}"
-                             Background="Transparent"
-                             BorderThickness="0">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate DataType="{x:Type models:GroupSummary}">
-                                <StackPanel Margin="4,6">
-                                    <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" />
-                                    <StackPanel Orientation="Horizontal" Opacity="0.7">
-                                        <TextBlock Text="{Binding Mail}" />
-                                        <TextBlock Text=" · " />
-                                        <TextBlock Text="{Binding GroupKind}" />
-                                    </StackPanel>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+                    <Grid Grid.Row="2">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Margin="0,24"
+                                    Visibility="{Binding Groups.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=invert}">
+                            <TextBlock Text=""
+                                       FontFamily="{StaticResource IconFontFamily}"
+                                       FontSize="48"
+                                       HorizontalAlignment="Center"
+                                       Opacity="0.4" />
+                            <TextBlock Text="Busca un grupo"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,12,0,4"
+                                       Opacity="0.7" />
+                            <TextBlock Text="Nombre o email del grupo — pulsa Enter"
+                                       FontSize="12"
+                                       HorizontalAlignment="Center"
+                                       Opacity="0.5" />
+                        </StackPanel>
+                        <ListBox ItemsSource="{Binding Groups}"
+                                 SelectedItem="{Binding SelectedGroup}"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 Visibility="{Binding Groups.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:GroupSummary}">
+                                    <Grid Margin="0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0"
+                                                Width="32" Height="32"
+                                                CornerRadius="6"
+                                                Margin="0,0,10,0"
+                                                Background="{DynamicResource AccentFillColorDefaultBrush}">
+                                            <TextBlock Text="{Binding DisplayName, Converter={StaticResource InitialsConverter}}"
+                                                       Foreground="White"
+                                                       FontWeight="SemiBold"
+                                                       FontSize="12"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding Mail, FallbackValue=—}" Opacity="0.65" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <Border Grid.Column="2"
+                                                Padding="6,1"
+                                                CornerRadius="4"
+                                                VerticalAlignment="Center"
+                                                Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+                                            <TextBlock Text="{Binding GroupKind}"
+                                                       FontSize="10"
+                                                       Opacity="0.75" />
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
                 </Grid>
             </Border>
 

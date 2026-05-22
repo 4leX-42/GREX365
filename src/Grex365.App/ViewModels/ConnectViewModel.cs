@@ -47,6 +47,12 @@ public sealed partial class ConnectViewModel : ObservableObject
     [ObservableProperty] private string _exoModuleStatus = "(no comprobado)";
     [ObservableProperty] private bool _exoModuleAvailable;
 
+    [ObservableProperty] private string? _certAppId;
+    [ObservableProperty] private string? _certThumbprint;
+    [ObservableProperty] private string? _certExpiry;
+    [ObservableProperty] private string? _certStatusMessage;
+    [ObservableProperty] private bool _certIsValid;
+
     public ConnectViewModel(
         IGraphConnection graph,
         IExchangeConnection exchange,
@@ -67,7 +73,33 @@ public sealed partial class ConnectViewModel : ObservableObject
         _rbac = rbac;
 
         _monitor.PropertyChanged += OnMonitorChanged;
+        _ = LoadCertInfoAsync();
         SyncFromMonitor();
+    }
+
+    private async Task LoadCertInfoAsync()
+    {
+        try
+        {
+            var config = await _certStore.LoadAsync().ConfigureAwait(true);
+            if (config is null)
+            {
+                CertStatusMessage = "Sin config (exo-app-params.json no encontrado).";
+                CertIsValid = false;
+                return;
+            }
+            CertAppId = config.AppId;
+            CertThumbprint = config.CertThumbprint;
+            var v = _certValidator.Validate(config);
+            CertIsValid = v.IsValid;
+            CertStatusMessage = v.Message;
+            CertExpiry = v.NotAfter?.ToString("yyyy-MM-dd");
+        }
+        catch (Exception ex)
+        {
+            CertStatusMessage = "Error cargando cert: " + ex.Message;
+            CertIsValid = false;
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanConnect))]

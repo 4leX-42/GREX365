@@ -22,6 +22,10 @@ public interface IUsersService
 
     Task RemoveLicenseAsync(string userId, Guid skuId, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default);
 
+    Task<string> ResetPasswordAsync(string userId, bool forceChangeNextSignIn = true, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default);
+
+    Task RevokeSignInSessionsAsync(string userId, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default);
+
     Task<UserSummary> CreateUserAsync(
         NewUserSpec spec,
         IProgress<LogEntry>? progress = null,

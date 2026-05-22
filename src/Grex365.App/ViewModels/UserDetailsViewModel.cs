@@ -231,6 +231,70 @@ public sealed partial class UserDetailsViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task ResetPasswordAsync()
+    {
+        if (User is null || string.IsNullOrEmpty(User.Id)) return;
+        var confirm = System.Windows.MessageBox.Show(
+            $"Restablecer la contraseña de {User.UserPrincipalName}?\n\nSe generará una nueva contraseña aleatoria y se forzará cambio en el siguiente inicio de sesión.",
+            "Confirmar reset password",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Question);
+        if (confirm != System.Windows.MessageBoxResult.Yes) return;
+
+        IsBusy = true;
+        StatusMessage = "Reseteando password...";
+        try
+        {
+            var newPwd = await _users.ResetPasswordAsync(User.Id, true, _log.Progress).ConfigureAwait(true);
+            System.Windows.Clipboard.SetText(newPwd);
+            System.Windows.MessageBox.Show(
+                $"Password temporal:\n\n{newPwd}\n\n(Copiada al portapapeles.)",
+                "Password reseteada",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Information);
+            StatusMessage = "Password reseteada. (Forzará cambio próximo inicio.)";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("UserDetails", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task RevokeSessionsAsync()
+    {
+        if (User is null || string.IsNullOrEmpty(User.Id)) return;
+        var confirm = System.Windows.MessageBox.Show(
+            $"Revocar TODAS las sign-in sessions de {User.UserPrincipalName}?\n\nForzará re-autenticación en cualquier sesión activa (web, Teams, Outlook, etc).",
+            "Confirmar revoke sessions",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning);
+        if (confirm != System.Windows.MessageBoxResult.Yes) return;
+
+        IsBusy = true;
+        StatusMessage = "Revocando sessions...";
+        try
+        {
+            await _users.RevokeSignInSessionsAsync(User.Id, _log.Progress).ConfigureAwait(true);
+            StatusMessage = "Sign-in sessions revocadas.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("UserDetails", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
     private async Task RemoveAllLicensesAsync()
     {
         if (User is null || string.IsNullOrEmpty(User.Id)) return;
