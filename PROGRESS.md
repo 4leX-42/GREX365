@@ -58,6 +58,24 @@
 
 ## Bitácora sesiones
 
+### 2026-05-23 (Sprint H + I) — Theme auto-system + AppReg refactor
+
+**Sprint H** — Theme auto-from-system:
+- `ISystemThemeProvider` en `Grex365.Core.Abstractions` (`bool IsDarkTheme()`).
+- `WindowsRegistryThemeProvider` en `Grex365.App.Services` lee `HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize\AppsUseLightTheme` (DWORD 0=dark/1=light). Default dark si registry inaccesible.
+- `SettingsViewModel.SystemThemeProvider` static settable + nuevo `ResolveActualTheme()` helper. `ApplyTheme` handle "Auto" via provider.
+- `App.OnStartup` subscribe `Microsoft.Win32.SystemEvents.UserPreferenceChanged`: cuando user cambia tema en Windows Personalization, si pref="Auto" re-aplica via dispatcher (otherwise respect explicit). Unsubscribe en `OnExit`.
+- `SettingsWindow` ComboBox + `FirstRunWizardWindow` RadioButton: añade "Auto (seguir sistema)" option.
+- 8 tests `SettingsViewModelThemeTests`: ResolveActualTheme Dark/Light/Auto+darkprov/Auto+lightprov/null prov defaults/null pref/unknown/case-insensitive. IDisposable fixture restaura SystemThemeProvider.
+
+**Sprint I** — GraphAppRegistrationService refactor:
+- Service crítico (auto-crea AppReg con 9 Graph AppRoles + Exchange.ManageAsApp) tenía 0 tests + lógica mezclada SDK construction + Graph calls.
+- Nueva `AppRegistrationSpec` static en `Grex365.Core.Connections`: pure helpers SDK-typed (`BuildRequiredResourceAccess`, `BuildApplication`, `BuildAdminConsentUrl`, `BuildCertLabel`) + tablas roles + validation. Sin dependencia `IGraphConnection`.
+- Service trimmed 120→50 líneas, usa spec para object construction, conserva Graph SDK calls + progress + result mapping.
+- 17 tests `AppRegistrationSpecTests`: shape (2 entries Graph+EXO), counts (9+1 roles), Type="Role", IDs únicos parseables GUID, permisos críticos presentes, URL formatter theory + reject empty, BuildApplication shape + validations (empty/null/empty-array), BuildCertLabel truncate.
+
+Tests **426 verdes** (343 Core +17 + 83 App). Build clean 7 projects.
+
 ### 2026-05-22 (Sprint G) — First-run wizard + DataGrid real fix
 
 User feedback Sprint F: "Auditoría sigue fallando, color de mierda" → diagnosis: WPF `DataGridTextColumn` y `GridViewColumn.DisplayMemberBinding` generan TextBlocks con Foreground hardcoded a `SystemColors.WindowTextBrush` via internal `SyncColumnProperty` — global Style en DataGrid/ListView NO penetra esos TextBlocks generados.
