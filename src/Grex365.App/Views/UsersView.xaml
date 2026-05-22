@@ -13,11 +13,25 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   Text="Usuarios"
-                   FontSize="24"
-                   FontWeight="SemiBold"
-                   Margin="0,0,0,4" />
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
+            <Border Width="44" Height="44" CornerRadius="12"
+                    Background="{StaticResource BrandAccentGradientSoft}"
+                    BorderBrush="{StaticResource GlassBorderHighlight}"
+                    BorderThickness="1"
+                    Margin="0,0,16,0"
+                    Effect="{StaticResource AccentGlowSoftEffect}">
+                <TextBlock Text=""
+                           FontFamily="{StaticResource IconFontFamily}"
+                           FontSize="22"
+                           Foreground="{StaticResource BrandAccentSolid}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+            </Border>
+            <TextBlock Text="Usuarios"
+                       FontSize="26"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center" />
+        </StackPanel>
         <TextBlock Grid.Row="1"
                    Text="Buscar, ver y administrar cuentas (habilitar/deshabilitar, quitar licencias)"
                    Opacity="0.7"

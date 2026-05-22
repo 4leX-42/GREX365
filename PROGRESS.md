@@ -89,9 +89,14 @@ User directiva: dirección visual obligatoria — minimalista futurista premium 
 - Header de página: Border 44×44 CornerRadius=12 con `BrandAccentGradientSoft` bg + `GlassBorderHighlight` border + `AccentGlowSoftEffect`. Glyph accent inside. Title 26px + subtitle inline.
 - Card de acciones rápidas convertida a `HeroCard` (glow base permanente).
 
-**Estado**: build clean 7 projects 0 errors. 469 tests siguen verdes (no rotos por refactor visual). Cards en todas las vistas heredan glow/elevation automáticamente vía `{StaticResource Card}`. ConnectView/TenantHealthView/AuditView/etc. mantienen headers existentes — el patrón Dashboard sirve de exemplar para futuras iteraciones de header hero.
+**Estado**: build clean 7 projects 0 errors. 469 tests siguen verdes (no rotos por refactor visual). Cards en todas las vistas heredan glow/elevation automáticamente vía `{StaticResource Card}`.
 
-Pendiente iteración usuario: aplicar hero header a más views (ConnectView/AuditView/TenantHealthView), tune intensidad glow según feedback, posible focus-ring accent en TextBox/ComboBox.
+**Sprint L extension** — Hero headers en TODAS las views:
+- Script Python `hero-headers.py` (efímero) reemplaza el `TextBlock Text=glyph FontSize=22 Opacity=0.85` por Border 44×44 hero badge (BrandAccentGradientSoft + GlassBorderHighlight + AccentGlowSoftEffect) en 12 vistas: ConnectView/AuditView/AuditLogView/TenantHealthView/SharedMailboxView/MailFlowRulesView/MailboxRulesView/OnboardingView/OffboardingView/CertWizardView/DomainCheckView/PsConsoleView.
+- UsersView + GroupsView con patrón header diferente (sin glyph TextBlock previo): wrap inline con `Edit` tool — añade el hero badge antes del título.
+- Resultado: 14 views con header hero badge coherente. Dashboard sirve de exemplar (badge + title + subtitle).
+
+Pendiente iteración usuario futura: tune intensidad glow según feedback, focus-ring accent en TextBox/ComboBox, headers más grandes en hero pages tipo Dashboard.
 
 ### 2026-05-23 (Sprint K) — Audit JSON export + baseline diff
 
