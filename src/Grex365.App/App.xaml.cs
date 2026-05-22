@@ -103,6 +103,7 @@ public partial class App : Application
                 services.AddSingleton<IAuditService, GraphAuditService>();
                 services.AddSingleton<IExoForwardingAuditService, ExoForwardingAuditService>();
                 services.AddSingleton<IAuditFindingsStore, InMemoryAuditFindingsStore>();
+                services.AddSingleton<IUserDetailsHost, UserDetailsHost>();
                 services.AddSingleton<ITenantHealthService, GraphTenantHealthService>();
                 services.AddSingleton<IUsersService, GraphUsersService>();
                 services.AddSingleton<IOffboardingService, OffboardingService>();
@@ -167,6 +168,7 @@ public partial class App : Application
                 services.AddTransient<AuditViewModel>();
                 services.AddTransient<TenantHealthViewModel>();
                 services.AddTransient<UsersViewModel>();
+                services.AddSingleton<UserDetailsViewModel>();
                 services.AddTransient<OffboardingViewModel>();
                 services.AddTransient<OnboardingViewModel>();
                 services.AddTransient<MailboxRulesViewModel>();

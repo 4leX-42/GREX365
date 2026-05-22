@@ -45,6 +45,10 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IGraphConnection _graph;
     private readonly IExchangeConnection _exchange;
     private readonly IAuditFindingsStore _auditStore;
+    private readonly IUserDetailsHost _userDetailsHost;
+
+    [ObservableProperty] private bool _userDrawerOpen;
+    public UserDetailsViewModel UserDetailsVm { get; }
 
     [ObservableProperty] private NavigationItem? _selectedNavigation;
     [ObservableProperty] private ObservableObject? _currentPage;
@@ -72,6 +76,8 @@ public sealed partial class MainViewModel : ObservableObject
         IGraphConnection graph,
         IExchangeConnection exchange,
         IAuditFindingsStore auditStore,
+        IUserDetailsHost userDetailsHost,
+        UserDetailsViewModel userDetailsVm,
         PluginLoadReport pluginReport)
     {
         _uiLog = uiLog;
@@ -82,9 +88,12 @@ public sealed partial class MainViewModel : ObservableObject
         _graph = graph;
         _exchange = exchange;
         _auditStore = auditStore;
+        _userDetailsHost = userDetailsHost;
+        UserDetailsVm = userDetailsVm;
 
         _monitor.PropertyChanged += OnMonitorChanged;
         _auditStore.PropertyChanged += OnAuditStoreChanged;
+        _userDetailsHost.PropertyChanged += OnUserDetailsHostChanged;
         SyncFromMonitor();
 
         try
@@ -251,6 +260,19 @@ public sealed partial class MainViewModel : ObservableObject
         TenantDomain = s.TenantDomain;
         Account = s.Account;
         UpdateNavEnabledStates();
+    }
+
+    private void OnUserDetailsHostChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher is not null && !dispatcher.CheckAccess())
+        {
+            dispatcher.Invoke(() => UserDrawerOpen = _userDetailsHost.IsOpen);
+        }
+        else
+        {
+            UserDrawerOpen = _userDetailsHost.IsOpen;
+        }
     }
 
     private void OnAuditStoreChanged(object? sender, PropertyChangedEventArgs e)

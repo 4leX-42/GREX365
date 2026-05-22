@@ -148,6 +148,11 @@
                              Background="Transparent"
                              BorderThickness="0"
                              VirtualizingPanel.IsVirtualizing="True">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <EventSetter Event="MouseDoubleClick" Handler="MemberItem_DoubleClick" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
                         <ListBox.ItemTemplate>
                             <DataTemplate DataType="{x:Type models:GroupMember}">
                                 <Grid Margin="4,4">

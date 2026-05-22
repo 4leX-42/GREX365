@@ -189,6 +189,9 @@
             <DataTemplate DataType="{x:Type vm:DomainCheckViewModel}">
                 <v:DomainCheckView />
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:UserDetailsViewModel}">
+                <v:UserDetailsView />
+            </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

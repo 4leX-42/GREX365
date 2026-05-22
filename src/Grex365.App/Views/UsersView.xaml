@@ -67,6 +67,11 @@
                              SelectedItem="{Binding SelectedUser}"
                              Background="Transparent"
                              BorderThickness="0">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <EventSetter Event="MouseDoubleClick" Handler="UserItem_DoubleClick" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
                         <ListBox.ItemTemplate>
                             <DataTemplate DataType="{x:Type models:UserSummary}">
                                 <StackPanel Margin="4,6">
