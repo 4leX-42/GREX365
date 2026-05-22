@@ -81,6 +81,10 @@
                            Margin="0,0,8,8"
                            Command="{Binding RunInboxRulesAuditCommand}"
                            ToolTip="Get-InboxRule por cada buzón: flagea reglas activas que borran, ocultan o reenvían externamente — patrón BEC clásico. Lento en tenants grandes." />
+                <ui:Button Content="Transport rules"
+                           Margin="0,0,8,8"
+                           Command="{Binding RunTransportRulesAuditCommand}"
+                           ToolTip="Get-TransportRule: flagea rules enabled con ForwardTo/BlindCopyTo/RedirectMessageTo a destinatarios externos (exfil), DeleteMessage sin scope, outbound connectors custom, modo Audit en producción, y rules disabled con nombre de seguridad." />
                 <TextBlock VerticalAlignment="Center" Text="Tope buzones:" Opacity="0.7" Margin="0,0,4,8" />
                 <ui:NumberBox Width="80"
                               Margin="0,0,8,8"

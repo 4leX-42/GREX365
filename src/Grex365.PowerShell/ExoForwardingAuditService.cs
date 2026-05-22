@@ -191,6 +191,71 @@ public sealed class ExoForwardingAuditService : IExoForwardingAuditService
             .ToList();
     }
 
+    public async Task<(Grex365.Core.Audit.TransportRulesSummary Summary, IReadOnlyList<AuditFinding> Findings)>
+        ScanTransportRulesAsync(
+            IProgress<LogEntry>? progress = null,
+            CancellationToken cancellationToken = default)
+    {
+        progress?.Report(LogEntry.Info("ExoAudit", "Get-AcceptedDomain..."));
+        const string domainsScript = """
+            param()
+            Get-AcceptedDomain -ErrorAction Stop |
+                Select-Object -ExpandProperty DomainName
+            """;
+        var domainsResult = await _runner.RunAsync(domainsScript, parameters: null, progress, cancellationToken).ConfigureAwait(false);
+        if (!domainsResult.Success)
+        {
+            throw new InvalidOperationException("Get-AcceptedDomain falló: " + string.Join("; ", domainsResult.Errors));
+        }
+        var acceptedDomains = domainsResult.Output
+            .Select(o => o?.ToString())
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s => s!)
+            .ToList();
+
+        progress?.Report(LogEntry.Info("ExoAudit",
+            $"Aceptados {acceptedDomains.Count} dominios. Get-TransportRule completo..."));
+
+        const string rulesScript = """
+            param()
+            Get-TransportRule -ErrorAction Stop |
+                Select-Object Name, State, Priority, Mode, Description,
+                              @{N='ForwardTo';E={ if ($_.ForwardTo) { @($_.ForwardTo | ForEach-Object { $_.ToString() }) } else { @() } }},
+                              @{N='BlindCopyTo';E={ if ($_.BlindCopyTo) { @($_.BlindCopyTo | ForEach-Object { $_.ToString() }) } else { @() } }},
+                              @{N='RedirectMessageTo';E={ if ($_.RedirectMessageTo) { @($_.RedirectMessageTo | ForEach-Object { $_.ToString() }) } else { @() } }},
+                              RouteMessageOutboundConnector, DeleteMessage, SentToScope, FromScope
+            """;
+        var rulesResult = await _runner.RunAsync(rulesScript, parameters: null, progress, cancellationToken).ConfigureAwait(false);
+        if (!rulesResult.Success)
+        {
+            throw new InvalidOperationException("Get-TransportRule falló: " + string.Join("; ", rulesResult.Errors));
+        }
+
+        var snapshots = rulesResult.Output
+            .OfType<PSObject>()
+            .Select(o => new Grex365.Core.Audit.TransportRuleSnapshot(
+                Name: o.Properties["Name"]?.Value?.ToString() ?? string.Empty,
+                State: o.Properties["State"]?.Value?.ToString() ?? string.Empty,
+                Priority: o.Properties["Priority"]?.Value is int pi ? pi : 0,
+                Mode: o.Properties["Mode"]?.Value?.ToString() ?? string.Empty,
+                Description: o.Properties["Description"]?.Value?.ToString(),
+                ForwardTo: ToList(o.Properties["ForwardTo"]?.Value),
+                BlindCopyTo: ToList(o.Properties["BlindCopyTo"]?.Value),
+                RedirectMessageTo: ToList(o.Properties["RedirectMessageTo"]?.Value),
+                RouteMessageOutboundConnector: o.Properties["RouteMessageOutboundConnector"]?.Value?.ToString(),
+                DeleteMessage: o.Properties["DeleteMessage"]?.Value is bool dm && dm,
+                SentToScope: o.Properties["SentToScope"]?.Value?.ToString(),
+                FromScope: o.Properties["FromScope"]?.Value?.ToString()))
+            .ToList();
+
+        var (summary, findings) = Grex365.Core.Audit.TransportRuleAuditAnalyzer.Analyze(snapshots, acceptedDomains);
+        progress?.Report(LogEntry.Ok("ExoAudit",
+            $"Transport rules: {summary.Total} totales · {summary.Enabled} enabled · " +
+            $"fwd-ext={summary.WithExternalForward} bcc-ext={summary.WithExternalBcc} redir-ext={summary.WithExternalRedirect} · " +
+            $"{findings.Count} hallazgos"));
+        return (summary, findings);
+    }
+
     private static IReadOnlyList<string> ToList(object? value)
     {
         if (value is null) return Array.Empty<string>();

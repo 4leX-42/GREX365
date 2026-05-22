@@ -12,4 +12,9 @@ public interface IExoForwardingAuditService
         int maxMailboxes = 200,
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default);
+
+    Task<(Grex365.Core.Audit.TransportRulesSummary Summary, IReadOnlyList<AuditFinding> Findings)>
+        ScanTransportRulesAsync(
+            IProgress<LogEntry>? progress = null,
+            CancellationToken cancellationToken = default);
 }

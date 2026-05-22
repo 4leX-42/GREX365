@@ -360,6 +360,7 @@ public sealed partial class AuditViewModel : ObservableObject
         RunAppCredentialsAuditCommand.NotifyCanExecuteChanged();
         RunTenantDefaultsAuditCommand.NotifyCanExecuteChanged();
         RunOAuthGrantsAuditCommand.NotifyCanExecuteChanged();
+        RunTransportRulesAuditCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
     }
 
@@ -441,6 +442,50 @@ public sealed partial class AuditViewModel : ObservableObject
         {
             StatusMessage = "Error: " + ex.Message;
             _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+            _cts?.Dispose();
+            _cts = null;
+            NotifyAllCommands();
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRun))]
+    private async Task RunTransportRulesAuditAsync()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+        _cts = new CancellationTokenSource();
+        IsBusy = true;
+        NotifyAllCommands();
+        StatusMessage = "Get-TransportRule + Get-AcceptedDomain...";
+        Findings.Clear();
+        Summary = null;
+        try
+        {
+            var (summary, findings) = await _exoAudit
+                .ScanTransportRulesAsync(_log.Progress, _cts.Token)
+                .ConfigureAwait(true);
+            foreach (var f in findings)
+            {
+                Findings.Add(f);
+            }
+            StatusMessage = $"Transport rules: {summary.Total} totales · {summary.Enabled} enabled · " +
+                            $"fwd-ext={summary.WithExternalForward} bcc-ext={summary.WithExternalBcc} " +
+                            $"redir-ext={summary.WithExternalRedirect} · {findings.Count} hallazgos";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("ExoAudit", ex.Message, ex));
         }
         finally
         {
