@@ -14,16 +14,18 @@ namespace Grex365.App.ViewModels;
 
 public sealed partial class NavigationItem : ObservableObject
 {
-    public NavigationItem(string title, string glyph, Type viewModelType)
+    public NavigationItem(string title, string glyph, Type viewModelType, string category = "Otros")
     {
         Title = title;
         Glyph = glyph;
         ViewModelType = viewModelType;
+        Category = category;
     }
 
     public string Title { get; }
     public string Glyph { get; }
     public Type ViewModelType { get; }
+    public string Category { get; }
     public bool RequiresGraph { get; set; }
     public bool RequiresExchange { get; set; }
 
@@ -100,26 +102,29 @@ public sealed partial class MainViewModel : ObservableObject
 
         NavigationItems = new ObservableCollection<NavigationItem>
         {
-            new("Dashboard",      "", typeof(DashboardViewModel)),
-            new("Conexion",       "", typeof(ConnectViewModel)),
-            new("Salud tenant",   "", typeof(TenantHealthViewModel)),
-            new("Usuarios",       "", typeof(UsersViewModel)),
-            new("Grupos",         "", typeof(GroupsViewModel)),
-            new("Buzones",        "", typeof(SharedMailboxViewModel)),
-            new("Reglas buzon", "", typeof(MailboxRulesViewModel)),
-            new("Mail flow",      "", typeof(MailFlowRulesViewModel)),
-            new("Auditoria",      "", typeof(AuditViewModel)),
-            new("Audit log",    "", typeof(AuditLogViewModel)),
-            new("Onboarding",     "", typeof(OnboardingViewModel)),
-            new("Offboarding",    "", typeof(OffboardingViewModel)),
-            new("Cert Wizard",    "", typeof(CertWizardViewModel)),
-            new("DNS check",      "", typeof(DomainCheckViewModel)),
+            new("Dashboard",     "", typeof(DashboardViewModel),     "Tenant"),
+            new("Conexion",      "", typeof(ConnectViewModel),       "Tenant"),
+            new("Salud tenant",  "", typeof(TenantHealthViewModel),  "Tenant"),
+            new("Usuarios",      "", typeof(UsersViewModel),         "Identidad"),
+            new("Grupos",        "", typeof(GroupsViewModel),        "Identidad"),
+            new("Onboarding",    "", typeof(OnboardingViewModel),   "Identidad"),
+            new("Offboarding",   "", typeof(OffboardingViewModel),  "Identidad"),
+            new("Buzones",       "", typeof(SharedMailboxViewModel), "Mail"),
+            new("Reglas buzon",  "", typeof(MailboxRulesViewModel),  "Mail"),
+            new("Mail flow",     "", typeof(MailFlowRulesViewModel), "Mail"),
+            new("Auditoria",     "", typeof(AuditViewModel),         "Seguridad"),
+            new("Audit log",     "", typeof(AuditLogViewModel),      "Seguridad"),
+            new("Cert Wizard",   "", typeof(CertWizardViewModel),   "Herramientas"),
+            new("DNS check",     "", typeof(DomainCheckViewModel),  "Herramientas"),
         };
 
         foreach (var module in pluginReport.AllModules)
         {
-            NavigationItems.Add(new NavigationItem(module.Title, module.Glyph, module.ViewModelType));
+            NavigationItems.Add(new NavigationItem(module.Title, module.Glyph, module.ViewModelType, "Plugins"));
         }
+
+        NavigationItemsView = CollectionViewSource.GetDefaultView(NavigationItems);
+        NavigationItemsView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(NavigationItem.Category)));
 
         ApplyConnectionRequirements();
         UpdateNavEnabledStates();
@@ -174,6 +179,7 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     public ObservableCollection<NavigationItem> NavigationItems { get; }
+    public ICollectionView NavigationItemsView { get; private set; } = default!;
 
     public ObservableCollection<LogEntry> LogEntries { get; }
 

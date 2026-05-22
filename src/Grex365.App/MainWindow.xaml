@@ -69,12 +69,25 @@
                             Background="{DynamicResource ControlStrokeColorDefaultBrush}"
                             Margin="0,0,0,6" />
 
-                    <ListBox ItemsSource="{Binding NavigationItems}"
+                    <ListBox ItemsSource="{Binding NavigationItemsView}"
                              SelectedItem="{Binding SelectedNavigation}"
                              Background="Transparent"
                              BorderThickness="0"
                              ItemContainerStyle="{StaticResource NavListBoxItem}"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"
+                                                   Opacity="0.55"
+                                                   Margin="14,14,0,4" />
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </ListBox.GroupStyle>
                         <ListBox.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:NavigationItem}">
                                 <Grid>
