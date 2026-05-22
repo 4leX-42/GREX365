@@ -218,23 +218,23 @@
                                 Orientation="Horizontal"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center">
-                        <Border Background="{DynamicResource BrushSemanticErrorSoft}" CornerRadius="12" Padding="12,4" Margin="4,0" BorderBrush="{DynamicResource BrushSemanticError}" BorderThickness="1">
-                            <TextBlock VerticalAlignment="Center" FontSize="13">
-                                <Run Text="ERROR " FontWeight="Bold" Foreground="{DynamicResource BrushSemanticErrorMutedText}" />
-                                <Run Text="{Binding ErrorCount, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#FFFFFF" />
-                            </TextBlock>
+                        <Border Background="{DynamicResource BrushSemanticErrorSoft}" CornerRadius="14" Padding="10,4" Margin="4,0" BorderBrush="{DynamicResource BrushSemanticError}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="ERROR" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticError}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding ErrorCount, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
                         </Border>
-                        <Border Background="{DynamicResource BrushSemanticWarnSoft}" CornerRadius="12" Padding="12,4" Margin="4,0" BorderBrush="{DynamicResource BrushSemanticWarn}" BorderThickness="1">
-                            <TextBlock VerticalAlignment="Center" FontSize="13">
-                                <Run Text="WARN " FontWeight="Bold" Foreground="{DynamicResource BrushSemanticWarnMutedText}" />
-                                <Run Text="{Binding WarningCount, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#FFFFFF" />
-                            </TextBlock>
+                        <Border Background="{DynamicResource BrushSemanticWarnSoft}" CornerRadius="14" Padding="10,4" Margin="4,0" BorderBrush="{DynamicResource BrushSemanticWarn}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="WARN" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticWarn}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding WarningCount, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
                         </Border>
-                        <Border Background="{DynamicResource BrushSemanticInfoSoft}" CornerRadius="12" Padding="12,4" Margin="4,0" BorderBrush="{DynamicResource BrushSemanticInfo}" BorderThickness="1">
-                            <TextBlock VerticalAlignment="Center" FontSize="13">
-                                <Run Text="INFO " FontWeight="Bold" Foreground="{DynamicResource BrushSemanticInfoMutedText}" />
-                                <Run Text="{Binding InfoCount, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#FFFFFF" />
-                            </TextBlock>
+                        <Border Background="{DynamicResource BrushSemanticInfoSoft}" CornerRadius="14" Padding="10,4" Margin="4,0" BorderBrush="{DynamicResource BrushSemanticInfo}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="INFO" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticInfo}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding InfoCount, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
                         </Border>
                     </StackPanel>
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">

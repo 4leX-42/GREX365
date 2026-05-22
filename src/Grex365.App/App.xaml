@@ -40,11 +40,6 @@
             <Color x:Key="SemanticInfoSoftColor">#5560A5FA</Color>
             <Color x:Key="SemanticOkSoftColor">#5534D399</Color>
 
-            <Color x:Key="SemanticErrorAccentTextColor">#FFFFFF</Color>
-            <Color x:Key="SemanticErrorMutedTextColor">#FFEAEA</Color>
-            <Color x:Key="SemanticWarnMutedTextColor">#FFF8E5</Color>
-            <Color x:Key="SemanticInfoMutedTextColor">#E6F0FF</Color>
-
             <SolidColorBrush x:Key="BrushSemanticError" Color="{StaticResource SemanticErrorColor}" />
             <SolidColorBrush x:Key="BrushSemanticWarn" Color="{StaticResource SemanticWarnColor}" />
             <SolidColorBrush x:Key="BrushSemanticInfo" Color="{StaticResource SemanticInfoColor}" />
@@ -56,10 +51,6 @@
             <SolidColorBrush x:Key="BrushSemanticWarnSoft" Color="{StaticResource SemanticWarnSoftColor}" />
             <SolidColorBrush x:Key="BrushSemanticInfoSoft" Color="{StaticResource SemanticInfoSoftColor}" />
             <SolidColorBrush x:Key="BrushSemanticOkSoft" Color="{StaticResource SemanticOkSoftColor}" />
-
-            <SolidColorBrush x:Key="BrushSemanticErrorMutedText" Color="{StaticResource SemanticErrorMutedTextColor}" />
-            <SolidColorBrush x:Key="BrushSemanticWarnMutedText" Color="{StaticResource SemanticWarnMutedTextColor}" />
-            <SolidColorBrush x:Key="BrushSemanticInfoMutedText" Color="{StaticResource SemanticInfoMutedTextColor}" />
 
             <!-- App-wide accent definitions (light + dark agnostic).
                  wpf-ui ThemeDictionary swaps surface colors, semantic palette stays
@@ -249,6 +240,107 @@
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
+            </Style>
+
+            <!-- Global DataGrid theme-aware (legacy WPF default Foreground = black hardcoded; wpf-ui doesn't restyle DataGrid) -->
+            <Style TargetType="DataGrid">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="GridLinesVisibility" Value="None" />
+                <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                <Setter Property="VerticalGridLinesBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                <Setter Property="RowBackground" Value="Transparent" />
+                <Setter Property="AlternatingRowBackground" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+                <Setter Property="CanUserAddRows" Value="False" />
+                <Setter Property="CanUserDeleteRows" Value="False" />
+                <Setter Property="HeadersVisibility" Value="Column" />
+                <Setter Property="SelectionUnit" Value="FullRow" />
+                <Setter Property="RowHeight" Value="32" />
+            </Style>
+
+            <Style TargetType="DataGridCell">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="8,4" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="DataGridCell">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter VerticalAlignment="Center"
+                                                  TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style TargetType="DataGridRow">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            </Style>
+
+            <Style TargetType="DataGridColumnHeader">
+                <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Padding" Value="10,8" />
+                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="0,0,0,1" />
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+            </Style>
+
+            <!-- Global ListView (GridView) theme-aware -->
+            <Style TargetType="ListView">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                <Setter Property="BorderThickness" Value="0" />
+            </Style>
+
+            <Style TargetType="ListViewItem">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="4,6" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                    </Trigger>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style TargetType="GridViewColumnHeader">
+                <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Padding" Value="10,8" />
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="0,0,0,1" />
+            </Style>
+
+            <!-- Global ListBox theme-aware (used in Users/Groups searches) -->
+            <Style TargetType="ListBox">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                <Setter Property="BorderThickness" Value="0" />
             </Style>
 
             <!-- Sidebar background -->

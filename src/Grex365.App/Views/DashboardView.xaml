@@ -167,23 +167,26 @@
                                    VerticalAlignment="Center" />
                     </Grid>
                     <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                        <Border Background="{DynamicResource BrushSemanticErrorSoft}" CornerRadius="14" Padding="14,6" Margin="0,0,8,0">
-                            <TextBlock>
-                                <Run Text="ERROR " FontWeight="SemiBold" Foreground="{DynamicResource BrushSemanticError}" />
-                                <Run Text="{Binding LastAuditErrors, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="{DynamicResource BrushSemanticError}" FontSize="16" />
-                            </TextBlock>
+                        <Border Background="{DynamicResource BrushSemanticErrorSoft}" CornerRadius="14" Padding="12,6" Margin="0,0,8,0"
+                                BorderBrush="{DynamicResource BrushSemanticError}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="ERROR" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticError}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding LastAuditErrors, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
                         </Border>
-                        <Border Background="{DynamicResource BrushSemanticWarnSoft}" CornerRadius="14" Padding="14,6" Margin="0,0,8,0">
-                            <TextBlock>
-                                <Run Text="WARN " FontWeight="SemiBold" Foreground="{DynamicResource BrushSemanticWarn}" />
-                                <Run Text="{Binding LastAuditWarnings, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="{DynamicResource BrushSemanticWarn}" FontSize="16" />
-                            </TextBlock>
+                        <Border Background="{DynamicResource BrushSemanticWarnSoft}" CornerRadius="14" Padding="12,6" Margin="0,0,8,0"
+                                BorderBrush="{DynamicResource BrushSemanticWarn}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="WARN" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticWarn}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding LastAuditWarnings, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
                         </Border>
-                        <Border Background="{DynamicResource BrushSemanticInfoSoft}" CornerRadius="14" Padding="14,6">
-                            <TextBlock>
-                                <Run Text="INFO " FontWeight="SemiBold" Foreground="{DynamicResource BrushSemanticInfo}" />
-                                <Run Text="{Binding LastAuditInfo, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="{DynamicResource BrushSemanticInfo}" FontSize="16" />
-                            </TextBlock>
+                        <Border Background="{DynamicResource BrushSemanticInfoSoft}" CornerRadius="14" Padding="12,6"
+                                BorderBrush="{DynamicResource BrushSemanticInfo}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="INFO" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticInfo}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding LastAuditInfo, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
                         </Border>
                     </StackPanel>
                 </StackPanel>
