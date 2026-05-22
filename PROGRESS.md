@@ -46,6 +46,13 @@ Commits:
 - `ux(empty-states)` UsersView + GroupsView con placeholder cuando no hay resultados (icono Contact U+E77B / People U+E716 + texto guía "Busca... — pulsa Enter"). Listas con avatares con iniciales (`InitialsConverter`) — círculo 32px Background AccentFill para usuarios, square con CornerRadius=6 para grupos, badge GroupKind como pill.
 - `ux(connect)` header con logo Globe U+E703, nuevo card "Certificado" muestra App ID, Thumbprint, Expira, status con pill coloreada válido/inválido. `ConnectViewModel.LoadCertInfoAsync` se ejecuta en el constructor para mostrar info inmediatamente al abrir la vista.
 - `ux(logos)` headers consistentes en TODAS las views: Dashboard (Home U+E80F), TenantHealth (Health U+E9D9), Audit (Shield U+E9D5), SharedMailbox (Mail U+E715), Onboarding (AddFriend U+E8FA), Offboarding (BlockContact U+E8F8), CertWizard (Lock U+E72E), DomainCheck (Globe U+E774). Patrón StackPanel Orientation=Horizontal con glyph FontSize=22 + título FontSize=24-28.
+- `ux(audit-dark)` contraste pills + checkboxes en dark theme: alpha background 0x22 → 0x55 + BorderThickness=1 + Foreground brighter shades (`#FFEAEA/#FFF8E5/#E6F0FF` con text negro `#FFFFFF` para count). `AuditSeverityToBrushConverter` ahora usa tonos brighter `#F87171/#FBBF24/#60A5FA` que funcionan bien en dark Y light. Checkboxes filter FontWeight=SemiBold.
+- `perf(audit)` paraleliza `RunIdentityAuditAsync` + `RunGroupsAuditAsync` con `Task.WhenAll` en `RunAsync` VM. Antes secuencial — ahora corren simultáneamente.
+- `feat(audit-scenarios)` 3 escenarios pre-canned con filtro automático de findings:
+  - **Cuentas en riesgo (deshab+licencia)**: identity + groups en paralelo, filtra findings con keywords disabled/license/stale/inactive
+  - **Acceso privilegiado**: privileged roles + MFA + CA en paralelo
+  - **Higiene mail (BEC)**: forwarding externo + inbox rules + transport rules + shared mailbox sign-in
+- `ux(audit-layout)` reorganiza botones en 4 secciones con headers: ESCENARIOS RÁPIDOS / IDENTIDAD / SEGURIDAD-TENANT / MAIL-EXO. Cada sección en Border CornerRadius=8 con label small caps opacity 0.55. Pasa de 2 filas planas confusas a 4 grupos claros por dominio.
 - `refactor(audit-vm)` extrae `NotifyAllCommands()` helper en AuditViewModel — elimina ~80 líneas de notify chains repetidas y evita bugs cuando se añade un nuevo command.
 
 Plantamiento status: Fase 6 sigue **6/8 hechos**; backlog seguridad amplía cobertura M365 baseline. Toolbar fila 1 ahora con 8 audits Graph (Identidad+grupos, MFA, CA policies, Privileged roles, App credentials, Tenant defaults, OAuth grants, Actividad grupos) y fila 2 con 4 audits EXO (Forwarding externo, Inbox rules, Transport rules, Shared mailbox sign-in).

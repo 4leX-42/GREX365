@@ -118,9 +118,14 @@ public sealed partial class AuditViewModel : ObservableObject
         Findings.Clear();
         try
         {
-            var (summary, findings) = await _audit.RunIdentityAuditAsync(_log.Progress, _cts.Token).ConfigureAwait(true);
+            // Paralelizar identity + groups audit — son endpoints distintos, no compiten.
+            var identityTask = _audit.RunIdentityAuditAsync(_log.Progress, _cts.Token);
+            var groupsTask = _audit.RunGroupsAuditAsync(_log.Progress, _cts.Token);
+            await Task.WhenAll(identityTask, groupsTask).ConfigureAwait(true);
+
+            var (summary, findings) = identityTask.Result;
+            var groupFindings = groupsTask.Result;
             Summary = summary;
-            var groupFindings = await _audit.RunGroupsAuditAsync(_log.Progress, _cts.Token).ConfigureAwait(true);
 
             AddFindingsSorted("Identidad + grupos", findings.Concat(groupFindings));
 
@@ -430,6 +435,9 @@ public sealed partial class AuditViewModel : ObservableObject
         RunOAuthGrantsAuditCommand.NotifyCanExecuteChanged();
         RunTransportRulesAuditCommand.NotifyCanExecuteChanged();
         RunSharedMailboxSignInAuditCommand.NotifyCanExecuteChanged();
+        RunScenarioRiskyAccountsCommand.NotifyCanExecuteChanged();
+        RunScenarioPrivilegedCommand.NotifyCanExecuteChanged();
+        RunScenarioMailHygieneCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
     }
 
@@ -646,6 +654,105 @@ public sealed partial class AuditViewModel : ObservableObject
 
     private bool CanRun() => !IsBusy;
     private bool CanCancel() => IsBusy;
+
+    // ---- Pre-canned scenarios (combos) -----------------------------------
+
+    [RelayCommand(CanExecute = nameof(CanRun))]
+    private async Task RunScenarioRiskyAccountsAsync()
+    {
+        await RunScenarioCommonAsync(
+            "Cuentas en riesgo",
+            "Identidad + grupos · filtrando deshab+licencia / stale+licencia...",
+            async () =>
+            {
+                var identityTask = _audit.RunIdentityAuditAsync(_log.Progress, _cts!.Token);
+                var groupsTask = _audit.RunGroupsAuditAsync(_log.Progress, _cts!.Token);
+                await Task.WhenAll(identityTask, groupsTask).ConfigureAwait(true);
+                var (summary, findings) = identityTask.Result;
+                Summary = summary;
+                return findings.Concat(groupsTask.Result);
+            },
+            keep: f =>
+                f.Category.Contains("disabled", StringComparison.OrdinalIgnoreCase) ||
+                f.Category.Contains("license", StringComparison.OrdinalIgnoreCase) ||
+                f.Category.Contains("stale", StringComparison.OrdinalIgnoreCase) ||
+                f.Category.Contains("inactive", StringComparison.OrdinalIgnoreCase)).ConfigureAwait(true);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRun))]
+    private async Task RunScenarioPrivilegedAsync()
+    {
+        await RunScenarioCommonAsync(
+            "Acceso privilegiado",
+            "Privileged roles + MFA + CA policies en paralelo...",
+            async () =>
+            {
+                var rolesTask = _audit.RunPrivilegedRolesAuditAsync(_log.Progress, _cts!.Token);
+                var mfaTask = _audit.RunMfaCoverageAuditAsync(_log.Progress, _cts!.Token);
+                var caTask = _audit.RunConditionalAccessAuditAsync(_log.Progress, _cts!.Token);
+                await Task.WhenAll(rolesTask, mfaTask, caTask).ConfigureAwait(true);
+                return rolesTask.Result.Findings
+                    .Concat(mfaTask.Result.Findings)
+                    .Concat(caTask.Result.Findings);
+            }).ConfigureAwait(true);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanRun))]
+    private async Task RunScenarioMailHygieneAsync()
+    {
+        await RunScenarioCommonAsync(
+            "Higiene mail (BEC)",
+            "Forwarding externo + Inbox rules + Transport rules + Shared mailbox sign-in...",
+            async () =>
+            {
+                var fwd = await _exoAudit.ScanExternalForwardingAsync(_log.Progress, _cts!.Token).ConfigureAwait(true);
+                var rules = await _exoAudit.ScanInboxRulesAsync(InboxRuleScanCap, _log.Progress, _cts!.Token).ConfigureAwait(true);
+                var tr = await _exoAudit.ScanTransportRulesAsync(_log.Progress, _cts!.Token).ConfigureAwait(true);
+                var sh = await _exoAudit.ScanSharedMailboxSignInAsync(_log.Progress, _cts!.Token).ConfigureAwait(true);
+                return fwd
+                    .Concat(rules)
+                    .Concat(tr.Findings)
+                    .Concat(sh.Findings);
+            }).ConfigureAwait(true);
+    }
+
+    private async Task RunScenarioCommonAsync(
+        string name,
+        string startMessage,
+        Func<Task<IEnumerable<AuditFinding>>> runner,
+        Func<AuditFinding, bool>? keep = null)
+    {
+        if (IsBusy) return;
+        _cts = new CancellationTokenSource();
+        IsBusy = true;
+        NotifyAllCommands();
+        StatusMessage = startMessage;
+        Findings.Clear();
+        Summary = null;
+        try
+        {
+            var raw = await runner().ConfigureAwait(true);
+            var filtered = keep is null ? raw : raw.Where(keep);
+            AddFindingsSorted(name, filtered);
+            StatusMessage = $"{name}: {Findings.Count} hallazgos";
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Cancelado.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+            _cts?.Dispose();
+            _cts = null;
+            NotifyAllCommands();
+        }
+    }
 
     [RelayCommand]
     private void ExportFindings()

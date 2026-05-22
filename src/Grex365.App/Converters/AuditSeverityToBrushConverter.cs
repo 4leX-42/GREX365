@@ -6,10 +6,11 @@ namespace Grex365.App.Converters;
 
 public sealed class AuditSeverityToBrushConverter : IValueConverter
 {
-    private static readonly Brush InfoBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)));
-    private static readonly Brush WarnBrush = Freeze(new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)));
-    private static readonly Brush ErrorBrush = Freeze(new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)));
-    private static readonly Brush DefaultBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x6B, 0x72, 0x80)));
+    // Brighter shades para legibilidad en dark theme (también funcionan en light).
+    private static readonly Brush InfoBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x60, 0xA5, 0xFA)));
+    private static readonly Brush WarnBrush = Freeze(new SolidColorBrush(Color.FromRgb(0xFB, 0xBF, 0x24)));
+    private static readonly Brush ErrorBrush = Freeze(new SolidColorBrush(Color.FromRgb(0xF8, 0x71, 0x71)));
+    private static readonly Brush DefaultBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x9C, 0xA3, 0xAF)));
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
         (value as string)?.ToUpperInvariant() switch

@@ -30,77 +30,115 @@
                    Margin="0,0,0,16" />
 
         <StackPanel Grid.Row="2" Margin="0,0,0,16">
-            <!-- Row 1: Identity / Groups audits (Graph) -->
-            <WrapPanel Orientation="Horizontal" Margin="0,0,0,8">
-                <ui:Button Content="Identidad + grupos"
-                           Appearance="Primary"
-                           Margin="0,0,8,8"
-                           Command="{Binding RunCommand}"
-                           ToolTip="Identity audit (stale members + disabled+licensed) + Groups audit (sin owner / vacíos / guests en privados). Atajo: Ctrl+R" />
-                <ui:Button Content="MFA coverage"
-                           Margin="0,0,8,8"
-                           Command="{Binding RunMfaCoverageAuditCommand}"
-                           ToolTip="/reports/authenticationMethods/userRegistrationDetails: cobertura MFA. Admin sin MFA = ERROR crítico." />
-                <ui:Button Content="CA policies"
-                           Margin="0,0,8,8"
-                           Command="{Binding RunCaPoliciesAuditCommand}"
-                           ToolTip="/identity/conditionalAccess/policies: detecta policies disabled, report-only stale, sin MFA/compliantDevice, sin user scope, etc. Requiere Policy.Read.All." />
-                <ui:Button Content="Privileged roles"
-                           Margin="0,0,8,8"
-                           Command="{Binding RunPrivilegedRolesAuditCommand}"
-                           ToolTip="/directoryRoles + members: detecta 0/1/&gt;5 Global Admins, guests con role admin, cuentas deshabilitadas con role, y service principals con admin." />
-                <ui:Button Content="App credentials"
-                           Margin="0,0,8,8"
-                           Command="{Binding RunAppCredentialsAuditCommand}"
-                           ToolTip="/applications: flagea passwordCredentials/keyCredentials expirados (ERROR), expirando &lt;30d (WARN) y long-lived &gt;2y (INFO). Requiere Application.Read.All." />
-                <ui:Button Content="Tenant defaults"
-                           Margin="0,0,8,8"
-                           Command="{Binding RunTenantDefaultsAuditCommand}"
-                           ToolTip="/policies/authorizationPolicy + securityDefaults: detecta users-can-create-apps, users-can-create-tenants, invitesFrom=everyone, SSPR disabled, etc." />
-                <ui:Button Content="OAuth grants"
-                           Margin="0,0,8,8"
-                           Command="{Binding RunOAuthGrantsAuditCommand}"
-                           ToolTip="/oauth2PermissionGrants: detecta apps con scopes peligrosos (Mail/Files/Sites/Directory/full_access_as_user). Tenant-wide=ERROR, user-consented=WARN (posible phishing OAuth)." />
-                <ui:Button Content="Actividad grupos"
-                           Margin="0,0,8,8"
-                           Command="{Binding RunActivityAuditCommand}"
-                           ToolTip="Descarga /reports/getOffice365GroupsActivityDetail (requiere Reports.Read.All)" />
-                <TextBlock VerticalAlignment="Center" Text="Inactivos &gt;" Opacity="0.7" Margin="0,0,4,8" />
-                <ui:NumberBox Width="80"
-                              Margin="0,0,4,8"
-                              Value="{Binding InactivityDays}"
-                              Minimum="1"
-                              Maximum="180"
-                              ToolTip="Días sin actividad para considerar grupo inactivo (1-180)" />
-                <TextBlock VerticalAlignment="Center" Text="días" Opacity="0.7" Margin="0,0,8,8" />
-            </WrapPanel>
+            <!-- Pre-canned scenarios (combos comunes) -->
+            <Border CornerRadius="8" Padding="10,8" Margin="0,0,0,10"
+                    Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+                <StackPanel>
+                    <TextBlock Text="ESCENARIOS RÁPIDOS" FontSize="10" FontWeight="SemiBold" Opacity="0.55" Margin="0,0,0,6" />
+                    <WrapPanel Orientation="Horizontal">
+                        <ui:Button Content="Cuentas en riesgo (deshab + licencia)"
+                                   Appearance="Primary"
+                                   Margin="0,0,8,4"
+                                   Command="{Binding RunScenarioRiskyAccountsCommand}"
+                                   ToolTip="Identidad + grupos + filtra automáticamente disabled-con-licencia (coste evitable + riesgo perdida info)." />
+                        <ui:Button Content="Acceso privilegiado"
+                                   Margin="0,0,8,4"
+                                   Command="{Binding RunScenarioPrivilegedCommand}"
+                                   ToolTip="Privileged roles + MFA + CA policies — verifica posture admin." />
+                        <ui:Button Content="Higiene mail (BEC)"
+                                   Margin="0,0,8,4"
+                                   Command="{Binding RunScenarioMailHygieneCommand}"
+                                   ToolTip="Forwarding externo + Inbox rules + Transport rules + Shared mailbox sign-in (vectores BEC clásicos)." />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
 
-            <!-- Row 2: Mail / Security audits (EXO) -->
-            <WrapPanel Orientation="Horizontal" Margin="0,0,0,8">
-                <ui:Button Content="Forwarding externo"
-                           Margin="0,0,8,8"
-                           Command="{Binding RunExternalForwardingAuditCommand}"
-                           ToolTip="Get-Mailbox + Get-AcceptedDomain: detecta ForwardingSmtpAddress hacia dominios fuera del tenant (indicador phishing). Requiere Exchange conectado." />
-                <ui:Button Content="Inbox rules"
-                           Margin="0,0,8,8"
-                           Command="{Binding RunInboxRulesAuditCommand}"
-                           ToolTip="Get-InboxRule por cada buzón: flagea reglas activas que borran, ocultan o reenvían externamente — patrón BEC clásico. Lento en tenants grandes." />
-                <ui:Button Content="Transport rules"
-                           Margin="0,0,8,8"
-                           Command="{Binding RunTransportRulesAuditCommand}"
-                           ToolTip="Get-TransportRule: flagea rules enabled con ForwardTo/BlindCopyTo/RedirectMessageTo a destinatarios externos (exfil), DeleteMessage sin scope, outbound connectors custom, modo Audit en producción, y rules disabled con nombre de seguridad." />
-                <ui:Button Content="Shared mailbox sign-in"
-                           Margin="0,0,8,8"
-                           Command="{Binding RunSharedMailboxSignInAuditCommand}"
-                           ToolTip="Get-Mailbox SharedMailbox + Get-User: detecta shared mailboxes con AccountDisabled=false (sign-in habilitado — vector password attack). Bloquéalas con Set-User -AccountDisabled \$true." />
-                <TextBlock VerticalAlignment="Center" Text="Tope buzones:" Opacity="0.7" Margin="0,0,4,8" />
-                <ui:NumberBox Width="80"
-                              Margin="0,0,8,8"
-                              Value="{Binding InboxRuleScanCap}"
-                              Minimum="1"
-                              Maximum="5000"
-                              ToolTip="Cuántos buzones escanear (Get-InboxRule por cada uno es N+1, default 200)" />
-            </WrapPanel>
+            <!-- Identidad -->
+            <Border CornerRadius="8" Padding="10,8" Margin="0,0,0,8"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <StackPanel>
+                    <TextBlock Text="IDENTIDAD" FontSize="10" FontWeight="SemiBold" Opacity="0.55" Margin="0,0,0,6" />
+                    <WrapPanel Orientation="Horizontal">
+                        <ui:Button Content="Identidad + grupos"
+                                   Margin="0,0,8,4"
+                                   Command="{Binding RunCommand}"
+                                   ToolTip="Identity audit (stale members + disabled+licensed) + Groups audit (sin owner / vacíos / guests en privados). Atajo: Ctrl+R" />
+                        <ui:Button Content="MFA coverage"
+                                   Margin="0,0,8,4"
+                                   Command="{Binding RunMfaCoverageAuditCommand}"
+                                   ToolTip="/reports/authenticationMethods/userRegistrationDetails: cobertura MFA. Admin sin MFA = ERROR crítico." />
+                        <ui:Button Content="Privileged roles"
+                                   Margin="0,0,8,4"
+                                   Command="{Binding RunPrivilegedRolesAuditCommand}"
+                                   ToolTip="/directoryRoles + members: detecta 0/1/&gt;5 Global Admins, guests con role admin, etc." />
+                        <ui:Button Content="Actividad grupos"
+                                   Margin="0,0,8,4"
+                                   Command="{Binding RunActivityAuditCommand}"
+                                   ToolTip="Descarga /reports/getOffice365GroupsActivityDetail" />
+                        <TextBlock VerticalAlignment="Center" Text="&gt;" Opacity="0.7" Margin="0,0,4,4" />
+                        <ui:NumberBox Width="60" Margin="0,0,2,4"
+                                      Value="{Binding InactivityDays}" Minimum="1" Maximum="180"
+                                      ToolTip="Días sin actividad (1-180)" />
+                        <TextBlock VerticalAlignment="Center" Text="d" Opacity="0.7" Margin="0,0,0,4" />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Seguridad / Tenant -->
+            <Border CornerRadius="8" Padding="10,8" Margin="0,0,0,8"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <StackPanel>
+                    <TextBlock Text="SEGURIDAD / TENANT" FontSize="10" FontWeight="SemiBold" Opacity="0.55" Margin="0,0,0,6" />
+                    <WrapPanel Orientation="Horizontal">
+                        <ui:Button Content="CA policies"
+                                   Margin="0,0,8,4"
+                                   Command="{Binding RunCaPoliciesAuditCommand}"
+                                   ToolTip="/identity/conditionalAccess/policies. Requiere Policy.Read.All." />
+                        <ui:Button Content="Tenant defaults"
+                                   Margin="0,0,8,4"
+                                   Command="{Binding RunTenantDefaultsAuditCommand}"
+                                   ToolTip="/policies/authorizationPolicy + securityDefaults" />
+                        <ui:Button Content="OAuth grants"
+                                   Margin="0,0,8,4"
+                                   Command="{Binding RunOAuthGrantsAuditCommand}"
+                                   ToolTip="/oauth2PermissionGrants — scopes peligrosos" />
+                        <ui:Button Content="App credentials"
+                                   Margin="0,0,8,4"
+                                   Command="{Binding RunAppCredentialsAuditCommand}"
+                                   ToolTip="/applications passwordCredentials / keyCredentials expiry" />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Mail / EXO -->
+            <Border CornerRadius="8" Padding="10,8" Margin="0,0,0,8"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <StackPanel>
+                    <TextBlock Text="MAIL / EXO" FontSize="10" FontWeight="SemiBold" Opacity="0.55" Margin="0,0,0,6" />
+                    <WrapPanel Orientation="Horizontal">
+                        <ui:Button Content="Forwarding externo"
+                                   Margin="0,0,8,4"
+                                   Command="{Binding RunExternalForwardingAuditCommand}"
+                                   ToolTip="Get-Mailbox + Get-AcceptedDomain: detecta ForwardingSmtpAddress externos" />
+                        <ui:Button Content="Inbox rules"
+                                   Margin="0,0,8,4"
+                                   Command="{Binding RunInboxRulesAuditCommand}"
+                                   ToolTip="Get-InboxRule por buzón — patrón BEC" />
+                        <ui:Button Content="Transport rules"
+                                   Margin="0,0,8,4"
+                                   Command="{Binding RunTransportRulesAuditCommand}"
+                                   ToolTip="Get-TransportRule: ForwardTo/BCC/Redirect externos" />
+                        <ui:Button Content="Shared mailbox sign-in"
+                                   Margin="0,0,8,4"
+                                   Command="{Binding RunSharedMailboxSignInAuditCommand}"
+                                   ToolTip="Shared boxes con AccountDisabled=false" />
+                        <TextBlock VerticalAlignment="Center" Text="Tope:" Opacity="0.7" Margin="8,0,4,4" />
+                        <ui:NumberBox Width="60" Margin="0,0,0,4"
+                                      Value="{Binding InboxRuleScanCap}" Minimum="1" Maximum="5000"
+                                      ToolTip="Cuántos buzones escanear (Get-InboxRule N+1)" />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
 
             <!-- Row 3: Actions + status -->
             <WrapPanel Orientation="Horizontal">
@@ -180,29 +218,29 @@
                                 Orientation="Horizontal"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center">
-                        <Border Background="#22EF4444" CornerRadius="12" Padding="10,3" Margin="4,0">
-                            <TextBlock VerticalAlignment="Center">
-                                <Run Text="ERROR " FontWeight="SemiBold" Foreground="#EF4444" />
-                                <Run Text="{Binding ErrorCount, Mode=OneWay, FallbackValue=0}" FontWeight="SemiBold" Foreground="#EF4444" />
+                        <Border Background="#55EF4444" CornerRadius="12" Padding="12,4" Margin="4,0" BorderBrush="#EF4444" BorderThickness="1">
+                            <TextBlock VerticalAlignment="Center" FontSize="13">
+                                <Run Text="ERROR " FontWeight="Bold" Foreground="#FFEAEA" />
+                                <Run Text="{Binding ErrorCount, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#FFFFFF" />
                             </TextBlock>
                         </Border>
-                        <Border Background="#22F59E0B" CornerRadius="12" Padding="10,3" Margin="4,0">
-                            <TextBlock VerticalAlignment="Center">
-                                <Run Text="WARN " FontWeight="SemiBold" Foreground="#F59E0B" />
-                                <Run Text="{Binding WarningCount, Mode=OneWay, FallbackValue=0}" FontWeight="SemiBold" Foreground="#F59E0B" />
+                        <Border Background="#55F59E0B" CornerRadius="12" Padding="12,4" Margin="4,0" BorderBrush="#F59E0B" BorderThickness="1">
+                            <TextBlock VerticalAlignment="Center" FontSize="13">
+                                <Run Text="WARN " FontWeight="Bold" Foreground="#FFF8E5" />
+                                <Run Text="{Binding WarningCount, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#FFFFFF" />
                             </TextBlock>
                         </Border>
-                        <Border Background="#223B82F6" CornerRadius="12" Padding="10,3" Margin="4,0">
-                            <TextBlock VerticalAlignment="Center">
-                                <Run Text="INFO " FontWeight="SemiBold" Foreground="#3B82F6" />
-                                <Run Text="{Binding InfoCount, Mode=OneWay, FallbackValue=0}" FontWeight="SemiBold" Foreground="#3B82F6" />
+                        <Border Background="#553B82F6" CornerRadius="12" Padding="12,4" Margin="4,0" BorderBrush="#3B82F6" BorderThickness="1">
+                            <TextBlock VerticalAlignment="Center" FontSize="13">
+                                <Run Text="INFO " FontWeight="Bold" Foreground="#E6F0FF" />
+                                <Run Text="{Binding InfoCount, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#FFFFFF" />
                             </TextBlock>
                         </Border>
                     </StackPanel>
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                        <CheckBox Content="ERROR" IsChecked="{Binding ShowErrors}" Margin="4,0" Foreground="#EF4444" />
-                        <CheckBox Content="WARN" IsChecked="{Binding ShowWarnings}" Margin="4,0" Foreground="#F59E0B" />
-                        <CheckBox Content="INFO" IsChecked="{Binding ShowInfo}" Margin="4,0" Foreground="#3B82F6" />
+                        <CheckBox Content="ERROR" IsChecked="{Binding ShowErrors}" Margin="4,0" Foreground="#F87171" FontWeight="SemiBold" />
+                        <CheckBox Content="WARN" IsChecked="{Binding ShowWarnings}" Margin="4,0" Foreground="#FBBF24" FontWeight="SemiBold" />
+                        <CheckBox Content="INFO" IsChecked="{Binding ShowInfo}" Margin="4,0" Foreground="#60A5FA" FontWeight="SemiBold" />
                         <ui:TextBox Width="200"
                                     Margin="12,0,0,0"
                                     PlaceholderText="Filtrar categoría / identity / detalle..."
