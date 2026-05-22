@@ -4,14 +4,14 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **295 passing** (xUnit + FluentAssertions)
+- Tests: **301 passing** (xUnit + FluentAssertions)
 - Última actualización: 2026-05-22
 
 ## Bitácora sesiones
 
 ### 2026-05-22 — Sesión "security audits sprint"
 
-Tests **214 → 295** (+81). Seis auditorías de seguridad nuevas + refactor notify.
+Tests **214 → 301** (+87). Siete auditorías de seguridad nuevas + refactor notify.
 
 Commits:
 - `feat(audit)` Conditional Access policies audit: `CaPolicyAnalyzer` puro + `RunConditionalAccessAuditAsync` consume `/identity/conditionalAccess/policies`. Categorías: disabled (INFO), report-only stale ≥30d (WARN), report-only fresh (INFO), enabled sin builtInControls (ERROR), enabled con controls débiles (WARN), enabled con `All` users sin exclusiones (WARN), enabled sin user scope (ERROR), tenant sin policies (ERROR). Suma `Policy.Read.All` al App Reg auto-create.
@@ -20,9 +20,10 @@ Commits:
 - `feat(audit)` Tenant defaults audit: `TenantDefaultsAnalyzer` puro + `RunTenantDefaultsAuditAsync` consume `/policies/authorizationPolicy` + `/policies/identitySecurityDefaultsEnforcementPolicy`. Categorías: users-can-create-apps (WARN), users-can-create-tenants (WARN), email-verified self-join (WARN), allowInvitesFrom=everyone (WARN), SSPR disabled (INFO), email-based subscriptions (INFO), SecurityDefaults on (INFO).
 - `feat(audit)` OAuth consent grants audit: `OAuthGrantAnalyzer` puro + `RunOAuthGrantsAuditAsync` enumera `/oauth2PermissionGrants` y resuelve nombres de clientes/recursos via `/servicePrincipals` (8x paralelo). Severidades: AllPrincipals + scope alto-riesgo (ERROR — admin consent peligroso), Principal + scope alto-riesgo (WARN — posible phishing OAuth). Set alto-riesgo: Mail.*/Files.*/Sites.*/Directory.*/User.*/Group.*/Calendars.*/Contacts.*/full_access_as_user/Notes.ReadWrite.All. Cubierto por `Directory.ReadWrite.All` existente.
 - `feat(audit)` Transport rules security audit: `TransportRuleAuditAnalyzer` puro + `ScanTransportRulesAsync` en `ExoForwardingAuditService`. Severidades: enabled rule con ForwardTo/BlindCopyTo/RedirectMessageTo a destinatarios externos (ERROR — exfil), outbound connector custom (INFO — verificar hybrid), DeleteMessage broad-scope (WARN), modo Audit (INFO — no enforcement), rules disabled con nombre que contiene `anti/spam/phish/dlp/quarantine/...` (WARN). Match dominios case-insensitive con `Get-AcceptedDomain`.
+- `feat(audit)` Shared mailbox sign-in audit: `SharedMailboxSignInAnalyzer` puro + `ScanSharedMailboxSignInAsync` en `ExoForwardingAuditService`. Get-Mailbox -RecipientTypeDetails SharedMailbox + Get-User por UPN para extraer AccountDisabled. Flagea shared mailboxes con `AccountDisabled=false` (WARN — sign-in habilitado, vector password attack sin MFA). Tolerante a Get-User fallo (INFO unknown).
 - `refactor(audit-vm)` extrae `NotifyAllCommands()` helper en AuditViewModel — elimina ~80 líneas de notify chains repetidas y evita bugs cuando se añade un nuevo command.
 
-Plantamiento status: Fase 6 sigue **6/8 hechos**; backlog seguridad amplía cobertura M365 baseline. Toolbar fila 1 ahora con 8 audits Graph (Identidad+grupos, MFA, CA policies, Privileged roles, App credentials, Tenant defaults, OAuth grants, Actividad grupos) y fila 2 con 3 audits EXO (Forwarding externo, Inbox rules, Transport rules).
+Plantamiento status: Fase 6 sigue **6/8 hechos**; backlog seguridad amplía cobertura M365 baseline. Toolbar fila 1 ahora con 8 audits Graph (Identidad+grupos, MFA, CA policies, Privileged roles, App credentials, Tenant defaults, OAuth grants, Actividad grupos) y fila 2 con 4 audits EXO (Forwarding externo, Inbox rules, Transport rules, Shared mailbox sign-in).
 
 ---
 
@@ -187,6 +188,7 @@ UX/QoL fase 3:
 - [x] **Auditoría: Tenant defaults / authorization policy** — `TenantDefaultsAnalyzer` puro + `RunTenantDefaultsAuditAsync` consume `/policies/authorizationPolicy` + `/policies/identitySecurityDefaultsEnforcementPolicy`. Detecta users-can-create-apps (WARN), users-can-create-tenants (WARN), allowInvitesFrom=everyone (WARN), email-verified self-join (WARN), SSPR disabled (INFO), SecurityDefaults on (INFO). Requiere `Policy.Read.All`
 - [x] **Auditoría: OAuth consent grants** — `OAuthGrantAnalyzer` puro + `RunOAuthGrantsAuditAsync` enumera `/oauth2PermissionGrants` y resuelve nombres de clientes/recursos via `/servicePrincipals`. AllPrincipals + scope alto-riesgo (ERROR — admin consent), Principal + scope alto-riesgo (WARN — posible phishing OAuth). Set alto-riesgo cubre Mail/Files/Sites/Directory/User/Group/Calendars/Contacts/Notes + full_access_as_user. Cubierto por `Directory.ReadWrite.All`
 - [x] **Auditoría: Transport rules** — `TransportRuleAuditAnalyzer` puro + `ScanTransportRulesAsync` en `ExoForwardingAuditService`. Detecta rules enabled con forwarding/BCC/redirect a destinatarios externos (ERROR — vector exfil), outbound connectors custom (INFO), DeleteMessage broad-scope (WARN), modo Audit (INFO), y rules disabled cuyo nombre incluye keywords de seguridad anti/spam/phish/dlp/quarantine (WARN). Match dominios contra `Get-AcceptedDomain`
+- [x] **Auditoría: Shared mailbox sign-in** — `SharedMailboxSignInAnalyzer` puro + `ScanSharedMailboxSignInAsync` en `ExoForwardingAuditService`. Get-Mailbox SharedMailbox + Get-User por UPN. Flagea shared boxes con `AccountDisabled=false` (WARN — sign-in habilitado, vector password attack). Tolerante a Get-User fallo (INFO unknown)
 - [x] **Cert export PFX con password** — `ICertificateGenerator.ExportPfx`, panel "Exportar PFX" en CertWizardView con PasswordBox + tests de validacion (no encontrado, password vacio, etc.)
 - [x] **Auto-create App Registration vía Graph** — `GraphAppRegistrationService.CreateAndConfigureAsync` aplica todos los AppRoles (User/Group/GroupMember/Organization/AuditLog/Directory + Exchange.ManageAsApp + Reports.Read.All), sube cert como `KeyCredential`, crea ServicePrincipal y devuelve admin-consent URL clickable. Reemplaza los 29 pasos manuales del legacy.
 - [x] **Auto-install módulo EXO** — `ExchangeConnection.InstallModuleAsync` lanza `pwsh.exe` externo (Start-Process) para esquivar el ACL de WindowsApps que niega `Microsoft.PackageManagement.dll` en runspaces embebidos. UI muestra estado del módulo + botones Comprobar/Instalar.
@@ -198,7 +200,7 @@ UX/QoL fase 3:
 
 ---
 
-## Tests (295 passing)
+## Tests (301 passing)
 
 | Suite | Tests | Cubre |
 |-------|-------|-------|
@@ -234,6 +236,7 @@ UX/QoL fase 3:
 | TenantDefaultsAnalyzer | 10 | safe baseline, create-apps (WARN), create-tenants (WARN), email-verified join, invitesFrom=everyone, invitesFrom=adminsOnly OK, SSPR disabled, email-based subs, SecurityDefaults on, case-insensitive invitesFrom |
 | OAuthGrantAnalyzer | 13 | empty, low-risk only, tenant-wide high-risk (ERROR), user-consented (WARN), empty clientId skip, scope trim, case-insensitive, mixed scopes detail, name fallback, unique clients dedup, full_access_as_user, IsHighRiskScope helper, mixed counts |
 | TransportRuleAuditAnalyzer | 17 | empty, no-actions OK, forward externo (ERROR), forward interno OK, BCC externo, redirect externo, outbound connector (INFO), delete broad scope (WARN), delete narrow OK, modo Audit (INFO), disabled (INFO), disabled security keyword (WARN), smtp prefix strip, case-insensitive domain, no-domain skip, empty name, multi-findings same rule |
+| SharedMailboxSignInAnalyzer | 6 | empty, disabled OK, enabled (WARN), unknown (INFO), empty UPN skip, mixed counts |
 
 ---
 
