@@ -88,50 +88,103 @@
                         <TextBlock Text="{Binding OverallPercent, StringFormat={}{0:F1}%}" FontWeight="SemiBold" />
                     </StackPanel>
                 </Grid>
-                <ItemsControl ItemsSource="{Binding Licenses}"
-                              Background="Transparent"
-                              VirtualizingPanel.IsVirtualizing="True"
-                              Margin="16,0,16,12">
-                    <ItemsControl.Template>
-                        <ControlTemplate>
-                            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                <ItemsPresenter />
-                            </ScrollViewer>
-                        </ControlTemplate>
-                    </ItemsControl.Template>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type models:LicenseSummary}">
-                            <Grid Margin="0,6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="260" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="140" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0"
-                                           Text="{Binding SkuPartNumber}"
-                                           FontFamily="Cascadia Mono, Consolas"
-                                           FontSize="12"
-                                           VerticalAlignment="Center"
-                                           TextTrimming="CharacterEllipsis" />
-                                <ProgressBar Grid.Column="1"
-                                             Minimum="0"
-                                             Maximum="{Binding Enabled}"
-                                             Value="{Binding Consumed, Mode=OneWay}"
-                                             Height="14"
-                                             VerticalAlignment="Center"
-                                             Margin="0,0,12,0" />
-                                <TextBlock Grid.Column="2"
-                                           VerticalAlignment="Center"
-                                           HorizontalAlignment="Right"
-                                           FontSize="12">
-                                    <Run Text="{Binding Consumed, Mode=OneWay}" FontWeight="SemiBold" />
-                                    <Run Text=" / " />
-                                    <Run Text="{Binding Enabled, Mode=OneWay}" />
-                                </TextBlock>
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="16,0,16,12">
+                    <ItemsControl ItemsSource="{Binding LicensesView}"
+                                  Background="Transparent"
+                                  xmlns:vm="clr-namespace:Grex365.App.ViewModels">
+                        <ItemsControl.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{DynamicResource SubtleFillColorSecondaryBrush}"
+                                                CornerRadius="6"
+                                                Padding="12,6"
+                                                Margin="0,16,0,8">
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontWeight="SemiBold"
+                                                       FontSize="13"
+                                                       Opacity="0.85" />
+                                        </Border>
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                                <GroupStyle.Panel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel />
+                                    </ItemsPanelTemplate>
+                                </GroupStyle.Panel>
+                            </GroupStyle>
+                        </ItemsControl.GroupStyle>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:LicenseCard}">
+                                <Border Width="280"
+                                        Margin="0,0,12,12"
+                                        Padding="16,14"
+                                        Background="{DynamicResource ControlFillColorDefaultBrush}"
+                                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="10">
+                                    <StackPanel>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding FriendlyName}"
+                                                           FontWeight="SemiBold"
+                                                           FontSize="14"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding SkuPartNumber}"
+                                                           Style="{StaticResource MonoText}"
+                                                           Opacity="0.45"
+                                                           Margin="0,2,0,0" />
+                                            </StackPanel>
+                                            <Border Grid.Column="1"
+                                                    CornerRadius="10"
+                                                    Padding="8,2"
+                                                    Background="{Binding UtilizationLevel, Converter={StaticResource UtilizationToBrushConverter}}"
+                                                    Opacity="0.18"
+                                                    VerticalAlignment="Top" />
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding PercentUsed, StringFormat={}{0:F0}%}"
+                                                       FontWeight="SemiBold"
+                                                       FontSize="12"
+                                                       Margin="8,2,8,0"
+                                                       VerticalAlignment="Top"
+                                                       Foreground="{Binding UtilizationLevel, Converter={StaticResource UtilizationToBrushConverter}}" />
+                                        </Grid>
+                                        <ProgressBar Minimum="0"
+                                                     Maximum="{Binding Enabled}"
+                                                     Value="{Binding Consumed, Mode=OneWay}"
+                                                     Height="8"
+                                                     Margin="0,12,0,8"
+                                                     Foreground="{Binding UtilizationLevel, Converter={StaticResource UtilizationToBrushConverter}}" />
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" FontSize="12" Opacity="0.85">
+                                                <Run Text="{Binding Consumed, Mode=OneWay}" FontWeight="SemiBold" />
+                                                <Run Text=" usadas de " />
+                                                <Run Text="{Binding Enabled, Mode=OneWay}" />
+                                            </TextBlock>
+                                            <TextBlock Grid.Column="1" FontSize="12" Opacity="0.65">
+                                                <Run Text="Disponibles: " />
+                                                <Run Text="{Binding Available, Mode=OneWay}" FontWeight="SemiBold" />
+                                            </TextBlock>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
             </DockPanel>
         </Border>
     </Grid>

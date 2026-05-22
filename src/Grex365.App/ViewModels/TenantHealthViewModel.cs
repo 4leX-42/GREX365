@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Grex365.App.Services;
@@ -20,12 +22,16 @@ public sealed partial class TenantHealthViewModel : ObservableObject
     [ObservableProperty] private int _totalEnabled;
     [ObservableProperty] private double _overallPercent;
 
-    public ObservableCollection<LicenseSummary> Licenses { get; } = new();
+    public ObservableCollection<LicenseCard> Licenses { get; } = new();
+    public ICollectionView LicensesView { get; }
 
     public TenantHealthViewModel(ITenantHealthService service, IUiLogSink log)
     {
         _service = service;
         _log = log;
+        LicensesView = CollectionViewSource.GetDefaultView(Licenses);
+        LicensesView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(LicenseCard.CategoryLabel)));
+        LicensesView.SortDescriptions.Add(new SortDescription(nameof(LicenseCard.Priority), ListSortDirection.Ascending));
     }
 
     [RelayCommand(CanExecute = nameof(CanRefresh))]
@@ -42,9 +48,9 @@ public sealed partial class TenantHealthViewModel : ObservableObject
             var h = await _service.GetAsync(_log.Progress, _cts.Token).ConfigureAwait(true);
             Health = h;
             Licenses.Clear();
-            foreach (var l in h.Licenses.OrderByDescending(x => x.Consumed))
+            foreach (var l in h.Licenses)
             {
-                Licenses.Add(l);
+                Licenses.Add(LicenseCard.From(l));
             }
             TotalConsumed = h.Licenses.Sum(l => l.Consumed);
             TotalEnabled = h.Licenses.Sum(l => l.Enabled);
