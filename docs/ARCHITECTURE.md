@@ -43,14 +43,19 @@ GREX365 is a Microsoft 365 administration toolkit for a single operator (sysadmi
 | Considered | Rejected because |
 |---|---|
 | WinUI 3 / Windows App SDK | Tooling immature, frequent breaking changes, smaller community, harder for self-taught dev. WPF achieves visually identical results with WPF-UI. |
-| Prism | Heavyweight framework; CommunityToolkit.Mvvm covers our needs. |
+| Prism | Heavyweight framework; CommunityToolkit.Mvvm covers our needs. Custom lightweight plugin system (`IModule` + `AssemblyLoadContext`) covers modular feature loading. |
 | Avalonia | We don't need cross-platform; M365 admins are Windows-only. |
 | .NET MAUI | Mobile-first; weak desktop story. |
 | Blazor Hybrid / Electron | UI-in-web layer adds complexity, performance cost, breaks native feel. |
-| Plugin system (Prism modules, MEF) | YAGNI for solo project; revisit at v2. |
 | Background Windows Service + gRPC IPC | Over-engineered for single-user desktop app. |
-| Application Insights / telemetry | Single operator = no need for remote telemetry. |
-| MSIX / Intune deployment | Premature; start with single-file `.exe`. |
+
+### Stack decisions later reversed
+
+| Originally rejected | Re-added because |
+|---|---|
+| Plugin system (MEF-style) | `PluginLoader` + `IModule` + `AssemblyLoadContext` shipped en Fase 4 — sample plugin POC en `samples/Grex365.SamplePlugin`. Discovery tolerante a fallos; Settings UI enable/disable por DLL. |
+| Application Insights / telemetry | Added opt-in via `ITelemetry`/`NullTelemetry` + `ApplicationInsightsTelemetry` (`Grex365.App.Services`). Empty conn string = NullTelemetry. `UiLogSink` forwards Ok/Warn/Error como TrackEvent/TrackException. Útil para multi-operator scenarios. |
+| MSIX / Intune deployment | Scaffold en `packaging/msix/` (Fase 5). Single-file `.exe` sigue disponible vía `PublishProfiles/win-x64-portable.pubxml`. Real branded assets + smoke test end-to-end pendientes. |
 
 ---
 

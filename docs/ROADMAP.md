@@ -1,7 +1,10 @@
 # GREX365 — Roadmap & status
 
 > Comprehensive punch list. Updated on every meaningful change.
-> Date created: 2026-05-15. Last update: 2026-05-15.
+> Date created: 2026-05-15. Last update: 2026-05-22.
+>
+> **Live source of truth: [`PROGRESS.md`](../PROGRESS.md)** (sessions bitácora + 326 tests detail).
+> This file tracks H0–H6 hitos. PROGRESS.md tracks per-session deltas.
 >
 > Legend: ✅ done · 🟡 in progress · 🔴 not started · ⚪ deferred · ❌ rejected
 >
@@ -13,17 +16,29 @@
 
 ---
 
+## 📍 Status snapshot (2026-05-22)
+
+- **Build**: 6 projects, 0 errors, 0 warnings
+- **Tests**: 326 passing (xUnit + FluentAssertions + Moq)
+- **Nav modules in app**: 14 (Dashboard, Conexión, Salud tenant, Usuarios, Grupos, Onboarding, Offboarding, Buzones, Reglas de buzón, Flujo de correo, Auditoría, Registro de auditoría, Asistente cert, Comprobación DNS) + Plugins category
+- **Fase 1** (refactor backend + scaffolding) — ✅ DONE
+- **Fase 2** (PS engine + async) — ✅ DONE
+- **Fase 3** (UI moderna WPF + Fluent) — ✅ DONE
+- **Fase 4** (arquitectura modular / plugins) — ✅ DONE
+- **Fase 5** (packaging) — 🟡 MSIX scaffold DONE; real assets + smoke test pending
+- **Fase 6** (telemetría + enterprise) — 🟡 6/8: JSONL audit + viewer + level switch + metrics + AppInsights + RBAC done; docs internas + QA escenarios pending
+
 ## Realistic total effort
 
 Initial estimate "3-5 weeks" assumed full-time dev. Solo + part-time autodidacta reality: **3-4 months** to reach a usable v1.0 that fully replaces the PS toolkit. Below is the full breakdown.
 
 Approximate effort summary:
 - H0 (cimientos): S ✅
-- H1 (backend core): L
-- H2 (Connect feature complete): M
-- H3 (port 8-10 features): XL
-- H4 (UX polish): M
-- H5 (release v1.0): M
+- H1 (backend core): L ✅
+- H2 (Connect feature complete): M ✅
+- H3 (port 8-10 features): XL ✅
+- H4 (UX polish): M 🟡 mostly done
+- H5 (release v1.0): M 🟡 MSIX scaffold done
 - H6 (iteration): ongoing
 
 ---
@@ -64,9 +79,9 @@ Goal: rock-solid services usable from any UI, fully tested.
 | 1.1.7 | Unit tests for cancellation | ✅ | S | Start-Sleep 30s + 200ms cancel |
 | 1.1.8 | Unit tests for stream forwarding | ✅ | S | Info + Warning streams covered |
 | 1.1.9 | Integration test: real `Get-Date` script | ✅ | S | Plus concurrent calls test |
-| 1.1.10 | Handle PSGallery first-time install (timeout, fallback) | 🔴 | M | Real-world: 60s install with no output is unacceptable |
-| 1.1.11 | Progress events for module install | 🔴 | M | Verbose stream → progress |
-| 1.1.12 | Reset runspace state on error (avoid contaminated reuse) | 🔴 | M | Currently uses default thread options |
+| 1.1.10 | Handle PSGallery first-time install (timeout, fallback) | ⚪ | M | Sidestepped: `InstallModuleAsync` launches external `pwsh.exe` (Start-Process) to avoid WindowsApps ACL on embedded runspace |
+| 1.1.11 | Progress events for module install | ⚪ | M | Same — external process surfaces progress through stdout |
+| 1.1.12 | Reset runspace state on error (avoid contaminated reuse) | 🟡 | M | Mitigated via `DISABLE_REST_API_USE_BY_DEFAULT=true` + cross-runspace EXO probe dropped. Full reset still pending. |
 
 ### 1.2 GraphConnection (native SDK)
 
@@ -77,11 +92,11 @@ Goal: rock-solid services usable from any UI, fully tested.
 | 1.2.3 | Smoke test via `Organization.GetAsync` | ✅ | S | |
 | 1.2.4 | Cert loading from CurrentUser\My | ✅ | S | |
 | 1.2.5 | Real connection state (token validity, not just IsConnected flag) | ✅ | M | `CheckLiveAsync` probes Graph with 10s cache |
-| 1.2.6 | Tenant lock enforcement (compare actual TenantId vs expected) | 🔴 | S | Port from legacy `Assert-TenantLock` |
-| 1.2.7 | Scope handling (currently hardcoded `.default`) | 🔴 | S | Keep app-only for cert; explicit scopes for device code |
-| 1.2.8 | Device-code / traditional flow | 🔴 | M | `DeviceCodeCredential` |
-| 1.2.9 | Connection state cache (avoid re-auth per call) | 🔴 | S | SDK handles via token cache |
-| 1.2.10 | Unit tests with Moq | 🔴 | S | |
+| 1.2.6 | Tenant lock enforcement (compare actual TenantId vs expected) | ✅ | S | `ITenantLock.EnforceAsync` in `ConnectViewModel` post-Graph-connect (cert + device-code) |
+| 1.2.7 | Scope handling (currently hardcoded `.default`) | ✅ | S | App-only `.default` for cert; explicit scopes for device-code |
+| 1.2.8 | Device-code / traditional flow | ✅ | M | Azure CLI public client, no AppReg required |
+| 1.2.9 | Connection state cache (avoid re-auth per call) | ✅ | S | `CheckLiveAsync` 10s cache TTL |
+| 1.2.10 | Unit tests with Moq | 🔴 | S | Pending — `GraphConnection` integration paths |
 
 ### 1.3 ExchangeConnection (runspace)
 
@@ -91,11 +106,11 @@ Goal: rock-solid services usable from any UI, fully tested.
 | 1.3.2 | `Connect-ExchangeOnline` cert flow | ✅ | S | |
 | 1.3.3 | Module ensure (install + import) | ✅ | S | |
 | 1.3.4 | Disconnect | ✅ | S | |
-| 1.3.5 | Persistent session across runspace pool | 🔴 | M | Currently each runspace lacks connection state |
-| 1.3.6 | Real `Test-ExchangeOnlineConnected` via runspace | ✅ | S | `CheckLiveAsync` calls Get-ConnectionInformation |
-| 1.3.7 | Tenant lock enforcement | 🔴 | S | |
-| 1.3.8 | Device-code flow | 🔴 | M | |
-| 1.3.9 | Integration test (mock or real tenant) | 🔴 | M | |
+| 1.3.5 | Persistent session across runspace pool | 🟡 | M | Connection persists per-runspace via `DISABLE_REST_API_USE_BY_DEFAULT=true`; pool-wide handoff not exhaustively tested |
+| 1.3.6 | Real `Test-ExchangeOnlineConnected` via runspace | ✅ | S | `CheckLiveAsync` calls `Get-ConnectionInformation` |
+| 1.3.7 | Tenant lock enforcement | ✅ | S | Enforced in `ConnectViewModel` (Graph-side tenant matches; EXO inherits same tenant) |
+| 1.3.8 | Device-code flow | 🔴 | M | EXO cert-only; device-code for EXO not added (no real ops driver yet) |
+| 1.3.9 | Integration test (mock or real tenant) | 🔴 | M | Manual only |
 
 ### 1.4 ConnectionStateMonitor
 
@@ -107,7 +122,7 @@ Goal: rock-solid services usable from any UI, fully tested.
 | 1.4.4 | Real check vs `IGraphConnection.IsConnected` | ✅ | S | Calls `CheckLiveAsync` per tick |
 | 1.4.5 | Real check vs `Get-ConnectionInformation` runspace | ✅ | M | 10s cache TTL prevents stampede |
 | 1.4.6 | Surface tenant + account info in state | ✅ | S | TenantId, Organization, Account flow to UI |
-| 1.4.7 | Unit tests | 🔴 | S | |
+| 1.4.7 | Unit tests | ✅ | S | `ConnectionStateMonitorTests` (4 tests) |
 
 ### 1.5 Preferences + cert config
 
@@ -126,9 +141,9 @@ Goal: rock-solid services usable from any UI, fully tested.
 |---|------|--------|--------|-------|
 | 1.6.1 | Serilog rolling file config | ✅ | S | |
 | 1.6.2 | `UiLogSink` ObservableCollection | ✅ | S | |
-| 1.6.3 | Audit log separate file (who did what when) | 🔴 | M | Compliance-relevant ops only |
-| 1.6.4 | Log severity filter in UI | 🔴 | S | Hide Debug by default |
-| 1.6.5 | Log export (copy/save to file) | 🔴 | S | |
+| 1.6.3 | Audit log separate file (who did what when) | ✅ | M | `FileAuditLog` JSONL en `%LOCALAPPDATA%\Grex365\audit\audit-YYYY-MM.jsonl` (thread-safe + AuditLogView viewer) |
+| 1.6.4 | Log severity filter in UI | ✅ | S | Checkboxes Info/Ok/Warn/Err/Dbg en log panel (Dbg oculto por defecto) |
+| 1.6.5 | Log export (copy/save to file) | 🔴 | S | Pending — file is on disk but no in-UI export button |
 
 ---
 
@@ -145,170 +160,82 @@ Goal: the bug that started this conversation is fully fixed in the new app.
 | 2.5 | DI bootstrap in `App.xaml.cs` | ✅ | S | |
 | 2.6 | Global exception handler | ✅ | S | DispatcherUnhandledException only — need 3 more |
 | 2.7 | App.UnhandledException + TaskScheduler.UnobservedTaskException | ✅ | S | Wired in `WireGlobalExceptionHandlers` |
-| 2.8 | Settings view (cert path, tenant id, connection method) | 🔴 | M | Bind to `IPreferencesStore` |
-| 2.9 | First-run wizard (no config exists) | 🔴 | M | Guide user to set cert + tenant |
+| 2.8 | Settings view (cert path, tenant id, connection method) | ✅ | M | `SettingsWindow` con tabs (cert picker, tenant lock, theme, telemetry, plugins, log level, RBAC group) |
+| 2.9 | First-run wizard (no config exists) | 🟡 | M | Auto-connect on startup if cert válido (`TryAutoConnectAsync`). Sin first-run wizard explícito — usuario va a Conexión/Asistente cert manualmente |
 | 2.10 | Smoke test against real tenant | 🔴 | M | Manual; documents the flow |
 | 2.11 | Replace fake `IsConnected` with real state | ✅ | M | Wired to H1.2.5 + H1.3.6 + dispatcher marshalling |
 | 2.12 | Cert config validation UI (warn if cert expired, missing in store) | ✅ | S | `ICertValidator` runs before Connect, blocks if invalid |
-| 2.13 | Theme toggle (light/dark) | 🔴 | S | Read from prefs |
-| 2.14 | Window restore (size, position) on relaunch | 🔴 | S | |
-| 2.15 | App icon + branding | 🔴 | S | |
-| 2.16 | About dialog (version, repo link) | 🔴 | S | |
+| 2.13 | Theme toggle (light/dark) | ✅ | S | Botón Tema en sidebar + persistencia `UserPreferences.Theme` |
+| 2.14 | Window restore (size, position) on relaunch | 🔴 | S | Pending |
+| 2.15 | App icon + branding | 🟡 | S | MSIX assets placeholder; in-app sin branding final |
+| 2.16 | About dialog (version, repo link) | 🔴 | S | Pending |
 
 ---
 
-## H3 — Migrate features 🔴
+## H3 — Migrate features ✅
 
-One section per legacy feature. Each typically: read PS script → port logic to C# service → unit tests → ViewModel + View → update `MIGRATION.md`.
+All major feature ports complete. See [`MIGRATION.md`](MIGRATION.md) for per-feature legacy→new table.
 
-### 3.1 Tenant health (L)
+| # | Feature | Status | Service | View |
+|---|---|---|---|---|
+| 3.1 | Tenant health | ✅ | `TenantHealthService` + `SkuCatalog` | `TenantHealthView` (M365-portal-style cards) |
+| 3.2 | Identity audit | ✅ | `GraphAuditService.RunIdentityAuditAsync` + `IdentityAuditAnalyzer` | `AuditView` (compartido) |
+| 3.3 | Groups workflow | ✅ | `GraphGroupsService` + `DistributionListsService` + `BulkGroupRowPreprocessor` | `GroupsView` (search + bulk CSV auto-detect type) |
+| 3.4 | Mailbox permissions | ✅ | `SharedMailboxService` | `SharedMailboxView` |
+| 3.5 | Offboarding wizard | ✅ | `OffboardingService` (composes Users + SharedMailbox + RBAC gate) | `OffboardingView` |
+| 3.6 | Cert wizard | ✅ | `CertificateGenerator` + `GraphAppRegistrationService` (auto AppReg + cert upload + consent URL) | `CertWizardView` |
+| 3.7 | Roles + UI modes | ⚪ | Superseded by RBAC guard (membership-based) | — |
+| 3.8 | Templates | ⚪ | Open — no demand yet | — |
+| 3.9 | Reports | 🔴 | Open decision (D3): CSV/XLSX/HTML/in-app? | — |
 
-Legacy: `GREX365/Scripts/Show-TenantHealth.ps1` (20.5 KB, 500+ lines)
+### Extras (no legacy, ported new)
 
-| # | Item | Status | Effort | Notes |
-|---|------|--------|--------|-------|
-| 3.1.1 | Read legacy + identify Graph calls | 🔴 | S | |
-| 3.1.2 | Port to `Grex365.Core/Services/TenantHealthService.cs` | 🔴 | M | Use `GraphServiceClient` |
-| 3.1.3 | `TenantHealthViewModel` + `TenantHealthView.xaml` | 🔴 | M | DataGrid + summary cards |
-| 3.1.4 | Cancellation support | 🔴 | S | |
-| 3.1.5 | CSV/clipboard export | 🔴 | S | |
-| 3.1.6 | Unit tests with mocked GraphServiceClient | 🔴 | M | |
-| 3.1.7 | Mark legacy as DEPRECATED | 🔴 | S | |
-
-### 3.2 Identity audit (L)
-
-Legacy: `GREX365/Scripts/Invoke-IdentityAudit.ps1` (6.8 KB)
-
-| # | Item | Status | Effort | Notes |
-|---|------|--------|--------|-------|
-| 3.2.1 | Port logic to `IdentityAuditService` | 🔴 | M | |
-| 3.2.2 | VM + View | 🔴 | M | |
-| 3.2.3 | Tests | 🔴 | M | |
-| 3.2.4 | Deprecate legacy | 🔴 | S | |
-
-### 3.3 Groups workflow (XL)
-
-Legacy combined: `Invoke-GroupsWorkflow.ps1` + `Add-GroupMembers.ps1` + `Export-GroupMembers.ps1` + `New-GroupsFromCsv.ps1` (~50 KB)
-
-| # | Item | Status | Effort | Notes |
-|---|------|--------|--------|-------|
-| 3.3.1 | Port `GroupResolver.ps1` to `GroupResolverService` | 🔴 | M | Search + resolve identities |
-| 3.3.2 | Port Add-GroupMembers | 🔴 | M | CSV input |
-| 3.3.3 | Port Export-GroupMembers | 🔴 | M | CSV output |
-| 3.3.4 | Port New-GroupsFromCsv | 🔴 | L | M365 Groups + DLs, `-WhatIf` support |
-| 3.3.5 | Unified Groups VM/View | 🔴 | L | Three tabs: Add / Export / Create |
-| 3.3.6 | CSV browse dialog + preview | 🔴 | S | |
-| 3.3.7 | Drag-and-drop CSV onto window | 🔴 | S | |
-| 3.3.8 | Tests | 🔴 | L | |
-| 3.3.9 | Deprecate legacy | 🔴 | S | |
-
-### 3.4 Mailbox permissions (M)
-
-Legacy: `Set-SharedMailboxPermissions.ps1` + `Convert-SharedToUserMailbox.ps1`
-
-| # | Item | Status | Effort | Notes |
-|---|------|--------|--------|-------|
-| 3.4.1 | Port permissions logic | 🔴 | M | EXO runspace |
-| 3.4.2 | Port shared→user convert | 🔴 | M | |
-| 3.4.3 | VM + View | 🔴 | M | |
-| 3.4.4 | Tests | 🔴 | M | |
-| 3.4.5 | Deprecate legacy | 🔴 | S | |
-
-### 3.5 Offboarding wizard (XL)
-
-Legacy: `Invoke-OffboardingWizard.ps1` (22.6 KB, 600+ lines) — most complex feature
-
-| # | Item | Status | Effort | Notes |
-|---|------|--------|--------|-------|
-| 3.5.1 | Read full wizard, map steps | 🔴 | S | |
-| 3.5.2 | Decide: transactional rollback vs checkpoint? | 🔴 | S | OPEN DECISION |
-| 3.5.3 | `OffboardingService` with step abstraction | 🔴 | L | Pipeline pattern |
-| 3.5.4 | Steps: disable user, revoke licenses, fwd mailbox, transfer OneDrive, etc. | 🔴 | L | |
-| 3.5.5 | Multi-page wizard View | 🔴 | L | Step indicator + summary |
-| 3.5.6 | Dry-run mode (`-WhatIf` equivalent) | 🔴 | M | |
-| 3.5.7 | Progress + cancel mid-pipeline | 🔴 | M | |
-| 3.5.8 | Tests | 🔴 | L | |
-| 3.5.9 | Deprecate legacy | 🔴 | S | |
-
-### 3.6 Cert wizard (XL)
-
-Legacy: `GREX365/Modules/CertWizard.ps1` (28.3 KB, 628 lines) — 29 interactive steps
-
-| # | Item | Status | Effort | Notes |
-|---|------|--------|--------|-------|
-| 3.6.1 | Map 29 steps to typed C# state machine | 🔴 | M | |
-| 3.6.2 | Self-signed cert generation (`CertificateRequest`) | 🔴 | M | |
-| 3.6.3 | App registration creation via Graph | 🔴 | L | Needs Graph admin consent |
-| 3.6.4 | Service Principal + directory roles | 🔴 | L | |
-| 3.6.5 | AppRoles Graph + Exchange grants | 🔴 | L | |
-| 3.6.6 | Multi-page wizard UI | 🔴 | L | |
-| 3.6.7 | Save config to `exo-app-params.json` | 🔴 | S | |
-| 3.6.8 | Cleanup / uninstall flow | 🔴 | M | Port `Remove-CertConfig` |
-| 3.6.9 | Tests (mostly Graph SDK mocked) | 🔴 | L | |
-| 3.6.10 | Deprecate legacy | 🔴 | S | |
-
-### 3.7 Roles + UI modes (S)
-
-Legacy: `Roles.ps1` — operator vs admin, support vs advanced UI
-
-| # | Item | Status | Effort | Notes |
-|---|------|--------|--------|-------|
-| 3.7.1 | Decide if needed in v1 (you're sole operator) | 🔴 | S | OPEN DECISION — probably ⚪ defer |
-| 3.7.2 | If yes: port to `IRoleService` + view visibility | ⚪ | M | |
-
-### 3.8 Templates (S)
-
-Legacy: `Templates.ps1` — offboarding templates
-
-| # | Item | Status | Effort | Notes |
-|---|------|--------|--------|-------|
-| 3.8.1 | Decide if needed v1 | 🔴 | S | OPEN DECISION |
-| 3.8.2 | Port if yes | ⚪ | S | |
-
-### 3.9 Reports (M)
-
-Legacy: `Report.ps1` — generates summary reports of runs
-
-| # | Item | Status | Effort | Notes |
-|---|------|--------|--------|-------|
-| 3.9.1 | Decide format: in-app DataGrid + CSV vs XLSX vs HTML | 🔴 | S | OPEN DECISION |
-| 3.9.2 | Implement | 🔴 | M | |
-| 3.9.3 | Tests | 🔴 | S | |
+| Feature | Status | Notes |
+|---|---|---|
+| Onboarding wizard | ✅ | Create user + assign SKUs + add to groups |
+| Mailbox rules (OOO/forwarding/calendar perms) | ✅ | EXO via `MailboxRulesService` |
+| Mail flow rules viewer | ✅ | `Get-TransportRule` lister |
+| DNS check (MX/TXT/SPF/DMARC) | ✅ | `DomainChecker` |
+| 13 security audits (Identity / MFA / CA policy / Privileged roles / App creds / Tenant defaults / OAuth grants / Forwarding ext / Inbox rules / Transport rules / Shared mailbox sign-in / Group activity / Groups hygiene) | ✅ | Cubre baseline M365 security |
+| User details drawer (mini-portal lateral M365 admin) | ✅ | Identity card + memberships + license assign/remove + reset password + revoke sessions + slide-in animation |
+| Audit log JSONL + viewer with metrics | ✅ | `FileAuditLog` + `MetricsAggregator` + `AuditLogView` |
 
 ---
 
-## H4 — UX polish 🔴
+## H4 — UX polish 🟡
 
 | # | Item | Status | Effort | Notes |
 |---|------|--------|--------|-------|
-| 4.1 | Dashboard home screen | 🔴 | M | Cards: tenant health summary, recent ops, connection state |
-| 4.2 | Theme toggle (light/dark/auto from system) | 🔴 | S | |
-| 4.3 | Sidebar navigation (NavigationView with Frame) | 🔴 | M | Replace flat layout |
-| 4.4 | Keyboard shortcuts (Ctrl+, settings, Ctrl+L logs, etc.) | 🔴 | S | |
-| 4.5 | Empty states for every list / panel | 🔴 | S | |
-| 4.6 | Notification toast for completion + errors | 🔴 | M | |
-| 4.7 | Confirmation dialogs for destructive ops | 🔴 | S | |
-| 4.8 | Per-monitor DPI testing | 🔴 | S | |
-| 4.9 | Accessibility pass (keyboard nav, screen reader) | 🔴 | M | |
-| 4.10 | App icon + splash | 🔴 | S | |
-| 4.11 | Spanish/English locale toggle | 🔴 | M | OPEN DECISION — needed? |
+| 4.1 | Dashboard home screen | ✅ | M | Cards: connection state + last audit + quick actions |
+| 4.2 | Theme toggle (light/dark/auto from system) | ✅ | S | Botón Tema sidebar + persistencia (auto-from-system pending) |
+| 4.3 | Sidebar navigation (NavigationView with Frame) | ✅ | M | CIPP-style grouping (Tenant/Identidad/Mail/Seguridad/Herramientas/Plugins) + accent rail PowerToys-style |
+| 4.4 | Keyboard shortcuts (Ctrl+, settings, Ctrl+L logs, etc.) | 🟡 | S | Audit view: Ctrl+R/Esc/Ctrl+E. Enter en search en Users/Groups/SharedMailbox/MailboxRules/DNS. Esc cierra drawer. Falta global Ctrl+, settings |
+| 4.5 | Empty states for every list / panel | ✅ | S | Users/Groups/Audit con placeholder + glyph + texto guía |
+| 4.6 | Notification toast for completion + errors | ✅ | M | `SnackbarPresenter` wpf-ui en Ok/Warn/Error |
+| 4.7 | Confirmation dialogs for destructive ops | ✅ | S | Disable user, remove licenses, remove member, offboarding, bulk create |
+| 4.8 | Per-monitor DPI testing | 🔴 | S | Pending |
+| 4.9 | Accessibility pass (keyboard nav, screen reader) | 🔴 | M | Pending — glyphs en columnas refuerzan color (audit) pero no auditado |
+| 4.10 | App icon + splash | 🔴 | S | Pending |
+| 4.11 | Spanish/English locale toggle | 🔴 | M | Open decision (D6) — ES-only por ahora |
 
 ---
 
-## H5 — Release v1.0 🔴
+## H5 — Release v1.0 🟡
 
 | # | Item | Status | Effort | Notes |
 |---|------|--------|--------|-------|
-| 5.1 | `dotnet publish` single-file `.exe` works | ✅ | S | Tested locally — pipeline ready |
-| 5.2 | Self-signed code-signing cert | 🔴 | S | `New-SelfSignedCertificate -Type CodeSigningCert` |
-| 5.3 | `signtool` integrated into publish step | 🔴 | M | |
-| 5.4 | Velopack auto-update | 🔴 | M | GitHub Releases as feed |
-| 5.5 | GitHub Releases automated on tag | 🔴 | S | CI workflow already stubs this |
-| 5.6 | Release notes template | 🔴 | S | |
-| 5.7 | Versioning scheme (SemVer + Directory.Build.props) | 🔴 | S | |
-| 5.8 | Install / uninstall docs | 🔴 | S | |
-| 5.9 | Real (purchased) code-signing cert decision | 🔴 | S | OPEN — SmartScreen reputation |
-| 5.10 | Smoke test on clean Win10/Win11 VMs | 🔴 | M | |
+| 5.1 | `dotnet publish` single-file `.exe` works | ✅ | S | `PublishProfiles/win-x64-portable.pubxml` + `PACKAGING.md` |
+| 5.2 | Self-signed code-signing cert | 🔴 | S | Decision pending (D7) |
+| 5.3 | `signtool` integrated into publish step | 🟡 | M | Hook opcional en CI (`SIGN_CERT_PFX_B64` + `SIGN_CERT_PASSWORD` secrets) — sin cert real configurado |
+| 5.4 | Velopack auto-update | 🔴 | M | Sustituido por MSIX `.appinstaller` template con auto-update |
+| 5.5 | GitHub Releases automated on tag | ✅ | S | CI workflow job `msix` triggered on `v*` tag |
+| 5.6 | Release notes template | 🔴 | S | Pending |
+| 5.7 | Versioning scheme (SemVer + Directory.Build.props) | 🔴 | S | Currently `v0.2.0-alpha` hardcoded en UI strings |
+| 5.8 | Install / uninstall docs | ✅ | S | `PACKAGING.md` (Intune/SCCM/AppInstaller) |
+| 5.9 | Real (purchased) code-signing cert decision | 🔴 | S | Open (D7) |
+| 5.10 | Smoke test on clean Win10/Win11 VMs | 🔴 | M | Pending |
+| 5.11 | MSIX `Package.appxmanifest` + scaffold | ✅ | M | `packaging/msix/` + `Build-Msix.ps1` + `Generate-Assets.ps1` |
+| 5.12 | Real branded MSIX assets (replace PNG placeholders) | 🔴 | S | Pending |
 
 ---
 
@@ -324,28 +251,29 @@ Legacy: `Report.ps1` — generates summary reports of runs
 
 ## Open decisions tracker
 
-These block later work. Resolve before reaching their hito.
-
 | # | Decision | Blocks | Status |
 |---|----------|--------|--------|
-| D1 | Branching strategy (trunk vs feature branches) | H0.12 | 🔴 |
-| D2 | Offboarding: transactional or checkpoint? | H3.5 | 🔴 |
-| D3 | Report format: CSV / XLSX / HTML / DataGrid only? | H3.9 | 🔴 |
-| D4 | Roles + UI modes: keep or drop for v1? | H3.7 | 🔴 — recommend drop |
-| D5 | Templates: keep or drop for v1? | H3.8 | 🔴 |
-| D6 | i18n: Spanish only, or Spanish + English? | H4.11 | 🔴 |
-| D7 | Code-signing cert: self-signed forever or buy real? | H5.9 | 🔴 |
-| D8 | Min target OS: Win10 1809+ or Win11 only? | many | 🔴 |
-| D9 | Tenant lock: keep legacy preference? | H1.2.6 | 🔴 |
+| D1 | Branching strategy (trunk vs feature branches) | H0.12 | 🟡 De-facto trunk-based en `grex365-2.0`; sin doc explícito |
+| D2 | Offboarding: transactional or checkpoint? | H3.5 | 🟡 De-facto step-by-step fail-soft (each step try/catch) |
+| D3 | Report format: CSV / XLSX / HTML / DataGrid only? | H3.9 | 🔴 Open — audits ya exportan CSV |
+| D4 | Roles + UI modes: keep or drop for v1? | H3.7 | ✅ Dropped — RBAC guard cubre |
+| D5 | Templates: keep or drop for v1? | H3.8 | 🔴 Open |
+| D6 | i18n: Spanish only, or Spanish + English? | H4.11 | 🔴 Open — ES-only por ahora |
+| D7 | Code-signing cert: self-signed forever or buy real? | H5.9 | 🔴 Open |
+| D8 | Min target OS: Win10 1809+ or Win11 only? | many | 🔴 Open — `.NET 10` runtime soporta ambos |
+| D9 | Tenant lock: keep legacy preference? | H1.2.6 | ✅ Kept + enforced post-auth (cert + device-code) |
 
 ---
 
-## What to work on next (single source of truth)
+## What to work on next (priorizado por valor / riesgo)
 
-**Right now**: H0 done. The next session should pick one of:
+**Backlog activo** (per `PROGRESS.md` "Próximo bloque planificado"):
 
-1. **H1.1.6–1.1.11**: solidify `PowerShellRunner` (tests + install progress). Necessary for everything else.
-2. **H2.11**: real connection state (replace fake `IsConnected`). Unlocks the actual bug fix demo.
-3. **H2.9**: first-run wizard so the app is usable on a fresh machine.
-
-Recommendation: **H2.11 first** (shortest path to "Connect actually works and shows live state"), then H1 tests, then H3 features one-by-one.
+1. **MSIX assets reales** — reemplazar PNG placeholders + smoke test instalación end-to-end con cert real (H5.12 + H5.10)
+2. **QA escenarios reales** — 100+ ops simultáneas bajo carga + scripted bulk CSV grande (Fase 6)
+3. **Tests cobertura gap** — UserDetailsVM, GraphAppRegistrationService, GraphUsers/Groups/Audit services (requiere `Grex365.App.Tests` csproj + `IConfirmationService`/`IClipboardService` abstracciones)
+4. **Terminal PowerShell embebido** (`EasyWindowsTerminalControl`) — troubleshooting in-app (backlog Polish UI)
+5. **First-run wizard explícito** (H2.9) — flujo guiado para usuario sin config
+6. **Documentación técnica interna** (RUNBOOK.md) — requiere petición explícita del usuario
+7. **Pequeñas mejoras**: log export (H1.6.5), window restore (H2.14), about dialog (H2.16), Ctrl+, global shortcut (H4.4), DPI/a11y pass (H4.8/9)
+8. **Resolver decisiones abiertas** D3/D5/D6/D7/D8
