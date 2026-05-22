@@ -154,6 +154,18 @@
                            Margin="0,0,8,0"
                            Command="{Binding ExportFindingsHtmlCommand}"
                            ToolTip="Informe HTML con tablas por severidad, totales y CSS embebido. Comparte con stakeholders." />
+                <ui:Button Content="Exportar JSON..."
+                           Margin="0,0,8,0"
+                           Command="{Binding ExportFindingsJsonCommand}"
+                           ToolTip="Informe JSON machine-readable. Schema versionado para automatización/CI/baseline diff." />
+                <ui:Button Content="Cargar baseline..."
+                           Margin="0,0,8,0"
+                           Command="{Binding LoadBaselineCommand}"
+                           ToolTip="Compara findings actuales contra un JSON exportado previamente. Muestra nuevos/resueltos/persistentes." />
+                <ui:Button Content="Limpiar baseline"
+                           Margin="0,0,8,0"
+                           Visibility="{Binding HasBaseline, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}"
+                           Command="{Binding ClearBaselineCommand}" />
                 <ui:ProgressRing IsIndeterminate="True"
                                  Width="20" Height="20"
                                  Margin="8,0,8,0"

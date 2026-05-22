@@ -35,6 +35,8 @@ public sealed partial class AuditViewModel : ObservableObject
     [ObservableProperty] private int _errorCount;
     [ObservableProperty] private int _warningCount;
     [ObservableProperty] private int _infoCount;
+    [ObservableProperty] private string? _baselineSummary;
+    [ObservableProperty] private bool _hasBaseline;
 
     public ObservableCollection<AuditFinding> Findings { get; } = new();
     public ICollectionView FindingsView { get; }
@@ -809,6 +811,94 @@ public sealed partial class AuditViewModel : ObservableObject
             return '"' + v.Replace("\"", "\"\"") + '"';
         }
         return v;
+    }
+
+    [RelayCommand]
+    private void LoadBaseline()
+    {
+        var dlg = new OpenFileDialog
+        {
+            Title = "Cargar baseline JSON",
+            Filter = "JSON (*.json)|*.json|Todos|*.*"
+        };
+        if (dlg.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            var json = File.ReadAllText(dlg.FileName);
+            var envelope = AuditReportJsonBuilder.Parse(json);
+            if (envelope is null)
+            {
+                StatusMessage = "Baseline vacío o inválido.";
+                return;
+            }
+
+            var current = FindingsView.Cast<AuditFinding>().ToList();
+            var diff = AuditBaselineComparer.Compare(envelope.Findings, current);
+            BaselineSummary =
+                $"Baseline {Path.GetFileName(dlg.FileName)} ({envelope.GeneratedAt:yyyy-MM-dd}) — " +
+                $"nuevos: {diff.NewCount} · resueltos: {diff.ResolvedCount} · persistentes: {diff.PersistentCount}";
+            HasBaseline = true;
+            StatusMessage = BaselineSummary;
+            _log.Progress.Report(LogEntry.Ok("Audit",
+                $"Baseline cargado: {diff.NewCount} nuevos, {diff.ResolvedCount} resueltos, {diff.PersistentCount} persistentes"));
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error baseline: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
+        }
+    }
+
+    [RelayCommand]
+    private void ClearBaseline()
+    {
+        BaselineSummary = null;
+        HasBaseline = false;
+        StatusMessage = "Baseline borrado.";
+    }
+
+    [RelayCommand]
+    private void ExportFindingsJson()
+    {
+        if (Findings.Count == 0)
+        {
+            StatusMessage = "Sin hallazgos para exportar.";
+            return;
+        }
+
+        var dlg = new SaveFileDialog
+        {
+            Title = "Guardar informe JSON",
+            Filter = "JSON (*.json)|*.json",
+            FileName = $"audit_report_{DateTime.Now:yyyyMMdd_HHmmss}.json"
+        };
+        if (dlg.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            var rows = FindingsView.Cast<AuditFinding>().ToList();
+            var ctx = new AuditReportContext(
+                Title: "GREX365 — Informe de auditoría",
+                GeneratedAt: DateTime.Now,
+                TenantDomain: _graph?.TenantId,
+                GeneratedBy: Environment.UserName);
+            var json = AuditReportJsonBuilder.Build(rows, ctx);
+            File.WriteAllText(dlg.FileName, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            StatusMessage = $"Exportado: {Path.GetFileName(dlg.FileName)}";
+            _log.Progress.Report(LogEntry.Ok("Audit", "Informe JSON exportado: " + dlg.FileName));
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Error: " + ex.Message;
+            _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
+        }
     }
 
     [RelayCommand]

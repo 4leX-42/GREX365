@@ -4,7 +4,7 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **444 passing** (xUnit + FluentAssertions)
+- Tests: **469 passing** (xUnit + FluentAssertions)
 - Última actualización: 2026-05-23
 
 ## Auditoría técnica integral 2026-05-22
@@ -57,6 +57,19 @@
 - Sweep final `grep "Foreground=\"#\|Background=\"#"`: cero matches restantes — paleta 100% via DynamicResource.
 
 ## Bitácora sesiones
+
+### 2026-05-23 (Sprint K) — Audit JSON export + baseline diff
+
+**Sprint K** — Machine-readable export + drift detection contra baseline previo:
+- `AuditReportJsonBuilder` puro en `Grex365.Core.Audit`: serializa `AuditReportEnvelope` (Schema + Title + GeneratedAt + Tenant + Operator + Counts + Findings) via `System.Text.Json`. Constante `SchemaVersion = "grex365.audit.v1"` para automation forward-compat. Helper `Parse(string) → AuditReportEnvelope?` para reload. Encoder `JavaScriptEncoder.UnsafeRelaxedJsonEscaping` evita escapar acentos UTF-8.
+- `AuditReportCounts` record (Errors/Warnings/Info/Total) precomputado en build, NO recalculado en consumer.
+- `AuditBaselineComparer` puro: `Compare(baseline, current) → AuditBaselineDiff` (New/Resolved/Persistent). Identidad por `(Category, Identity, Detail, Severity-case-insensitive)` via custom `IEqualityComparer<AuditFinding>`. Dedupe rows duplicadas en current. `HasChanges` flag + count helpers.
+- `AuditViewModel`: `ExportFindingsJsonCommand` (SaveFileDialog .json, UTF-8 sin BOM para tooling compatibility) + `LoadBaselineCommand` (OpenFileDialog, calcula diff contra `FindingsView` actual, status string `nuevos: X · resueltos: Y · persistentes: Z`) + `ClearBaselineCommand`. Props `BaselineSummary` + `HasBaseline` para UI.
+- `AuditView.xaml`: botones "Exportar JSON..." / "Cargar baseline..." / "Limpiar baseline" (visible solo si HasBaseline) en toolbar acciones.
+- 13 tests `AuditReportJsonBuilderTests`: roundtrip preserva findings, schema embebido, counts case-insensitive, ISO8601 timestamps, pretty-print default, custom options, parse null/whitespace/invalid, tenant+actor.
+- 12 tests `AuditBaselineComparerTests`: empty inputs, nulls, persistent vs new vs resolved, severity case-insensitive, category case-sensitive, dedup duplicates, mixed state partition, null severity = empty, different detail = different finding.
+
+**Estado**: 469 tests verdes (386 Core +25 + 83 App). Build clean 7 projects 0 errors.
 
 ### 2026-05-23 (Sprint J) — Audit HTML report export
 
