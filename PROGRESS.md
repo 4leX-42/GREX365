@@ -51,6 +51,11 @@
 
 326 tests siguen verdes. Build clean.
 
+### Post-refactor sweep
+- DashboardView pills Foreground refactor también a `BrushSemanticError/Warn/Info` (eran inline hex en `Run.Foreground`).
+- Surface tokens añadidos en App.xaml: `BrushSurfaceDivider` (#33808080 — gris translúcido válido en light/dark). Disponible para dividers consistentes.
+- Sweep final `grep "Foreground=\"#\|Background=\"#"`: cero matches restantes — paleta 100% via DynamicResource.
+
 ## Bitácora sesiones
 
 ### 2026-05-22 — Sesión "security audits sprint"

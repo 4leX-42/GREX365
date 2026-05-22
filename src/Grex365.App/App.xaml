@@ -61,6 +61,15 @@
             <SolidColorBrush x:Key="BrushSemanticWarnMutedText" Color="{StaticResource SemanticWarnMutedTextColor}" />
             <SolidColorBrush x:Key="BrushSemanticInfoMutedText" Color="{StaticResource SemanticInfoMutedTextColor}" />
 
+            <!-- App-wide accent definitions (light + dark agnostic).
+                 wpf-ui ThemeDictionary swaps surface colors, semantic palette stays
+                 readable en ambos themes. Para futuro: separate ResourceDictionary
+                 por theme con overrides para variantes mate. -->
+            <Color x:Key="SurfaceCardBgDarkColor">#1A1F2A</Color>
+            <Color x:Key="SurfaceCardBgLightColor">#FFFFFF</Color>
+            <Color x:Key="SurfaceDividerColor">#33808080</Color>
+            <SolidColorBrush x:Key="BrushSurfaceDivider" Color="{StaticResource SurfaceDividerColor}" />
+
             <!-- Typography -->
             <Style x:Key="PageTitleText" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="28" />

@@ -169,20 +169,20 @@
                     <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                         <Border Background="{DynamicResource BrushSemanticErrorSoft}" CornerRadius="14" Padding="14,6" Margin="0,0,8,0">
                             <TextBlock>
-                                <Run Text="ERROR " FontWeight="SemiBold" Foreground="#EF4444" />
-                                <Run Text="{Binding LastAuditErrors, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#EF4444" FontSize="16" />
+                                <Run Text="ERROR " FontWeight="SemiBold" Foreground="{DynamicResource BrushSemanticError}" />
+                                <Run Text="{Binding LastAuditErrors, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="{DynamicResource BrushSemanticError}" FontSize="16" />
                             </TextBlock>
                         </Border>
                         <Border Background="{DynamicResource BrushSemanticWarnSoft}" CornerRadius="14" Padding="14,6" Margin="0,0,8,0">
                             <TextBlock>
-                                <Run Text="WARN " FontWeight="SemiBold" Foreground="#F59E0B" />
-                                <Run Text="{Binding LastAuditWarnings, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#F59E0B" FontSize="16" />
+                                <Run Text="WARN " FontWeight="SemiBold" Foreground="{DynamicResource BrushSemanticWarn}" />
+                                <Run Text="{Binding LastAuditWarnings, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="{DynamicResource BrushSemanticWarn}" FontSize="16" />
                             </TextBlock>
                         </Border>
                         <Border Background="{DynamicResource BrushSemanticInfoSoft}" CornerRadius="14" Padding="14,6">
                             <TextBlock>
-                                <Run Text="INFO " FontWeight="SemiBold" Foreground="#3B82F6" />
-                                <Run Text="{Binding LastAuditInfo, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="#3B82F6" FontSize="16" />
+                                <Run Text="INFO " FontWeight="SemiBold" Foreground="{DynamicResource BrushSemanticInfo}" />
+                                <Run Text="{Binding LastAuditInfo, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" Foreground="{DynamicResource BrushSemanticInfo}" FontSize="16" />
                             </TextBlock>
                         </Border>
                     </StackPanel>
