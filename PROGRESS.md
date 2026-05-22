@@ -58,6 +58,23 @@
 
 ## Bitácora sesiones
 
+### 2026-05-22 (final) — Sprint F "UI polish a fondo"
+
+User reporta: "se ve muy verde, auditoría resultados como mensajes de error, modo oscuro texto oscuro y azul oscuro no se ve". 4 commits.
+
+Bugs visuales identificados + fix:
+- **DataGrid/ListView/ListBox texto invisible en dark theme** — legacy WPF defaults Foreground=Black hardcoded; wpf-ui ThemesDictionary NO restilea estos controles. Fix: global Styles (no x:Key) en App.xaml para DataGrid + DataGridCell + DataGridRow + DataGridColumnHeader + ListView + ListViewItem + GridViewColumnHeader + ListBox, Foreground=`TextFillColorPrimaryBrush`. Normaliza AlternatingRowBackground (`SubtleFillColorTertiary`), header bg (`SubtleFillColorSecondary`), bottom border 1px stroke, RowHeight 32, transparent rows, no grid lines. Esto fix la tabla Hallazgos en AuditView + tabla jsonl en AuditLogView.
+- **Severity pills (AuditView + DashboardView) invisible en light theme** — count text Foreground=`#FFFFFF` hardcoded; label usaba `BrushSemantic*MutedText` (#FFEAEA/#FFF8E5/#E6F0FF) diseñado solo para dark. Fix: rediseño pills como Border + StackPanel. Border: Soft bg + strong border 1px. Label "ERROR" (Bold 11px) Foreground=`BrushSemanticError` (theme-independent strong color). Count (Bold 14-16px) Foreground=`TextFillColorPrimaryBrush` (theme-aware blanco/negro). Borrados los brushes MutedText sin uso.
+
+Polish UI adicional:
+- `ux(splitter)` GridSplitter invisible — custom ControlTemplate con 40x3 pill central `ControlStrokeColorDefault` Opacity 0.7. Cursor SizeNS hover.
+- Card hover state: `CardHover` style toggles `ControlFillColorSecondary` bg + `ControlStrokeColorSecondary` border on IsMouseOver. `MetricCard` border on AccentFillColorTertiary on hover.
+- Page transition: ContentControl ControlTemplate envuelve ContentPresenter en Border con Loaded EventTrigger storyboard: Opacity 0→1 + TranslateTransform Y 6→0, 180ms CubicEase EaseOut. Cada nav change re-materializa view → fade-in.
+- `PageSubtitleText` ahora usa `TextFillColorSecondaryBrush` (theme-aware) + Margin 20→16 tighter.
+- ProgressBar global: custom ControlTemplate CornerRadius=3 (track + indicator). Background `ControlFillColorTertiary`. MinHeight 6. Look Fluent moderno. License cards utilization bars beneficiados.
+
+Tests **391 verdes** (sin tests rotos por refactor styles). Build clean 7 projects 0 errors.
+
 ### 2026-05-22 (noche) — Sesión "Sprint C completion + D + E"
 
 Continúa autonomous tras save. **6 commits**. Tests **326 → 391** (+65 App.Tests). Build clean 7 projects 0 errors.
