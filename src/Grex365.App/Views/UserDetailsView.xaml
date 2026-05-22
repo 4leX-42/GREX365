@@ -5,8 +5,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
+             x:Name="Root"
              mc:Ignorable="d"
-             Background="{DynamicResource SolidBackgroundFillColorBaseAltBrush}">
+             Background="{DynamicResource SolidBackgroundFillColorBaseBrush}">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -39,7 +40,6 @@
             </StackPanel>
             <ui:Button Grid.Column="1"
                        Content="Cerrar"
-                       Icon=""
                        VerticalAlignment="Top"
                        Command="{Binding CloseCommand}" />
         </Grid>
@@ -164,7 +164,7 @@
                                                    Content="Quitar"
                                                    FontSize="11"
                                                    Padding="8,2"
-                                                   Command="{Binding DataContext.RemoveLicenseCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                   Command="{Binding ElementName=Root, Path=DataContext.RemoveLicenseCommand}"
                                                    CommandParameter="{Binding}" />
                                     </Grid>
                                 </DataTemplate>
