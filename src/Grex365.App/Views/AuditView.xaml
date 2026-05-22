@@ -274,9 +274,27 @@
                           Visibility="{Binding Findings.Count, Converter={StaticResource CountToVisibilityConverter}}">
                     <ListView.View>
                         <GridView>
-                            <GridViewColumn Header="Categoría" Width="160" DisplayMemberBinding="{Binding Category}" />
-                            <GridViewColumn Header="Identity"  Width="260" DisplayMemberBinding="{Binding Identity}" />
-                            <GridViewColumn Header="Detalle"   Width="380" DisplayMemberBinding="{Binding Detail}" />
+                            <GridViewColumn Header="Categoría" Width="160">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Category}" Style="{StaticResource DataCellText}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Identity" Width="260">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Identity}" Style="{StaticResource DataCellText}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Detalle" Width="380">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Detail}" Style="{StaticResource DataCellText}" TextWrapping="Wrap" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
                             <GridViewColumn Header="Severidad" Width="120">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>

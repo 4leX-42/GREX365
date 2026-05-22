@@ -205,6 +205,8 @@ public partial class App : Application
                 services.AddSingleton<MainWindow>();
                 services.AddTransient<SettingsWindow>();
                 services.AddTransient<AboutWindow>();
+                services.AddTransient<FirstRunWizardViewModel>();
+                services.AddTransient<FirstRunWizardWindow>();
 
                 services.AddSingleton(pluginReport);
                 foreach (var module in pluginReport.AllModules)
@@ -240,9 +242,38 @@ public partial class App : Application
         var main = Services.GetRequiredService<MainWindow>();
         main.Show();
 
-        _ = TryAutoConnectAsync();
+        _ = ShowFirstRunWizardIfNeededAsync().ContinueWith(_ => TryAutoConnectAsync(), TaskScheduler.FromCurrentSynchronizationContext());
 
         base.OnStartup(e);
+    }
+
+    private async Task ShowFirstRunWizardIfNeededAsync()
+    {
+        try
+        {
+            var prefsStore = Services.GetRequiredService<IPreferencesStore>();
+            var prefs = await prefsStore.LoadAsync().ConfigureAwait(true);
+            if (prefs.FirstRunCompleted)
+            {
+                return;
+            }
+
+            var window = Services.GetRequiredService<FirstRunWizardWindow>();
+            window.Owner = Current?.MainWindow;
+            window.ShowDialog();
+
+            // After wizard closes, re-apply theme in case user changed it.
+            try
+            {
+                var updated = await prefsStore.LoadAsync().ConfigureAwait(true);
+                ViewModels.SettingsViewModel.ApplyThemeFromPreferences(updated.Theme);
+            }
+            catch { /* non-critical */ }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "First-run wizard failed (non-fatal)");
+        }
     }
 
     private async Task TryAutoConnectAsync()

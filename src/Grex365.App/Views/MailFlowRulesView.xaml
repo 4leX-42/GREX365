@@ -63,11 +63,11 @@
                           CanUserDeleteRows="False"
                           VirtualizingPanel.IsVirtualizing="True">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Prio"        Binding="{Binding Priority}"                                 Width="60" />
-                        <DataGridTextColumn Header="State"       Binding="{Binding State}"                                    Width="80" />
-                        <DataGridTextColumn Header="Mode"        Binding="{Binding Mode}"                                     Width="90" />
-                        <DataGridTextColumn Header="Name"        Binding="{Binding Name}"                                     Width="260" />
-                        <DataGridTextColumn Header="Description" Binding="{Binding Description}"                              Width="*" />
+                        <DataGridTextColumn Header="Prio"        Binding="{Binding Priority}"     Width="60"  ElementStyle="{StaticResource DataCellText}" />
+                        <DataGridTextColumn Header="State"       Binding="{Binding State}"        Width="80"  ElementStyle="{StaticResource DataCellText}" />
+                        <DataGridTextColumn Header="Mode"        Binding="{Binding Mode}"         Width="90"  ElementStyle="{StaticResource DataCellText}" />
+                        <DataGridTextColumn Header="Name"        Binding="{Binding Name}"         Width="260" ElementStyle="{StaticResource DataCellText}" />
+                        <DataGridTextColumn Header="Description" Binding="{Binding Description}"  Width="*"   ElementStyle="{StaticResource DataCellText}" />
                     </DataGrid.Columns>
                 </DataGrid>
             </DockPanel>

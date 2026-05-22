@@ -169,11 +169,11 @@
                           CanUserDeleteRows="False"
                           VirtualizingPanel.IsVirtualizing="True">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat=yyyy-MM-dd HH:mm:ss}" Width="160" />
-                        <DataGridTextColumn Header="Actor"     Binding="{Binding Actor}"                                       Width="120" />
-                        <DataGridTextColumn Header="Source"    Binding="{Binding Source}"                                      Width="120" />
-                        <DataGridTextColumn Header="Outcome"   Binding="{Binding Outcome}"                                     Width="80" />
-                        <DataGridTextColumn Header="Message"   Binding="{Binding Message}"                                     Width="*" />
+                        <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat=yyyy-MM-dd HH:mm:ss}" Width="160" ElementStyle="{StaticResource DataMonoCellText}" />
+                        <DataGridTextColumn Header="Actor"     Binding="{Binding Actor}"                                       Width="120" ElementStyle="{StaticResource DataCellText}" />
+                        <DataGridTextColumn Header="Source"    Binding="{Binding Source}"                                      Width="120" ElementStyle="{StaticResource DataCellText}" />
+                        <DataGridTextColumn Header="Outcome"   Binding="{Binding Outcome}"                                     Width="80"  ElementStyle="{StaticResource DataCellText}" />
+                        <DataGridTextColumn Header="Message"   Binding="{Binding Message}"                                     Width="*"   ElementStyle="{StaticResource DataCellText}" />
                     </DataGrid.Columns>
                 </DataGrid>
             </DockPanel>

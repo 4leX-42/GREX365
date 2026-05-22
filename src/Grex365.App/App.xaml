@@ -24,6 +24,8 @@
             <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
             <conv:NullToCollapsedConverter x:Key="NullToCollapsedConverter" />
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <conv:EnumToVisibilityConverter x:Key="EnumToVisibilityConverter" />
+            <conv:StringEqualsConverter x:Key="StringEqualsConverter" />
 
             <FontFamily x:Key="IconFontFamily">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
 
@@ -100,6 +102,22 @@
             </Style>
 
             <Style x:Key="MonoText" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Courier New" />
+                <Setter Property="FontSize" Value="12" />
+            </Style>
+
+            <!-- Text Styles for DataGrid/GridView cells. WPF DataGridTextColumn + GridViewColumn DisplayMemberBinding
+                 generate TextBlock with Foreground hardcoded to SystemColors.WindowTextBrush (legacy).
+                 wpf-ui ThemesDictionary doesn't override SystemColors → text invisible in dark theme.
+                 Apply via DataGridTextColumn.ElementStyle and GridViewColumn.CellTemplate. -->
+            <Style x:Key="DataCellText" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Margin" Value="8,0" />
+                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+            </Style>
+
+            <Style x:Key="DataMonoCellText" TargetType="TextBlock" BasedOn="{StaticResource DataCellText}">
                 <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Courier New" />
                 <Setter Property="FontSize" Value="12" />
             </Style>

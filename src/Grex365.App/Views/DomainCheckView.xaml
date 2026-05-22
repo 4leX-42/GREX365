@@ -65,9 +65,27 @@
                           BorderThickness="0">
                     <ListView.View>
                         <GridView>
-                            <GridViewColumn Header="Tipo"    Width="100" DisplayMemberBinding="{Binding Type}" />
-                            <GridViewColumn Header="Estado"  Width="100" DisplayMemberBinding="{Binding Status}" />
-                            <GridViewColumn Header="Valor"   Width="700" DisplayMemberBinding="{Binding Value}" />
+                            <GridViewColumn Header="Tipo" Width="100">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Type}" Style="{StaticResource DataCellText}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Estado" Width="100">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Status}" Style="{StaticResource DataCellText}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Valor" Width="700">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Value}" Style="{StaticResource DataMonoCellText}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
                         </GridView>
                     </ListView.View>
                 </ListView>
