@@ -4,17 +4,18 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **230 passing** (xUnit + FluentAssertions)
+- Tests: **244 passing** (xUnit + FluentAssertions)
 - Última actualización: 2026-05-22
 
 ## Bitácora sesiones
 
-### 2026-05-22 — Sesión "CA policies audit"
+### 2026-05-22 — Sesión "CA policies + privileged roles audit"
 
-Tests **214 → 230** (+16). Nueva auditoría de seguridad: Conditional Access policies.
+Tests **214 → 244** (+30). Dos auditorías de seguridad nuevas.
 
 Commits:
 - `feat(audit)` Conditional Access policies audit: `CaPolicyAnalyzer` puro + `RunConditionalAccessAuditAsync` consume `/identity/conditionalAccess/policies`. Categorías: disabled (INFO), report-only stale ≥30d (WARN), report-only fresh (INFO), enabled sin builtInControls (ERROR), enabled con controls débiles (WARN), enabled con `All` users sin exclusiones (WARN), enabled sin user scope (ERROR), tenant sin policies (ERROR). Suma `Policy.Read.All` al App Reg auto-create.
+- `feat(audit)` Privileged role assignments audit: `PrivilegedRoleAuditAnalyzer` puro + `RunPrivilegedRolesAuditAsync` enumera `/directoryRoles` + members en paralelo (8x). Categorías: guests con role admin (ERROR), cuentas deshabilitadas con role (ERROR), service principals con role (INFO), 0 Global Admins (ERROR), 1 Global Admin (WARN — sin backup), >5 Global Admins (WARN — sprawl). Identifica GA via templateId `62e90394-69f5-4237-9190-012177145e10`.
 
 Plantamiento status: Fase 6 sigue **6/8 hechos**; backlog seguridad amplía cobertura M365 baseline.
 
@@ -176,6 +177,7 @@ UX/QoL fase 3:
 - [x] **Auditoría: inbox rules (BEC indicator)** — `InboxRuleAnalyzer` puro + `ScanInboxRulesAsync(maxMailboxes)`. Categorías: delete, hide (move-to Deleted/Junk/RSS/Archive…), external forward/redirect. Keywords BEC EN+ES (invoice/factura/wire/payment/password…) elevan a WARN. Botón "Inbox rules" + NumberBox tope buzones en AuditView
 - [x] **Auditoría: MFA coverage** — `MfaCoverageAnalyzer` puro + `RunMfaCoverageAuditAsync` consume `/reports/authenticationMethods/userRegistrationDetails`. Admin sin MFA = ERROR crítico, member = WARN, guest = INFO. Status muestra cobertura admin %. Requiere `Reports.Read.All`
 - [x] **Auditoría: Conditional Access policies** — `CaPolicyAnalyzer` puro + `RunConditionalAccessAuditAsync` consume `/identity/conditionalAccess/policies`. Detecta policies disabled (INFO), report-only stale ≥30d (WARN), enabled sin builtInControls (ERROR), enabled con controls débiles sin MFA/compliantDevice/block (WARN), enabled con includeUsers=All sin exclusiones (WARN), enabled sin user scope (ERROR), y tenant sin policies (ERROR). Requiere `Policy.Read.All`
+- [x] **Auditoría: Privileged role assignments** — `PrivilegedRoleAuditAnalyzer` puro + `RunPrivilegedRolesAuditAsync` enumera `/directoryRoles` y members en paralelo. Detecta guests con role admin (ERROR), cuentas deshabilitadas con role (ERROR), service principals con role (INFO), 0 Global Admins (ERROR), 1 GA (WARN — sin backup), >5 GAs (WARN — sprawl). Cubierto por `Directory.ReadWrite.All` existente
 - [x] **Cert export PFX con password** — `ICertificateGenerator.ExportPfx`, panel "Exportar PFX" en CertWizardView con PasswordBox + tests de validacion (no encontrado, password vacio, etc.)
 - [x] **Auto-create App Registration vía Graph** — `GraphAppRegistrationService.CreateAndConfigureAsync` aplica todos los AppRoles (User/Group/GroupMember/Organization/AuditLog/Directory + Exchange.ManageAsApp + Reports.Read.All), sube cert como `KeyCredential`, crea ServicePrincipal y devuelve admin-consent URL clickable. Reemplaza los 29 pasos manuales del legacy.
 - [x] **Auto-install módulo EXO** — `ExchangeConnection.InstallModuleAsync` lanza `pwsh.exe` externo (Start-Process) para esquivar el ACL de WindowsApps que niega `Microsoft.PackageManagement.dll` en runspaces embebidos. UI muestra estado del módulo + botones Comprobar/Instalar.
@@ -187,7 +189,7 @@ UX/QoL fase 3:
 
 ---
 
-## Tests (230 passing)
+## Tests (244 passing)
 
 | Suite | Tests | Cubre |
 |-------|-------|-------|
@@ -218,6 +220,7 @@ UX/QoL fase 3:
 | InboxRuleAnalyzer | 13 | disabled skip, UPN vacío, delete plain/keyword, move-deleted/regular/RSS, forward externo/interno, redirect externo, SMTP en brackets, 3 findings combinados, keyword español |
 | MfaCoverageAnalyzer | 9 | empty, admin sin/con MFA, member sin MFA, guest sin MFA, UPN vacío, IsAdmin precedence, mixed pop, capable=false |
 | CaPolicyAnalyzer | 16 | empty (ERROR), enabled strong OK, disabled, report-only stale/fresh, sin controls, weak controls, All sin exclusions, exclusions valid, sin user scope, empty name, unknown state, compliantDevice/block strong, case-insensitive, mixed |
+| PrivilegedRoleAuditAnalyzer | 14 | empty (no GA), 1 GA (backup warn), 2 GAs OK, >5 GAs (sprawl), guest admin (ERROR), disabled admin (ERROR), SP admin (INFO), disabled-SP no false positive, multi-roles same user, guest in 2 roles, empty memberId, no-GA-other-role, template case-insensitive, identity from displayName |
 
 ---
 
