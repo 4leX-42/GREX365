@@ -15,11 +15,15 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
-            <TextBlock Text="Salud del tenant" FontSize="28" FontWeight="SemiBold" VerticalAlignment="Center" />
+        <StackPanel Grid.Row="0" Margin="0,0,0,4">
+            <TextBlock Text="LICENCIAS" Style="{StaticResource EyebrowText}" />
+            <TextBlock Text="Licencias del tenant"
+                       FontSize="28"
+                       FontWeight="Light"
+                       VerticalAlignment="Center" />
         </StackPanel>
         <TextBlock Grid.Row="1" Style="{StaticResource PageSubtitleText}"
-                   Text="Vista rápida: organización, conteo de usuarios/grupos y consumo de licencias" />
+                   Text="Consumo de SKUs, organización y conteo de usuarios/grupos. Carga automática al conectar." />
 
         <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,0,0,16">
             <StackPanel Orientation="Horizontal">
@@ -73,12 +77,72 @@
             <DockPanel>
                 <Grid DockPanel.Dock="Top" Margin="16,14,16,8">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="Licencias"
-                               Style="{StaticResource SectionTitleText}" Margin="0" />
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                               Style="{StaticResource SectionTitleText}"
+                               VerticalAlignment="Center" Margin="0,0,16,0" />
+
+                    <!-- Search lupa: filtra por FriendlyName/SkuPartNumber/CategoryLabel -->
+                    <Border Grid.Column="1"
+                            CornerRadius="6"
+                            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            Padding="8,4"
+                            MaxWidth="280"
+                            HorizontalAlignment="Left"
+                            Background="{DynamicResource ControlFillColorDefaultBrush}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text=""
+                                       FontFamily="{StaticResource IconFontFamily}"
+                                       FontSize="13"
+                                       Opacity="0.55"
+                                       VerticalAlignment="Center"
+                                       Margin="2,0,8,0" />
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding LicenseFilter, UpdateSourceTrigger=PropertyChanged, Delay=120}"
+                                     BorderThickness="0"
+                                     Background="Transparent"
+                                     VerticalAlignment="Center"
+                                     ToolTip="Buscar por nombre, SKU o categoría"
+                                     Padding="0" />
+                            <Button Grid.Column="2"
+                                    Content="×"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Padding="6,0"
+                                    FontSize="14"
+                                    Opacity="0.6"
+                                    Command="{Binding ClearFilterCommand}"
+                                    Visibility="{Binding LicenseFilter, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}"
+                                    ToolTip="Limpiar filtro" />
+                        </Grid>
+                    </Border>
+
+                    <ui:Button Grid.Column="2"
+                               Margin="12,0,8,0"
+                               Command="{Binding GoToUsersCommand}"
+                               ToolTip="Ir al módulo Usuarios para asignar/quitar licencias">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text=""
+                                       FontFamily="{StaticResource IconFontFamily}"
+                                       FontSize="13"
+                                       Margin="0,0,6,0"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="Gestionar" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ui:Button>
+
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center"
                                 Visibility="{Binding Health, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
                         <TextBlock Text="Total: " Opacity="0.7" />
                         <TextBlock>

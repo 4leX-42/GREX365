@@ -113,7 +113,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             new("Dashboard",     "", typeof(DashboardViewModel),     "Tenant"),
             new("Conexión",      "", typeof(ConnectViewModel),       "Tenant"),
-            new("Salud tenant",  "", typeof(TenantHealthViewModel),  "Tenant"),
+            new("Licencias",  "", typeof(TenantHealthViewModel),  "Tenant"),
             new("Usuarios",      "", typeof(UsersViewModel),         "Identidad"),
             new("Grupos",        "", typeof(GroupsViewModel),        "Identidad"),
             new("Onboarding",    "", typeof(OnboardingViewModel),   "Identidad"),
@@ -144,7 +144,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private static readonly HashSet<string> RequiresGraphTitles = new(StringComparer.OrdinalIgnoreCase)
     {
-        "Salud tenant",
+        "Licencias",
         "Usuarios",
         "Grupos",
         "Auditoría",
@@ -165,6 +165,7 @@ public sealed partial class MainViewModel : ObservableObject
         ["Conexion"] = "Conexión",
         ["Auditoria"] = "Auditoría",
         ["Reglas buzon"] = "Reglas de buzón",
+        ["Salud tenant"] = "Licencias",
     };
 
     private void ApplyConnectionRequirements()
