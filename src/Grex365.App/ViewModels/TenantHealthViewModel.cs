@@ -84,6 +84,22 @@ public sealed partial class TenantHealthViewModel : ObservableObject
         }
     }
 
+    // Called by TenantHealthView.Loaded — fires every time the user navigates
+    // here. Refreshes if currently empty and Graph is connected. This avoids
+    // depending only on ConnectionStateMonitor.PropertyChanged, which the user
+    // may have missed if the page hadn't been visited yet at connect time.
+    public void TriggerLoadIfNeeded()
+    {
+        if (IsBusy) return;
+        if (!_monitor.Current.GraphConnected) return;
+        if (Licenses.Count > 0) return;
+        _autoLoadAttempted = true;
+        if (RefreshCommand.CanExecute(null))
+        {
+            RefreshCommand.Execute(null);
+        }
+    }
+
     [RelayCommand(CanExecute = nameof(CanRefresh))]
     private async Task RefreshAsync()
     {
