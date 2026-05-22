@@ -15,22 +15,10 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
-            <Border Width="44" Height="44" CornerRadius="12"
-                    Background="{StaticResource BrandAccentGradientSoft}"
-                    BorderBrush="{StaticResource GlassBorderHighlight}"
-                    BorderThickness="1"
-                    Margin="0,0,16,0"
-                    Effect="{StaticResource AccentGlowSoftEffect}">
-                <TextBlock Text=""
-                           FontFamily="{StaticResource IconFontFamily}"
-                           FontSize="22"
-                           Foreground="{StaticResource BrandAccentSolid}"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center" />
-            </Border>
+            <TextBlock Text="GRUPOS" Style="{StaticResource EyebrowText}" />
             <TextBlock Text="Grupos y DLs"
-                       FontSize="26"
-                       FontWeight="SemiBold"
+                       FontSize="28"
+                       FontWeight="Light"
                        VerticalAlignment="Center" />
         </StackPanel>
         <Grid Grid.Row="1" Margin="0,0,0,16">

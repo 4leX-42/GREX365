@@ -12,22 +12,10 @@
     <ScrollViewer Style="{StaticResource PageRoot}">
         <StackPanel MaxWidth="1200" HorizontalAlignment="Stretch">
             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                <Border Width="44" Height="44" CornerRadius="12"
-                        Background="{StaticResource BrandAccentGradientSoft}"
-                        BorderBrush="{StaticResource GlassBorderHighlight}"
-                        BorderThickness="1"
-                        Margin="0,0,16,0"
-                        Effect="{StaticResource AccentGlowSoftEffect}">
-                    <TextBlock Text="&#xE756;"
-                               FontFamily="{StaticResource IconFontFamily}"
-                               FontSize="22"
-                               Foreground="{StaticResource BrandAccentSolid}"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
-                </Border>
-                <TextBlock Text="Consola PowerShell"
-                           FontSize="24"
-                           FontWeight="SemiBold"
+                <TextBlock Text="CONSOLA" Style="{StaticResource EyebrowText}" />
+            <TextBlock Text="Consola PowerShell"
+                           FontSize="28"
+                           FontWeight="Light"
                            VerticalAlignment="Center" />
             </StackPanel>
             <TextBlock Text="Ejecuta scripts arbitrarios en el runspace pool compartido. Útil para diagnóstico y comandos puntuales."

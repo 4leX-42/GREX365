@@ -38,14 +38,21 @@
 
             <Border Grid.Column="0" Style="{StaticResource SidebarBorder}">
                 <DockPanel>
-                    <Border DockPanel.Dock="Top" Padding="18,22,16,16">
+                    <Border DockPanel.Dock="Top" Padding="18,20,16,14">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <ContentControl Style="{StaticResource GxLogoMark}"
-                                            Margin="0,0,12,0" />
+                                            Width="22" Height="22"
+                                            Margin="0,1,11,0"
+                                            VerticalAlignment="Center" />
                             <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="GREX365" FontSize="17" FontWeight="SemiBold" />
-                                <TextBlock FontSize="10" Opacity="0.55">
-                                    <Run Text="M365 toolkit · v" /><Run Text="{x:Static local:App.AppVersion}" />
+                                <TextBlock Text="GREX365"
+                                           FontSize="15"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                <TextBlock FontSize="10"
+                                           Opacity="0.5"
+                                           FontFamily="Cascadia Mono, Consolas">
+                                    <Run Text="v" /><Run Text="{x:Static local:App.AppVersion}" />
                                 </TextBlock>
                             </StackPanel>
                         </StackPanel>
@@ -190,28 +197,7 @@
                                             <Storyboard>
                                                 <DoubleAnimation Storyboard.TargetProperty="Opacity"
                                                                  From="0" To="1"
-                                                                 Duration="0:0:0.28">
-                                                    <DoubleAnimation.EasingFunction>
-                                                        <CubicEase EasingMode="EaseOut" />
-                                                    </DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
-                                                                 From="10" To="0"
-                                                                 Duration="0:0:0.32">
-                                                    <DoubleAnimation.EasingFunction>
-                                                        <CubicEase EasingMode="EaseOut" />
-                                                    </DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                                                 From="0.985" To="1"
-                                                                 Duration="0:0:0.32">
-                                                    <DoubleAnimation.EasingFunction>
-                                                        <CubicEase EasingMode="EaseOut" />
-                                                    </DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                                                 From="0.985" To="1"
-                                                                 Duration="0:0:0.32">
+                                                                 Duration="0:0:0.12">
                                                     <DoubleAnimation.EasingFunction>
                                                         <CubicEase EasingMode="EaseOut" />
                                                     </DoubleAnimation.EasingFunction>
@@ -220,13 +206,6 @@
                                         </BeginStoryboard>
                                     </EventTrigger>
                                 </Border.Triggers>
-                                <Border.RenderTransformOrigin>0.5,0.4</Border.RenderTransformOrigin>
-                                <Border.RenderTransform>
-                                    <TransformGroup>
-                                        <ScaleTransform ScaleX="1" ScaleY="1" />
-                                        <TranslateTransform Y="0" />
-                                    </TransformGroup>
-                                </Border.RenderTransform>
                                 <ContentPresenter />
                             </Border>
                         </ControlTemplate>
@@ -370,19 +349,17 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,18,0">
-                    <Border Width="9" Height="9" CornerRadius="5" Margin="0,0,8,0"
+                    <Border Width="7" Height="7" CornerRadius="4" Margin="0,0,8,0"
                             VerticalAlignment="Center"
-                            Background="{Binding GraphConnected, Converter={StaticResource BoolToBrushConverter}}"
-                            Effect="{StaticResource AccentGlowSoftEffect}" />
-                    <TextBlock Text="Graph" FontSize="12" FontWeight="SemiBold" Opacity="0.85" VerticalAlignment="Center" />
+                            Background="{Binding GraphConnected, Converter={StaticResource BoolToBrushConverter}}" />
+                    <TextBlock Text="Graph" FontSize="12" Opacity="0.75" VerticalAlignment="Center" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,18,0">
-                    <Border Width="9" Height="9" CornerRadius="5" Margin="0,0,8,0"
+                    <Border Width="7" Height="7" CornerRadius="4" Margin="0,0,8,0"
                             VerticalAlignment="Center"
-                            Background="{Binding ExchangeConnected, Converter={StaticResource BoolToBrushConverter}}"
-                            Effect="{StaticResource AccentGlowSoftEffect}" />
-                    <TextBlock Text="Exchange" FontSize="12" FontWeight="SemiBold" Opacity="0.85" VerticalAlignment="Center" />
+                            Background="{Binding ExchangeConnected, Converter={StaticResource BoolToBrushConverter}}" />
+                    <TextBlock Text="Exchange" FontSize="12" Opacity="0.75" VerticalAlignment="Center" />
                 </StackPanel>
 
                 <Rectangle Grid.Column="2" Width="1" Margin="0,4,16,4"

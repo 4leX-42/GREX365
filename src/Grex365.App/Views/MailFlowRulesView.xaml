@@ -14,20 +14,8 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
-            <Border Width="44" Height="44" CornerRadius="12"
-                        Background="{StaticResource BrandAccentGradientSoft}"
-                        BorderBrush="{StaticResource GlassBorderHighlight}"
-                        BorderThickness="1"
-                        Margin="0,0,16,0"
-                        Effect="{StaticResource AccentGlowSoftEffect}">
-                    <TextBlock Text=""
-                               FontFamily="{StaticResource IconFontFamily}"
-                               FontSize="22"
-                               Foreground="{StaticResource BrandAccentSolid}"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
-                </Border>
-            <TextBlock Text="Mail flow rules" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <TextBlock Text="MAIL FLOW" Style="{StaticResource EyebrowText}" />
+            <TextBlock Text="Mail flow rules" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
         </StackPanel>
         <TextBlock Grid.Row="1"
                    Text="Transport rules de Exchange Online (Get-TransportRule). Solo lectura en esta version."

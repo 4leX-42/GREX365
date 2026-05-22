@@ -9,20 +9,8 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="32,28,32,16">
             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                <Border Width="44" Height="44" CornerRadius="12"
-                        Background="{StaticResource BrandAccentGradientSoft}"
-                        BorderBrush="{StaticResource GlassBorderHighlight}"
-                        BorderThickness="1"
-                        Margin="0,0,16,0"
-                        Effect="{StaticResource AccentGlowSoftEffect}">
-                    <TextBlock Text=""
-                               FontFamily="{StaticResource IconFontFamily}"
-                               FontSize="22"
-                               Foreground="{StaticResource BrandAccentSolid}"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
-                </Border>
-                <TextBlock Text="Offboarding" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <TextBlock Text="OFFBOARDING" Style="{StaticResource EyebrowText}" />
+            <TextBlock Text="Offboarding" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
             </StackPanel>
             <TextBlock Text="Deshabilitar cuenta, quitar licencias y convertir buzón a compartido"
                        Opacity="0.7"

@@ -215,103 +215,36 @@
                 <Setter Property="FontSize" Value="12" />
             </Style>
 
-            <!-- Cards — glass + depth + subtle gradient border on hover -->
+            <!-- Cards — flat by default, restraint. Hover changes border only. -->
             <Style x:Key="Card" TargetType="Border">
-                <Setter Property="CornerRadius" Value="12" />
-                <Setter Property="Padding" Value="20" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Padding" Value="14" />
                 <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
                 <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="Effect" Value="{StaticResource CardElevationSoft}" />
             </Style>
 
-            <!-- Card with hover lift + accent border glow (interactive cards) -->
             <Style x:Key="CardHover" TargetType="Border" BasedOn="{StaticResource Card}">
-                <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
-                <Setter Property="RenderTransform">
-                    <Setter.Value>
-                        <TranslateTransform Y="0" />
-                    </Setter.Value>
-                </Setter>
                 <Style.Triggers>
-                    <EventTrigger RoutedEvent="MouseEnter">
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
-                                                 To="-2" Duration="0:0:0.18">
-                                    <DoubleAnimation.EasingFunction>
-                                        <CubicEase EasingMode="EaseOut" />
-                                    </DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </EventTrigger>
-                    <EventTrigger RoutedEvent="MouseLeave">
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
-                                                 To="0" Duration="0:0:0.18">
-                                    <DoubleAnimation.EasingFunction>
-                                        <CubicEase EasingMode="EaseOut" />
-                                    </DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </EventTrigger>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="BorderBrush" Value="{StaticResource GlassBorderHighlight}" />
-                        <Setter Property="Effect" Value="{StaticResource CardElevation}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorSecondaryBrush}" />
+                        <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
                     </Trigger>
                 </Style.Triggers>
             </Style>
 
             <Style x:Key="MetricCard" TargetType="Border" BasedOn="{StaticResource Card}">
-                <Setter Property="Padding" Value="18" />
-                <Setter Property="Margin" Value="0,0,12,12" />
-                <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
-                <Setter Property="RenderTransform">
-                    <Setter.Value>
-                        <TranslateTransform Y="0" />
-                    </Setter.Value>
-                </Setter>
+                <Setter Property="Padding" Value="14" />
+                <Setter Property="Margin" Value="0,0,8,8" />
                 <Style.Triggers>
-                    <EventTrigger RoutedEvent="MouseEnter">
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
-                                                 To="-3" Duration="0:0:0.2">
-                                    <DoubleAnimation.EasingFunction>
-                                        <CubicEase EasingMode="EaseOut" />
-                                    </DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </EventTrigger>
-                    <EventTrigger RoutedEvent="MouseLeave">
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
-                                                 To="0" Duration="0:0:0.18">
-                                    <DoubleAnimation.EasingFunction>
-                                        <CubicEase EasingMode="EaseOut" />
-                                    </DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </EventTrigger>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="BorderBrush" Value="{StaticResource GlassBorderHighlight}" />
-                        <Setter Property="Effect" Value="{StaticResource AccentGlowSoftEffect}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorSecondaryBrush}" />
                     </Trigger>
                 </Style.Triggers>
             </Style>
 
-            <!-- HeroCard: featured card con gradient acentuado en borde -->
-            <Style x:Key="HeroCard" TargetType="Border" BasedOn="{StaticResource Card}">
-                <Setter Property="BorderBrush" Value="{StaticResource GlassBorderHighlight}" />
-                <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="Effect" Value="{StaticResource AccentGlowSoftEffect}" />
-            </Style>
+            <!-- HeroCard: alias plano de Card. Solo Dashboard lo usa puntualmente. -->
+            <Style x:Key="HeroCard" TargetType="Border" BasedOn="{StaticResource Card}" />
 
             <!-- SettingsCard (PowerToys-style: icon + title/desc + control row) -->
             <Style x:Key="SettingsCard" TargetType="Border">
@@ -369,7 +302,23 @@
             <!-- Page root -->
             <Style x:Key="PageRoot" TargetType="ScrollViewer">
                 <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
-                <Setter Property="Padding" Value="32,28,32,16" />
+                <Setter Property="Padding" Value="22,18,22,14" />
+            </Style>
+
+            <!-- Eyebrow / page title pattern (estilo Linear/Raycast):
+                 Eyebrow uppercase letter-spacing + Title weight Light grande + subtitle. -->
+            <Style x:Key="EyebrowText" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="10" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Opacity" Value="0.5" />
+                <Setter Property="Margin" Value="0,0,0,4" />
+                <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
+            </Style>
+
+            <Style x:Key="PageHeroTitle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="28" />
+                <Setter Property="FontWeight" Value="Light" />
+                <Setter Property="Margin" Value="0,0,0,2" />
             </Style>
 
             <!-- Status pill (Ellipse) -->
@@ -469,32 +418,54 @@
                 <Setter Property="Effect" Value="{StaticResource AccentGlowSoftEffect}" />
             </Style>
 
-            <!-- GX brand monogram (reusable) — gradient badge + custom-drawn G + X
-                 Usage:
-                    <ContentControl Style="{StaticResource GxLogoMark}" />
-                    <ContentControl Style="{StaticResource GxLogoMark}" Width="56" Height="56" /> -->
+            <!-- GX monogram BARE — strokes solid, fondo transparente. Default uso chrome (sidebar). -->
             <Style x:Key="GxLogoMark" TargetType="ContentControl">
-                <Setter Property="Width" Value="40" />
-                <Setter Property="Height" Value="40" />
+                <Setter Property="Width" Value="22" />
+                <Setter Property="Height" Value="22" />
+                <Setter Property="Focusable" Value="False" />
+                <Setter Property="IsTabStop" Value="False" />
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ContentControl">
+                            <Viewbox>
+                                <Canvas Width="40" Height="28">
+                                    <!-- G: D-shape estirada con stub a 60% altura, asimetría humana -->
+                                    <Path Stroke="{TemplateBinding Foreground}" StrokeThickness="3.2"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                          StrokeLineJoin="Round"
+                                          Data="M 16,3 L 5,3 A 9,11 0 0 0 5,25 L 16,25 A 5,5 0 0 0 21,20 L 21,15 L 13,15" />
+                                    <!-- X: dos diagonales con cruce off-center (55% vertical) -->
+                                    <Path Stroke="{TemplateBinding Foreground}" StrokeThickness="3.2"
+                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                          Data="M 26,3 L 38,25 M 38,3 L 26,25" />
+                                </Canvas>
+                            </Viewbox>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- GX monogram BADGE — pill gradient. Solo para splash/About/marketing surface. -->
+            <Style x:Key="GxLogoBadge" TargetType="ContentControl">
+                <Setter Property="Width" Value="56" />
+                <Setter Property="Height" Value="56" />
                 <Setter Property="Focusable" Value="False" />
                 <Setter Property="IsTabStop" Value="False" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ContentControl">
-                            <Border CornerRadius="11"
-                                    Background="{StaticResource BrandAccentGradient}"
-                                    BorderBrush="{StaticResource GlassBorderHighlight}"
-                                    BorderThickness="1"
-                                    Effect="{StaticResource AccentGlowSoftEffect}">
-                                <Viewbox Margin="6">
+                            <Border CornerRadius="14"
+                                    Background="{StaticResource BrandAccentGradient}">
+                                <Viewbox Margin="10">
                                     <Canvas Width="40" Height="28">
-                                        <Path Stroke="White" StrokeThickness="3.4"
+                                        <Path Stroke="White" StrokeThickness="3.2"
                                               StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                               StrokeLineJoin="Round"
-                                              Data="M 14,3 A 11,11 0 1 0 14,25 L 20,25 L 20,16 L 14,16" />
-                                        <Path Stroke="White" StrokeThickness="3.4"
+                                              Data="M 16,3 L 5,3 A 9,11 0 0 0 5,25 L 16,25 A 5,5 0 0 0 21,20 L 21,15 L 13,15" />
+                                        <Path Stroke="White" StrokeThickness="3.2"
                                               StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                              Data="M 26,4 L 38,24 M 38,4 L 26,24" />
+                                              Data="M 26,3 L 38,25 M 38,3 L 26,25" />
                                     </Canvas>
                                 </Viewbox>
                             </Border>
@@ -597,24 +568,23 @@
                 <Setter Property="BorderThickness" Value="0,0,0,1" />
             </Style>
 
-            <!-- Global ProgressBar — gradient indicator + glow -->
+            <!-- Global ProgressBar — flat brand accent, sin glow ni gradient -->
             <Style TargetType="ProgressBar">
                 <Setter Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}" />
                 <Setter Property="BorderThickness" Value="0" />
-                <Setter Property="MinHeight" Value="6" />
-                <Setter Property="Foreground" Value="{StaticResource BrandAccentGradient}" />
+                <Setter Property="MinHeight" Value="4" />
+                <Setter Property="Foreground" Value="{StaticResource BrandAccentSolid}" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ProgressBar">
-                            <Border CornerRadius="4"
+                            <Border CornerRadius="2"
                                     Background="{TemplateBinding Background}">
                                 <Grid ClipToBounds="True">
                                     <Border x:Name="PART_Track" />
                                     <Border x:Name="PART_Indicator"
                                             HorizontalAlignment="Left"
-                                            CornerRadius="4"
-                                            Background="{TemplateBinding Foreground}"
-                                            Effect="{StaticResource AccentGlowSoftEffect}" />
+                                            CornerRadius="2"
+                                            Background="{TemplateBinding Foreground}" />
                                 </Grid>
                             </Border>
                         </ControlTemplate>

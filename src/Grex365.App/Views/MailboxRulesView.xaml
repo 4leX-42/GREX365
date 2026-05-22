@@ -9,22 +9,10 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="32,28,32,16">
             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                <Border Width="44" Height="44" CornerRadius="12"
-                        Background="{StaticResource BrandAccentGradientSoft}"
-                        BorderBrush="{StaticResource GlassBorderHighlight}"
-                        BorderThickness="1"
-                        Margin="0,0,16,0"
-                        Effect="{StaticResource AccentGlowSoftEffect}">
-                    <TextBlock Text=""
-                               FontFamily="{StaticResource IconFontFamily}"
-                               FontSize="22"
-                               Foreground="{StaticResource BrandAccentSolid}"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
-                </Border>
-                <TextBlock Text="Reglas buzón"
-                           FontSize="24"
-                           FontWeight="SemiBold"
+                <TextBlock Text="REGLAS" Style="{StaticResource EyebrowText}" />
+            <TextBlock Text="Reglas buzón"
+                           FontSize="28"
+                           FontWeight="Light"
                            VerticalAlignment="Center" />
             </StackPanel>
             <TextBlock Text="Out-of-Office (respuestas automáticas) · Forwarding (reenvío)"

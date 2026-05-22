@@ -8,20 +8,8 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24" MaxWidth="900" HorizontalAlignment="Left">
             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-            <Border Width="44" Height="44" CornerRadius="12"
-                        Background="{StaticResource BrandAccentGradientSoft}"
-                        BorderBrush="{StaticResource GlassBorderHighlight}"
-                        BorderThickness="1"
-                        Margin="0,0,16,0"
-                        Effect="{StaticResource AccentGlowSoftEffect}">
-                    <TextBlock Text=""
-                               FontFamily="{StaticResource IconFontFamily}"
-                               FontSize="22"
-                               Foreground="{StaticResource BrandAccentSolid}"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
-                </Border>
-            <TextBlock Text="Asistente de certificado" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <TextBlock Text="CERTIFICADO" Style="{StaticResource EyebrowText}" />
+            <TextBlock Text="Asistente de certificado" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
         </StackPanel>
             <TextBlock Text="Genera un certificado autofirmado para autenticación de la App Registration"
                        Opacity="0.7"
