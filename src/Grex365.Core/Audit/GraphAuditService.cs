@@ -24,17 +24,40 @@ public sealed class GraphAuditService : IAuditService
         progress?.Report(LogEntry.Info("Audit", "Cargando usuarios..."));
 
         var analyzer = new IdentityAuditAnalyzer(DateTimeOffset.UtcNow);
+        bool signInActivityAvailable = true;
 
-        var response = await client.Users.GetAsync(req =>
+        UserCollectionResponse? response;
+        try
         {
-            req.QueryParameters.Select = new[]
+            response = await client.Users.GetAsync(req =>
             {
-                "id", "userPrincipalName", "displayName", "accountEnabled",
-                "userType", "assignedLicenses", "signInActivity", "mail"
-            };
-            req.QueryParameters.Top = 999;
-            req.Headers.Add("ConsistencyLevel", "eventual");
-        }, cancellationToken).ConfigureAwait(false);
+                req.QueryParameters.Select = new[]
+                {
+                    "id", "userPrincipalName", "displayName", "accountEnabled",
+                    "userType", "assignedLicenses", "signInActivity", "mail"
+                };
+                req.QueryParameters.Top = 999;
+                req.Headers.Add("ConsistencyLevel", "eventual");
+            }, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (IsAuditLogPermissionError(ex))
+        {
+            progress?.Report(LogEntry.Warn(
+                "Audit",
+                "Falta el permiso AuditLog.Read.All. Stale-user detection deshabilitado. " +
+                "Concede admin consent al permiso AuditLog.Read.All en la App Registration."));
+            signInActivityAvailable = false;
+            response = await client.Users.GetAsync(req =>
+            {
+                req.QueryParameters.Select = new[]
+                {
+                    "id", "userPrincipalName", "displayName", "accountEnabled",
+                    "userType", "assignedLicenses", "mail"
+                };
+                req.QueryParameters.Top = 999;
+                req.Headers.Add("ConsistencyLevel", "eventual");
+            }, cancellationToken).ConfigureAwait(false);
+        }
 
         var iterator = PageIterator<User, UserCollectionResponse>.CreatePageIterator(
             client,
@@ -49,8 +72,25 @@ public sealed class GraphAuditService : IAuditService
         await iterator.IterateAsync(cancellationToken).ConfigureAwait(false);
 
         var summary = analyzer.BuildSummary();
-        progress?.Report(LogEntry.Ok("Audit", $"Procesados {summary.UsersTotal} usuarios; {analyzer.Findings.Count} hallazgos"));
-        return (summary, analyzer.Findings);
+        var findings = analyzer.Findings.ToList();
+        if (!signInActivityAvailable)
+        {
+            findings.Insert(0, new AuditFinding(
+                "Permiso faltante: AuditLog.Read.All",
+                "(tenant)",
+                "El AppReg no tiene AuditLog.Read.All concedido. Stale-user detection deshabilitada. " +
+                "Concede admin consent al permiso para habilitar la detección de usuarios inactivos.",
+                "WARN"));
+        }
+        progress?.Report(LogEntry.Ok("Audit", $"Procesados {summary.UsersTotal} usuarios; {findings.Count} hallazgos"));
+        return (summary, findings);
+    }
+
+    private static bool IsAuditLogPermissionError(Exception ex)
+    {
+        var msg = ex.Message ?? string.Empty;
+        return msg.Contains("AuditLog.Read.All", StringComparison.OrdinalIgnoreCase)
+            || msg.Contains("required Microsoft Graph permission", StringComparison.OrdinalIgnoreCase);
     }
 
     public async Task<IReadOnlyList<AuditFinding>> RunGroupsAuditAsync(
