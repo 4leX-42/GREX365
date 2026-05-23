@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **469 passing** (xUnit + FluentAssertions)
-- Última actualización: 2026-05-23
+- Tests: **532 passing** (xUnit + FluentAssertions) — 401 Core + 131 App
+- Última actualización: 2026-05-23 (sesión noche autónoma)
 
 ## Auditoría técnica integral 2026-05-22
 
@@ -57,6 +57,36 @@
 - Sweep final `grep "Foreground=\"#\|Background=\"#"`: cero matches restantes — paleta 100% via DynamicResource.
 
 ## Bitácora sesiones
+
+### 2026-05-23 (sesión noche autónoma) — Sprint P · Docs internas + code health + cobertura tests
+
+Usuario delega trabajo ausente: "sigue con el proyecto, es un proyecto de semanas, hasta que no terminas todas las fases no pares". Memoria `feedback_keep_shipping` confirma push autónomo OK. Sesión cierra el item "docs internas" pendiente de Fase 6 y limpia code health.
+
+**Sprint P (docs + code health + tests)** — 4 commits:
+
+1. `docs(ARCHITECTURE + RUNBOOK)`:
+   - ARCHITECTURE.md refresh contra estado real del repo (era stale 8 días, marcaba Fase 4-6 como NOT taken). Stack tabla versiones reales (WPF-UI 4.3.0, CommunityToolkit.Mvvm 8.4.2, Microsoft.ApplicationInsights 2.23.0, .NET 10), layout completo (3 proyectos + tests + samples + packaging/), 8 secciones nuevas: connections+auth (cert/device-code/AppReg auto-create/TenantLock/RBAC/Graph replica retry), audit subsystem (12 analyzers + HTML/JSON/CSV + baseline diff), plugin system (IModule + PluginLoader + AssemblyLoadContext), telemetry (ITelemetry/NullTelemetry/AppInsights + UiLogSink forward), theme auto-system (WindowsRegistryThemeProvider + SystemEvents), 14 módulos nav tabla con RequiresGraph/Exchange, packaging MSIX + portable single-file.
+   - RUNBOOK.md nuevo (14 secciones): manual operacional desde install hasta troubleshoot. Instalación 3 paths (MSIX AppInstaller / portable / build), primer arranque (FirstRunWizard + device-code + AppReg auto-create + auto-connect), operación día a día (status bar, tema, atajos), 15 módulos detallados, plugins install/enable/troubleshoot, troubleshooting 10 escenarios (EXO no conecta, cert no encontrado, TenantLock mismatch, permisos faltantes Graph, bulk groups replica, audit vacío, tema no sigue, RBAC bloquea, MSIX no arranca), datos disco + backup/restore + desinstall, config avanzada (logging level, AppInsights, proxy), telemetría + privacidad, soporte + escalación, limitaciones conocidas.
+   - **Cierra Fase 6 item "Crear documentación técnica interna (arquitectura, manual de operación)"**. Fase 6 ahora 7/8 (queda solo QA escenarios reales — no automatizable sin tenant real).
+
+2. `chore(health)`:
+   - AuditViewModel: 7 instancias de `task.Result` tras `Task.WhenAll` → reemplazadas por `await task.ConfigureAwait(true)`. Tras `WhenAll` la task ya está completada, `await` es zero-cost y desenvuelve excepciones limpias (sin AggregateException wrap). Tres callsites: RunIdentityAuditAsync, RunScenarioAtRiskAccountsAsync, RunScenarioPrivilegedAsync.
+   - MainViewModel.RenamedNavTitles: añadidos 4 renames del refactor 2026-05-22 que faltaban en el dict (Mail flow → Flujo de correo, Audit log → Registro de auditoría, Cert Wizard → Asistente cert, DNS check → Comprobación DNS). Sin esto, usuarios beta con `LastSelectedNavigation` pre-rename perdían su selección al arrancar tras update.
+
+3. `test(app)` — extract pure helpers + cobertura Sprints L-O (+48 tests):
+   - `NavTitleMigrator` (nuevo public static, `Grex365.App.ViewModels`): extracted desde MainViewModel.LoadLastNavigation. RenamedNavTitles dict + `Resolve(saved) → string?`. MainViewModel delega al helper.
+   - `LicenseFilterMatcher` (nuevo public static): extracted desde TenantHealthViewModel.LicenseFilterPredicate. `Matches(card, filter)` case-insensitive substring sobre FriendlyName/SkuPartNumber/CategoryLabel. VM delega ahora (1 línea).
+   - `NavTitleMigratorTests` (24): null/empty/whitespace, 8 renames theory, case-insensitive, no-renamed pass-through, RenameMap contains-expected-keys + new-titles-resolve-to-self + no-cycles invariant.
+   - `LicenseFilterMatcherTests` (11): null/empty/whitespace pass-through, match por friendly/sku/category, case-insensitive, trim, no-match, short-circuit any-field, null-card ArgumentNullException.
+   - `LicenseCardTests` (13): LicenseCard.From factory sin tests dedicados. Known SKU → friendly+category resolved, unknown SKU → humanize fallback + Other category, zero-enabled → 0% Low + Available zero, half-used → 50% Low, utilization levels theory (60/79/80/94/95/100 → Low/Medium/High/Critical boundaries), over-consumed → Available clamped to 0 via Math.Max, seat counts preserved, priority > 0 para known SKU.
+
+4. `test(core)` — cobertura componentes sin tests dedicados (+15 tests):
+   - `InMemoryAuditFindingsStoreTests` (5): initial defaults nulls + 0, Update sets all five fields, Update raises PropertyChanged para LastAuditName+ErrorCount+WarnCount+InfoCount+LastRunAt, Update twice overwrites + LastRunAt advances, accepts zero counts.
+   - `UserDetailsHostTests` (10): initial closed+null, RequestOpen sets state + fires OpenRequested + PropertyChanged para IsOpen y CurrentUserId, RequestOpen con whitespace/null no-op theory, RequestOpen idempotente (PropertyChanged value-gated no duplica), RequestClose desde open resets + fires CloseRequested, RequestClose desde closed no PropertyChanged pero CloseRequested sí, open→close→open ciclo.
+
+**Polish UI Sprint L pendiente cerrado**: focus-ring accent en ComboBox (paridad con TextBox/PasswordBox shipped previamente). `IsKeyboardFocusWithin` trigger → border `BrandAccentSolid` + `AccentGlowSoftEffect`. App.xaml.
+
+**Estado final sesión**: 532 tests verdes (401 Core + 131 App, +63 desde 469). Build clean 7 projects 0 errors. 4 commits pushed. Plantamiento status: Fase 1-4 DONE, Fase 5 MSIX scaffold DONE (blocked: arte definitivo + smoke test), Fase 6 7/8 DONE (blocked: QA escenarios reales con tenant). Backlog Plantamiento §6 cerrado (Terminal PS embebido shipped vía Consola PS). Backlog "Features útiles" 100% shipped.
 
 ### 2026-05-23 (sesión tarde) — Sprints M-O · UX overhaul + bug stomping
 
@@ -477,13 +507,16 @@ UX/QoL fase 3:
 - [x] **Auto-install módulo EXO** — `ExchangeConnection.InstallModuleAsync` lanza `pwsh.exe` externo (Start-Process) para esquivar el ACL de WindowsApps que niega `Microsoft.PackageManagement.dll` en runspaces embebidos. UI muestra estado del módulo + botones Comprobar/Instalar.
 
 ### Polish UI
-- [ ] Terminal PowerShell embebido (`EasyWindowsTerminalControl`)
+- [x] **Terminal PowerShell embebido** — cerrado vía módulo "Consola PS" (Sprint E 2026-05-22): REPL multi-line en runspace compartido con la app, reusa `IPowerShellRunner` (RunspacePool-backed), history navegable, Ctrl+Enter run, Esc cancel. Menos invasivo que `EasyWindowsTerminalControl` integration y reutiliza infra existente
 - [x] **Theme toggle desde sidebar** — botón "Tema" junto a "Ajustes" persiste y aplica al instante
 - [x] **Disable nav items cuando Graph/Exchange desconectado** — `NavigationItem.RequiresGraph/RequiresExchange`, `MainViewModel.UpdateNavEnabledStates` reactivo al `ConnectionStateMonitor`
+- [x] **Focus-ring accent en TextBox/PasswordBox/ComboBox** — borde `BrandAccentSolid` + `AccentGlowSoftEffect` en IsKeyboardFocused/IsKeyboardFocusWithin trigger (App.xaml)
 
 ---
 
-## Tests (326 passing)
+## Tests (532 passing)
+
+**Core.Tests**: 401 · **App.Tests**: 131. Suites destacadas (Core abajo):
 
 | Suite | Tests | Cubre |
 |-------|-------|-------|
@@ -521,6 +554,29 @@ UX/QoL fase 3:
 | TransportRuleAuditAnalyzer | 17 | empty, no-actions OK, forward externo (ERROR), forward interno OK, BCC externo, redirect externo, outbound connector (INFO), delete broad scope (WARN), delete narrow OK, modo Audit (INFO), disabled (INFO), disabled security keyword (WARN), smtp prefix strip, case-insensitive domain, no-domain skip, empty name, multi-findings same rule |
 | SharedMailboxSignInAnalyzer | 6 | empty, disabled OK, enabled (WARN), unknown (INFO), empty UPN skip, mixed counts |
 | SkuCatalog | 13 | resolve theory (E5/E3/SPB/F3/EntraID/Visio), fallback humanize, empty SKU graceful, case-insensitive, priority order Ent<Bus<Frontline<Sec, CategoryLabel mapping |
+| InMemoryAuditFindingsStore | 5 | initial nulls + 0, Update sets all five fields + raises 5 PropertyChanged, Update twice overwrites, accepts zero counts |
+| UserDetailsHost | 10 | initial closed+null, RequestOpen sets state + fires events, whitespace/null no-op theory, idempotent (value-gated), RequestClose from open/closed, open→close→open cycle |
+| AppRegistrationSpec | 17 | shape, counts, Type=Role, IDs únicos GUID, permisos críticos, URL formatter, BuildApplication validations, BuildCertLabel truncate |
+| AuditReportHtmlBuilder | 18 | empty/null findings, group by severity, hide section if empty, HTML entity escape, pills 4 counts, tenant+actor, severity case-insensitive, timestamp invariant, columns ×3, Esc edge cases |
+| AuditReportJsonBuilder | 13 | roundtrip preserves findings, schema embedded, counts case-insensitive, ISO8601, pretty-print, custom options, parse invalid, tenant+actor |
+| AuditBaselineComparer | 12 | empty inputs, nulls, persistent vs new vs resolved, severity case-insensitive, category case-sensitive, dedup duplicates, mixed state partition, null severity, different detail |
+
+**App.Tests (131)** — VMs + UI helpers con mocks:
+
+| Suite | Tests | Cubre |
+|-------|-------|-------|
+| UserDetailsViewModel | 16 | OpenRequested populate, userNotFound, Reset, ToggleAccount, RemoveLicense, AssignSku, ResetPassword (clipboard+show), RevokeSessions, RemoveAllLicenses, Close |
+| Users | 15 | RBAC denied, confirm-no/yes paths, DisableEnable, AssignLicense seat-available/no-seats, RemoveLicenses zero/positive |
+| Groups | 5 | RemoveMember confirm paths + service-throws |
+| Offboarding | 6 | RBAC, confirm paths, per-flag execution |
+| Onboarding | 5 | OnboardingRun confirm paths + trim UPN + uppercase usageLocation + GroupIdentifiers split, AddSku dedup + Remove |
+| MailboxRules | 9 | ApplyForwarding empty/RBAC/confirm paths con trim, ClearForwarding, RemoveCalendarPermission |
+| PsConsole | 9 | empty input no-op, valid script appends + history, errors marker, exception marker, cancel, Clear, history dedupe + nav up/down wrap |
+| FirstRunWizard | 10 | state machine, persistencia, skip, finish con trim, save error, labels |
+| SettingsViewModelTheme | 8 | ResolveActualTheme Dark/Light/Auto+dark/Auto+light/null prov/null pref/unknown/case-insensitive |
+| NavTitleMigrator | 24 | null/empty/whitespace, 8 renames theory, case-insensitive, no-renamed pass-through, RenameMap invariants (contains-keys + new-resolve-to-self + no-cycles) |
+| LicenseFilterMatcher | 11 | null/empty/whitespace, match por friendly/sku/category, case-insensitive, trim, short-circuit, null-card ArgumentNullException |
+| LicenseCard | 13 | From factory known/unknown SKU, zero-enabled, half-used, utilization levels boundaries (60/79/80/94/95/100), over-consumed Available clamp, seat counts, priority |
 
 ---
 
@@ -549,8 +605,13 @@ Datos persistidos en `%LOCALAPPDATA%\Grex365\`:
 
 ## Próximo bloque planificado
 
-**Orden propuesto (mayor utilidad / menor riesgo primero):**
-1. **Documentación técnica interna** — arquitectura + manual operación (ARCHITECTURE.md + RUNBOOK.md) [requiere petición explícita del usuario]
-2. **Asset definitivo MSIX** — reemplazar PNG placeholders por branding + smoke test instalación end-to-end con cert real
-3. **QA escenarios reales** — 100+ ops simultáneas bajo carga + scripted bulk CSV grande
-4. **Terminal PowerShell embebido** (`EasyWindowsTerminalControl`) — útil para troubleshooting in-app
+**Backlog autónomo restante (todos blocked por entrada externa):**
+1. **Asset definitivo MSIX** — reemplazar PNG placeholders por branding (requiere arte definitivo de Andersen) + smoke test instalación end-to-end con cert real (requiere entorno test con cert firmado)
+2. **QA escenarios reales** — 100+ ops simultáneas bajo carga + scripted bulk CSV grande (requiere tenant real con datos representativos)
+
+**Status fases vs Plantamiento:**
+- Fase 1-4: DONE
+- Fase 5 (packaging): MSIX scaffold + CI release job DONE — pendiente assets definitivos + smoke test real
+- Fase 6 (telemetría + features enterprise): 7/8 done. Falta solo QA escenarios reales (no automatizable sin tenant real)
+
+**Backlog Plantamiento §6 cerrado:** Terminal PowerShell embebido shipped via Consola PS module. Toda feature útil del backlog también shipped.
