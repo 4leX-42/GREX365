@@ -266,12 +266,12 @@ All major feature ports complete. See [`MIGRATION.md`](MIGRATION.md) for per-fea
 |---|----------|--------|--------|
 | D1 | Branching strategy (trunk vs feature branches) | H0.12 | 🟡 De-facto trunk-based en `grex365-2.0`; sin doc explícito |
 | D2 | Offboarding: transactional or checkpoint? | H3.5 | 🟡 De-facto step-by-step fail-soft (each step try/catch) |
-| D3 | Report format: CSV / XLSX / HTML / DataGrid only? | H3.9 | 🔴 Open — audits ya exportan CSV |
+| D3 | Report format: CSV / XLSX / HTML / DataGrid only? | H3.9 | ✅ Closed — CSV + HTML + JSON shipped (Sprint J-K). XLSX descartado (sin Excel dependency); DataGrid in-app ya existe via AuditView |
 | D4 | Roles + UI modes: keep or drop for v1? | H3.7 | ✅ Dropped — RBAC guard cubre |
-| D5 | Templates: keep or drop for v1? | H3.8 | 🔴 Open |
-| D6 | i18n: Spanish only, or Spanish + English? | H4.11 | 🔴 Open — ES-only por ahora |
-| D7 | Code-signing cert: self-signed forever or buy real? | H5.9 | 🔴 Open |
-| D8 | Min target OS: Win10 1809+ or Win11 only? | many | 🔴 Open — `.NET 10` runtime soporta ambos |
+| D5 | Templates: keep or drop for v1? | H3.8 | 🔴 Open — no demand observado, deferred a iteración post-v1.0 |
+| D6 | i18n: Spanish only, or Spanish + English? | H4.11 | 🟡 In progress — Sprint R scaffold L10n JSON + Settings switcher (es default, en parcial). Hot-swap via restart required |
+| D7 | Code-signing cert: self-signed forever or buy real? | H5.9 | 🔴 Open — decision por user (cost OV/EV cert $100-300/yr vs SmartScreen friction interno) |
+| D8 | Min target OS: Win10 1809+ or Win11 only? | many | ✅ Closed — Win10 1809+ de-facto via `.NET 10` runtime + app.manifest supportedOS GUIDs. Win11 inherita Win10 GUID en manifest |
 | D9 | Tenant lock: keep legacy preference? | H1.2.6 | ✅ Kept + enforced post-auth (cert + device-code) |
 
 ---
