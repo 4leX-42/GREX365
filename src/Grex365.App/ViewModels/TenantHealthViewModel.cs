@@ -51,14 +51,7 @@ public sealed partial class TenantHealthViewModel : ObservableObject
     }
 
     private bool LicenseFilterPredicate(object obj)
-    {
-        if (obj is not LicenseCard l) return false;
-        var q = (LicenseFilter ?? string.Empty).Trim();
-        if (q.Length == 0) return true;
-        return (l.FriendlyName?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
-            || (l.SkuPartNumber?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
-            || (l.CategoryLabel?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false);
-    }
+        => obj is LicenseCard l && LicenseFilterMatcher.Matches(l, LicenseFilter);
 
     partial void OnLicenseFilterChanged(string value) => LicensesView.Refresh();
 

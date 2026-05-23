@@ -159,19 +159,6 @@ public sealed partial class MainViewModel : ObservableObject
         "Flujo de correo",
     };
 
-    // Old → new title rename map. Lets users that had old nav persisted keep their last selection.
-    private static readonly Dictionary<string, string> RenamedNavTitles = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["Conexion"] = "Conexión",
-        ["Auditoria"] = "Auditoría",
-        ["Reglas buzon"] = "Reglas de buzón",
-        ["Salud tenant"] = "Licencias",
-        ["Mail flow"] = "Flujo de correo",
-        ["Audit log"] = "Registro de auditoría",
-        ["Cert Wizard"] = "Asistente cert",
-        ["DNS check"] = "Comprobación DNS",
-    };
-
     private void ApplyConnectionRequirements()
     {
         foreach (var item in NavigationItems)
@@ -211,13 +198,11 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             var prefs = _prefs.LoadAsync().GetAwaiter().GetResult();
-            if (string.IsNullOrWhiteSpace(prefs.LastSelectedNavigation))
+            var target = NavTitleMigrator.Resolve(prefs.LastSelectedNavigation);
+            if (target is null)
             {
                 return null;
             }
-            var target = RenamedNavTitles.TryGetValue(prefs.LastSelectedNavigation, out var renamed)
-                ? renamed
-                : prefs.LastSelectedNavigation;
             return NavigationItems.FirstOrDefault(i =>
                 string.Equals(i.Title, target, StringComparison.OrdinalIgnoreCase));
         }
