@@ -1,12 +1,12 @@
 # Migration log: PowerShell toolkit → .NET 10 app
 
 > Tracks what has been ported from `GREX365/` (legacy PS) to `src/` (new .NET app).
-> Live source of truth: [`PROGRESS.md`](../PROGRESS.md) (sessions bitácora + 326 tests detail).
+> Live source of truth: [`PROGRESS.md`](../PROGRESS.md) (sessions bitácora + 532 tests detail).
 > Update on every feature migration.
 
 ---
 
-## Status (2026-05-22)
+## Status (2026-05-23)
 
 | Feature | Legacy location | New location | Status | Notes |
 |---|---|---|---|---|
@@ -26,7 +26,10 @@
 | DNS check | (new — not in legacy) | `Grex365.Core/DomainChecks/DomainChecker.cs` + `DomainCheckViewModel`/`View` | 🟢 Ported | MX/TXT/SPF/DMARC via nslookup |
 | Mail flow rules viewer | (new) | `Grex365.PowerShell/MailFlowRulesService.cs` + `MailFlowRulesViewModel`/`View` | 🟢 Ported | `Get-TransportRule` lister with filter |
 | Mailbox rules (OOO/forwarding/calendar) | (extracted from above) | `Grex365.PowerShell/MailboxRulesService.cs` + `MailboxRulesViewModel`/`View` | 🟢 Ported | OOO state + msg interno/externo + range; forwarding SMTP; calendar folder permissions |
-| Audit log viewer | (new) | `Grex365.Core/Logging/FileAuditLog.cs` + `MetricsAggregator.cs` + `AuditLogViewModel`/`View` | 🟢 Ported | JSONL persistente + summary cards (totales, error rate, last 24h, top sources) |
+| Audit log viewer | (new) | `Grex365.Core/Audit/FileAuditLog.cs` + `MetricsAggregator.cs` + `AuditLogViewModel`/`View` | 🟢 Ported | JSONL persistente + summary cards (totales, error rate, last 24h, top sources) |
+| Audit report exports (HTML/JSON/Baseline diff) | (new) | `AuditReportHtmlBuilder.cs` + `AuditReportJsonBuilder.cs` + `AuditBaselineComparer.cs` | 🟢 Ported | HTML standalone con CSS embebido (light + prefers-color-scheme dark), JSON schema `grex365.audit.v1` parseable, baseline diff New/Resolved/Persistent contra export previo |
+| Consola PowerShell embebida | (new) | `Grex365.App/ViewModels/PsConsoleViewModel.cs` + `PsConsoleView` | 🟢 Ported | REPL multi-line reusa `IPowerShellRunner` (RunspacePool shared con app); Graph/EXO en scope; history navegable Up/Down max 50 dedupe; Ctrl+Enter run, Esc cancel. Cierra Plantamiento §6 backlog "Terminal PS embebido" sin EasyWindowsTerminalControl |
+| First-Run Wizard | (new) | `Grex365.App/FirstRunWizardWindow.xaml` + `FirstRunWizardViewModel.cs` | 🟢 Ported | Modal 5 páginas: Welcome → Connection (device-code/cert) → TenantLock (id+domain) → Theme (Dark/Light/Auto) → Summary. Persist preferences |
 | Plugin system | (not in legacy) | `Grex365.Core/Plugins/PluginLoader.cs` + `IModule` + `Settings` enable/disable UI | 🟢 Ported | `AssemblyLoadContext` per DLL from `%LOCALAPPDATA%\Grex365\plugins\*.dll`. SamplePlugin POC en `samples/` |
 | RBAC guard | (not in legacy) | `Grex365.Core/Security/RbacGuard.cs` + `GraphMembershipChecker.cs` | 🟢 Ported | `/me/checkMemberGroups` against `AuthorizationGroupId`; gates destructive ops only |
 | Tenant lock | (not in legacy) | `Grex365.Core/Connections/TenantLock.cs` | 🟢 Ported | Enforced post-Graph-connect (cert + device-code paths); aborts + disconnects on mismatch |
@@ -83,3 +86,22 @@ Legend: 🟢 ported · 🟡 skeleton only · 🔴 pending · ⚪ deferred · ⚫
 
 - **Cert wizard**: auto-creates App Registration via Graph (`GraphAppRegistrationService.CreateAndConfigureAsync`) with all required AppRoles + cert upload + admin-consent URL. Manual fallback in legacy docs.
 - **Tenant lock (D9)**: kept. Enforced post-Graph-connect (cert + device-code).
+- **Terminal PowerShell embebido**: shipped vía `PsConsoleView` (Sprint E 2026-05-22) — reusa runspace existente en vez de integrar `EasyWindowsTerminalControl`.
+- **Docs internas (Fase 6)**: shipped Sprint P 2026-05-23 — ARCHITECTURE.md refresh + RUNBOOK.md nuevo + ROADMAP.md refresh + MIGRATION.md sync. Closes Plantamiento Fase 6 item "Crear documentación técnica interna".
+
+---
+
+## Renames de nav titles (2026-05-22 / 2026-05-23)
+
+Acumulación de pequeños renames cubierta por `NavTitleMigrator.RenameMap` para preservar `LastSelectedNavigation` de usuarios beta.
+
+| Old | New | Cuando |
+|---|---|---|
+| Conexion | Conexión | 2026-05-22 |
+| Auditoria | Auditoría | 2026-05-22 |
+| Reglas buzon | Reglas de buzón | 2026-05-22 |
+| Mail flow | Flujo de correo | 2026-05-22 |
+| Audit log | Registro de auditoría | 2026-05-22 |
+| Cert Wizard | Asistente cert | 2026-05-22 |
+| DNS check | Comprobación DNS | 2026-05-22 |
+| Salud tenant | Licencias | 2026-05-23 (Sprint O) |
