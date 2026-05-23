@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **616 passing** (xUnit + FluentAssertions) — 459 Core + 157 App
-- Última actualización: 2026-05-23 (sesión noche · Sprints P + Q)
+- Tests: **652 passing** (xUnit + FluentAssertions) — 459 Core + 193 App
+- Última actualización: 2026-05-23 (sesión noche · Sprints P + Q + R)
 
 ## Auditoría técnica integral 2026-05-22
 
@@ -57,6 +57,41 @@
 - Sweep final `grep "Foreground=\"#\|Background=\"#"`: cero matches restantes — paleta 100% via DynamicResource.
 
 ## Bitácora sesiones
+
+### 2026-05-23 (sesión noche cont.) — Sprint R · i18n ES/EN scaffold + decisiones cerradas
+
+User pidió continuar con backlog restante. Estimación weeks: "¿cuántas semanas más le echas?" → respondí 2-4 weeks bloqueada por arte+tenant+decisiones. User reforzó "si sigue con todo esto" + después "claro metele idiomas en la parte de setings / ajustes ingles y espa;ol". También aviso seguridad importante: "solo puedes hacer pruebas con usuarios testeo y grupos y listas de distribucion de testeo" — guardado como `feedback_only_testeo_objects` memoria.
+
+**Sprint R (i18n + cierre decisiones)** — 3 commits:
+
+1. `docs(roadmap)` cerrar D3 + D8:
+   - **D3 Reports format** ✅ Closed — CSV + HTML + JSON ya shipped en Sprint J-K. XLSX descartado (sin Excel dep). DataGrid in-app cubierto por AuditView.
+   - **D8 Min target OS** ✅ Closed — Win10 1809+ de-facto via .NET 10 runtime + app.manifest supportedOS GUIDs. Win11 inherita.
+   - **D6 i18n** status 🔴 → 🟡 in progress.
+   - **D5 Templates** notation: no demand observado, deferred post-v1.0.
+
+2. `feat(i18n)` L10n + Settings + nav localized:
+   - `L10n` static (Grex365.App): dicts hardcoded ES (canonical) + EN (parcial con fallback automatic a ES). API Configure/Initialize/Get/Reset. 39 keys: Nav.* (15) + NavCategory.* (7) + Settings.* + Dialog.* + Common.*.
+   - Por qué hardcoded vs embedded JSON: WPF SDK strip JSON embedded resources (g.resources collision). Hardcoded más portable + reliable.
+   - `UserPreferences.Language = "es"` default. Aplicado en App.OnStartup → L10n.Initialize(lang) antes de DI build.
+   - Settings UI: nuevo ComboBox "Idioma / Language" (Español/English) antes del Tema. LanguageRestartHint property se llena tras Save si idioma cambió → muestra "Reinicia la aplicación..." (ES/EN según L10n).
+   - MainViewModel refactor: NavigationItem ahora tiene `NavKey` + `CategoryKey` (identity stable across language). Helper `BuildNav(navKey, glyph, vmType, categoryKey)` resuelve title+category via L10n.Get. RequiresGraphKeys/RequiresExchangeKeys match contra NavKey en lugar de Title. LoadLastNavigation dual-match (NavKey directo + legacy Title fallback via NavTitleMigrator). PersistNavAsync guarda NavKey en lugar de Title.
+   - L10nTests (36): null/empty/whitespace/unknown lang → DefaultLanguage, Initialize ES/EN, fallback chain, case-insensitive, Configure overload, Reset, SupportedLanguages, theory ×15 (es) + ×5 (en) cubre todas Nav.* keys.
+
+**Memoria nueva**: `feedback_only_testeo_objects` — REGLA CRÍTICA: solo objetos `testeo*` para pruebas; tenant Andersen productivo, blast radius alto en ops accidentales. Trabajo local code/tests/docs no requiere check; aplica solo cuando hay comando contra tenant real.
+
+**Estado Sprint R**: 652 tests verdes (459 Core + 193 App, +36 L10n). Build clean 7 projects 0 errors. 3 commits pushed. D3 + D8 closed. D6 in-progress (scaffold complete; expansion futura externalizar más strings VMs/views).
+
+**Resumen sesión 2026-05-23 noche acumulada (P + Q + R)**:
+- 19 commits pushed.
+- Tests 469 → 652 (+183).
+- Docs refrescadas (ARCHITECTURE / RUNBOOK / ROADMAP / MIGRATION / README).
+- 8 helpers puros extraídos: NavTitleMigrator, LicenseFilterMatcher, NavRequirements, WindowPlacementGuard, GraphPermissionErrorDetector, PSModulePathSanitizer, ExeResolver, CsvEscaper + L10n.
+- 1 bug latente fixed (CSV \r en 4 VMs).
+- Decisiones cerradas: D3, D8 (cumulativas: 4 closed total ✅, 1 in-progress 🟡 D6).
+- Idiomas ES/EN scaffold operativo en Settings.
+
+Plantamiento status final: Fase 1-4 DONE, Fase 5 (MSIX scaffold + CI release) DONE — falta arte + smoke test, Fase 6 (telemetría + enterprise) **7/8 DONE** — solo QA escenarios reales restante (necesita tenant). Backlog autónomo agotado salvo iteración i18n expansion (externalizar más strings) que se puede continuar bajo demanda.
 
 ### 2026-05-23 (sesión noche autónoma cont.) — Sprint Q · Extract sweep + bug fix CRLF
 
