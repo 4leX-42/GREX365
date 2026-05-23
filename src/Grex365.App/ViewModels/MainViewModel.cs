@@ -182,9 +182,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         foreach (var item in NavigationItems)
         {
-            item.IsEnabled =
-                (!item.RequiresGraph || GraphConnected) &&
-                (!item.RequiresExchange || ExchangeConnected);
+            item.IsEnabled = NavRequirements.IsEnabled(item, GraphConnected, ExchangeConnected);
         }
     }
 

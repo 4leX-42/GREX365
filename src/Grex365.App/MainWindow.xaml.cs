@@ -80,13 +80,11 @@ public partial class MainWindow : FluentWindow
 
     private static bool IsOnScreen(double left, double top, double width, double height)
     {
-        var virt = System.Windows.SystemParameters.VirtualScreenWidth;
-        var virtH = System.Windows.SystemParameters.VirtualScreenHeight;
-        var minLeft = System.Windows.SystemParameters.VirtualScreenLeft;
-        var minTop = System.Windows.SystemParameters.VirtualScreenTop;
-        return left + width > minLeft + 50
-            && left < minLeft + virt - 50
-            && top + height > minTop + 50
-            && top < minTop + virtH - 50;
+        var virt = new VirtualScreenBounds(
+            Left: System.Windows.SystemParameters.VirtualScreenLeft,
+            Top: System.Windows.SystemParameters.VirtualScreenTop,
+            Width: System.Windows.SystemParameters.VirtualScreenWidth,
+            Height: System.Windows.SystemParameters.VirtualScreenHeight);
+        return WindowPlacementGuard.IsOnScreen(left, top, width, height, virt);
     }
 }
