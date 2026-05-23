@@ -87,11 +87,7 @@ public sealed class GraphAuditService : IAuditService
     }
 
     private static bool IsAuditLogPermissionError(Exception ex)
-    {
-        var msg = ex.Message ?? string.Empty;
-        return msg.Contains("AuditLog.Read.All", StringComparison.OrdinalIgnoreCase)
-            || msg.Contains("required Microsoft Graph permission", StringComparison.OrdinalIgnoreCase);
-    }
+        => GraphPermissionErrorDetector.IsAuditLogPermissionError(ex);
 
     public async Task<IReadOnlyList<AuditFinding>> RunGroupsAuditAsync(
         IProgress<LogEntry>? progress = null,
