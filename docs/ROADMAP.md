@@ -1,9 +1,9 @@
 # GREX365 — Roadmap & status
 
 > Comprehensive punch list. Updated on every meaningful change.
-> Date created: 2026-05-15. Last update: 2026-05-22.
+> Date created: 2026-05-15. Last update: 2026-05-23.
 >
-> **Live source of truth: [`PROGRESS.md`](../PROGRESS.md)** (sessions bitácora + 326 tests detail).
+> **Live source of truth: [`PROGRESS.md`](../PROGRESS.md)** (sessions bitácora + 532 tests detail).
 > This file tracks H0–H6 hitos. PROGRESS.md tracks per-session deltas.
 >
 > Legend: ✅ done · 🟡 in progress · 🔴 not started · ⚪ deferred · ❌ rejected
@@ -16,17 +16,17 @@
 
 ---
 
-## 📍 Status snapshot (2026-05-22)
+## 📍 Status snapshot (2026-05-23)
 
-- **Build**: 6 projects, 0 errors, 0 warnings
-- **Tests**: 326 passing (xUnit + FluentAssertions + Moq)
-- **Nav modules in app**: 14 (Dashboard, Conexión, Salud tenant, Usuarios, Grupos, Onboarding, Offboarding, Buzones, Reglas de buzón, Flujo de correo, Auditoría, Registro de auditoría, Asistente cert, Comprobación DNS) + Plugins category
+- **Build**: 7 projects (Core + PS + App + Tests Core + Tests App + SamplePlugin + Tests transitive), 0 errors, 0 warnings
+- **Tests**: 532 passing (xUnit + FluentAssertions + Moq) — 401 Core + 131 App
+- **Nav modules en app**: 15 (Dashboard · Conexión · Licencias · Usuarios · Grupos · Onboarding · Offboarding · Buzones · Reglas de buzón · Flujo de correo · Auditoría · Registro de auditoría · Consola PS · Asistente cert · Comprobación DNS) + Plugins category dinámico
 - **Fase 1** (refactor backend + scaffolding) — ✅ DONE
 - **Fase 2** (PS engine + async) — ✅ DONE
 - **Fase 3** (UI moderna WPF + Fluent) — ✅ DONE
 - **Fase 4** (arquitectura modular / plugins) — ✅ DONE
-- **Fase 5** (packaging) — 🟡 MSIX scaffold DONE; real assets + smoke test pending
-- **Fase 6** (telemetría + enterprise) — 🟡 6/8: JSONL audit + viewer + level switch + metrics + AppInsights + RBAC done; docs internas + QA escenarios pending
+- **Fase 5** (packaging) — 🟡 MSIX scaffold + CI release DONE; real assets (arte) + smoke test (cert) pending external input
+- **Fase 6** (telemetría + enterprise) — 🟡 7/8: JSONL audit + viewer + level switch + metrics + AppInsights + RBAC + docs internas (ARCHITECTURE refresh + RUNBOOK nuevo) DONE; falta solo QA escenarios reales (necesita tenant)
 
 ## Realistic total effort
 
@@ -207,16 +207,20 @@ All major feature ports complete. See [`MIGRATION.md`](MIGRATION.md) for per-fea
 | # | Item | Status | Effort | Notes |
 |---|------|--------|--------|-------|
 | 4.1 | Dashboard home screen | ✅ | M | Cards: connection state + last audit + quick actions |
-| 4.2 | Theme toggle (light/dark/auto from system) | ✅ | S | Botón Tema sidebar + persistencia (auto-from-system pending) |
+| 4.2 | Theme toggle (light/dark/auto from system) | ✅ | S | Botón Tema sidebar + persistencia + Auto follows OS theme via WindowsRegistryThemeProvider + SystemEvents.UserPreferenceChanged live update (Sprint H) |
 | 4.3 | Sidebar navigation (NavigationView with Frame) | ✅ | M | CIPP-style grouping (Tenant/Identidad/Mail/Seguridad/Herramientas/Plugins) + accent rail PowerToys-style |
-| 4.4 | Keyboard shortcuts (Ctrl+, settings, Ctrl+L logs, etc.) | 🟡 | S | Audit view: Ctrl+R/Esc/Ctrl+E. Enter en search en Users/Groups/SharedMailbox/MailboxRules/DNS. Esc cierra drawer. Falta global Ctrl+, settings |
+| 4.4 | Keyboard shortcuts (Ctrl+, settings, Ctrl+L logs, etc.) | ✅ | S | Audit Ctrl+R/Esc/Ctrl+E, Enter en search Users/Groups/SharedMailbox/MailboxRules/DNS, Esc cierra drawer, Ctrl+, → Settings, F1 → About, Ctrl+L toggle log panel, Ctrl+Enter run / Esc cancel en Consola PS |
 | 4.5 | Empty states for every list / panel | ✅ | S | Users/Groups/Audit con placeholder + glyph + texto guía |
 | 4.6 | Notification toast for completion + errors | ✅ | M | `SnackbarPresenter` wpf-ui en Ok/Warn/Error |
-| 4.7 | Confirmation dialogs for destructive ops | ✅ | S | Disable user, remove licenses, remove member, offboarding, bulk create |
-| 4.8 | Per-monitor DPI testing | 🔴 | S | Pending |
+| 4.7 | Confirmation dialogs for destructive ops | ✅ | S | Disable user, remove licenses, remove member, offboarding, bulk create — via `IDialogService` abstraction |
+| 4.8 | Per-monitor DPI testing | 🔴 | S | Pending — manifest declara `<dpiAware>True/PM</dpiAware>` pero no testeado real |
 | 4.9 | Accessibility pass (keyboard nav, screen reader) | 🔴 | M | Pending — glyphs en columnas refuerzan color (audit) pero no auditado |
-| 4.10 | App icon + splash | 🔴 | S | Pending |
+| 4.10 | App icon + splash | 🟡 | S | MSIX assets placeholder shipped; arte definitivo pendiente |
 | 4.11 | Spanish/English locale toggle | 🔴 | M | Open decision (D6) — ES-only por ahora |
+| 4.12 | Focus-ring accent en inputs (TextBox/PasswordBox/ComboBox) | ✅ | S | App.xaml global Styles con `IsKeyboardFocused`/`IsKeyboardFocusWithin` → `BrandAccentSolid` border + `AccentGlowSoftEffect` |
+| 4.13 | Page transition animations | ✅ | S | ContentControl ControlTemplate fade-in (Sprint F) + Sprint M restraint pass (120ms fade only) |
+| 4.14 | Card hover + elevation | ✅ | S | CardHover + MetricCard + HeroCard con storyboards (Sprint L) |
+| 4.15 | Sprint L visual overhaul futurista + Sprint M Sally restraint | ✅ | L | Brand palette `#4F8CFF → #6A6CFF → #9B6CFF` + cyan `#7AB7FF` + glass borders + glow effects, 14 views con hero badges → eyebrow+título Light pattern post-restraint |
 
 ---
 
@@ -230,7 +234,7 @@ All major feature ports complete. See [`MIGRATION.md`](MIGRATION.md) for per-fea
 | 5.4 | Velopack auto-update | 🔴 | M | Sustituido por MSIX `.appinstaller` template con auto-update |
 | 5.5 | GitHub Releases automated on tag | ✅ | S | CI workflow job `msix` triggered on `v*` tag |
 | 5.6 | Release notes template | 🔴 | S | Pending |
-| 5.7 | Versioning scheme (SemVer + Directory.Build.props) | 🔴 | S | Currently `v0.2.0-alpha` hardcoded en UI strings |
+| 5.7 | Versioning scheme (SemVer + Directory.Build.props) | ✅ | S | `Directory.Build.props` raíz con `<Version>0.2.0-alpha</Version>` single-source. `App.AppVersion` static lee `AssemblyInformationalVersionAttribute`. Sidebar header + status bar bind via `{x:Static local:App.AppVersion}` |
 | 5.8 | Install / uninstall docs | ✅ | S | `PACKAGING.md` (Intune/SCCM/AppInstaller) |
 | 5.9 | Real (purchased) code-signing cert decision | 🔴 | S | Open (D7) |
 | 5.10 | Smoke test on clean Win10/Win11 VMs | 🔴 | M | Pending |
@@ -239,13 +243,20 @@ All major feature ports complete. See [`MIGRATION.md`](MIGRATION.md) for per-fea
 
 ---
 
-## H6 — Post v1.0 / iteration ⚪
+## H6 — Post v1.0 / iteration ✅ (Fase 6 mapping)
 
-- Plugin system (Prism / MEF) — only if real demand
-- MSIX packaging — only if corporate deployment needed
-- Application Insights — only if multi-operator
-- Multi-tenant support — out of scope v1
-- Cross-platform (Avalonia) — out of scope, Windows-only target
+| # | Item | Status | Effort | Notes |
+|---|------|--------|--------|-------|
+| 6.1 | Plugin system (`IModule` + PluginLoader + AssemblyLoadContext) | ✅ | M | Fase 4 shipped. Sample plugin POC + Settings UI enable/disable per DLL |
+| 6.2 | MSIX packaging + AppInstaller auto-update | ✅ | L | Fase 5 scaffold shipped. `packaging/msix/` + CI release job `v*` tag. Assets + smoke test pending |
+| 6.3 | Application Insights opt-in telemetry | ✅ | M | `ITelemetry` + `NullTelemetry` + `ApplicationInsightsTelemetry`. Empty conn string = NullTelemetry |
+| 6.4 | Logging level configurable runtime | ✅ | S | `LoggingLevelSwitch` Serilog desde Settings (Debug/Info/Warn/Error) |
+| 6.5 | Audit JSONL log + viewer + métricas | ✅ | M | `FileAuditLog` append-only + `MetricsAggregator` + AuditLogView con filtros + recent errors |
+| 6.6 | RBAC vía Entra group membership | ✅ | M | `RbacGuard` cachea decisión, gating en VMs destructivos (Users/Groups/SharedMailbox/MailboxRules). App-only auth bypassea by design |
+| 6.7 | Docs internas (ARCHITECTURE + RUNBOOK + ROADMAP + MIGRATION) | ✅ | M | Sprint P 2026-05-23. ARCHITECTURE refresh contra estado real + RUNBOOK manual operacional nuevo |
+| 6.8 | QA escenarios reales (100+ ops simultáneas + bulk CSV grande) | 🔴 | M | Blocked: necesita tenant real con datos representativos |
+| 6.9 | Multi-tenant support | ❌ | XL | Out of scope v1 (D-multitenant). Multi-profile Windows como workaround |
+| 6.10 | Cross-platform (Avalonia) | ❌ | XL | Out of scope, Windows-only target |
 
 ---
 
@@ -269,11 +280,14 @@ All major feature ports complete. See [`MIGRATION.md`](MIGRATION.md) for per-fea
 
 **Backlog activo** (per `PROGRESS.md` "Próximo bloque planificado"):
 
-1. **MSIX assets reales** — reemplazar PNG placeholders + smoke test instalación end-to-end con cert real (H5.12 + H5.10)
-2. **QA escenarios reales** — 100+ ops simultáneas bajo carga + scripted bulk CSV grande (Fase 6)
-3. **Tests cobertura gap** — UserDetailsVM, GraphAppRegistrationService, GraphUsers/Groups/Audit services (requiere `Grex365.App.Tests` csproj + `IConfirmationService`/`IClipboardService` abstracciones)
-4. **Terminal PowerShell embebido** (`EasyWindowsTerminalControl`) — troubleshooting in-app (backlog Polish UI)
-5. **First-run wizard explícito** (H2.9) — flujo guiado para usuario sin config
-6. **Documentación técnica interna** (RUNBOOK.md) — requiere petición explícita del usuario
-7. **Pequeñas mejoras**: log export (H1.6.5), window restore (H2.14), about dialog (H2.16), Ctrl+, global shortcut (H4.4), DPI/a11y pass (H4.8/9)
-8. **Resolver decisiones abiertas** D3/D5/D6/D7/D8
+1. **MSIX assets reales** (H5.12 + H4.10) — reemplazar PNG placeholders por branding (necesita arte definitivo de Andersen) + smoke test instalación end-to-end con cert real (H5.10) — blocked external
+2. **QA escenarios reales** (H6.8) — 100+ ops simultáneas bajo carga + scripted bulk CSV grande — blocked: necesita tenant real
+3. **Decisiones abiertas pendientes** (D3/D5/D6/D7/D8) — Report format, Templates, i18n, Code-signing cert real, Min target OS
+4. **A11y + DPI** (H4.8/H4.9) — auditoría accesibilidad screen reader + DPI per-monitor real
+5. **i18n** (H4.11) — switcher ES/EN si la decisión D6 se resuelve a favor de bilingüe
+
+**Items shipped en Sprint P 2026-05-23 (sesión noche autónoma)** — ver PROGRESS bitácora:
+- ARCHITECTURE.md refresh + RUNBOOK.md nuevo (cierra Fase 6 docs internas)
+- ComboBox focus-ring accent (H4.12)
+- `chore(health)`: `.Result` purge + nav rename map ampliado
+- 5 nuevos test suites: NavTitleMigrator (24) + LicenseFilterMatcher (11) + LicenseCard (13) + InMemoryAuditFindingsStore (5) + UserDetailsHost (10) = +63 tests, total 532
