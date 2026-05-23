@@ -40,6 +40,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string? _expectedTenantDomain;
     [ObservableProperty] private bool _enforceTenantLock;
     [ObservableProperty] private string _theme = "Dark";
+    [ObservableProperty] private string _language = "es";
+    [ObservableProperty] private string _languageRestartHint = string.Empty;
+    private string _initialLanguage = "es";
     [ObservableProperty] private string _logLevel = "Information";
     [ObservableProperty] private string? _applicationInsightsConnectionString;
     [ObservableProperty] private string? _authorizationGroupId;
@@ -81,6 +84,9 @@ public sealed partial class SettingsViewModel : ObservableObject
         ExpectedTenantDomain = prefs.ExpectedTenantDomain;
         EnforceTenantLock = prefs.EnforceTenantLock;
         Theme = string.IsNullOrWhiteSpace(prefs.Theme) ? "Dark" : prefs.Theme;
+        Language = string.IsNullOrWhiteSpace(prefs.Language) ? "es" : prefs.Language;
+        _initialLanguage = Language;
+        LanguageRestartHint = string.Empty;
         LogLevel = string.IsNullOrWhiteSpace(prefs.LogLevel) ? "Information" : prefs.LogLevel;
         ApplicationInsightsConnectionString = prefs.ApplicationInsightsConnectionString;
         AuthorizationGroupId = prefs.AuthorizationGroupId;
@@ -138,6 +144,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             prefs.ExpectedTenantDomain = ExpectedTenantDomain;
             prefs.EnforceTenantLock = EnforceTenantLock;
             prefs.Theme = Theme;
+            prefs.Language = string.IsNullOrWhiteSpace(Language) ? "es" : Language.Trim().ToLowerInvariant();
             prefs.LogLevel = LogLevel;
             prefs.ApplicationInsightsConnectionString = string.IsNullOrWhiteSpace(ApplicationInsightsConnectionString)
                 ? null
@@ -166,6 +173,12 @@ public sealed partial class SettingsViewModel : ObservableObject
 
             SaveStatus = $"Guardado · {DateTime.Now:HH:mm:ss}";
             _log.Progress.Report(LogEntry.Ok("Settings", "Preferencias y certificado guardados."));
+
+            if (!string.Equals(prefs.Language, _initialLanguage, StringComparison.OrdinalIgnoreCase))
+            {
+                LanguageRestartHint = L10n.Get("Settings.RestartRequired");
+            }
+
             ValidateCert();
         }
         catch (Exception ex)

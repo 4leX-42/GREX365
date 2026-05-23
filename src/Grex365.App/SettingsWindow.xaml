@@ -55,6 +55,21 @@
                         <CheckBox Content="Forzar tenant lock (rechazar conexión si no coincide)"
                                   IsChecked="{Binding EnforceTenantLock}" />
 
+                        <TextBlock Text="Idioma / Language" FontWeight="SemiBold" Margin="0,16,0,4" />
+                        <ComboBox SelectedValue="{Binding Language}"
+                                  SelectedValuePath="Tag"
+                                  Width="220"
+                                  HorizontalAlignment="Left">
+                            <ComboBoxItem Content="Español" Tag="es" />
+                            <ComboBoxItem Content="English" Tag="en" />
+                        </ComboBox>
+                        <TextBlock Text="{Binding LanguageRestartHint}"
+                                   Opacity="0.85"
+                                   FontSize="12"
+                                   FontStyle="Italic"
+                                   Margin="0,4,0,0"
+                                   TextWrapping="Wrap" />
+
                         <TextBlock Text="Tema" FontWeight="SemiBold" Margin="0,16,0,4" />
                         <ComboBox SelectedValue="{Binding Theme}"
                                   SelectedValuePath="Tag"

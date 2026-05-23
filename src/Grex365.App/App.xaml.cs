@@ -69,6 +69,7 @@ public partial class App : Application
 
         var bootPrefs = TryLoadBootPreferences(configDir);
         LogLevelSwitch.MinimumLevel = ParseLogLevel(bootPrefs.LogLevel);
+        L10n.Initialize(bootPrefs.Language);
 
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.ControlledBy(LogLevelSwitch)

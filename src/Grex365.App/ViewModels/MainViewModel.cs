@@ -14,18 +14,24 @@ namespace Grex365.App.ViewModels;
 
 public sealed partial class NavigationItem : ObservableObject
 {
-    public NavigationItem(string title, string glyph, Type viewModelType, string category = "Otros")
+    // navKey + categoryKey son identity stable across language switches.
+    // title + category derive from L10n lookup en construction (snapshot at boot).
+    public NavigationItem(string title, string glyph, Type viewModelType, string category = "Otros", string? navKey = null, string? categoryKey = null)
     {
         Title = title;
         Glyph = glyph;
         ViewModelType = viewModelType;
         Category = category;
+        NavKey = navKey ?? title;
+        CategoryKey = categoryKey ?? category;
     }
 
     public string Title { get; }
     public string Glyph { get; }
     public Type ViewModelType { get; }
     public string Category { get; }
+    public string NavKey { get; }
+    public string CategoryKey { get; }
     public bool RequiresGraph { get; set; }
     public bool RequiresExchange { get; set; }
 
@@ -111,26 +117,32 @@ public sealed partial class MainViewModel : ObservableObject
 
         NavigationItems = new ObservableCollection<NavigationItem>
         {
-            new("Dashboard",     "", typeof(DashboardViewModel),     "Tenant"),
-            new("Conexión",      "", typeof(ConnectViewModel),       "Tenant"),
-            new("Licencias",  "", typeof(TenantHealthViewModel),  "Tenant"),
-            new("Usuarios",      "", typeof(UsersViewModel),         "Identidad"),
-            new("Grupos",        "", typeof(GroupsViewModel),        "Identidad"),
-            new("Onboarding",    "", typeof(OnboardingViewModel),   "Identidad"),
-            new("Offboarding",   "", typeof(OffboardingViewModel),  "Identidad"),
-            new("Buzones",       "", typeof(SharedMailboxViewModel), "Mail"),
-            new("Reglas de buzón","", typeof(MailboxRulesViewModel),  "Mail"),
-            new("Flujo de correo","", typeof(MailFlowRulesViewModel), "Mail"),
-            new("Auditoría",     "", typeof(AuditViewModel),         "Seguridad"),
-            new("Registro de auditoría","", typeof(AuditLogViewModel),      "Seguridad"),
-            new("Consola PS",   "", typeof(PsConsoleViewModel),     "Herramientas"),
-            new("Asistente cert","", typeof(CertWizardViewModel),   "Herramientas"),
-            new("Comprobación DNS","", typeof(DomainCheckViewModel),  "Herramientas"),
+            BuildNav("Nav.Dashboard", "", typeof(DashboardViewModel), "NavCategory.Tenant"),
+            BuildNav("Nav.Connection", "", typeof(ConnectViewModel), "NavCategory.Tenant"),
+            BuildNav("Nav.Licenses", "", typeof(TenantHealthViewModel), "NavCategory.Tenant"),
+            BuildNav("Nav.Users", "", typeof(UsersViewModel), "NavCategory.Identity"),
+            BuildNav("Nav.Groups", "", typeof(GroupsViewModel), "NavCategory.Identity"),
+            BuildNav("Nav.Onboarding", "", typeof(OnboardingViewModel), "NavCategory.Identity"),
+            BuildNav("Nav.Offboarding", "", typeof(OffboardingViewModel), "NavCategory.Identity"),
+            BuildNav("Nav.SharedMailbox", "", typeof(SharedMailboxViewModel), "NavCategory.Mail"),
+            BuildNav("Nav.MailboxRules", "", typeof(MailboxRulesViewModel), "NavCategory.Mail"),
+            BuildNav("Nav.MailFlow", "", typeof(MailFlowRulesViewModel), "NavCategory.Mail"),
+            BuildNav("Nav.Audit", "", typeof(AuditViewModel), "NavCategory.Security"),
+            BuildNav("Nav.AuditLog", "", typeof(AuditLogViewModel), "NavCategory.Security"),
+            BuildNav("Nav.PsConsole", "", typeof(PsConsoleViewModel), "NavCategory.Tools"),
+            BuildNav("Nav.CertWizard", "", typeof(CertWizardViewModel), "NavCategory.Tools"),
+            BuildNav("Nav.DnsCheck", "", typeof(DomainCheckViewModel), "NavCategory.Tools"),
         };
 
         foreach (var module in pluginReport.AllModules)
         {
-            NavigationItems.Add(new NavigationItem(module.Title, module.Glyph, module.ViewModelType, "Plugins"));
+            NavigationItems.Add(new NavigationItem(
+                title: module.Title,
+                glyph: module.Glyph,
+                viewModelType: module.ViewModelType,
+                category: L10n.Get("NavCategory.Plugins"),
+                navKey: "Plugin." + module.Title,
+                categoryKey: "NavCategory.Plugins"));
         }
 
         NavigationItemsView = CollectionViewSource.GetDefaultView(NavigationItems);
@@ -142,32 +154,44 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedNavigation = LoadLastNavigation() ?? NavigationItems[0];
     }
 
-    private static readonly HashSet<string> RequiresGraphTitles = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> RequiresGraphKeys = new(StringComparer.OrdinalIgnoreCase)
     {
-        "Licencias",
-        "Usuarios",
-        "Grupos",
-        "Auditoría",
-        "Onboarding",
-        "Offboarding",
+        "Nav.Licenses",
+        "Nav.Users",
+        "Nav.Groups",
+        "Nav.Audit",
+        "Nav.Onboarding",
+        "Nav.Offboarding",
     };
 
-    private static readonly HashSet<string> RequiresExchangeTitles = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> RequiresExchangeKeys = new(StringComparer.OrdinalIgnoreCase)
     {
-        "Buzones",
-        "Reglas de buzón",
-        "Flujo de correo",
+        "Nav.SharedMailbox",
+        "Nav.MailboxRules",
+        "Nav.MailFlow",
+        "Nav.Audit",
     };
+
+    private static NavigationItem BuildNav(string navKey, string glyph, Type viewModelType, string categoryKey)
+    {
+        return new NavigationItem(
+            title: L10n.Get(navKey),
+            glyph: glyph,
+            viewModelType: viewModelType,
+            category: L10n.Get(categoryKey),
+            navKey: navKey,
+            categoryKey: categoryKey);
+    }
 
     private void ApplyConnectionRequirements()
     {
         foreach (var item in NavigationItems)
         {
-            if (RequiresGraphTitles.Contains(item.Title))
+            if (RequiresGraphKeys.Contains(item.NavKey))
             {
                 item.RequiresGraph = true;
             }
-            if (RequiresExchangeTitles.Contains(item.Title))
+            if (RequiresExchangeKeys.Contains(item.NavKey))
             {
                 item.RequiresExchange = true;
             }
@@ -196,11 +220,17 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             var prefs = _prefs.LoadAsync().GetAwaiter().GetResult();
-            var target = NavTitleMigrator.Resolve(prefs.LastSelectedNavigation);
-            if (target is null)
-            {
-                return null;
-            }
+            var saved = prefs.LastSelectedNavigation;
+            if (string.IsNullOrWhiteSpace(saved)) return null;
+
+            // Modern: saved value is the NavKey (language-stable).
+            var byKey = NavigationItems.FirstOrDefault(i =>
+                string.Equals(i.NavKey, saved, StringComparison.OrdinalIgnoreCase));
+            if (byKey is not null) return byKey;
+
+            // Legacy: saved value is a Title (possibly pre-rename). Migrate then match by current Title.
+            var target = NavTitleMigrator.Resolve(saved);
+            if (target is null) return null;
             return NavigationItems.FirstOrDefault(i =>
                 string.Equals(i.Title, target, StringComparison.OrdinalIgnoreCase));
         }
@@ -218,19 +248,19 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
         CurrentPage = (ObservableObject)_services.GetRequiredService(value.ViewModelType);
-        _ = PersistNavAsync(value.Title);
+        _ = PersistNavAsync(value.NavKey);
     }
 
-    private async Task PersistNavAsync(string title)
+    private async Task PersistNavAsync(string navKey)
     {
         try
         {
             var p = await _prefs.LoadAsync().ConfigureAwait(false);
-            if (string.Equals(p.LastSelectedNavigation, title, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(p.LastSelectedNavigation, navKey, StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }
-            p.LastSelectedNavigation = title;
+            p.LastSelectedNavigation = navKey;
             await _prefs.SaveAsync(p).ConfigureAwait(false);
         }
         catch

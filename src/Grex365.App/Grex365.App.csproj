@@ -5,6 +5,7 @@
     <ProjectReference Include="..\Grex365.PowerShell\Grex365.PowerShell.csproj" />
   </ItemGroup>
 
+
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.23.0" />
