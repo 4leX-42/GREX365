@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **532 passing** (xUnit + FluentAssertions) — 401 Core + 131 App
-- Última actualización: 2026-05-23 (sesión noche autónoma)
+- Tests: **616 passing** (xUnit + FluentAssertions) — 459 Core + 157 App
+- Última actualización: 2026-05-23 (sesión noche · Sprints P + Q)
 
 ## Auditoría técnica integral 2026-05-22
 
@@ -57,6 +57,45 @@
 - Sweep final `grep "Foreground=\"#\|Background=\"#"`: cero matches restantes — paleta 100% via DynamicResource.
 
 ## Bitácora sesiones
+
+### 2026-05-23 (sesión noche autónoma cont.) — Sprint Q · Extract sweep + bug fix CRLF
+
+Continuación autónoma tras Sprint P. User feedback "sigue con lo que falta" tras inicial cierre. Trabajo `extract pure helpers + tests` pattern aplicado consistentemente sobre code-behind / VMs / PS service helpers no testados.
+
+**Sprint Q (refactor + bug fix)** — 6 commits:
+
+1. `refactor(app)` NavRequirements + WindowPlacementGuard (+26 tests):
+   - `NavRequirements` (`Grex365.App.ViewModels`): `IsEnabled(requiresGraph, requiresExchange, graphConnected, exchangeConnected) → bool` + overload sobre `NavigationItem`. MainViewModel.UpdateNavEnabledStates delega. Tests 15 (no-req always, requires-graph/exchange/both, overload on item real, null-item throws, truth table theory 9 casos).
+   - `WindowPlacementGuard` (`Grex365.App`) + `VirtualScreenBounds` readonly record struct: `IsOnScreen(left, top, width, height, virtBounds)` con EdgeMargin 50px. MainWindow.IsOnScreen wraps `SystemParameters.VirtualScreen*`. Tests 11 (centered, top-left, fully-off cada lado, dual-monitor secondary, secondary-disconnected scenario, partially-visible 50px margin, edge-case-exactly-at-margin strict <, negative-top).
+
+2. `refactor(audit)` GraphPermissionErrorDetector (+21 Core):
+   - GraphAuditService.IsAuditLogPermissionError era private sin tests. Extract a `Grex365.Core.Audit.GraphPermissionErrorDetector` + amplía API con `IsAnyPermissionError` genérico (detect "Insufficient privileges", "Authorization_RequestDenied", "Forbidden" además de existing). Tests cubren null, empty, contains scope, generic phrase, case-insensitive theory 5, unrelated → false; IsAnyPermissionError theory 6 phrases, unrelated 4.
+
+3. `refactor(ps)` PSModulePathSanitizer (+10 Core):
+   - RunspacePoolHost.SanitizeModulePath + BuildSafeDefault eran private sin tests. Extract a `Grex365.PowerShell.PSModulePathSanitizer` con overloads test-friendly (userModulesPath inyectable). Tests cubren empty input default, WindowsApps drop (ACL workaround core), mixed paths only WindowsApps removed, UserPath prepended si missing, no duplicate si already, case-insensitive UserPath match, empty parts filtered, BuildSafeDefault 3 entries shape.
+
+4. `refactor(ps)` ExeResolver (+11 Core):
+   - ExchangeConnection.ResolvePwshExe era private inline. Extract a `Grex365.PowerShell.ExeResolver` con API genérica `Resolve(candidates, pathEnv, fileExists, fallback) → string` + default `ResolvePwsh()`. Tests cubren first-found wins, second cuando first missing, no-candidate → fallback, null/empty PATH → fallback, empty segments skipped, candidate-order respected, ArgumentNullException theory 3 (null candidates / null fileExists / null fallback).
+
+5. `refactor(core)` CsvEscaper unify (+16 Core, **bug fix latente**):
+   - 5 VMs (Users/Groups/SharedMailbox/Audit/Main) tenían private static Escape duplicado. Variation: 4 omitían `\r` check, solo MainViewModel.CsvEscape lo incluía. **Bug latente real**: si campo CSV contenía CRLF de Windows, los 4 VMs producían CSV mal formado (split por LF dentro de campo durante reload/parse).
+   - Fix: extract `CsvEscaper.Escape(string?)` a `Grex365.Core.Csv` (canonical location junto a FlexibleCsvReader). RFC 4180-compliant detection (`,` `"` `\n` `\r`). 5 VMs ahora 1-line delegate. Mismo comportamiento + fix `\r` para los 4 que faltaba.
+   - Tests 16: null/empty/simple/spaces no-quote, comma quoted, double-quote escaped, newline/CR/CRLF quoted, all-specials combined, theory 4 specials solos, quote-only edge case, tab NOT special.
+
+**Estado final Sprint Q**: 616 tests verdes (459 Core + 157 App, +84 desde Sprint P start 532). Build clean 7 projects 0 errors. 6 commits pushed.
+
+**Resumen sesión completa 2026-05-23 noche** (Sprints P + Q juntos):
+- 16 commits pushed.
+- Tests 469 → 616 (+147).
+- Docs cerradas: ARCHITECTURE refresh + RUNBOOK nuevo + ROADMAP refresh + MIGRATION sync + README refresh.
+- Code health: `.Result` purge + nav rename map ampliado + ComboBox focus.
+- 7 nuevos helpers puros extraídos: NavTitleMigrator, LicenseFilterMatcher, NavRequirements, WindowPlacementGuard, GraphPermissionErrorDetector, PSModulePathSanitizer, ExeResolver, CsvEscaper.
+- 2 nuevos tests para componentes Core previamente sin tests: InMemoryAuditFindingsStore, UserDetailsHost, LicenseCard.
+- 1 bug latente fixed: 4 VMs CSV escape sin \r check.
+
+Plantamiento status final: Fase 1-4 DONE, Fase 5 (MSIX scaffold) + CI release DONE — falta arte + smoke test (blocked external), Fase 6 (telemetría + enterprise) **7/8 DONE** — solo QA escenarios reales (necesita tenant) bloqueado externo.
+
+Backlog autónomo agotado completamente. Pendiente todo bloqueado por entrada externa o decisiones D3/D5/D6/D7/D8 que requieren input usuario.
 
 ### 2026-05-23 (sesión noche autónoma) — Sprint P · Docs internas + code health + cobertura tests
 
