@@ -634,6 +634,20 @@
                 </Style.Triggers>
             </Style>
 
+            <!-- ComboBox parity con TextBox/PasswordBox focus accent -->
+            <Style TargetType="ComboBox">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="8,6" />
+                <Style.Triggers>
+                    <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                        <Setter Property="BorderBrush" Value="{StaticResource BrandAccentSolid}" />
+                        <Setter Property="Effect" Value="{StaticResource AccentGlowSoftEffect}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
             <!-- CheckBox accent (override stock blue) -->
             <Style TargetType="CheckBox">
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
