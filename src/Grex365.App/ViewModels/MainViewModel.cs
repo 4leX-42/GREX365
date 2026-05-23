@@ -166,6 +166,10 @@ public sealed partial class MainViewModel : ObservableObject
         ["Auditoria"] = "Auditoría",
         ["Reglas buzon"] = "Reglas de buzón",
         ["Salud tenant"] = "Licencias",
+        ["Mail flow"] = "Flujo de correo",
+        ["Audit log"] = "Registro de auditoría",
+        ["Cert Wizard"] = "Asistente cert",
+        ["DNS check"] = "Comprobación DNS",
     };
 
     private void ApplyConnectionRequirements()

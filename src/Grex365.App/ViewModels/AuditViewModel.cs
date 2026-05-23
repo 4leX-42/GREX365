@@ -129,8 +129,8 @@ public sealed partial class AuditViewModel : ObservableObject
             var groupsTask = _audit.RunGroupsAuditAsync(_log.Progress, _cts.Token);
             await Task.WhenAll(identityTask, groupsTask).ConfigureAwait(true);
 
-            var (summary, findings) = identityTask.Result;
-            var groupFindings = groupsTask.Result;
+            var (summary, findings) = await identityTask.ConfigureAwait(true);
+            var groupFindings = await groupsTask.ConfigureAwait(true);
             Summary = summary;
 
             AddFindingsSorted("Identidad + grupos", findings.Concat(groupFindings));
@@ -674,9 +674,10 @@ public sealed partial class AuditViewModel : ObservableObject
                 var identityTask = _audit.RunIdentityAuditAsync(_log.Progress, _cts!.Token);
                 var groupsTask = _audit.RunGroupsAuditAsync(_log.Progress, _cts!.Token);
                 await Task.WhenAll(identityTask, groupsTask).ConfigureAwait(true);
-                var (summary, findings) = identityTask.Result;
+                var (summary, findings) = await identityTask.ConfigureAwait(true);
+                var groupFindings = await groupsTask.ConfigureAwait(true);
                 Summary = summary;
-                return findings.Concat(groupsTask.Result);
+                return findings.Concat(groupFindings);
             },
             keep: f =>
                 f.Category.Contains("disabled", StringComparison.OrdinalIgnoreCase) ||
@@ -697,9 +698,12 @@ public sealed partial class AuditViewModel : ObservableObject
                 var mfaTask = _audit.RunMfaCoverageAuditAsync(_log.Progress, _cts!.Token);
                 var caTask = _audit.RunConditionalAccessAuditAsync(_log.Progress, _cts!.Token);
                 await Task.WhenAll(rolesTask, mfaTask, caTask).ConfigureAwait(true);
-                return rolesTask.Result.Findings
-                    .Concat(mfaTask.Result.Findings)
-                    .Concat(caTask.Result.Findings);
+                var rolesResult = await rolesTask.ConfigureAwait(true);
+                var mfaResult = await mfaTask.ConfigureAwait(true);
+                var caResult = await caTask.ConfigureAwait(true);
+                return rolesResult.Findings
+                    .Concat(mfaResult.Findings)
+                    .Concat(caResult.Findings);
             }).ConfigureAwait(true);
     }
 
