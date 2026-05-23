@@ -1,19 +1,20 @@
-# GREX365 — Architecture
+# GREX365 v2.0 — Architecture
 
 > Living document. Update on every architectural decision.
-> Author: alexa + Claude (Opus 4.7). Date created: 2026-05-15.
+> Last refresh: 2026-05-23.
 
 ---
 
 ## 1. Goals
 
-GREX365 is a Microsoft 365 administration toolkit for a single operator (sysadmin), built as a desktop Windows application. Long-term goals:
+GREX365 is a Microsoft 365 administration toolkit for a single sysadmin operator, built as a desktop Windows application. Long-term goals:
 
-- **Stability**: never freeze; cancellable operations; resilient to transient Graph/EXO failures.
+- **Stability**: never freeze; cancellable operations; resilient to transient Graph/EXO failures (Graph eventual-consistency retry already in groups path).
 - **Scalability of features**: add new admin workflows (group ops, offboarding, audits, reports) without touching unrelated code.
 - **Maintainability**: clear separation of UI / business logic / external API; testable; logs trace every action.
-- **UX**: Fluent-style modern Windows look, dark/light theme, live status indicators, real progress bars, cancel buttons.
-- **Distribution**: signed single-file `.exe` with auto-update.
+- **UX**: Fluent-style modern Windows look, dark/light/auto theme, live status indicators, real progress bars, cancel buttons.
+- **Security**: RBAC gating on destructive commands, tenant lock, signed binaries, opt-in telemetry, audit log of every privileged action.
+- **Distribution**: signed single-file `.exe` (portable) + MSIX (Intune/SCCM) with auto-update via AppInstaller.
 
 ---
 
@@ -22,40 +23,41 @@ GREX365 is a Microsoft 365 administration toolkit for a single operator (sysadmi
 | Layer | Choice | Version | Why |
 |---|---|---|---|
 | Language | C# | 13 (with .NET 10) | First-class M365 SDK support, async/await, source generators |
-| Runtime | .NET | 10 (LTS, GA Nov 2025) | LTS until Nov 2028, latest perf, AOT-ready |
-| UI framework | WPF | Built-in | Mature tooling (XAML designer, snoop, hot reload), huge community, .NET 10 ships Fluent themes, easier learning curve than WinUI 3 |
-| Fluent styling | WPF-UI | latest | Fluent Design ported to WPF (Mica, navigation view, modern controls) |
-| MVVM | CommunityToolkit.Mvvm | 8.x | Microsoft-official, source-generated `[ObservableProperty]` / `[RelayCommand]`, minimal boilerplate |
-| DI | Microsoft.Extensions.DependencyInjection | 10.x | Standard, integrates with HostBuilder |
-| Logging | Serilog | 4.x | Rolling files, structured logs, sinks for console + file |
-| Graph API | Microsoft.Graph SDK | 5.x | Native .NET, async, no PS overhead |
-| Auth | Azure.Identity (`ClientCertificateCredential`) | 1.x | Token caching, MSAL under the hood |
-| Exchange Online | PowerShell `ExchangeOnlineManagement` via runspace | latest | No native .NET SDK for EXO cmdlets exists; runspace is canonical |
-| PowerShell host | `System.Management.Automation` (PowerShell SDK NuGet) | 7.5.x | Embedded PS 7 runspaces, no `pwsh.exe` spawning |
-| Tests | xUnit + FluentAssertions + Moq | latest | Standard .NET stack |
+| Runtime | .NET | 10 | LTS Nov 2025; latest perf; AOT-ready |
+| UI framework | WPF | Built-in | Mature tooling, .NET 10 ships Fluent themes via WPF-UI; lower learning curve than WinUI 3 |
+| Fluent styling | WPF-UI | 4.3.0 | Mica, NavigationView, modern controls, Fluent theme dictionaries |
+| MVVM | CommunityToolkit.Mvvm | 8.4.2 | Microsoft-official, source-generated `[ObservableProperty]` / `[RelayCommand]` |
+| DI | Microsoft.Extensions.DependencyInjection | 10.0.8 | Hosting bootstrap |
+| Hosting | Microsoft.Extensions.Hosting | 10.0.8 | App lifetime + DI container |
+| Logging | Serilog | 10.0.0 (Extensions.Logging) + 7.0.0 (File sink) | Rolling files (30 days), structured, ObservableLogSink for UI panel |
+| Graph API | Microsoft.Graph SDK | 5.x | Native .NET, async |
+| Auth | `ClientCertificateCredential` / `DeviceCodeCredential` (Azure.Identity) | 1.x | Token caching, MSAL under the hood |
+| Exchange Online | `ExchangeOnlineManagement` PS module via runspace | latest | No native .NET SDK; runspace is canonical |
+| PowerShell host | `System.Management.Automation` SDK (PowerShell 7.5) | 7.5.x | Embedded PS 7 runspaces, no `pwsh.exe` spawning |
+| Telemetry | Microsoft.ApplicationInsights | 2.23.0 | Opt-in via connection string |
+| Tests | xUnit 2.9.3 + FluentAssertions 8.10.0 + Moq 4.20.72 + coverlet 6.0.4 | — | Standard .NET stack |
 | Build | GitHub Actions on `windows-latest` | — | Free, integrates with repo |
-| Packaging | `dotnet publish` self-contained single-file | — | Simple `.exe`, no MSIX/Intune until needed |
-| Auto-update | Velopack | latest | Squirrel successor; simple GitHub Releases as update feed |
-| Code signing | self-signed initially, EV cert later | — | Avoid SmartScreen warnings once mature |
+| Packaging | `dotnet publish` self-contained single-file **+** MSIX | — | Portable `.exe` for ad-hoc; MSIX for Intune/SCCM with AppInstaller auto-update |
+| Code signing | self-signed initially, EV cert later | — | Avoid SmartScreen warnings on real deploy |
 
-### Stack decisions explicitly NOT taken
+### Stack decisions NOT taken
 
 | Considered | Rejected because |
 |---|---|
-| WinUI 3 / Windows App SDK | Tooling immature, frequent breaking changes, smaller community, harder for self-taught dev. WPF achieves visually identical results with WPF-UI. |
-| Prism | Heavyweight framework; CommunityToolkit.Mvvm covers our needs. Custom lightweight plugin system (`IModule` + `AssemblyLoadContext`) covers modular feature loading. |
-| Avalonia | We don't need cross-platform; M365 admins are Windows-only. |
+| WinUI 3 / Windows App SDK | Tooling immature, frequent breaking changes; WPF + WPF-UI delivers same visual result. |
+| Prism | Heavyweight; CommunityToolkit.Mvvm covers our needs. Custom plugin loader (`IModule` + `AssemblyLoadContext`) covers modular loading. |
+| Avalonia | No cross-platform need; M365 admins are Windows-only. |
 | .NET MAUI | Mobile-first; weak desktop story. |
-| Blazor Hybrid / Electron | UI-in-web layer adds complexity, performance cost, breaks native feel. |
-| Background Windows Service + gRPC IPC | Over-engineered for single-user desktop app. |
+| Blazor Hybrid / Electron | UI-in-web layer adds complexity, perf cost, breaks native feel. |
+| Background Windows Service + gRPC IPC | Over-engineered for single-user desktop. |
 
 ### Stack decisions later reversed
 
 | Originally rejected | Re-added because |
 |---|---|
-| Plugin system (MEF-style) | `PluginLoader` + `IModule` + `AssemblyLoadContext` shipped en Fase 4 — sample plugin POC en `samples/Grex365.SamplePlugin`. Discovery tolerante a fallos; Settings UI enable/disable por DLL. |
-| Application Insights / telemetry | Added opt-in via `ITelemetry`/`NullTelemetry` + `ApplicationInsightsTelemetry` (`Grex365.App.Services`). Empty conn string = NullTelemetry. `UiLogSink` forwards Ok/Warn/Error como TrackEvent/TrackException. Útil para multi-operator scenarios. |
-| MSIX / Intune deployment | Scaffold en `packaging/msix/` (Fase 5). Single-file `.exe` sigue disponible vía `PublishProfiles/win-x64-portable.pubxml`. Real branded assets + smoke test end-to-end pendientes. |
+| Plugin system (MEF-style) | Phase 4 shipped: `IModule` + `PluginLoader` + `AssemblyLoadContext` + sample plugin POC + Settings UI enable/disable per DLL. |
+| Application Insights / telemetry | Phase 6 shipped: opt-in via `ITelemetry`/`NullTelemetry`/`ApplicationInsightsTelemetry`. `UiLogSink` forwards Ok/Warn/Error as TrackEvent/TrackException. Empty conn string = NullTelemetry. |
+| MSIX / Intune deployment | Phase 5 shipped scaffold: `packaging/msix/` (Package.appxmanifest + Build-Msix.ps1 + Generate-Assets.ps1 + appinstaller template + CI release job on `v*` tag with optional sign secrets). Real branded assets + end-to-end smoke test still pending. |
 
 ---
 
@@ -64,36 +66,59 @@ GREX365 is a Microsoft 365 administration toolkit for a single operator (sysadmi
 ```
 GREX365-main_2/
 ├─ src/
-│   ├─ Grex365.sln
-│   ├─ Grex365.Core/              ← business logic, no UI ref
-│   │   ├─ Abstractions/          ← interfaces
-│   │   ├─ Connections/           ← Graph + EXO orchestration
-│   │   ├─ Models/                ← DTOs, domain types
-│   │   ├─ Preferences/           ← user_preferences.json IO
-│   │   ├─ Logging/               ← Serilog config
+│   ├─ Grex365.slnx                          ← solution file (no .sln)
+│   ├─ Directory.Build.props                 ← single-source <Version>
+│   ├─ Grex365.Core/                         ← business logic, no UI ref
+│   │   ├─ Abstractions/                     ← 29 interfaces (I*)
+│   │   ├─ Audit/                            ← 12 analyzers + builders + stores
+│   │   ├─ Certificates/                     ← cert generator + helpers
+│   │   ├─ Connections/                      ← Graph + EXO + AppReg + TenantLock
+│   │   ├─ Csv/                              ← FlexibleCsvReader
+│   │   ├─ DomainChecks/                     ← DNS/MX/SPF/DKIM
+│   │   ├─ Groups/                           ← bulk-group parser + service
+│   │   ├─ Health/                           ← SKU catalog + license cards
+│   │   ├─ Logging/                          ← LogEntry + LoggingLevelSwitch
+│   │   ├─ Mailboxes/                        ← shared mbx + rules + forwarding
+│   │   ├─ Models/                           ← 18 POCOs / DTOs
+│   │   ├─ Offboarding/                      ← OffboardingService
+│   │   ├─ Onboarding/                       ← validator + service
+│   │   ├─ Plugins/                          ← IModule + PluginLoader
+│   │   ├─ Preferences/                      ← JsonPreferencesStore + legacy importer
+│   │   ├─ Security/                         ← RbacGuard
+│   │   ├─ Users/                            ← bulk-user parser + service
 │   │   └─ Grex365.Core.csproj
-│   ├─ Grex365.PowerShell/        ← embedded PS runspace pool
+│   ├─ Grex365.PowerShell/                   ← embedded PS runspace pool
 │   │   ├─ PowerShellRunner.cs
 │   │   ├─ RunspacePoolHost.cs
 │   │   └─ Grex365.PowerShell.csproj
-│   └─ Grex365.App/                ← WPF UI (depends on Core + PS)
-│       ├─ App.xaml
-│       ├─ App.xaml.cs            ← DI bootstrap
-│       ├─ MainWindow.xaml
-│       ├─ ViewModels/
-│       ├─ Views/
-│       ├─ Converters/
-│       ├─ Themes/
+│   └─ Grex365.App/                          ← WPF UI (depends on Core + PS)
+│       ├─ App.xaml + App.xaml.cs            ← DI bootstrap + startup chain
+│       ├─ MainWindow.xaml + .xaml.cs
+│       ├─ SettingsWindow.xaml + .xaml.cs
+│       ├─ FirstRunWizardWindow.xaml + .xaml.cs
+│       ├─ AboutWindow.xaml + .xaml.cs
+│       ├─ ViewModels/                       ← 20 VMs
+│       ├─ Views/                            ← 16 module Views
+│       ├─ Converters/                       ← 9 value converters
+│       ├─ Services/                         ← WPF-only impls (Dialog, Clipboard, AppInsights, ThemeProvider, UiLogSink, Notifier)
 │       └─ Grex365.App.csproj
 ├─ tests/
-│   └─ Grex365.Core.Tests/
-│       └─ Grex365.Core.Tests.csproj
+│   ├─ Grex365.Core.Tests/                   ← 386 tests, 30+ suites
+│   └─ Grex365.App.Tests/                    ← 83 tests, 10 suites
+├─ samples/
+│   └─ Grex365.SamplePlugin/                 ← POC plugin (Fase 4 reference)
+├─ packaging/
+│   └─ msix/                                 ← Package.appxmanifest + Build-Msix.ps1 + Generate-Assets.ps1 + Grex365.appinstaller + assets/
 ├─ docs/
-│   ├─ ARCHITECTURE.md            ← this file (stack + patterns)
-│   ├─ ROADMAP.md                 ← punch list H0–H6, every sub-item
-│   └─ MIGRATION.md               ← legacy→new migration log
-├─ deep-research-report.md         ← initial research (repo root)
-├─ GREX365/                       ← legacy PS toolkit (untouched until ported)
+│   ├─ ARCHITECTURE.md                       ← this file
+│   ├─ ROADMAP.md                            ← punch list H0-H6
+│   ├─ MIGRATION.md                          ← legacy→new per-feature log
+│   └─ RUNBOOK.md                            ← operations manual (install, troubleshoot)
+├─ Plantamiento_arquitectura_de_la_herramienta.md   ← original 6-phase roadmap
+├─ deep-research-report.md                   ← initial tech research
+├─ PROGRESS.md                               ← authoritative session log
+├─ PACKAGING.md                              ← Fase 5 docs
+├─ GREX365/                                  ← legacy PS toolkit (source-of-truth porting)
 ├─ .github/workflows/ci.yml
 └─ README.md
 ```
@@ -105,10 +130,13 @@ Grex365.App  →  Grex365.Core
              →  Grex365.PowerShell  →  Grex365.Core
 
 Grex365.Core.Tests  →  Grex365.Core
-                    →  Grex365.PowerShell  (integration tests)
+Grex365.App.Tests   →  Grex365.App   →  Grex365.Core + Grex365.PowerShell
+Grex365.SamplePlugin → Grex365.Core (ExcludeAssets=runtime — avoid Core dupe in plugin bin)
 ```
 
-**Rule**: `Grex365.Core` never references WPF/WinUI assemblies. UI-agnostic. This is what enables headless testing.
+**Rule**: `Grex365.Core` never references WPF/WinUI assemblies. UI-agnostic. This enables headless testing in `Grex365.Core.Tests` (net10.0).
+
+**Rule**: ViewModels never reference WPF types directly. Use `IDialogService` / `IClipboardService` abstractions in `Grex365.Core/Abstractions`. WPF impls (`WpfDialogService`, `WpfClipboardService`) live in `Grex365.App/Services/`.
 
 ---
 
@@ -116,76 +144,84 @@ Grex365.Core.Tests  →  Grex365.Core
 
 ### 4.1 MVVM
 
-- Views are XAML + minimal code-behind (only WPF-specific wiring).
-- ViewModels live in `Grex365.App/ViewModels/`. Use `ObservableObject` base + `[ObservableProperty]` / `[RelayCommand]` from CommunityToolkit.Mvvm.
-- Models live in `Grex365.Core/Models/`. POCOs.
-- ViewModels never reference WPF types directly. Use `IDialogService` / `INotificationService` abstractions when UI interaction is needed.
+- Views: XAML + minimal code-behind (only WPF-specific wiring like KeyBinding handlers, Loaded hooks for view-driven triggers).
+- ViewModels in `Grex365.App/ViewModels/`. Inherit `ObservableObject` + `[ObservableProperty]` / `[RelayCommand]` source generators.
+- Models in `Grex365.Core/Models/`. POCOs.
+- All page ViewModels are **Singleton** in DI (state persists across tab switches — see Sprint state persistence 2026-05-23). Settings + FirstRun VMs stay Transient (modal one-shot).
 
 ### 4.2 Dependency injection
 
-`App.xaml.cs` builds a `Microsoft.Extensions.Hosting.Host` with services registered:
+`App.xaml.cs` builds a `Microsoft.Extensions.Hosting.Host` with ~65 services registered. Order:
 
-```csharp
-services.AddSingleton<IPowerShellRunner, RunspacePoolRunner>();
-services.AddSingleton<IGraphConnection, GraphConnection>();
-services.AddSingleton<IExchangeConnection, ExchangeConnection>();
-services.AddSingleton<IConnectionStateMonitor, ConnectionStateMonitor>();
-services.AddSingleton<IPreferencesStore, JsonPreferencesStore>();
-services.AddSingleton<MainWindow>();
-services.AddSingleton<ConnectViewModel>();
-// ...
+1. Logger/hosting stack (`SerilogLoggerFactory`, `ILogger<>`, `LoggingLevelSwitch`).
+2. PowerShell (`RunspacePoolHost`, `IPowerShellRunner`).
+3. Connections (`IGraphConnection` → `GraphConnection`, `IExchangeConnection` → `ExchangeConnection`, etc.).
+4. Domain services (`IGroupsService` → `GraphGroupsService`, `IAuditService` → `GraphAuditService`, etc.).
+5. UI services (`IDialogService` → `WpfDialogService`, `IClipboardService` → `WpfClipboardService`, `IUiLogSink` → `UiLogSink`, `ITelemetry` → `ApplicationInsightsTelemetry` or `NullTelemetry`).
+6. ViewModels (Singleton for page VMs; Transient for `FirstRunWizardViewModel` + `SettingsViewModel`).
+7. Windows (`MainWindow`, `SettingsWindow`, `FirstRunWizardWindow`, `AboutWindow`).
+
+### 4.3 Startup chain (`App.OnStartup`)
+
+```
+1. Serilog config + LoggingLevelSwitch from preferences
+2. PluginLoader.LoadAsync(plugins/ dir) → registers IModule services
+3. Build IHost + IServiceProvider
+4. Apply theme (resolves Auto via WindowsRegistryThemeProvider)
+5. Subscribe SystemEvents.UserPreferenceChanged for live theme follow
+6. ShowFirstRunWizardIfNeededAsync()       ← only if FirstRunCompleted=false
+7. TryAutoConnectAsync()                    ← Graph cert + EXO if cert + tenant present
+8. MainWindow.Show() with restored window pos/size from prefs
 ```
 
-All ViewModels and services injected via constructor.
-
-### 4.3 Async + cancellation
+### 4.4 Async + cancellation
 
 Every long-running method exposes:
 - `CancellationToken` parameter
 - `IProgress<LogEntry>` for streaming progress
 - Returns `Task<TResult>` or `Task`
 
-Cancel buttons in UI bind to a `CancellationTokenSource` owned by the ViewModel. On Cancel: `cts.Cancel()` propagates to runspaces (`PowerShell.Stop()`) and Graph client (HTTP cancellation).
+Cancel buttons in UI bind to `CancellationTokenSource` owned by the ViewModel. On Cancel: `cts.Cancel()` propagates to runspaces (`PowerShell.Stop()`) and Graph (HTTP cancellation).
 
-### 4.4 State observation
+Search inputs (Users, Groups) use **debounced typeahead** (250 ms) with `CancellationTokenSource` swap to cancel stale Graph calls. Min 2 chars before hitting Graph; snapshot guard discards out-of-order callbacks.
 
-`IConnectionStateMonitor` raises `PropertyChanged` events when Graph or EXO state changes. UI bindings update automatically. Internal poll loop (every 1s in background) checks:
-- `GraphServiceClient` has a valid token (no actual call needed; check token cache)
-- `Get-ConnectionInformation` via runspace returns Connected
+### 4.5 State observation
 
-No more "click connect → wait silently → status updates after job ends".
+`IConnectionStateMonitor` polls Graph + EXO every second on a background timer. Raises `PropertyChanged` events when state flips. UI bindings update automatically. `MainViewModel.UpdateNavEnabledStates()` listens and toggles `NavigationItem.IsEnabled` based on `RequiresGraph` / `RequiresExchange` flags.
 
-### 4.5 Logging
-
-Serilog config:
+### 4.6 Logging
 
 ```csharp
 Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Debug()
-    .WriteTo.File("logs/grex365-.log", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 30)
-    .WriteTo.Sink(new ObservableLogSink())   // pushes entries into ObservableCollection for UI log panel
+    .MinimumLevel.ControlledBy(logLevelSwitch)
+    .WriteTo.File("%LOCALAPPDATA%/Grex365/logs/grex365-.log",
+                  rollingInterval: RollingInterval.Day,
+                  retainedFileCountLimit: 30)
+    .WriteTo.Sink(observableLogSink)   // ObservableCollection<LogEntry> bound to UI log panel
     .CreateLogger();
 ```
 
-`ObservableLogSink` exposes an `ObservableCollection<LogEntry>` bound to a `DataGrid` in the UI. Live log without manual queue draining.
+`UiLogSink` (in `Grex365.App/Services`) wraps `IUiLogSink` and forwards `Ok` / `Warn` / `Error` log entries into `ITelemetry.TrackEvent` / `TrackException`.
 
-### 4.6 Error handling
+`LoggingLevelSwitch` lets the user change level live from Settings (Debug / Information / Warning / Error).
 
-- Each method: try/catch only where adding context. Otherwise let exceptions bubble.
-- ViewModel command handlers wrap calls in try/catch, log with Serilog, show toast / message box.
-- `Application.DispatcherUnhandledException` + `AppDomain.CurrentDomain.UnhandledException` + `TaskScheduler.UnobservedTaskException` all wired to a single global handler that logs full stack trace and prompts user.
+### 4.7 Error handling
+
+- Methods: try/catch only where adding context. Otherwise let exceptions bubble.
+- ViewModel command handlers wrap calls in try/catch, log with Serilog, show toast / message box via `IDialogService`.
+- `Application.DispatcherUnhandledException` + `AppDomain.CurrentDomain.UnhandledException` + `TaskScheduler.UnobservedTaskException` all wired to a single global handler that logs full stack trace and prompts.
 
 ---
 
 ## 5. PowerShell integration
 
-### 5.1 Why we keep PowerShell
+### 5.1 Why PowerShell stays
 
-Some Microsoft 365 surface area has **no .NET SDK equivalent**:
-- Exchange Online cmdlets (`Get-Mailbox`, `Set-MailboxPermission`, `Set-CalendarProcessing`, etc.) — only available in the `ExchangeOnlineManagement` PS module.
+Some Microsoft 365 surface has **no .NET SDK equivalent**:
+- Exchange Online cmdlets (`Get-Mailbox`, `Set-MailboxPermission`, `Get-TransportRule`, etc.) — only available in `ExchangeOnlineManagement` module.
 - Some Teams + SharePoint admin cmdlets.
 
-For Microsoft Graph we **prefer the native .NET SDK** (`Microsoft.Graph`), not the PowerShell module. Same API, far less overhead, real async.
+For Microsoft Graph we **prefer the native .NET SDK**, not the PowerShell module. Same API surface, far less overhead, real async.
 
 ### 5.2 RunspacePool design
 
@@ -197,14 +233,14 @@ For Microsoft Graph we **prefer the native .NET SDK** (`Microsoft.Graph`), not t
 
 `PowerShellRunner.RunScriptAsync(string script, IDictionary<string,object>? args, IProgress<LogEntry>? progress, CancellationToken ct)`:
 1. Acquires a `PowerShell` instance from the pool.
-2. Subscribes to `Streams.Information / Warning / Error / Verbose / Debug / Progress` and forwards each event to `progress`.
+2. Subscribes `Streams.Information / Warning / Error / Verbose / Debug / Progress` → `progress`.
 3. `BeginInvoke()` async.
 4. Awaits completion or cancellation. On cancel: `ps.Stop()`.
 5. Returns `Collection<PSObject>` or throws.
 
 ### 5.3 EXO connection lifecycle
 
-Cert flow:
+Cert flow (preferred for unattended sysadmin use):
 ```powershell
 Connect-ExchangeOnline `
   -AppId $AppId `
@@ -212,184 +248,298 @@ Connect-ExchangeOnline `
   -Organization $Org `
   -ShowBanner:$false
 ```
-Wrapped in a single runspace invocation. Connection persists across subsequent runspace allocations (same pool, runspaces reused).
+Connection persists across subsequent runspace allocations (same pool, runspaces reused). Disconnect on app shutdown: `Disconnect-ExchangeOnline -Confirm:$false`.
 
-Disconnect on app shutdown: `Disconnect-ExchangeOnline -Confirm:$false`.
+**Module auto-install** (`ExchangeConnection.InstallModuleAsync`) launches `pwsh.exe` externally via `Start-Process` to bypass the WindowsApps ACL that denies `Microsoft.PackageManagement.dll` inside embedded runspaces. UI shows module state + Comprobar/Instalar buttons.
 
-### 5.4 Graph connection lifecycle (native .NET)
+### 5.4 PS Console module
 
-```csharp
-var cert = new X509Certificate2(Cert:\CurrentUser\My\{thumbprint}, ...);
-var credential = new ClientCertificateCredential(tenantId, clientId, cert);
-var graphClient = new GraphServiceClient(credential, scopes);
-```
-
-Token caching automatic. No deadlocks. No prompts.
+`PsConsoleViewModel` exposes a multi-line REPL inside the app (Herramientas → Consola PS). Reuses the same `IPowerShellRunner` — scripts execute in app context (Graph/EXO in scope). History navigable Up/Down (max 50, dedupe consecutive). Ctrl+Enter → Run, Esc → Cancel. Closes Plantamiento §6 backlog "Terminal PowerShell embebido" without adding `EasyWindowsTerminalControl` integration.
 
 ---
 
-## 6. Coexistence with legacy PowerShell toolkit
+## 6. Connections + Auth
 
-The legacy `GREX365/` PowerShell scripts stay in the repo during migration. They are **not modified** after the initial connection hang fix.
+### 6.1 Graph (native .NET SDK)
 
-Migration strategy per feature (Health, Audit, Groups, Offboarding, etc.):
+Two auth paths, both gated by `TenantLock`:
 
-1. **Port** the script logic to a C# method in `Grex365.Core/Services/{Feature}Service.cs`.
-2. **Test** with unit tests + manual run against dev tenant.
-3. **Wire** to a new ViewModel + View in `Grex365.App`.
-4. **Mark** the legacy script as deprecated in `docs/MIGRATION.md`.
-5. **Remove** legacy script after one stable release cycle.
+**Cert (unattended)**: `ClientCertificateCredential(tenantId, clientId, X509Certificate2)` — token cached by MSAL.
+**Device code (interactive bootstrap)**: `DeviceCodeCredential` with `organizations` tenant — used when no cert exists yet. After login, `_graph.TenantId` checked non-null before marking connected (closes bypass identified in 2026-05-22 audit: `ConnectViewModel.ConnectByDeviceCodeAsync` aborts if null).
 
-This avoids a big-bang rewrite. The new app gradually replaces the old toolkit.
+### 6.2 App Registration auto-create
+
+`GraphAppRegistrationService.CreateAndConfigureAsync` (refactored via `AppRegistrationSpec` pure helpers, 17 tests):
+- Creates app with 9 Graph AppRoles + Exchange.ManageAsApp + Reports.Read.All.
+- Uploads cert as `KeyCredential`.
+- Creates ServicePrincipal.
+- Returns clickable admin-consent URL.
+
+Replaces 29 manual steps from legacy `Certificate-Setup-Steps.csv`.
+
+### 6.3 TenantLock
+
+`ITenantLock` enforces expected TenantId/Domain against actual `_graph.TenantId` after login. Enforced in both auto-connect and manual connect (cert + device-code). Can be skipped via Settings checkbox (`EnforceTenantLock=false`) for dev/lab.
+
+### 6.4 RBAC
+
+`IRbacGuard` checks user membership in a configured Entra group before allowing destructive commands (Users / Groups / SharedMailbox / MailboxRules). Cached per session, `Invalidate()` flushes on disconnect. App-only auth (cert flow) **bypasses RBAC by design** — no `me.CheckMemberGroups` context available.
+
+### 6.5 Graph eventual consistency
+
+`WithGraphReplicaRetryAsync` wraps `POST /groups` followed by `PATCH/POST /groups/{id}/members` ops. Exponential backoff (1.5 → 3 → 6 → 12 → 15 s cap). 8 retries on `justCreated=true`, 2 on existing groups. Catches `Request_ResourceNotFound`, `ResourceNotFound`, message "does not exist".
 
 ---
 
-## 7. Build, test, release
+## 7. Audit subsystem
 
-### 7.1 Local build
+Two parallel audit surfaces — both write to the unified `FileAuditLog` (JSONL).
 
-```bash
-dotnet restore src/Grex365.sln
-dotnet build src/Grex365.sln -c Release
-dotnet test src/Grex365.sln -c Release
+### 7.1 Privileged-action audit log
+
+Every privileged command (group create, license assign, user disable, mailbox convert, etc.) writes a row to `%LOCALAPPDATA%/Grex365/audit/grex365-YYYY-MM.jsonl`. Format:
+
+```json
+{"ts":"2026-05-23T10:31:00Z","actor":"alex@tenant","source":"GroupsService","action":"CreateM365Group","target":"sales","result":"Ok","detail":"…"}
 ```
 
-### 7.2 CI (GitHub Actions)
+`MetricsAggregator` (pure) computes totals, error rate, last-24h count, top sources, recent errors — surfaced in **AuditLog view**.
 
-`.github/workflows/ci.yml` runs on every push + PR to `main`:
-1. Setup .NET 10 SDK
-2. Restore
-3. Build Release
-4. Run tests
-5. (On tags) Publish single-file .exe + upload as release artifact
+### 7.2 Security audit reports (read-only analyzers)
 
-### 7.3 Publish .exe
+Triggered manually from the **Auditoría** view. 12 pure analyzers + `GraphAuditService` (orchestrator):
 
-```bash
+| # | Analyzer | Detects | Required Graph permission |
+|---|---|---|---|
+| 1 | `IdentityAuditAnalyzer` | Stale users + disabled-with-license | `User.Read.All` |
+| 2 | `GroupActivityAnalyzer` | Groups inactive ≥N days via `/reports/getOffice365GroupsActivityDetail` | `Reports.Read.All` |
+| 3 | `MailboxForwardingAnalyzer` (EXO) | External forwarding (vector exfil) | EXO `Get-Mailbox` |
+| 4 | `InboxRuleAnalyzer` (EXO) | BEC indicators: delete / hide / external forward + ES/EN keywords | EXO `Get-InboxRule` |
+| 5 | `MfaCoverageAnalyzer` | Admin/member/guest without MFA, via `/reports/authenticationMethods/userRegistrationDetails` | `Reports.Read.All` |
+| 6 | `CaPolicyAnalyzer` | Conditional Access weak/disabled/report-only-stale policies | `Policy.Read.All` |
+| 7 | `PrivilegedRoleAuditAnalyzer` | Guest admins, disabled admins, 0/1 GAs, GA sprawl | `Directory.ReadWrite.All` |
+| 8 | `AppCredentialAuditAnalyzer` | Expired / expiring-soon / long-lived secrets + keys | `Application.Read.All` |
+| 9 | `TenantDefaultsAnalyzer` | users-can-create-apps, invitesFrom=everyone, SSPR disabled, etc. | `Policy.Read.All` |
+| 10 | `OAuthGrantAnalyzer` | AllPrincipals high-risk OAuth grants (admin consent) + user-consented phish-OAuth | `Directory.ReadWrite.All` |
+| 11 | `TransportRuleAuditAnalyzer` (EXO) | Forwarding/BCC/redirect to external recipients, custom outbound connectors, broad-scope deletes, disabled-security-keyword rules | EXO `Get-TransportRule` |
+| 12 | `SharedMailboxSignInAnalyzer` (EXO) | Shared mailboxes with sign-in enabled (vector password attack) | EXO `Get-Mailbox` + `Get-User` |
+
+All analyzers are **pure** (no Graph/EXO calls) — input is a typed model, output is `IEnumerable<AuditFinding>`. Tested with seed data, no mocks needed.
+
+### 7.3 Report outputs
+
+- **CSV** export (default)
+- **HTML** report via `AuditReportHtmlBuilder` — standalone, embedded CSS, light + `prefers-color-scheme: dark`, severity pills, escape HTML entities.
+- **JSON** export via `AuditReportJsonBuilder` — schema `grex365.audit.v1`, parseable for automation.
+- **Baseline diff** via `AuditBaselineComparer` — load previous JSON, compute New / Resolved / Persistent. Identity = `(Category, Identity, Detail, Severity-case-insensitive)`.
+
+---
+
+## 8. Plugin system
+
+`Grex365.Core/Plugins/`:
+- **`IModule`** contract: `string Name`, `Version Version`, `void Register(IServiceCollection services)`, `void RegisterNav(INavRegistrar nav)`.
+- **`PluginLoader`** scans `%LOCALAPPDATA%/Grex365/plugins/`, loads each DLL in its own `AssemblyLoadContext`, finds `IModule` types, instantiates, calls `Register`. Failures reported as warnings (corrupt DLL, missing dep, throw in Register) — never block app startup.
+
+`UserPreferences.DisabledPluginAssemblies` (HashSet) — Settings UI toggles per DLL. Loader skips disabled assemblies.
+
+Sample plugin at `samples/Grex365.SamplePlugin/`:
+- `<Project Sdk="Microsoft.NET.Sdk">` with `CopyLocalLockFileAssemblies=false`.
+- References `Grex365.Core` with `ExcludeAssets=runtime` + MVVM Toolkit with `PrivateAssets=all` → avoids duplicating Core in plugin bin (loaded from host).
+
+CI builds the sample plugin and uploads as artifact (`plugin-sample.dll`).
+
+---
+
+## 9. Telemetry
+
+Opt-in via `appsettings.json` or env var (Application Insights connection string). Empty / null → `NullTelemetry` (no-op).
+
+**`ITelemetry`** contract (`Grex365.Core/Abstractions`):
+- `bool IsEnabled`
+- `void TrackEvent(string name, IDictionary<string,string>? properties = null)`
+- `void TrackException(Exception ex, IDictionary<string,string>? properties = null)`
+- `void Flush()`
+
+Impls:
+- `NullTelemetry` (`Grex365.Core`) — always returns IsEnabled=false, no-throw on every method.
+- `ApplicationInsightsTelemetry` (`Grex365.App.Services`) — wraps `TelemetryClient`. Auto-collects unhandled exceptions via global handler.
+
+`UiLogSink` forwards `Ok` → `TrackEvent("UiLog.Ok")`, `Warn` → `TrackEvent("UiLog.Warn")`, `Error` → `TrackException`. Decouples logging UI panel from telemetry pipeline.
+
+---
+
+## 10. Theme system
+
+Three modes: **Dark** (default), **Light**, **Auto** (follow Windows).
+
+`ISystemThemeProvider` abstraction (`Grex365.Core/Abstractions`) → `WindowsRegistryThemeProvider` (`Grex365.App/Services`) reads:
+```
+HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize\AppsUseLightTheme
+```
+DWORD 0=dark / 1=light. Defaults to dark if registry inaccessible.
+
+`SettingsViewModel.ResolveActualTheme()` maps Auto → provider.IsDarkTheme(). 
+
+`Microsoft.Win32.SystemEvents.UserPreferenceChanged` subscribed in `App.OnStartup`: when user flips Windows theme, re-applies via dispatcher only if pref="Auto" (otherwise respect explicit choice). Unsubscribed in `OnExit`.
+
+Palette unified in `App.xaml`:
+- Brand: `BrandAccentStart #4F8CFF` → `BrandAccentMid #6A6CFF` → `BrandAccentEnd #9B6CFF` + `BrandCyan #22D3EE`.
+- Semantic: `Color + Brush` resources `SemanticError/Warn/Info/Ok/Neutral/Debug` + Soft variants (alpha 0x55) + MutedText variants. 16 Color + 14 Brush keys.
+- 4 converters (`SeverityToBrush`, `AuditSeverityToBrush`, `UtilizationToBrush`, `BoolToBrush`) → `Application.Current.TryFindResource(key)` lookup (dynamic). Theme toggle affects derived colors.
+- Hardcoded XAML colors swept to zero (verified `grep "Foreground=\"#\|Background=\"#"` post-sweep).
+
+---
+
+## 11. Modules / navigation (14)
+
+Order in sidebar nav:
+
+| # | Nav title | View | RequiresGraph | RequiresExchange | Notes |
+|---|---|---|---|---|---|
+| 1 | Dashboard | DashboardView | — | — | Hero badge + quick actions |
+| 2 | Conexión | ConnectView | — | — | Manual + auto-connect entry |
+| 3 | Licencias | TenantHealthView | ✓ | — | (renamed 2026-05-23 from "Salud tenant" — auto-load + search filter + "Gestionar" deep-link to Usuarios) |
+| 4 | Usuarios | UsersView | ✓ | — | Bulk CSV `assign:<SkuPartNumber>` + debounced typeahead |
+| 5 | Grupos | GroupsView | ✓ | — | Bulk M365/DL + RadioButtons type choice + Graph replica retry |
+| 6 | Buzones compartidos | SharedMailboxView | ✓ | ✓ | Apply/convert/permissions |
+| 7 | Reglas de buzón | MailboxRulesView | ✓ | ✓ | OOO + forwarding + calendar permissions |
+| 8 | Flujo de correo | MailFlowRulesView | — | ✓ | Get-TransportRule viewer with filter |
+| 9 | Auditoría | AuditView | ✓ | ✓ | 12 security analyzers + CSV/HTML/JSON export + baseline diff |
+| 10 | Registro de auditoría | AuditLogView | — | — | JSONL viewer + metrics |
+| 11 | Onboarding | OnboardingView | ✓ | — | UPN/password/usage validation |
+| 12 | Offboarding | OffboardingView | ✓ | ✓ | Disable + license remove + sign-out + convert shared |
+| 13 | Asistente cert | CertWizardView | — | — | Self-signed + PFX export with password |
+| 14 | Comprobación DNS | DomainCheckView | — | — | MX/SPF/DKIM/DMARC |
+| 15 | Consola PS | PsConsoleView | — | — | Multi-line REPL (Herramientas) |
+
+Nav items grey out when their connection is missing (`MainViewModel.UpdateNavEnabledStates` reactive to `IConnectionStateMonitor`).
+
+---
+
+## 12. Build, test, release
+
+### 12.1 Local build + test
+
+```powershell
+dotnet build src/Grex365.slnx -c Release
+dotnet test  src/Grex365.slnx -c Release --no-build
+```
+
+No `.sln` — `Grex365.slnx` is the slim solution file.
+
+### 12.2 CI (`.github/workflows/ci.yml`)
+
+Triggers: push to `main` / `grex365-2.0`, PR to `main`.
+
+Steps:
+1. Checkout
+2. Setup .NET 10 SDK
+3. Restore (Core, PowerShell, App, tests, sample plugin)
+4. Build App (transitive cascade)
+5. Build SamplePlugin
+6. Test Core.Tests + App.Tests with `--logger trx`
+7. Upload artifacts: sample plugin DLL + `test-results.trx`
+
+### 12.3 Portable publish
+
+```powershell
 dotnet publish src/Grex365.App/Grex365.App.csproj `
-  -c Release `
-  -r win-x64 `
-  --self-contained `
+  -c Release -r win-x64 --self-contained `
   -p:PublishSingleFile=true `
   -p:IncludeAllContentForSelfExtract=true `
   -p:EnableCompressionInSingleFile=true
 ```
 
-Result: `bin/Release/net10.0-windows/win-x64/publish/Grex365.exe` (~70-90 MB, no .NET install required on target).
+Output: `bin/Release/net10.0-windows/win-x64/publish/Grex365.exe` (~70–90 MB, no .NET install required).
 
-### 7.4 Code signing
+### 12.4 MSIX
+
+```powershell
+.\packaging\msix\Build-Msix.ps1 -Version 0.2.0
+```
+
+Generates `Grex365_0.2.0_x64.msix` from `Package.appxmanifest`. Sign with `signtool` (cert from secrets) — CI release job (`v*` tag) automates this when secrets present.
+
+AppInstaller (`Grex365.appinstaller`) points to a feed URI (env var `MSIX_FEED_BASE_URI`) for auto-update.
+
+### 12.5 Code signing
 
 Phase 1 (dev): self-signed cert via `New-SelfSignedCertificate -Type CodeSigningCert`. Test users add to trusted publishers.
-
-Phase 2 (release): purchase code-signing cert (Sectigo OV ~$100/yr, EV ~$300/yr). Sign with `signtool sign /f cert.pfx /p pass /tr http://timestamp.sectigo.com /td sha256 /fd sha256 Grex365.exe`.
-
-### 7.5 Auto-update
-
-Velopack:
-- `vpk pack` produces a self-extracting installer + delta updates.
-- GitHub Releases is the update feed (no extra hosting).
-- App checks for update on startup; downloads + applies in background.
+Phase 2 (release): OV/EV cert (Sectigo). Sign with `signtool sign /f cert.pfx /p pass /tr http://timestamp.sectigo.com /td sha256 /fd sha256 Grex365.exe`.
 
 ---
 
-## 8. Roadmap (hitos sin fechas)
+## 13. Data on disk
 
-### H0 — Cimientos ✅ (in this commit)
-- ARCHITECTURE.md created
-- Solution + 4 projects scaffolded
-- CI workflow stub
-- README updated with migration status
-
-### H1 — Backend core
-- `IPowerShellRunner` + `RunspacePoolRunner`
-- `IGraphConnection` (native SDK)
-- `IExchangeConnection` (PS runspace)
-- `IConnectionStateMonitor` (live state)
-- Serilog config
-- Unit tests for runner stream forwarding + cancellation
-
-### H2 — Connect feature (the bug that started this) ✅ replaces legacy Connect
-- WPF shell with Fluent navigation
-- ConnectViewModel with live state, cancel button
-- Log panel bound to ObservableLogSink
-- Settings view (cert path, tenant id, connection method)
-
-### H3 — Migrate features one by one
-Order (cheapest first):
-1. Tenant health
-2. Identity audit
-3. Groups workflow (CSV import/export)
-4. Mailbox permissions
-5. Offboarding wizard
-6. Cert wizard (port 29 PS steps to typed C# wizard)
-
-### H4 — UX polish
-- Dark / light theme toggle
-- Dashboard with summary cards
-- Global error boundary
-- Keyboard shortcuts
-
-### H5 — Release v1.0
-- Self-contained single-file exe
-- Code signing (self-signed → real)
-- Velopack auto-update
-- GitHub Release
-
-### H6 — Iteration
-- Bug fixes, new features, automation
+```
+%LOCALAPPDATA%/Grex365/
+  config/
+    user_preferences.json        ← tenant lock, theme, last nav, window pos/size, disabled plugins, log level
+    exo-app-params.json          ← AppId, TenantId, Org, Cert thumbprint
+  logs/
+    grex365-YYYY-MM-DD.log       ← Serilog daily rolling (30-day retention)
+  audit/
+    grex365-YYYY-MM.jsonl        ← privileged-action audit log (append-only)
+  plugins/                       ← drop DLLs here for runtime discovery
+```
 
 ---
 
-## 9. Conventions
+## 14. Conventions
 
-### 9.1 Naming
-- C# follows standard Microsoft conventions: PascalCase types/methods, camelCase locals, `_camelCase` private fields, `Interface` prefix `I`.
+### 14.1 Naming
+- C# Microsoft conventions: PascalCase types/methods, camelCase locals, `_camelCase` private fields, `I`-prefixed interfaces.
 - File per type (one public type per `.cs` file).
 - Namespaces match folder layout: `Grex365.Core.Connections`, etc.
 
-### 9.2 Style
+### 14.2 Style
 - File-scoped namespaces.
 - `nullable enable` everywhere.
-- No `var` for primitive/literal types; OK for complex `new()` expressions where the type is obvious.
+- Sparing `var` (only when type is obvious from `new()`).
 - No regions.
 - No comments restating code. Comments only for non-obvious *why*.
 
-### 9.3 Async
+### 14.3 Async
 - Suffix `Async` on every async method.
-- `ConfigureAwait(false)` in `Grex365.Core` and `Grex365.PowerShell` (library code, no SyncContext).
-- App layer (`Grex365.App`): default context to flow back to UI thread.
+- `ConfigureAwait(false)` in `Grex365.Core` and `Grex365.PowerShell` (library code).
+- App layer (`Grex365.App`): default context flows back to UI thread.
 - Never `.Result` / `.Wait()`. Use `await`.
 
-### 9.4 Logging
+### 14.4 Logging
 - Structured logging: `Log.Information("Connecting to {Service} as {Account}", service, account);`
-- Levels: `Verbose` for noise, `Debug` for dev info, `Information` for user-relevant events, `Warning` for recoverable issues, `Error` for handled failures, `Fatal` for crashes.
+- Levels: `Verbose` (noise), `Debug` (dev), `Information` (user-relevant), `Warning` (recoverable), `Error` (handled), `Fatal` (crashes).
 
-### 9.5 Testing
+### 14.5 Testing
 - xUnit. One test class per production class.
 - FluentAssertions for readable asserts.
-- Moq for interface mocking.
-- Integration tests in a separate project later if needed.
+- Moq for interface mocking (App.Tests only — Core uses pure analyzers, no mocks).
+- App.Tests uses harness pattern: `TestDialogService` / `TestClipboardService` / `TestUiLogSink` / `TestUserDetailsHost` (see `tests/Grex365.App.Tests/TestFakes.cs`).
+
+### 14.6 Commits
+Conventional Commits with scope: `feat(scope):`, `fix(scope):`, `docs:`, `refactor:`, `test:`, `build:`, `ci:`, `ux:`. HEREDOC for multi-line bodies. `Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>` footer. Spanish acceptable in messages when adds context.
 
 ---
 
-## 10. Open questions
+## 15. Open questions / future decisions
 
-These need answering before we hit later milestones. Tracked here so they don't get lost.
-
-- [ ] Code-signing cert: self-signed forever (internal use) or buy OV/EV for SmartScreen?
-- [ ] Tenant lock: keep the legacy `EnforceTenantLock` preference or trust app-only auth scopes?
-- [ ] Offboarding: should it run as a single transactional workflow or step-by-step with checkpoints?
-- [ ] Reports: render in-app (DataGrid + export) or open in Excel?
-- [ ] Multi-tenant: out of scope for v1?
+- [ ] EV code-signing cert: purchase for general distribution or stay self-signed for internal-only?
+- [ ] AppInsights connection string distribution: per-tenant config endpoint vs hardcoded dev/prod?
+- [ ] Multi-tenant scenarios: stay single-tenant per profile (current) or add tenant switcher?
+- [ ] Plugin sandboxing: current `AssemblyLoadContext` isolates assemblies but plugins still run in-proc with full app perms. Sandbox needed for third-party plugins?
+- [ ] Velopack vs MSIX AppInstaller: pick one auto-update mechanism. Currently MSIX path is primary; Velopack documented as alternative but not wired.
 
 ---
 
-## 11. References
+## 16. References
 
-- Live punch list: [`ROADMAP.md`](ROADMAP.md) — comprehensive H0–H6 status, every sub-item, every open decision
-- Per-feature migration table: [`MIGRATION.md`](MIGRATION.md)
-- Deep research report: [`../deep-research-report.md`](../deep-research-report.md)
+- Phase punch list + session log: [`../PROGRESS.md`](../PROGRESS.md)
+- North-star roadmap: [`../Plantamiento_arquitectura_de_la_herramienta.md`](../Plantamiento_arquitectura_de_la_herramienta.md)
+- Original tech research: [`../deep-research-report.md`](../deep-research-report.md)
+- Per-feature migration log: [`MIGRATION.md`](MIGRATION.md)
+- H0-H6 sub-item tracker: [`ROADMAP.md`](ROADMAP.md)
+- MSIX/AppInstaller/Intune docs: [`../PACKAGING.md`](../PACKAGING.md)
+- Operations manual: [`RUNBOOK.md`](RUNBOOK.md)
 - WPF-UI (Fluent for WPF): https://wpfui.lepo.co/
 - CommunityToolkit.Mvvm: https://learn.microsoft.com/dotnet/communitytoolkit/mvvm/
 - Microsoft.Graph SDK: https://learn.microsoft.com/graph/sdks/sdks-overview
-- Velopack: https://velopack.io/
