@@ -80,3 +80,11 @@ packaging/msix/out/
 *.msix
 *.appx
 *.appxbundle
+
+# BMAD generated artifacts (planning/implementation outputs are per-developer)
+_bmad-output/
+_bmad/custom/config.user.toml
+
+# Claude Code local state
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
