@@ -807,15 +807,7 @@ public sealed partial class AuditViewModel : ObservableObject
         }
     }
 
-    private static string Escape(string? value)
-    {
-        var v = value ?? string.Empty;
-        if (v.Contains(',') || v.Contains('"') || v.Contains('\n'))
-        {
-            return '"' + v.Replace("\"", "\"\"") + '"';
-        }
-        return v;
-    }
+    private static string Escape(string? value) => Grex365.Core.Csv.CsvEscaper.Escape(value);
 
     [RelayCommand]
     private void LoadBaseline()

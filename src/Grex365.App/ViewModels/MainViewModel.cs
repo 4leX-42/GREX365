@@ -371,15 +371,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    private static string CsvEscape(string? value)
-    {
-        if (string.IsNullOrEmpty(value))
-        {
-            return string.Empty;
-        }
-        var needs = value.Contains(',') || value.Contains('"') || value.Contains('\n') || value.Contains('\r');
-        return needs ? "\"" + value.Replace("\"", "\"\"") + "\"" : value;
-    }
+    private static string CsvEscape(string? value) => Grex365.Core.Csv.CsvEscaper.Escape(value);
 
     [RelayCommand]
     private async Task DisconnectAllAsync()

@@ -479,15 +479,7 @@ public sealed partial class UsersViewModel : ObservableObject
         }
     }
 
-    private static string Escape(string? value)
-    {
-        var v = value ?? string.Empty;
-        if (v.Contains(',') || v.Contains('"') || v.Contains('\n'))
-        {
-            return '"' + v.Replace("\"", "\"\"") + '"';
-        }
-        return v;
-    }
+    private static string Escape(string? value) => Grex365.Core.Csv.CsvEscaper.Escape(value);
 
     [RelayCommand(CanExecute = nameof(CanCancel))]
     private void Cancel() => _cts?.Cancel();
