@@ -194,20 +194,7 @@ public sealed class ExchangeConnection : IExchangeConnection
         return await ProbeModuleAsync(progress, cancellationToken).ConfigureAwait(false);
     }
 
-    private static string ResolvePwshExe()
-    {
-        // Prefer pwsh.exe on PATH; fallback to legacy powershell.exe.
-        foreach (var name in new[] { "pwsh.exe", "powershell.exe" })
-        {
-            var path = Environment.GetEnvironmentVariable("PATH")?
-                .Split(Path.PathSeparator)
-                .Select(p => Path.Combine(p, name))
-                .FirstOrDefault(File.Exists);
-            if (!string.IsNullOrEmpty(path)) return path;
-        }
-        // Last resort: rely on shell resolution
-        return "powershell.exe";
-    }
+    private static string ResolvePwshExe() => ExeResolver.ResolvePwsh();
 
     public async Task DisconnectAsync(
         IProgress<LogEntry>? progress = null,
