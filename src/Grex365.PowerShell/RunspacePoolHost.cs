@@ -18,7 +18,7 @@ public sealed class RunspacePoolHost : IDisposable
 
         // Filter PSModulePath: drop WindowsApps store paths because their ACLs deny load of
         // Microsoft.PackageManagement.dll from embedded runspaces. Keep CurrentUser + ProgramFiles + System32.
-        var sanitizedModulePath = SanitizeModulePath(Environment.GetEnvironmentVariable("PSModulePath") ?? string.Empty);
+        var sanitizedModulePath = PSModulePathSanitizer.Sanitize(Environment.GetEnvironmentVariable("PSModulePath") ?? string.Empty);
         iss.Variables.Add(new SessionStateVariableEntry("env:PSModulePath", sanitizedModulePath, string.Empty));
         iss.EnvironmentVariables.Add(new SessionStateVariableEntry("PSModulePath", sanitizedModulePath, string.Empty));
 
@@ -31,42 +31,6 @@ public sealed class RunspacePoolHost : IDisposable
     }
 
     public RunspacePool Pool => _pool;
-
-    private static string SanitizeModulePath(string original)
-    {
-        if (string.IsNullOrEmpty(original))
-        {
-            return BuildSafeDefault();
-        }
-        var parts = original.Split(System.IO.Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
-        var kept = new List<string>(parts.Length);
-        foreach (var p in parts)
-        {
-            if (p.IndexOf("WindowsApps", StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                continue;
-            }
-            kept.Add(p);
-        }
-        // Ensure CurrentUser modules path is included.
-        var userModules = System.IO.Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            "PowerShell", "Modules");
-        if (!kept.Any(p => string.Equals(p, userModules, StringComparison.OrdinalIgnoreCase)))
-        {
-            kept.Insert(0, userModules);
-        }
-        return string.Join(System.IO.Path.PathSeparator, kept);
-    }
-
-    private static string BuildSafeDefault()
-    {
-        var docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        var user = System.IO.Path.Combine(docs, "PowerShell", "Modules");
-        var prog = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "PowerShell", "Modules");
-        var sys = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "WindowsPowerShell", "v1.0", "Modules");
-        return string.Join(System.IO.Path.PathSeparator, new[] { user, prog, sys });
-    }
 
     public void Dispose()
     {
