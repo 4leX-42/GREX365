@@ -376,6 +376,84 @@ public class L10nTests : IDisposable
         L10n.KnownKeys.Should().Contain("Settings.Title");
     }
 
+    [Theory]
+    [InlineData("Connect.Eyebrow")]
+    [InlineData("Connect.Title")]
+    [InlineData("Connect.Subtitle")]
+    [InlineData("Connect.MsGraph")]
+    [InlineData("Connect.ExchangeOnline")]
+    [InlineData("Connect.Section.Actions")]
+    [InlineData("Connect.Button.Connect")]
+    [InlineData("Connect.Button.Cancel")]
+    [InlineData("Connect.Button.DeviceCode")]
+    [InlineData("Connect.Button.Disconnect")]
+    [InlineData("Connect.ExoModule.Title")]
+    [InlineData("Connect.ExoModule.Hint")]
+    [InlineData("Connect.ExoModule.Probe")]
+    [InlineData("Connect.ExoModule.Install")]
+    [InlineData("Connect.DeviceCode.Title")]
+    [InlineData("Connect.DeviceCode.Step1")]
+    [InlineData("Connect.DeviceCode.Step2")]
+    [InlineData("Connect.DeviceCode.Step3")]
+    [InlineData("Connect.Section.Tenant")]
+    [InlineData("Connect.Tenant.Id")]
+    [InlineData("Connect.Tenant.Domain")]
+    [InlineData("Connect.Tenant.Account")]
+    [InlineData("Connect.Cert.GroupHeader")]
+    [InlineData("Connect.Cert.Status")]
+    [InlineData("Connect.Cert.AppId")]
+    [InlineData("Connect.Cert.AppId.Hint")]
+    [InlineData("Connect.Cert.Thumbprint")]
+    [InlineData("Connect.Cert.Thumbprint.Hint")]
+    [InlineData("Connect.Cert.Expiry")]
+    [InlineData("Connect.Cert.Expiry.Hint")]
+    [InlineData("Connect.Status.Connecting")]
+    [InlineData("Connect.Status.ConnectedGraph")]
+    [InlineData("Connect.Status.Disconnected")]
+    [InlineData("Connect.Status.Cancelled")]
+    [InlineData("Connect.Status.TenantLockMismatch")]
+    [InlineData("Connect.Status.TenantIdMissing")]
+    public void Initialize_Both_ConnectKeys_Resolved(string key)
+    {
+        L10n.Initialize("es");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+
+        L10n.Initialize("en");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+    }
+
+    [Theory]
+    [InlineData("Wizard.Window.Title")]
+    [InlineData("Wizard.TitleBar")]
+    [InlineData("Wizard.Step.Welcome")]
+    [InlineData("Wizard.Welcome.Title")]
+    [InlineData("Wizard.Welcome.Subtitle")]
+    [InlineData("Wizard.Connection.Title")]
+    [InlineData("Wizard.Connection.DeviceCode")]
+    [InlineData("Wizard.Connection.Cert")]
+    [InlineData("Wizard.TenantLock.Title")]
+    [InlineData("Wizard.TenantLock.Enable")]
+    [InlineData("Wizard.Theme.Title")]
+    [InlineData("Wizard.Theme.Dark")]
+    [InlineData("Wizard.Theme.Light")]
+    [InlineData("Wizard.Theme.Auto")]
+    [InlineData("Wizard.Summary.Title")]
+    [InlineData("Wizard.Button.Skip")]
+    [InlineData("Wizard.Status.Saving")]
+    [InlineData("Wizard.Status.Saved")]
+    [InlineData("Wizard.Connection.Label.Cert")]
+    [InlineData("Wizard.Connection.Label.DeviceCode")]
+    [InlineData("Wizard.TenantLock.Label.Enabled")]
+    [InlineData("Wizard.TenantLock.Label.Disabled")]
+    public void Initialize_Both_WizardKeys_Resolved(string key)
+    {
+        L10n.Initialize("es");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+
+        L10n.Initialize("en");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+    }
+
     [Fact]
     public void EnDict_HasTranslationForEveryEsKey()
     {
