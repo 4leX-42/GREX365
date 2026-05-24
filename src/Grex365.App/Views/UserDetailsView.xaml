@@ -199,14 +199,66 @@
                                 BorderThickness="0,1,0,0"
                                 Margin="0,10,0,8" />
 
-                        <TextBlock Text="Asignar nueva licencia" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,6" />
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0"
+                                       Text="Asignar nueva licencia"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,12,0" />
+                            <Border Grid.Column="1"
+                                    CornerRadius="6"
+                                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    Padding="8,3"
+                                    Background="{DynamicResource ControlFillColorDefaultBrush}"
+                                    HorizontalAlignment="Stretch">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text=""
+                                               FontFamily="{StaticResource IconFontFamily}"
+                                               FontSize="12"
+                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                               VerticalAlignment="Center"
+                                               Margin="2,0,8,0" />
+                                    <TextBox Grid.Column="1"
+                                             Text="{Binding AssignableSkuFilter, UpdateSourceTrigger=PropertyChanged, Delay=120}"
+                                             BorderThickness="0"
+                                             Background="Transparent"
+                                             VerticalAlignment="Center"
+                                             FontSize="11"
+                                             ToolTip="Filtrar por nombre, SKU o categoría"
+                                             Padding="0" />
+                                    <Button Grid.Column="2"
+                                            Content="×"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Padding="6,0"
+                                            FontSize="13"
+                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                            Command="{Binding ClearAssignableSkuFilterCommand}"
+                                            Visibility="{Binding AssignableSkuFilter, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}"
+                                            ToolTip="Limpiar filtro" />
+                                </Grid>
+                            </Border>
+                        </Grid>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <ComboBox Grid.Column="0"
-                                      ItemsSource="{Binding AssignableSkus}"
+                                      ItemsSource="{Binding AssignableSkusView}"
                                       SelectedItem="{Binding SelectedSkuToAdd}">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>

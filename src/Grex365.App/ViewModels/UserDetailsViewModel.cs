@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Grex365.App.Services;
@@ -29,10 +31,12 @@ public sealed partial class UserDetailsViewModel : ObservableObject
     [ObservableProperty] private string? _userId;
     [ObservableProperty] private bool _hasUser;
     [ObservableProperty] private SkuInfo? _selectedSkuToAdd;
+    [ObservableProperty] private string _assignableSkuFilter = string.Empty;
 
     public ObservableCollection<GroupSummary> Memberships { get; } = new();
     public ObservableCollection<AssignedLicenseRow> AssignedLicenses { get; } = new();
     public ObservableCollection<SkuInfo> AssignableSkus { get; } = new();
+    public ICollectionView AssignableSkusView { get; }
 
     public UserDetailsViewModel(
         IUsersService users,
@@ -46,9 +50,27 @@ public sealed partial class UserDetailsViewModel : ObservableObject
         _log = log;
         _dialogs = dialogs;
         _clipboard = clipboard;
+        AssignableSkusView = CollectionViewSource.GetDefaultView(AssignableSkus);
+        AssignableSkusView.Filter = AssignableSkuMatches;
         _host.OpenRequested += (_, id) => _ = LoadAsync(id);
         _host.CloseRequested += (_, _) => Reset();
     }
+
+    private bool AssignableSkuMatches(object obj)
+    {
+        if (obj is not SkuInfo sku) return false;
+        var filter = (AssignableSkuFilter ?? string.Empty).Trim();
+        if (filter.Length == 0) return true;
+        var info = SkuCatalog.Resolve(sku.SkuPartNumber);
+        return sku.SkuPartNumber.Contains(filter, StringComparison.OrdinalIgnoreCase)
+            || info.FriendlyName.Contains(filter, StringComparison.OrdinalIgnoreCase)
+            || SkuCatalog.CategoryLabel(info.Category).Contains(filter, StringComparison.OrdinalIgnoreCase);
+    }
+
+    partial void OnAssignableSkuFilterChanged(string value) => AssignableSkusView.Refresh();
+
+    [RelayCommand]
+    private void ClearAssignableSkuFilter() => AssignableSkuFilter = string.Empty;
 
     private void Reset()
     {
