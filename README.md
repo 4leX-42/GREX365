@@ -245,4 +245,4 @@ Estructura legacy y formato CSV detallados en [`docs/CSV-Schemas.html`](docs/CSV
 
 ## Licencia
 
-Uso interno Andersen. Sin licencia pública.
+Sin licencia pública.
