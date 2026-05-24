@@ -651,13 +651,15 @@
                 </Style.Triggers>
             </Style>
 
-            <!-- ComboBoxItem theme-aware. WPF default ComboBoxItem uses SystemColors
-                 hardcoded (Window/WindowText) → invisible white-on-light-gray in dark
-                 theme. Override Background/Foreground + hover/selected via wpf-ui
-                 surface tokens. -->
+            <!-- ComboBox + ComboBoxItem styling.
+                 WPF default ComboBox popup uses SystemColors hardcoded → light gray
+                 background in dark theme. We restyle items (Background/Foreground/
+                 hover/selected) via wpf-ui tokens while keeping default ControlTemplate
+                 (full template override broke click-to-open). Background on ComboBox
+                 itself uses theme token so closed state matches surface. -->
             <Style TargetType="ComboBoxItem">
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
-                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorTertiaryBrush}" />
                 <Setter Property="Padding" Value="10,6" />
                 <Setter Property="BorderThickness" Value="0" />
                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -667,8 +669,7 @@
                             <Border x:Name="Bd"
                                     Background="{TemplateBinding Background}"
                                     Padding="{TemplateBinding Padding}"
-                                    CornerRadius="4"
-                                    Margin="2,1">
+                                    SnapsToDevicePixels="True">
                                 <ContentPresenter VerticalAlignment="Center"
                                                   TextElement.Foreground="{TemplateBinding Foreground}" />
                             </Border>
@@ -678,7 +679,6 @@
                                 </Trigger>
                                 <Trigger Property="IsSelected" Value="True">
                                     <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
-                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                                 </Trigger>
                                 <Trigger Property="IsEnabled" Value="False">
                                     <Setter Property="Foreground" Value="{DynamicResource TextFillColorDisabledBrush}" />
@@ -689,102 +689,18 @@
                 </Setter>
             </Style>
 
-            <!-- ComboBox theme-aware. WPF default template has hardcoded SystemColors
-                 in Popup → invisible content dark theme. Full template override using
-                 wpf-ui tokens for both closed state + dropdown popup. -->
             <Style TargetType="ComboBox">
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                 <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
                 <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="Padding" Value="10,6" />
-                <Setter Property="HorizontalContentAlignment" Value="Left" />
-                <Setter Property="VerticalContentAlignment" Value="Center" />
-                <Setter Property="SnapsToDevicePixels" Value="True" />
-                <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
-                <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="ComboBox">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="28" />
-                                </Grid.ColumnDefinitions>
-                                <Border x:Name="OuterBorder"
-                                        Grid.ColumnSpan="2"
-                                        Background="{TemplateBinding Background}"
-                                        BorderBrush="{TemplateBinding BorderBrush}"
-                                        BorderThickness="{TemplateBinding BorderThickness}"
-                                        CornerRadius="4" />
-                                <ToggleButton x:Name="ToggleButton"
-                                              Grid.ColumnSpan="2"
-                                              Background="Transparent"
-                                              BorderThickness="0"
-                                              Focusable="False"
-                                              IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
-                                              ClickMode="Press">
-                                    <ToggleButton.Template>
-                                        <ControlTemplate TargetType="ToggleButton">
-                                            <Border Background="{TemplateBinding Background}" />
-                                        </ControlTemplate>
-                                    </ToggleButton.Template>
-                                </ToggleButton>
-                                <ContentPresenter Grid.Column="0"
-                                                  Margin="{TemplateBinding Padding}"
-                                                  Content="{TemplateBinding SelectionBoxItem}"
-                                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                                                  ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
-                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                                  IsHitTestVisible="False"
-                                                  TextElement.Foreground="{TemplateBinding Foreground}" />
-                                <TextBlock Grid.Column="1"
-                                           Text="&#xE70D;"
-                                           FontFamily="{StaticResource IconFontFamily}"
-                                           FontSize="11"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                           IsHitTestVisible="False" />
-                                <Popup x:Name="PART_Popup"
-                                       AllowsTransparency="True"
-                                       IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
-                                       Placement="Bottom"
-                                       PopupAnimation="Fade"
-                                       Focusable="False">
-                                    <Border x:Name="DropDownBorder"
-                                            MinWidth="{TemplateBinding ActualWidth}"
-                                            MaxHeight="{TemplateBinding MaxDropDownHeight}"
-                                            Margin="0,4,0,0"
-                                            Background="{DynamicResource SolidBackgroundFillColorTertiaryBrush}"
-                                            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
-                                            BorderThickness="1"
-                                            CornerRadius="6"
-                                            Effect="{StaticResource CardElevation}">
-                                        <ScrollViewer Margin="2"
-                                                      SnapsToDevicePixels="True">
-                                            <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
-                                        </ScrollViewer>
-                                    </Border>
-                                </Popup>
-                            </Grid>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                                    <Setter TargetName="OuterBorder" Property="BorderBrush" Value="{StaticResource BrandAccentSolid}" />
-                                    <Setter Property="Effect" Value="{StaticResource AccentGlowSoftEffect}" />
-                                </Trigger>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="OuterBorder" Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
-                                </Trigger>
-                                <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorDisabledBrush}" />
-                                    <Setter TargetName="OuterBorder" Property="Background" Value="{DynamicResource ControlFillColorDisabledBrush}" />
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
+                <Setter Property="Padding" Value="8,6" />
+                <Style.Triggers>
+                    <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                        <Setter Property="BorderBrush" Value="{StaticResource BrandAccentSolid}" />
+                        <Setter Property="Effect" Value="{StaticResource AccentGlowSoftEffect}" />
+                    </Trigger>
+                </Style.Triggers>
             </Style>
 
             <!-- CheckBox accent (override stock blue) -->
