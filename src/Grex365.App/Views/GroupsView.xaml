@@ -120,7 +120,7 @@
                                        FontFamily="{StaticResource IconFontFamily}"
                                        FontSize="48"
                                        HorizontalAlignment="Center"
-                                       Opacity="0.4" />
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                             <TextBlock Text="Busca un grupo"
                                        FontSize="14"
                                        FontWeight="SemiBold"

@@ -111,16 +111,25 @@ public sealed partial class UserDetailsViewModel : ObservableObject
                 var assigned = await _users.GetAssignedLicensesAsync(userId, token).ConfigureAwait(true);
                 var assignedSet = assigned.ToHashSet();
 
-                foreach (var skuId in assigned)
+                var assignedRows = assigned
+                    .Select(skuId =>
+                    {
+                        var sku = _allSkus.FirstOrDefault(s => s.SkuId == skuId);
+                        var partNumber = sku?.SkuPartNumber ?? skuId.ToString();
+                        var info = SkuCatalog.Resolve(partNumber);
+                        return (Row: new AssignedLicenseRow(
+                                SkuId: skuId,
+                                SkuPartNumber: partNumber,
+                                FriendlyName: info.FriendlyName,
+                                CategoryLabel: SkuCatalog.CategoryLabel(info.Category)),
+                            Priority: info.Priority);
+                    })
+                    .OrderBy(t => t.Priority)
+                    .ThenBy(t => t.Row.FriendlyName, StringComparer.OrdinalIgnoreCase)
+                    .Select(t => t.Row);
+                foreach (var row in assignedRows)
                 {
-                    var sku = _allSkus.FirstOrDefault(s => s.SkuId == skuId);
-                    var partNumber = sku?.SkuPartNumber ?? skuId.ToString();
-                    var info = SkuCatalog.Resolve(partNumber);
-                    AssignedLicenses.Add(new AssignedLicenseRow(
-                        SkuId: skuId,
-                        SkuPartNumber: partNumber,
-                        FriendlyName: info.FriendlyName,
-                        CategoryLabel: SkuCatalog.CategoryLabel(info.Category)));
+                    AssignedLicenses.Add(row);
                 }
 
                 foreach (var sku in _allSkus

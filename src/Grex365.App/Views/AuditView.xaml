@@ -272,7 +272,7 @@
                                    FontFamily="{StaticResource IconFontFamily}"
                                    FontSize="48"
                                    HorizontalAlignment="Center"
-                                   Opacity="0.4" />
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                         <TextBlock Text="Sin hallazgos todavía"
                                    FontSize="16"
                                    FontWeight="SemiBold"

@@ -376,7 +376,7 @@
                 </TextBlock>
 
                 <TextBlock Grid.Column="5"
-                           Opacity="0.4"
+                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                            FontSize="11"
                            VerticalAlignment="Center"
                            HorizontalAlignment="Right"

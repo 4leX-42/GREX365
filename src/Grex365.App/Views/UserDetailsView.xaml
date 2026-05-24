@@ -180,7 +180,7 @@
                                         <StackPanel Grid.Column="0">
                                             <TextBlock Text="{Binding FriendlyName}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
                                             <StackPanel Orientation="Horizontal" Margin="0,1,0,0">
-                                                <TextBlock Text="{Binding SkuPartNumber}" Style="{StaticResource MonoText}" FontSize="10" Opacity="0.45" Margin="0,0,8,0" />
+                                                <TextBlock Text="{Binding SkuPartNumber}" Style="{StaticResource MonoText}" FontSize="10" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,8,0" />
                                                 <TextBlock Text="{Binding CategoryLabel}" FontSize="10" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                                             </StackPanel>
                                         </StackPanel>
