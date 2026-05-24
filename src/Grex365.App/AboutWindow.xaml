@@ -5,8 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:local="clr-namespace:Grex365.App"
+        xmlns:l="clr-namespace:Grex365.App.Xaml"
         mc:Ignorable="d"
-        Title="Acerca de GREX365"
+        Title="{l:L10n Key=About.Window.Title}"
         Height="420" Width="560"
         ResizeMode="NoResize"
         WindowBackdropType="Mica"
@@ -20,7 +21,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="Acerca de" />
+        <ui:TitleBar Grid.Row="0" Title="{l:L10n Key=About.TitleBar}" />
 
         <StackPanel Grid.Row="1" Margin="32,12,32,16" VerticalAlignment="Top">
             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
@@ -38,7 +39,7 @@
             <TextBlock TextWrapping="Wrap"
                        Margin="0,12,0,0"
                        Opacity="0.85"
-                       Text="Toolkit para operaciones administrativas sobre Microsoft 365: Exchange Online, Microsoft Graph y Entra ID. Autenticación por certificado (app-only) o device code (delegado)." />
+                       Text="{l:L10n Key=About.Description}" />
 
             <Border CornerRadius="8" Padding="14" Margin="0,16,0,0"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
@@ -53,13 +54,13 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Versión" Opacity="0.7" />
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{l:L10n Key=About.Version}" Opacity="0.7" />
                     <TextBlock Grid.Row="0" Grid.Column="1" x:Name="VersionDetailText" />
 
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text=".NET runtime" Opacity="0.7" Margin="0,6,0,0" />
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="{l:L10n Key=About.Runtime}" Opacity="0.7" Margin="0,6,0,0" />
                     <TextBlock Grid.Row="1" Grid.Column="1" x:Name="RuntimeText" Margin="0,6,0,0" />
 
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Datos en" Opacity="0.7" Margin="0,6,0,0" />
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="{l:L10n Key=About.DataDir}" Opacity="0.7" Margin="0,6,0,0" />
                     <TextBlock Grid.Row="2" Grid.Column="1" x:Name="DataDirText"
                                Margin="0,6,0,0"
                                TextWrapping="Wrap"
@@ -74,10 +75,10 @@
                 BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
                 Padding="24,12">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <ui:Button Content="Abrir carpeta de datos"
+                <ui:Button Content="{l:L10n Key=About.Button.OpenDataDir}"
                            Margin="0,0,8,0"
                            Click="OpenDataDir_Click" />
-                <ui:Button Content="Cerrar"
+                <ui:Button Content="{l:L10n Key=About.Button.Close}"
                            Appearance="Primary"
                            Click="Close_Click" />
             </StackPanel>

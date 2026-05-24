@@ -15,6 +15,7 @@ public sealed partial class PluginToggleItem : ObservableObject
     public string AssemblyFileName { get; }
     public string Status { get; }
     public int ModuleCount { get; }
+    public string ModuleCountLabel => $"{ModuleCount} {L10n.Get("Settings.Plugins.ModulesSuffix")}";
     [ObservableProperty] private bool _isEnabled;
 
     public PluginToggleItem(string fileName, string status, int moduleCount, bool isEnabled)
@@ -111,7 +112,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             Plugins.Add(new PluginToggleItem(
                 Path.GetFileName(p.AssemblyPath),
-                "Cargado",
+                L10n.Get("Settings.Plugins.Status.Loaded"),
                 p.Modules.Count,
                 isEnabled: true));
         }
@@ -119,7 +120,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             Plugins.Add(new PluginToggleItem(
                 Path.GetFileName(f.AssemblyPath),
-                "Error: " + f.Message,
+                L10n.Get("Settings.Plugins.Status.ErrorPrefix") + f.Message,
                 0,
                 isEnabled: true));
         }
@@ -127,7 +128,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             Plugins.Add(new PluginToggleItem(
                 d.AssemblyFileName,
-                "Deshabilitado",
+                L10n.Get("Settings.Plugins.Status.Disabled"),
                 0,
                 isEnabled: false));
         }
@@ -171,8 +172,8 @@ public sealed partial class SettingsViewModel : ObservableObject
                     .ConfigureAwait(true);
             }
 
-            SaveStatus = $"Guardado · {DateTime.Now:HH:mm:ss}";
-            _log.Progress.Report(LogEntry.Ok("Settings", "Preferencias y certificado guardados."));
+            SaveStatus = L10n.Format("Settings.SaveStatus.Prefix", DateTime.Now.ToString("HH:mm:ss"));
+            _log.Progress.Report(LogEntry.Ok("Settings", L10n.Get("Settings.SaveStatus.SavedLog")));
 
             if (!string.Equals(prefs.Language, _initialLanguage, StringComparison.OrdinalIgnoreCase))
             {
@@ -183,7 +184,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            SaveStatus = "Error: " + ex.Message;
+            SaveStatus = L10n.Format("Settings.SaveStatus.ErrorPrefix", ex.Message);
             _log.Progress.Report(LogEntry.Error("Settings", ex.Message, ex));
         }
     }

@@ -5,8 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:vm="clr-namespace:Grex365.App.ViewModels"
+        xmlns:l="clr-namespace:Grex365.App.Xaml"
         mc:Ignorable="d"
-        Title="GREX365 · Settings"
+        Title="{l:L10n Key=Settings.Window.Title}"
         Height="640" Width="720"
         MinHeight="480" MinWidth="560"
         WindowBackdropType="Mica"
@@ -20,11 +21,11 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="Settings" />
+        <ui:TitleBar Grid.Row="0" Title="{l:L10n Key=Settings.TitleBar}" />
 
         <ScrollViewer Grid.Row="1" Margin="24" VerticalScrollBarVisibility="Auto">
             <StackPanel>
-                <TextBlock Text="Preferencias"
+                <TextBlock Text="{l:L10n Key=Settings.Preferences}"
                            FontSize="22"
                            FontWeight="SemiBold"
                            Margin="0,0,0,12" />
@@ -32,36 +33,36 @@
                 <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
                         Background="{DynamicResource ControlFillColorDefaultBrush}">
                     <StackPanel>
-                        <TextBlock Text="Método de conexión" FontWeight="SemiBold" Margin="0,0,0,8" />
+                        <TextBlock Text="{l:L10n Key=Settings.Section.Connection}" FontWeight="SemiBold" Margin="0,0,0,8" />
                         <ComboBox SelectedValue="{Binding ConnectionMethod}"
                                   SelectedValuePath="Tag"
                                   Width="240"
                                   HorizontalAlignment="Left"
                                   Margin="0,0,0,16">
-                            <ComboBoxItem Content="Certificado (app)" Tag="cert" />
-                            <ComboBoxItem Content="Tradicional (UPN)" Tag="traditional" />
+                            <ComboBoxItem Content="{l:L10n Key=Settings.Connection.Cert}" Tag="cert" />
+                            <ComboBoxItem Content="{l:L10n Key=Settings.Connection.Traditional}" Tag="traditional" />
                         </ComboBox>
 
-                        <TextBlock Text="Tenant esperado (ID)" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBlock Text="{l:L10n Key=Settings.Tenant.IdLabel}" FontWeight="SemiBold" Margin="0,0,0,4" />
                         <ui:TextBox Text="{Binding ExpectedTenantId, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="00000000-0000-0000-0000-000000000000"
+                                    PlaceholderText="{l:L10n Key=Settings.Tenant.IdPlaceholder}"
                                     Margin="0,0,0,12" />
 
-                        <TextBlock Text="Tenant esperado (dominio)" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBlock Text="{l:L10n Key=Settings.Tenant.DomainLabel}" FontWeight="SemiBold" Margin="0,0,0,4" />
                         <ui:TextBox Text="{Binding ExpectedTenantDomain, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="contoso.onmicrosoft.com"
+                                    PlaceholderText="{l:L10n Key=Settings.Tenant.DomainPlaceholder}"
                                     Margin="0,0,0,12" />
 
-                        <CheckBox Content="Forzar tenant lock (rechazar conexión si no coincide)"
+                        <CheckBox Content="{l:L10n Key=Settings.EnforceTenantLock}"
                                   IsChecked="{Binding EnforceTenantLock}" />
 
-                        <TextBlock Text="Idioma / Language" FontWeight="SemiBold" Margin="0,16,0,4" />
+                        <TextBlock Text="{l:L10n Key=Settings.LanguageLabel}" FontWeight="SemiBold" Margin="0,16,0,4" />
                         <ComboBox SelectedValue="{Binding Language}"
                                   SelectedValuePath="Tag"
                                   Width="220"
                                   HorizontalAlignment="Left">
-                            <ComboBoxItem Content="Español" Tag="es" />
-                            <ComboBoxItem Content="English" Tag="en" />
+                            <ComboBoxItem Content="{l:L10n Key=Settings.Language.Spanish}" Tag="es" />
+                            <ComboBoxItem Content="{l:L10n Key=Settings.Language.English}" Tag="en" />
                         </ComboBox>
                         <TextBlock Text="{Binding LanguageRestartHint}"
                                    Opacity="0.85"
@@ -70,54 +71,54 @@
                                    Margin="0,4,0,0"
                                    TextWrapping="Wrap" />
 
-                        <TextBlock Text="Tema" FontWeight="SemiBold" Margin="0,16,0,4" />
+                        <TextBlock Text="{l:L10n Key=Settings.Theme}" FontWeight="SemiBold" Margin="0,16,0,4" />
                         <ComboBox SelectedValue="{Binding Theme}"
                                   SelectedValuePath="Tag"
                                   Width="220"
                                   HorizontalAlignment="Left">
-                            <ComboBoxItem Content="Oscuro" Tag="Dark" />
-                            <ComboBoxItem Content="Claro" Tag="Light" />
-                            <ComboBoxItem Content="Auto (seguir sistema)" Tag="Auto" />
+                            <ComboBoxItem Content="{l:L10n Key=Settings.Theme.Dark}" Tag="Dark" />
+                            <ComboBoxItem Content="{l:L10n Key=Settings.Theme.Light}" Tag="Light" />
+                            <ComboBoxItem Content="{l:L10n Key=Settings.Theme.Auto}" Tag="Auto" />
                         </ComboBox>
-                        <TextBlock Text="Auto detecta el tema del sistema y se actualiza al instante cuando cambia."
+                        <TextBlock Text="{l:L10n Key=Settings.Theme.Hint}"
                                    Opacity="0.55" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap" />
 
-                        <TextBlock Text="Nivel de logging" FontWeight="SemiBold" Margin="0,16,0,4" />
+                        <TextBlock Text="{l:L10n Key=Settings.LogLevel}" FontWeight="SemiBold" Margin="0,16,0,4" />
                         <ComboBox SelectedValue="{Binding LogLevel}"
                                   SelectedValuePath="Tag"
                                   Width="200"
                                   HorizontalAlignment="Left">
-                            <ComboBoxItem Content="Debug (verboso)" Tag="Debug" />
-                            <ComboBoxItem Content="Information (recomendado)" Tag="Information" />
-                            <ComboBoxItem Content="Warning" Tag="Warning" />
-                            <ComboBoxItem Content="Error" Tag="Error" />
+                            <ComboBoxItem Content="{l:L10n Key=Settings.LogLevel.Debug}" Tag="Debug" />
+                            <ComboBoxItem Content="{l:L10n Key=Settings.LogLevel.Information}" Tag="Information" />
+                            <ComboBoxItem Content="{l:L10n Key=Settings.LogLevel.Warning}" Tag="Warning" />
+                            <ComboBoxItem Content="{l:L10n Key=Settings.LogLevel.Error}" Tag="Error" />
                         </ComboBox>
-                        <TextBlock Text="Aplica al instante (Serilog LoggingLevelSwitch); no requiere reinicio."
+                        <TextBlock Text="{l:L10n Key=Settings.LogLevel.Hint}"
                                    Opacity="0.55"
                                    FontSize="12"
                                    Margin="0,4,0,0" />
 
-                        <TextBlock Text="Application Insights — Connection String" FontWeight="SemiBold" Margin="0,16,0,4" />
+                        <TextBlock Text="{l:L10n Key=Settings.AppInsights}" FontWeight="SemiBold" Margin="0,16,0,4" />
                         <ui:TextBox Text="{Binding ApplicationInsightsConnectionString, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="InstrumentationKey=xxxx;IngestionEndpoint=https://..."
+                                    PlaceholderText="{l:L10n Key=Settings.AppInsights.Placeholder}"
                                     Margin="0,0,0,4" />
-                        <TextBlock Text="Opcional. Vacío = telemetría deshabilitada (NullTelemetry). Requiere reinicio para tomar efecto. Se envían eventos por cada Ok/Warn/Error registrado."
+                        <TextBlock Text="{l:L10n Key=Settings.AppInsights.Hint}"
                                    Opacity="0.55"
                                    FontSize="12"
                                    TextWrapping="Wrap" />
 
-                        <TextBlock Text="Permisos por rol (RBAC) — Object ID del grupo Entra autorizado" FontWeight="SemiBold" Margin="0,16,0,4" />
+                        <TextBlock Text="{l:L10n Key=Settings.Rbac}" FontWeight="SemiBold" Margin="0,16,0,4" />
                         <ui:TextBox Text="{Binding AuthorizationGroupId, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="00000000-0000-0000-0000-000000000000"
+                                    PlaceholderText="{l:L10n Key=Settings.Tenant.IdPlaceholder}"
                                     Margin="0,0,0,4" />
-                        <TextBlock Text="Opcional. Vacío = sin restricción. Si está configurado, las acciones destructivas (p.ej. offboarding) requieren que tu cuenta esté en ese grupo. Verificado via /me/checkMemberGroups."
+                        <TextBlock Text="{l:L10n Key=Settings.Rbac.Hint}"
                                    Opacity="0.55"
                                    FontSize="12"
                                    TextWrapping="Wrap" />
                     </StackPanel>
                 </Border>
 
-                <TextBlock Text="Plugins"
+                <TextBlock Text="{l:L10n Key=Settings.Section.Plugins}"
                            FontSize="18"
                            FontWeight="SemiBold"
                            Margin="0,0,0,12" />
@@ -125,7 +126,7 @@
                 <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
                         Background="{DynamicResource ControlFillColorDefaultBrush}">
                     <StackPanel>
-                        <TextBlock Text="DLLs detectados en %LOCALAPPDATA%\Grex365\plugins. Los cambios se aplican al reiniciar la aplicacion."
+                        <TextBlock Text="{l:L10n Key=Settings.Plugins.Hint}"
                                    Opacity="0.7"
                                    TextWrapping="Wrap"
                                    Margin="0,0,0,12" />
@@ -147,14 +148,14 @@
                                             <TextBlock Text="{Binding Status}" Opacity="0.65" FontSize="12" />
                                         </StackPanel>
                                         <TextBlock Grid.Column="2"
-                                                   Text="{Binding ModuleCount, StringFormat='{}{0} modulo(s)'}"
+                                                   Text="{Binding ModuleCountLabel}"
                                                    VerticalAlignment="Center"
                                                    Opacity="0.7" />
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <TextBlock Text="Si no aparecen plugins, copia un .dll que implemente Grex365.Core.Plugins.IModule en esa carpeta y reinicia."
+                        <TextBlock Text="{l:L10n Key=Settings.Plugins.Empty}"
                                    Opacity="0.55"
                                    FontSize="12"
                                    TextWrapping="Wrap"
@@ -162,7 +163,7 @@
                     </StackPanel>
                 </Border>
 
-                <TextBlock Text="Certificado (App registration)"
+                <TextBlock Text="{l:L10n Key=Settings.Section.Certificate}"
                            FontSize="18"
                            FontWeight="SemiBold"
                            Margin="0,0,0,12" />
@@ -170,16 +171,16 @@
                 <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
                         Background="{DynamicResource ControlFillColorDefaultBrush}">
                     <StackPanel>
-                        <TextBlock Text="App ID" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBlock Text="{l:L10n Key=Settings.Cert.AppId}" FontWeight="SemiBold" Margin="0,0,0,4" />
                         <ui:TextBox Text="{Binding CertAppId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
 
-                        <TextBlock Text="Tenant ID" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBlock Text="{l:L10n Key=Settings.Cert.TenantId}" FontWeight="SemiBold" Margin="0,0,0,4" />
                         <ui:TextBox Text="{Binding CertTenantId, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
 
-                        <TextBlock Text="Organization" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBlock Text="{l:L10n Key=Settings.Cert.Organization}" FontWeight="SemiBold" Margin="0,0,0,4" />
                         <ui:TextBox Text="{Binding CertOrganization, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
 
-                        <TextBlock Text="Cert thumbprint" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBlock Text="{l:L10n Key=Settings.Cert.Thumbprint}" FontWeight="SemiBold" Margin="0,0,0,4" />
                         <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -188,13 +189,13 @@
                             <ui:TextBox Grid.Column="0"
                                         Text="{Binding CertThumbprint, UpdateSourceTrigger=PropertyChanged}" />
                             <ui:Button Grid.Column="1"
-                                       Content="Examinar..."
+                                       Content="{l:L10n Key=Settings.Cert.Browse}"
                                        Margin="8,0,0,0"
                                        Click="BrowseCert_Click" />
                         </Grid>
 
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                            <ui:Button Content="Validar"
+                            <ui:Button Content="{l:L10n Key=Settings.Cert.Validate}"
                                        Margin="0,0,8,0"
                                        Command="{Binding ValidateCertCommand}" />
                             <TextBlock VerticalAlignment="Center"
@@ -215,10 +216,10 @@
                            Opacity="0.8"
                            VerticalAlignment="Center"
                            Margin="0,0,16,0" />
-                <ui:Button Content="Recargar"
+                <ui:Button Content="{l:L10n Key=Settings.Button.Reload}"
                            Margin="0,0,8,0"
                            Command="{Binding LoadCommand}" />
-                <ui:Button Content="Guardar"
+                <ui:Button Content="{l:L10n Key=Settings.Button.Save}"
                            Appearance="Primary"
                            Command="{Binding SaveCommand}" />
             </StackPanel>

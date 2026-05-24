@@ -12,7 +12,6 @@ public static class L10n
 
     public static string ActiveLanguage => _activeLanguage;
 
-    // Configurar desde dicts custom (tests + future i18n loader externo).
     public static void Configure(
         IDictionary<string, string> primary,
         IDictionary<string, string>? fallback = null,
@@ -26,8 +25,6 @@ public static class L10n
         _activeLanguage = activeLanguage;
     }
 
-    // Inicializa con strings built-in. ES = canonical, EN parcial con fallback a ES.
-    // Unknown / null / whitespace language → DefaultLanguage.
     public static void Initialize(string? languageCode)
     {
         var code = (languageCode ?? DefaultLanguage).Trim().ToLowerInvariant();
@@ -48,6 +45,22 @@ public static class L10n
         if (_fallback.TryGetValue(key, out var f)) return f;
         return key;
     }
+
+    public static string Format(string key, params object?[] args)
+    {
+        var template = Get(key);
+        if (args is null || args.Length == 0) return template;
+        try
+        {
+            return string.Format(template, args);
+        }
+        catch (FormatException)
+        {
+            return template;
+        }
+    }
+
+    public static IReadOnlyCollection<string> KnownKeys => EsStrings.Keys;
 
     public static void Reset()
     {
@@ -82,17 +95,73 @@ public static class L10n
         ["NavCategory.Plugins"] = "Plugins",
         ["NavCategory.Others"] = "Otros",
 
+        ["Settings.Window.Title"] = "GREX365 · Ajustes",
+        ["Settings.TitleBar"] = "Ajustes",
         ["Settings.Title"] = "Ajustes",
+        ["Settings.Preferences"] = "Preferencias",
+        ["Settings.Section.Connection"] = "Método de conexión",
+        ["Settings.Section.Plugins"] = "Plugins",
+        ["Settings.Section.Certificate"] = "Certificado (App registration)",
+        ["Settings.Connection.Cert"] = "Certificado (app)",
+        ["Settings.Connection.Traditional"] = "Tradicional (UPN)",
+        ["Settings.Tenant.IdLabel"] = "Tenant esperado (ID)",
+        ["Settings.Tenant.IdPlaceholder"] = "00000000-0000-0000-0000-000000000000",
+        ["Settings.Tenant.DomainLabel"] = "Tenant esperado (dominio)",
+        ["Settings.Tenant.DomainPlaceholder"] = "contoso.onmicrosoft.com",
+        ["Settings.EnforceTenantLock"] = "Forzar tenant lock (rechazar conexión si no coincide)",
+        ["Settings.LanguageLabel"] = "Idioma / Language",
         ["Settings.Language"] = "Idioma",
         ["Settings.Language.Spanish"] = "Español",
         ["Settings.Language.English"] = "Inglés",
         ["Settings.Theme"] = "Tema",
+        ["Settings.Theme.Dark"] = "Oscuro",
+        ["Settings.Theme.Light"] = "Claro",
+        ["Settings.Theme.Auto"] = "Auto (seguir sistema)",
+        ["Settings.Theme.Hint"] = "Auto detecta el tema del sistema y se actualiza al instante cuando cambia.",
+        ["Settings.LogLevel"] = "Nivel de logging",
+        ["Settings.LogLevel.Debug"] = "Debug (verboso)",
+        ["Settings.LogLevel.Information"] = "Information (recomendado)",
+        ["Settings.LogLevel.Warning"] = "Warning",
+        ["Settings.LogLevel.Error"] = "Error",
+        ["Settings.LogLevel.Hint"] = "Aplica al instante (Serilog LoggingLevelSwitch); no requiere reinicio.",
+        ["Settings.AppInsights"] = "Application Insights — Connection String",
+        ["Settings.AppInsights.Placeholder"] = "InstrumentationKey=xxxx;IngestionEndpoint=https://...",
+        ["Settings.AppInsights.Hint"] = "Opcional. Vacío = telemetría deshabilitada (NullTelemetry). Requiere reinicio para tomar efecto. Se envían eventos por cada Ok/Warn/Error registrado.",
+        ["Settings.Rbac"] = "Permisos por rol (RBAC) — Object ID del grupo Entra autorizado",
+        ["Settings.Rbac.Hint"] = "Opcional. Vacío = sin restricción. Si está configurado, las acciones destructivas (p.ej. offboarding) requieren que tu cuenta esté en ese grupo. Verificado via /me/checkMemberGroups.",
+        ["Settings.Plugins.Hint"] = "DLLs detectados en %LOCALAPPDATA%\\Grex365\\plugins. Los cambios se aplican al reiniciar la aplicación.",
+        ["Settings.Plugins.Empty"] = "Si no aparecen plugins, copia un .dll que implemente Grex365.Core.Plugins.IModule en esa carpeta y reinicia.",
+        ["Settings.Plugins.ModulesSuffix"] = "módulo(s)",
+        ["Settings.Plugins.Status.Loaded"] = "Cargado",
+        ["Settings.Plugins.Status.Disabled"] = "Deshabilitado",
+        ["Settings.Plugins.Status.ErrorPrefix"] = "Error: ",
+        ["Settings.Cert.AppId"] = "App ID",
+        ["Settings.Cert.TenantId"] = "Tenant ID",
+        ["Settings.Cert.Organization"] = "Organization",
+        ["Settings.Cert.Thumbprint"] = "Cert thumbprint",
+        ["Settings.Cert.Browse"] = "Examinar...",
+        ["Settings.Cert.Validate"] = "Validar",
+        ["Settings.Button.Reload"] = "Recargar",
+        ["Settings.Button.Save"] = "Guardar",
+        ["Settings.SaveStatus.Prefix"] = "Guardado · {0}",
+        ["Settings.SaveStatus.ErrorPrefix"] = "Error: {0}",
+        ["Settings.SaveStatus.SavedLog"] = "Preferencias y certificado guardados.",
         ["Settings.RestartRequired"] = "Reinicia la aplicación para aplicar el nuevo idioma.",
+
+        ["About.Window.Title"] = "Acerca de GREX365",
+        ["About.TitleBar"] = "Acerca de",
+        ["About.Description"] = "Toolkit para operaciones administrativas sobre Microsoft 365: Exchange Online, Microsoft Graph y Entra ID. Autenticación por certificado (app-only) o device code (delegado).",
+        ["About.Version"] = "Versión",
+        ["About.Runtime"] = ".NET runtime",
+        ["About.DataDir"] = "Datos en",
+        ["About.Button.OpenDataDir"] = "Abrir carpeta de datos",
+        ["About.Button.Close"] = "Cerrar",
 
         ["Dialog.Ok"] = "Aceptar",
         ["Dialog.Cancel"] = "Cancelar",
         ["Dialog.Yes"] = "Sí",
         ["Dialog.No"] = "No",
+        ["Dialog.Close"] = "Cerrar",
 
         ["Common.Connect"] = "Conectar",
         ["Common.Disconnect"] = "Desconectar",
@@ -102,6 +171,17 @@ public static class L10n
         ["Common.Apply"] = "Aplicar",
         ["Common.Clear"] = "Limpiar",
         ["Common.Search"] = "Buscar",
+        ["Common.Loading"] = "Cargando...",
+        ["Common.Empty"] = "Sin resultados",
+        ["Common.Save"] = "Guardar",
+        ["Common.Delete"] = "Eliminar",
+        ["Common.Edit"] = "Editar",
+        ["Common.Add"] = "Añadir",
+        ["Common.Remove"] = "Quitar",
+        ["Common.Back"] = "Atrás",
+        ["Common.Next"] = "Siguiente",
+        ["Common.Finish"] = "Finalizar",
+        ["Common.Skip"] = "Omitir",
     };
 
     private static readonly Dictionary<string, string> EnStrings = new(StringComparer.OrdinalIgnoreCase)
@@ -130,17 +210,73 @@ public static class L10n
         ["NavCategory.Plugins"] = "Plugins",
         ["NavCategory.Others"] = "Others",
 
+        ["Settings.Window.Title"] = "GREX365 · Settings",
+        ["Settings.TitleBar"] = "Settings",
         ["Settings.Title"] = "Settings",
+        ["Settings.Preferences"] = "Preferences",
+        ["Settings.Section.Connection"] = "Connection method",
+        ["Settings.Section.Plugins"] = "Plugins",
+        ["Settings.Section.Certificate"] = "Certificate (App registration)",
+        ["Settings.Connection.Cert"] = "Certificate (app)",
+        ["Settings.Connection.Traditional"] = "Traditional (UPN)",
+        ["Settings.Tenant.IdLabel"] = "Expected tenant (ID)",
+        ["Settings.Tenant.IdPlaceholder"] = "00000000-0000-0000-0000-000000000000",
+        ["Settings.Tenant.DomainLabel"] = "Expected tenant (domain)",
+        ["Settings.Tenant.DomainPlaceholder"] = "contoso.onmicrosoft.com",
+        ["Settings.EnforceTenantLock"] = "Enforce tenant lock (reject connection on mismatch)",
+        ["Settings.LanguageLabel"] = "Idioma / Language",
         ["Settings.Language"] = "Language",
         ["Settings.Language.Spanish"] = "Spanish",
         ["Settings.Language.English"] = "English",
         ["Settings.Theme"] = "Theme",
+        ["Settings.Theme.Dark"] = "Dark",
+        ["Settings.Theme.Light"] = "Light",
+        ["Settings.Theme.Auto"] = "Auto (follow system)",
+        ["Settings.Theme.Hint"] = "Auto detects the system theme and switches live when it changes.",
+        ["Settings.LogLevel"] = "Logging level",
+        ["Settings.LogLevel.Debug"] = "Debug (verbose)",
+        ["Settings.LogLevel.Information"] = "Information (recommended)",
+        ["Settings.LogLevel.Warning"] = "Warning",
+        ["Settings.LogLevel.Error"] = "Error",
+        ["Settings.LogLevel.Hint"] = "Applies instantly (Serilog LoggingLevelSwitch); no restart needed.",
+        ["Settings.AppInsights"] = "Application Insights — Connection String",
+        ["Settings.AppInsights.Placeholder"] = "InstrumentationKey=xxxx;IngestionEndpoint=https://...",
+        ["Settings.AppInsights.Hint"] = "Optional. Empty = telemetry disabled (NullTelemetry). Restart required to take effect. Sends an event per Ok/Warn/Error logged.",
+        ["Settings.Rbac"] = "Role-based permissions (RBAC) — Object ID of the authorized Entra group",
+        ["Settings.Rbac.Hint"] = "Optional. Empty = no restriction. When set, destructive actions (e.g. offboarding) require your account to be in that group. Checked via /me/checkMemberGroups.",
+        ["Settings.Plugins.Hint"] = "DLLs detected in %LOCALAPPDATA%\\Grex365\\plugins. Changes take effect after restart.",
+        ["Settings.Plugins.Empty"] = "If no plugins show up, drop a .dll implementing Grex365.Core.Plugins.IModule in that folder and restart.",
+        ["Settings.Plugins.ModulesSuffix"] = "module(s)",
+        ["Settings.Plugins.Status.Loaded"] = "Loaded",
+        ["Settings.Plugins.Status.Disabled"] = "Disabled",
+        ["Settings.Plugins.Status.ErrorPrefix"] = "Error: ",
+        ["Settings.Cert.AppId"] = "App ID",
+        ["Settings.Cert.TenantId"] = "Tenant ID",
+        ["Settings.Cert.Organization"] = "Organization",
+        ["Settings.Cert.Thumbprint"] = "Cert thumbprint",
+        ["Settings.Cert.Browse"] = "Browse...",
+        ["Settings.Cert.Validate"] = "Validate",
+        ["Settings.Button.Reload"] = "Reload",
+        ["Settings.Button.Save"] = "Save",
+        ["Settings.SaveStatus.Prefix"] = "Saved · {0}",
+        ["Settings.SaveStatus.ErrorPrefix"] = "Error: {0}",
+        ["Settings.SaveStatus.SavedLog"] = "Preferences and certificate saved.",
         ["Settings.RestartRequired"] = "Restart the app to apply the new language.",
+
+        ["About.Window.Title"] = "About GREX365",
+        ["About.TitleBar"] = "About",
+        ["About.Description"] = "Toolkit for administrative operations on Microsoft 365: Exchange Online, Microsoft Graph and Entra ID. Auth via certificate (app-only) or device code (delegated).",
+        ["About.Version"] = "Version",
+        ["About.Runtime"] = ".NET runtime",
+        ["About.DataDir"] = "Data at",
+        ["About.Button.OpenDataDir"] = "Open data folder",
+        ["About.Button.Close"] = "Close",
 
         ["Dialog.Ok"] = "OK",
         ["Dialog.Cancel"] = "Cancel",
         ["Dialog.Yes"] = "Yes",
         ["Dialog.No"] = "No",
+        ["Dialog.Close"] = "Close",
 
         ["Common.Connect"] = "Connect",
         ["Common.Disconnect"] = "Disconnect",
@@ -150,5 +286,16 @@ public static class L10n
         ["Common.Apply"] = "Apply",
         ["Common.Clear"] = "Clear",
         ["Common.Search"] = "Search",
+        ["Common.Loading"] = "Loading...",
+        ["Common.Empty"] = "No results",
+        ["Common.Save"] = "Save",
+        ["Common.Delete"] = "Delete",
+        ["Common.Edit"] = "Edit",
+        ["Common.Add"] = "Add",
+        ["Common.Remove"] = "Remove",
+        ["Common.Back"] = "Back",
+        ["Common.Next"] = "Next",
+        ["Common.Finish"] = "Finish",
+        ["Common.Skip"] = "Skip",
     };
 }

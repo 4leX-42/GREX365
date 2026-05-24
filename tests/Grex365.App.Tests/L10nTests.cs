@@ -179,4 +179,213 @@ public class L10nTests : IDisposable
         value.Should().NotBe(key);
         value.Should().NotBeNullOrWhiteSpace();
     }
+
+    [Theory]
+    [InlineData("Settings.Window.Title")]
+    [InlineData("Settings.Preferences")]
+    [InlineData("Settings.Section.Connection")]
+    [InlineData("Settings.Section.Plugins")]
+    [InlineData("Settings.Section.Certificate")]
+    [InlineData("Settings.Connection.Cert")]
+    [InlineData("Settings.Connection.Traditional")]
+    [InlineData("Settings.Tenant.IdLabel")]
+    [InlineData("Settings.Tenant.DomainLabel")]
+    [InlineData("Settings.EnforceTenantLock")]
+    [InlineData("Settings.LanguageLabel")]
+    [InlineData("Settings.Theme.Dark")]
+    [InlineData("Settings.Theme.Light")]
+    [InlineData("Settings.Theme.Auto")]
+    [InlineData("Settings.Theme.Hint")]
+    [InlineData("Settings.LogLevel")]
+    [InlineData("Settings.LogLevel.Debug")]
+    [InlineData("Settings.LogLevel.Information")]
+    [InlineData("Settings.LogLevel.Warning")]
+    [InlineData("Settings.LogLevel.Error")]
+    [InlineData("Settings.LogLevel.Hint")]
+    [InlineData("Settings.AppInsights")]
+    [InlineData("Settings.AppInsights.Placeholder")]
+    [InlineData("Settings.AppInsights.Hint")]
+    [InlineData("Settings.Rbac")]
+    [InlineData("Settings.Rbac.Hint")]
+    [InlineData("Settings.Plugins.Hint")]
+    [InlineData("Settings.Plugins.Empty")]
+    [InlineData("Settings.Plugins.ModulesSuffix")]
+    [InlineData("Settings.Plugins.Status.Loaded")]
+    [InlineData("Settings.Plugins.Status.Disabled")]
+    [InlineData("Settings.Plugins.Status.ErrorPrefix")]
+    [InlineData("Settings.Cert.AppId")]
+    [InlineData("Settings.Cert.TenantId")]
+    [InlineData("Settings.Cert.Organization")]
+    [InlineData("Settings.Cert.Thumbprint")]
+    [InlineData("Settings.Cert.Browse")]
+    [InlineData("Settings.Cert.Validate")]
+    [InlineData("Settings.Button.Reload")]
+    [InlineData("Settings.Button.Save")]
+    [InlineData("Settings.SaveStatus.Prefix")]
+    [InlineData("Settings.SaveStatus.ErrorPrefix")]
+    [InlineData("Settings.SaveStatus.SavedLog")]
+    public void Initialize_Spanish_AllSettingsKeys_Resolved(string key)
+    {
+        L10n.Initialize("es");
+        var value = L10n.Get(key);
+        value.Should().NotBe(key, because: $"the key '{key}' should resolve in es");
+        value.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Theory]
+    [InlineData("Settings.Window.Title")]
+    [InlineData("Settings.Section.Connection")]
+    [InlineData("Settings.Connection.Cert")]
+    [InlineData("Settings.Theme.Auto")]
+    [InlineData("Settings.LogLevel.Hint")]
+    [InlineData("Settings.Plugins.ModulesSuffix")]
+    [InlineData("Settings.Cert.Validate")]
+    [InlineData("Settings.Button.Save")]
+    public void Initialize_English_SettingsKeys_Resolved(string key)
+    {
+        L10n.Initialize("en");
+        var value = L10n.Get(key);
+        value.Should().NotBe(key);
+        value.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Theory]
+    [InlineData("About.Window.Title")]
+    [InlineData("About.TitleBar")]
+    [InlineData("About.Description")]
+    [InlineData("About.Version")]
+    [InlineData("About.Runtime")]
+    [InlineData("About.DataDir")]
+    [InlineData("About.Button.OpenDataDir")]
+    [InlineData("About.Button.Close")]
+    public void Initialize_Spanish_AllAboutKeys_Resolved(string key)
+    {
+        L10n.Initialize("es");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+    }
+
+    [Theory]
+    [InlineData("About.Description")]
+    [InlineData("About.Button.OpenDataDir")]
+    [InlineData("About.Button.Close")]
+    public void Initialize_English_AboutKeys_Resolved(string key)
+    {
+        L10n.Initialize("en");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+    }
+
+    [Theory]
+    [InlineData("Dialog.Ok")]
+    [InlineData("Dialog.Cancel")]
+    [InlineData("Dialog.Yes")]
+    [InlineData("Dialog.No")]
+    [InlineData("Dialog.Close")]
+    [InlineData("Common.Connect")]
+    [InlineData("Common.Disconnect")]
+    [InlineData("Common.Refresh")]
+    [InlineData("Common.Export")]
+    [InlineData("Common.Apply")]
+    [InlineData("Common.Clear")]
+    [InlineData("Common.Search")]
+    [InlineData("Common.Loading")]
+    [InlineData("Common.Empty")]
+    [InlineData("Common.Save")]
+    [InlineData("Common.Delete")]
+    [InlineData("Common.Edit")]
+    [InlineData("Common.Add")]
+    [InlineData("Common.Remove")]
+    [InlineData("Common.Back")]
+    [InlineData("Common.Next")]
+    [InlineData("Common.Finish")]
+    [InlineData("Common.Skip")]
+    public void Initialize_Both_DialogAndCommonKeys_Resolved(string key)
+    {
+        L10n.Initialize("es");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+
+        L10n.Initialize("en");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public void Format_KeyWithPlaceholder_SubstitutesArg()
+    {
+        L10n.Configure(new Dictionary<string, string> { ["Greeting"] = "Hola {0}" });
+
+        L10n.Format("Greeting", "mundo").Should().Be("Hola mundo");
+    }
+
+    [Fact]
+    public void Format_MultipleArgs_OrderPreserved()
+    {
+        L10n.Configure(new Dictionary<string, string> { ["X"] = "{0}-{1}" });
+
+        L10n.Format("X", "a", "b").Should().Be("a-b");
+    }
+
+    [Fact]
+    public void Format_NoArgs_ReturnsRawTemplate()
+    {
+        L10n.Configure(new Dictionary<string, string> { ["X"] = "static" });
+
+        L10n.Format("X").Should().Be("static");
+    }
+
+    [Fact]
+    public void Format_InvalidPlaceholder_ReturnsRawTemplate()
+    {
+        L10n.Configure(new Dictionary<string, string> { ["X"] = "bad {nope}" });
+
+        L10n.Format("X", "z").Should().Be("bad {nope}");
+    }
+
+    [Fact]
+    public void Format_NullArgs_ReturnsRawTemplate()
+    {
+        L10n.Configure(new Dictionary<string, string> { ["X"] = "literal" });
+
+        L10n.Format("X", null!).Should().Be("literal");
+    }
+
+    [Fact]
+    public void Format_SaveStatusPrefix_Spanish_FormatsTimestamp()
+    {
+        L10n.Initialize("es");
+        var result = L10n.Format("Settings.SaveStatus.Prefix", "12:34:56");
+
+        result.Should().Contain("12:34:56").And.Contain("Guardado");
+    }
+
+    [Fact]
+    public void Format_SaveStatusPrefix_English_FormatsTimestamp()
+    {
+        L10n.Initialize("en");
+        var result = L10n.Format("Settings.SaveStatus.Prefix", "09:00:00");
+
+        result.Should().Contain("09:00:00").And.Contain("Saved");
+    }
+
+    [Fact]
+    public void KnownKeys_NotEmpty_ContainsNavAndSettings()
+    {
+        L10n.Initialize("es");
+
+        L10n.KnownKeys.Should().NotBeEmpty();
+        L10n.KnownKeys.Should().Contain("Nav.Dashboard");
+        L10n.KnownKeys.Should().Contain("Settings.Title");
+    }
+
+    [Fact]
+    public void EnDict_HasTranslationForEveryEsKey()
+    {
+        L10n.Initialize("es");
+        var keys = L10n.KnownKeys.ToList();
+
+        L10n.Initialize("en");
+        foreach (var key in keys)
+        {
+            var en = L10n.Get(key);
+            en.Should().NotBe(key, because: $"EN should translate '{key}' (or fallback chain should mask it)");
+        }
+    }
 }
