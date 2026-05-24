@@ -21,7 +21,20 @@ public partial class MainWindow : FluentWindow
             notifier.AttachPresenter(RootSnackbarPresenter);
             RestoreWindowState();
         };
-        Closing += (_, _) => SaveWindowState();
+        Closing += OnMainWindowClosing;
+    }
+
+    private void OnMainWindowClosing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (Application.Current is App app && !app.IsExplicitExitRequested)
+        {
+            // X click on main window: hide to tray, keep app running.
+            e.Cancel = true;
+            SaveWindowState();
+            Hide();
+            return;
+        }
+        SaveWindowState();
     }
 
     private async void RestoreWindowState()

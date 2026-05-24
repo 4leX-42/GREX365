@@ -15,6 +15,21 @@ public sealed class UiLogSink : IUiLogSink
     private readonly ITelemetry? _telemetry;
     private readonly string _actor;
 
+    // Sources that should never emit toast notifications. Status bar + log panel
+    // are the canonical surfaces for connection/reconnection state per user
+    // preference ("solo status bar silencioso"). Adding a source here keeps it
+    // in Serilog + audit + telemetry but suppresses the snackbar toast.
+    private static readonly HashSet<string> SilentSources = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "AutoConnect",
+        "Connect",
+        "ConnectionMonitor",
+        "TenantLock",
+        "Settings",
+        "EXO",
+        "Graph",
+    };
+
     public UiLogSink(INotifier? notifier = null, IAuditLog? audit = null, ITelemetry? telemetry = null)
     {
         _notifier = notifier;
@@ -23,6 +38,15 @@ public sealed class UiLogSink : IUiLogSink
         _actor = Environment.UserName;
         Entries = new ObservableCollection<LogEntry>();
         _progress = new Progress<LogEntry>(OnEntry);
+    }
+
+    private bool ShouldNotify(LogEntry entry)
+    {
+        if (_notifier is null) return false;
+        // Always suppress for Info/Debug (covered by log panel only).
+        if (entry.Severity is LogSeverity.Info or LogSeverity.Debug) return false;
+        // Silent sources never emit toasts regardless of severity.
+        return !SilentSources.Contains(entry.Source);
     }
 
     public ObservableCollection<LogEntry> Entries { get; }
@@ -43,23 +67,24 @@ public sealed class UiLogSink : IUiLogSink
             Entries.RemoveAt(0);
         }
 
+        var shouldNotify = ShouldNotify(entry);
         switch (entry.Severity)
         {
             case LogSeverity.Error:
                 Log.Error(entry.Exception, "[{Source}] {Message}", entry.Source, entry.Message);
-                _notifier?.Notify(entry.Source, entry.Message, entry.Severity);
+                if (shouldNotify) _notifier!.Notify(entry.Source, entry.Message, entry.Severity);
                 FireAuditAsync(entry, "ERROR");
                 TryTrack(entry, "ERROR");
                 break;
             case LogSeverity.Warning:
                 Log.Warning("[{Source}] {Message}", entry.Source, entry.Message);
-                _notifier?.Notify(entry.Source, entry.Message, entry.Severity);
+                if (shouldNotify) _notifier!.Notify(entry.Source, entry.Message, entry.Severity);
                 FireAuditAsync(entry, "WARN");
                 TryTrack(entry, "WARN");
                 break;
             case LogSeverity.Ok:
                 Log.Information("[{Source}] OK · {Message}", entry.Source, entry.Message);
-                _notifier?.Notify(entry.Source, entry.Message, entry.Severity);
+                // Ok severity never emits toast (success is surfaced via status bar / log panel).
                 FireAuditAsync(entry, "OK");
                 TryTrack(entry, "OK");
                 break;

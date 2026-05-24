@@ -159,6 +159,7 @@ public partial class App : Application
                 services.AddSingleton<IDialogService, WpfDialogService>();
                 services.AddSingleton<IClipboardService, WpfClipboardService>();
                 services.AddSingleton<ISystemThemeProvider, WindowsRegistryThemeProvider>();
+                services.AddSingleton<TrayIconService>();
 
                 var auditDir = Path.Combine(DataDirectory, "audit");
                 Directory.CreateDirectory(auditDir);
@@ -249,6 +250,12 @@ public partial class App : Application
 
         TryApplySavedTheme();
 
+        // Tray icon enables background lifecycle: X minimizes to tray; explicit
+        // Exit from tray menu shuts down the app. ShutdownMode set to explicit so
+        // the process survives main window closing.
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        WireTrayIcon(monitor);
+
         var main = Services.GetRequiredService<MainWindow>();
         main.Show();
 
@@ -256,6 +263,45 @@ public partial class App : Application
 
         base.OnStartup(e);
     }
+
+    private void WireTrayIcon(IConnectionStateMonitor monitor)
+    {
+        var tray = Services.GetRequiredService<TrayIconService>();
+        tray.OpenRequested += (_, _) =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (MainWindow is null) return;
+                MainWindow.Show();
+                if (MainWindow.WindowState == WindowState.Minimized)
+                {
+                    MainWindow.WindowState = WindowState.Normal;
+                }
+                MainWindow.Activate();
+                MainWindow.Topmost = true;
+                MainWindow.Topmost = false;
+                MainWindow.Focus();
+            });
+        };
+        tray.ReconnectRequested += (_, _) => _ = TryAutoConnectAsync();
+        tray.ExitRequested += (_, _) =>
+        {
+            Dispatcher.Invoke(() =>
+            {
+                _explicitExitRequested = true;
+                Shutdown();
+            });
+        };
+        monitor.PropertyChanged += (_, _) =>
+        {
+            Dispatcher.Invoke(() =>
+                tray.UpdateConnectionState(monitor.Current.GraphConnected, monitor.Current.ExchangeConnected));
+        };
+        tray.Show();
+    }
+
+    private bool _explicitExitRequested;
+    public bool IsExplicitExitRequested => _explicitExitRequested;
 
     private async Task ShowFirstRunWizardIfNeededAsync()
     {
@@ -466,6 +512,9 @@ public partial class App : Application
         Microsoft.Win32.SystemEvents.UserPreferenceChanged -= OnSystemUserPreferenceChanged;
         if (_host is not null)
         {
+            var tray = Services.GetService<TrayIconService>();
+            tray?.Dispose();
+
             var monitor = Services.GetService<IConnectionStateMonitor>();
             if (monitor is not null)
             {
