@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S+T local)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **836 passing** (xUnit + FluentAssertions) — 480 Core + 356 App
-- Última actualización: 2026-05-24 (sesión · Sprints S + T + U)
+- Tests: **855 passing** (xUnit + FluentAssertions) — 480 Core + 375 App
+- Última actualización: 2026-05-24 (sesión · Sprints S–Y, UI overhaul)
 
 ## Auditoría técnica integral 2026-05-22
 
@@ -57,6 +57,58 @@
 - Sweep final `grep "Foreground=\"#\|Background=\"#"`: cero matches restantes — paleta 100% via DynamicResource.
 
 ## Bitácora sesiones
+
+### 2026-05-24 (sesión cont. autónoma — UX overhaul) — Sprints V–Y · paleta azul + contrast + tray + silent notifications
+
+User feedback explícito sobre calidad visual + UX: "fase seria de edición, presentación y rediseño completo... Sustituir el morado actual por una línea visual más moderna en tonos azulados/celestes. Corregir problemas de legibilidad: en ajustes, por ejemplo, el modo oscuro deja partes en gris y el texto casi no se puede leer." + lifecycle: "X = minimizar a tray, mantener en segundo plano, reconexión silenciosa, no toasts molestos".
+
+Decisiones tomadas vía AskUserQuestion:
+- Paleta: **Azul corporativo sólido** `#1E40AF → #2563EB → #3B82F6` (indigo deep, no púrpura).
+- Lifecycle: **Minimize-to-tray** (X oculta a tray, menú tray: Abrir/Estado/Reconectar/Salir).
+- Notifications: **Solo status bar silencioso** (sin toasts ni dialogs en reconnect/auto-connect).
+
+**Sprint V — Paleta azul corporativo** `444c1a5`:
+- App.xaml: BrandAccent gradient `5B8DEF→7A78F0→A66CF4` (azul→púrpura) → `1E40AF→2563EB→3B82F6` (indigo→sky). BrandPurple eliminado, nuevo BrandSky #7DD3FC. AccentFill* wpf-ui tokens override migrados a Mid (#2563EB) en lugar de Start.
+- GlassBorderHighlight gradient migrado a blue indigo. DropShadowEffect colors usan BrandAccentMid.
+- GxLogoMark + GxLogoBadge: canvas 42x28 (era 40x28), stroke 3 (era 3.2), proporciones tightened. Badge añade AccentGlowSoftEffect drop-shadow.
+
+**Sprint W — Theme-aware contrast** (commit conjunto V+W):
+- App.xaml: nuevos styles `FieldHintText`/`MutedText`/`CaptionText` con `Foreground=TextFillColorSecondaryBrush` (wpf-ui token auto-adjust per theme).
+- SettingsCardDescription / SettingsCardIcon / SettingsGroupHeader: Opacity reemplazado por Foreground=Secondary brush. SettingsCardIcon ahora BrandAccentSolid (azul).
+- Batch sweep 17 XAML files: `Opacity="0.5"`/`0.55"` → TextFillColorTertiaryBrush; `Opacity="0.6"`/`0.65"`/`0.7"` → TextFillColorSecondaryBrush. Auto-adjust per theme via DynamicResource. Border con Opacity 0.7 (GridSplitter handle) preservado (no es TextElement).
+- Fixes user feedback dark mode "gris-sobre-gris" gracias a wpf-ui tokens que tienen contrast correctness baked-in.
+
+**Sprint X — Background lifecycle** `40f0f67`:
+- Grex365.App.csproj: `UseWindowsForms=true` (System.Windows.Forms.NotifyIcon). Implicit usings `System.Windows.Forms` + `System.Drawing` removidos vía `<Using Remove="...">` para evitar collision con WPF UserControl/Brush. TrayIconService usa aliases D=/D2=/WinForms=.
+- `TrayIconService` nuevo (Grex365.App.Services): NotifyIcon con ContextMenuStrip (Abrir GREX365/Estado/Reconectar ahora/Salir). Icono procedural 32x32: gradient `1E40AF→3B82F6` 45° + letra "G" white SemiBold + status dot overlay (rojo/ámbar según graphConnected+exchangeConnected). UpdateConnectionState re-renderiza icon dynamic.
+- App.xaml.cs: `ShutdownMode=OnExplicitShutdown` (proceso sobrevive cierre main window). `WireTrayIcon(monitor)`: suscribe monitor.PropertyChanged → tray.UpdateConnectionState. OpenRequested → Show+Activate+focus. ReconnectRequested → TryAutoConnectAsync. ExitRequested → flag `_explicitExitRequested` + Shutdown(). OnExit dispose tray.
+- MainWindow.xaml.cs: `OnMainWindowClosing` cancela close + Hide() si !ExplicitExit. SaveWindowState sigue persistiendo. Topmost ping (true→false) en OpenRequested para foreground.
+
+**Sprint Y — Silent notifications** (commit conjunto X+Y):
+- UiLogSink.OnEntry ahora gated por `ShouldNotify` policy:
+  - Severity Info/Debug nunca emit toast.
+  - Severity Ok nunca emit toast (success surface vía status bar).
+  - `SilentSources` HashSet (case-insensitive): {AutoConnect, Connect, ConnectionMonitor, TenantLock, Settings, EXO, Graph} bypass toast incluso para Error/Warning. Status bar + log panel canónicos.
+  - Resto source/severity combos siguen disparando toast (e.g. RBAC denial en Users/Groups VM).
+- UiLogSinkNotificationTests +19: ShouldNotify gate cases (null notifier, silent sources case-insensitive ×9, non-silent error/warning, info/debug suppressed theory, Ok gate).
+
+**Verificación arranque**: app launched OK, log confirma flujo silencioso:
+```
+[AutoConnect] Cert válido detectado, conectando...
+[Graph] OK · Conectado. Organización: Andersen
+[EXO] OK · Exchange Online conectado.
+[AutoConnect] OK · Conectado automáticamente.
+```
+Cero MessageBox / Snackbar disparado durante auto-connect ✓.
+
+**Estado final Sprints V–Y**: 855 tests verdes (480 Core + 375 App, +19 UiLogSink). Build clean 7 projects 0 errors (2 warnings WFO0003 high-DPI manifest non-fatal). 2 commits locales (`444c1a5` + `40f0f67`). Total sesión: 7 commits desde S.
+
+**Pendiente verificación visual humana**: usuario debe abrir app y validar:
+1. Paleta azul corporativo aplicada (no purple) en sidebar/botones/glow/logo
+2. Settings dark mode legibilidad (no gray-on-gray) ambos temas
+3. X cierra a tray (no shutdown), tray menú functional
+4. Tray icon visible con status dot rojo/ámbar/verde
+5. Logo blue gradient en sidebar + AboutWindow
 
 ### 2026-05-24 (sesión continuación autónoma) — Sprints S + T + U · i18n expansion + BulkGroupPlanner + ConnectView
 
