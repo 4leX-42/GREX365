@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S+T local)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **778 passing** (xUnit + FluentAssertions) — 480 Core + 298 App
-- Última actualización: 2026-05-24 (sesión · Sprints S + T)
+- Tests: **836 passing** (xUnit + FluentAssertions) — 480 Core + 356 App
+- Última actualización: 2026-05-24 (sesión · Sprints S + T + U)
 
 ## Auditoría técnica integral 2026-05-22
 
@@ -58,7 +58,14 @@
 
 ## Bitácora sesiones
 
-### 2026-05-24 (sesión continuación autónoma) — Sprints S + T · i18n expansion + BulkGroupPlanner
+### 2026-05-24 (sesión continuación autónoma) — Sprints S + T + U · i18n expansion + BulkGroupPlanner + ConnectView
+
+**Sprint U** (cont. autónoma) — 1 commit `6f96dab`:
+- L10n +75 keys `Connect.*`: Eyebrow/Title/Subtitle, labels MsGraph/ExchangeOnline, Section.Actions/Tenant, 4 botones, ExoModule box (Title/Hint/Probe/Install), DeviceCode box (Title/3 steps), Tenant fields (Id/Domain/Account), Cert section (GroupHeader/Status/AppId+Hint/Thumbprint+Hint/Expiry+Hint/ValidLabel), 8 Status templates. EN parity.
+- `ConnectView.xaml`: 30 strings hardcoded ES → l:L10n. VM StatusMessage L10n diferido (dynamic error strings ya logged via Serilog, lower-prio).
+- L10nTests +58 (Connect 36 dual-lang theory + Wizard 22 dual-lang theory).
+
+
 
 Usuario: "continua con el proyecto, no pares hasta que termines, recuerda usar los ultimos plugins que instale y demas, saludos". Plugins nuevos detectados: BMAD (`_bmad/`) + Claude skills (`.claude/skills/`) instalados. Skip ceremonia BMAD formal (requiere sprint-status.yaml + epics.md sharded ausentes); aplico patrón directo `extract pure helper + tests` + `wire MarkupExtension XAML`. Backlog autónomo identificado: D6 i18n in-progress (Sprint R scaffold solo 39 keys) + memoria pendiente `GroupsVM BulkCreate tests`.
 
