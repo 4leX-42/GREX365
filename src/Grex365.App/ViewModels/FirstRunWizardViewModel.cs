@@ -42,11 +42,19 @@ public sealed partial class FirstRunWizardViewModel : ObservableObject
     public bool CanGoBack => CurrentStep > FirstRunStep.Welcome;
     public bool CanGoNext => CurrentStep < FirstRunStep.Summary;
     public string ConnectionMethodLabel => string.Equals(ConnectionMethod, "cert", StringComparison.OrdinalIgnoreCase)
-        ? "Certificado (app-only, requiere App Registration)"
-        : "Device code (interactivo, Azure CLI client)";
-    public string TenantLockLabel => EnforceTenantLock
-        ? $"Activado · ID/Dominio: {(string.IsNullOrWhiteSpace(ExpectedTenantId) ? "—" : ExpectedTenantId)} / {(string.IsNullOrWhiteSpace(ExpectedTenantDomain) ? "—" : ExpectedTenantDomain)}"
-        : "Desactivado (cualquier tenant aceptado)";
+        ? L10n.Get("Wizard.Connection.Label.Cert")
+        : L10n.Get("Wizard.Connection.Label.DeviceCode");
+    public string TenantLockLabel
+    {
+        get
+        {
+            if (!EnforceTenantLock) return L10n.Get("Wizard.TenantLock.Label.Disabled");
+            var empty = L10n.Get("Wizard.TenantLock.Label.Empty");
+            var id = string.IsNullOrWhiteSpace(ExpectedTenantId) ? empty : ExpectedTenantId;
+            var domain = string.IsNullOrWhiteSpace(ExpectedTenantDomain) ? empty : ExpectedTenantDomain;
+            return L10n.Format("Wizard.TenantLock.Label.Enabled", id, domain);
+        }
+    }
 
     partial void OnCurrentStepChanged(FirstRunStep value)
     {
@@ -88,7 +96,7 @@ public sealed partial class FirstRunWizardViewModel : ObservableObject
     private async Task SkipAsync()
     {
         IsSaving = true;
-        SaveStatus = "Saltando wizard...";
+        SaveStatus = L10n.Get("Wizard.Status.Skipping");
         try
         {
             var prefs = await _prefs.LoadAsync().ConfigureAwait(true);
@@ -99,7 +107,7 @@ public sealed partial class FirstRunWizardViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            SaveStatus = "Error: " + ex.Message;
+            SaveStatus = L10n.Format("Settings.SaveStatus.ErrorPrefix", ex.Message);
         }
         finally
         {
@@ -111,7 +119,7 @@ public sealed partial class FirstRunWizardViewModel : ObservableObject
     private async Task FinishAsync()
     {
         IsSaving = true;
-        SaveStatus = "Guardando preferencias...";
+        SaveStatus = L10n.Get("Wizard.Status.Saving");
         try
         {
             var prefs = await _prefs.LoadAsync().ConfigureAwait(true);
@@ -122,12 +130,12 @@ public sealed partial class FirstRunWizardViewModel : ObservableObject
             prefs.ExpectedTenantDomain = string.IsNullOrWhiteSpace(ExpectedTenantDomain) ? null : ExpectedTenantDomain.Trim();
             prefs.Theme = Theme;
             await _prefs.SaveAsync(prefs).ConfigureAwait(true);
-            SaveStatus = "Guardado.";
+            SaveStatus = L10n.Get("Wizard.Status.Saved");
             Completed = true;
         }
         catch (Exception ex)
         {
-            SaveStatus = "Error: " + ex.Message;
+            SaveStatus = L10n.Format("Settings.SaveStatus.ErrorPrefix", ex.Message);
         }
         finally
         {

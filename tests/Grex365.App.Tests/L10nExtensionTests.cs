@@ -4,6 +4,7 @@ using Grex365.App.Xaml;
 
 namespace Grex365.App.Tests;
 
+[Collection("L10n")]
 public class L10nExtensionTests : IDisposable
 {
     public L10nExtensionTests() => L10n.Reset();

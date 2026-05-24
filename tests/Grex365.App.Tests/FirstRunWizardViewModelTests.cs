@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Grex365.App;
 using Grex365.App.ViewModels;
 using Grex365.Core.Abstractions;
 using Grex365.Core.Models;
@@ -6,8 +7,12 @@ using Moq;
 
 namespace Grex365.App.Tests;
 
-public class FirstRunWizardViewModelTests
+[Collection("L10n")]
+public class FirstRunWizardViewModelTests : IDisposable
 {
+    public FirstRunWizardViewModelTests() => L10n.Initialize("es");
+    public void Dispose() => L10n.Reset();
+
     private static Mock<IPreferencesStore> MakePrefsMock(UserPreferences? initial = null)
     {
         var prefs = initial ?? new UserPreferences();
@@ -184,5 +189,77 @@ public class FirstRunWizardViewModelTests
         vm.EnforceTenantLock = true;
         vm.ExpectedTenantId = "tenant-xyz";
         vm.TenantLockLabel.Should().Contain("Activado").And.Contain("tenant-xyz");
+    }
+
+    [Fact]
+    public void Labels_English_TranslatedViaL10n()
+    {
+        L10n.Initialize("en");
+        var vm = new FirstRunWizardViewModel(MakePrefsMock().Object);
+
+        vm.ConnectionMethod = "cert";
+        vm.ConnectionMethodLabel.Should().Contain("Certificate");
+
+        vm.ConnectionMethod = "devicecode";
+        vm.ConnectionMethodLabel.Should().Contain("Device code");
+
+        vm.EnforceTenantLock = false;
+        vm.TenantLockLabel.Should().Contain("Disabled");
+
+        vm.EnforceTenantLock = true;
+        vm.ExpectedTenantId = "tenant-en";
+        vm.TenantLockLabel.Should().Contain("Enabled").And.Contain("tenant-en");
+    }
+
+    [Fact]
+    public void TenantLockLabel_EmptyValues_UsesEmptyMarker()
+    {
+        var vm = new FirstRunWizardViewModel(MakePrefsMock().Object)
+        {
+            EnforceTenantLock = true,
+            ExpectedTenantId = string.Empty,
+            ExpectedTenantDomain = "   "
+        };
+
+        vm.TenantLockLabel.Should().Contain("—");
+    }
+
+    [Fact]
+    public async Task Skip_SetsLocalizedSavingStatus_DuringExecution()
+    {
+        var prefsMock = new Mock<IPreferencesStore>();
+        var loadTcs = new TaskCompletionSource<UserPreferences>();
+        prefsMock.Setup(p => p.LoadAsync(It.IsAny<CancellationToken>())).Returns(loadTcs.Task);
+        prefsMock.Setup(p => p.SaveAsync(It.IsAny<UserPreferences>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var vm = new FirstRunWizardViewModel(prefsMock.Object);
+
+        var task = vm.SkipCommand.ExecuteAsync(null);
+        vm.SaveStatus.Should().Contain("Saltando");
+        loadTcs.SetResult(new UserPreferences());
+        await task;
+    }
+
+    [Fact]
+    public async Task Finish_SetsLocalizedSavedStatus_OnSuccess()
+    {
+        var mock = MakePrefsMock();
+        var vm = new FirstRunWizardViewModel(mock.Object);
+
+        await vm.FinishCommand.ExecuteAsync(null);
+
+        vm.SaveStatus.Should().Be("Guardado.");
+    }
+
+    [Fact]
+    public async Task Finish_English_LocalizedSavedStatus()
+    {
+        L10n.Initialize("en");
+        var mock = MakePrefsMock();
+        var vm = new FirstRunWizardViewModel(mock.Object);
+
+        await vm.FinishCommand.ExecuteAsync(null);
+
+        vm.SaveStatus.Should().Be("Saved.");
     }
 }

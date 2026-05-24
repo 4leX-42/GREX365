@@ -427,31 +427,10 @@ public sealed partial class GroupsViewModel : ObservableObject
 
         if (!await RequireAuthorizedAsync("Bulk create groups").ConfigureAwait(true)) return;
 
-        // Override row.GroupType si el usuario eligió M365 o DL explícitamente desde la UI.
-        var forced = (BulkTypeChoice ?? "Auto").Trim();
-        if (string.Equals(forced, "M365", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(forced, "DL", StringComparison.OrdinalIgnoreCase))
-        {
-            rows = rows.Select(r => new BulkGroupRow(r.GroupName, r.Email, forced.ToUpperInvariant())).ToList();
-        }
+        var plan = BulkGroupPlanner.Plan(rows, BulkTypeChoice);
+        var confirmMsg = BulkGroupPlanner.BuildConfirmMessage(plan, rows.Count, domain);
 
-        var m365Rows = rows.Where(r => string.Equals(r.GroupType, "M365", StringComparison.OrdinalIgnoreCase)).ToList();
-        var dlRows = rows.Where(r => string.Equals(r.GroupType, "DL", StringComparison.OrdinalIgnoreCase)).ToList();
-        var distinctM365 = m365Rows.Select(r => r.GroupName).Distinct(StringComparer.OrdinalIgnoreCase).Count();
-        var distinctDl = dlRows.Select(r => r.GroupName).Distinct(StringComparer.OrdinalIgnoreCase).Count();
-        var breakdown = string.Join(" + ", new[]
-        {
-            distinctM365 > 0 ? $"{distinctM365} M365" : null,
-            distinctDl   > 0 ? $"{distinctDl} DL"   : null,
-        }.Where(s => s is not null));
-
-        var typeHint = string.Equals(forced, "Auto", StringComparison.OrdinalIgnoreCase)
-            ? "Tipo detectado desde columna `GroupType` del CSV (default M365)."
-            : $"Forzado por usuario: TODOS los grupos como {forced}.";
-
-        var ok = await _dialogs.ConfirmAsync(
-            $"Se crearán/actualizarán {breakdown} ({rows.Count} miembros) sobre @{domain}.\n\n{typeHint}\n\n¿Continuar?",
-            "Confirmar creación masiva").ConfigureAwait(true);
+        var ok = await _dialogs.ConfirmAsync(confirmMsg, "Confirmar creación masiva").ConfigureAwait(true);
         if (!ok)
         {
             StatusMessage = "Cancelado por el usuario.";
@@ -461,30 +440,26 @@ public sealed partial class GroupsViewModel : ObservableObject
         EnsureToken();
         IsBusy = true;
         CancelCommand.NotifyCanExecuteChanged();
-        StatusMessage = $"Creando {breakdown}...";
+        StatusMessage = $"Creando {plan.Breakdown}...";
         BulkCreateResults.Clear();
         try
         {
             var allResults = new List<BulkGroupResult>();
-            if (m365Rows.Count > 0)
+            if (plan.M365Rows.Count > 0)
             {
-                var r1 = await _groups.CreateM365GroupsFromRowsAsync(m365Rows, domain, _log.Progress, _cts!.Token).ConfigureAwait(true);
+                var r1 = await _groups.CreateM365GroupsFromRowsAsync(plan.M365Rows, domain, _log.Progress, _cts!.Token).ConfigureAwait(true);
                 allResults.AddRange(r1);
             }
-            if (dlRows.Count > 0)
+            if (plan.DlRows.Count > 0)
             {
-                var r2 = await _dls.CreateFromRowsAsync(dlRows, domain, _log.Progress, _cts!.Token).ConfigureAwait(true);
+                var r2 = await _dls.CreateFromRowsAsync(plan.DlRows, domain, _log.Progress, _cts!.Token).ConfigureAwait(true);
                 allResults.AddRange(r2);
             }
             foreach (var r in allResults)
             {
                 BulkCreateResults.Add(r);
             }
-            var created = allResults.Count(r => r.Action == "Created");
-            var existed = allResults.Count(r => r.Action == "Skipped");
-            var added = allResults.Count(r => r.Action == "MemberAdded");
-            var errors = allResults.Count(r => r.Action == "Error");
-            StatusMessage = $"Grupos: Nuevos={created}  YaEstaban={existed}  Miembros={added}  Err={errors}";
+            StatusMessage = BulkGroupPlanner.Summarize(allResults);
         }
         catch (OperationCanceledException)
         {

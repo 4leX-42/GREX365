@@ -3,6 +3,7 @@ using Grex365.App;
 
 namespace Grex365.App.Tests;
 
+[Collection("L10n")]
 public class L10nTests : IDisposable
 {
     public L10nTests() => L10n.Reset();
