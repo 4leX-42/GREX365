@@ -12,7 +12,7 @@
             <TextBlock Text="Asistente de certificado" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
         </StackPanel>
             <TextBlock Text="Genera un certificado autofirmado para autenticación de la App Registration"
-                       Opacity="0.7"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                        Margin="0,0,0,16" />
 
             <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
@@ -76,20 +76,20 @@
                             <ColumnDefinition Width="160" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Subject" Opacity="0.7" />
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Subject" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Generated.Subject}" />
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Thumbprint" Opacity="0.7" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Thumbprint" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Grid.Row="1" Grid.Column="1"
                                    Text="{Binding Generated.Thumbprint}"
                                    FontFamily="Cascadia Mono,Consolas"
                                    FontWeight="Bold"
                                    IsHitTestVisible="True"
                                    Cursor="IBeam" />
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Válido desde" Opacity="0.7" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Válido desde" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Generated.NotBefore, StringFormat='yyyy-MM-dd HH:mm'}" />
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Válido hasta" Opacity="0.7" />
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Válido hasta" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Generated.NotAfter, StringFormat='yyyy-MM-dd HH:mm'}" />
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text=".cer exportado" Opacity="0.7" />
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text=".cer exportado" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Generated.CerPath}" TextWrapping="Wrap" />
                     </Grid>
 
@@ -108,7 +108,7 @@
                                        FontWeight="SemiBold"
                                        Margin="0,0,0,8" />
                             <TextBlock Text="Solo si necesitas restaurar el certificado en otra estacion. NO lo subas a Azure (sube el .cer)."
-                                       Opacity="0.6"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                        FontSize="12"
                                        TextWrapping="Wrap"
                                        Margin="0,0,0,8" />
@@ -141,7 +141,7 @@
                                        FontWeight="SemiBold"
                                        Margin="0,0,0,8" />
                             <TextBlock Text="Requiere Graph conectado (usa 'Conectar (device code)' en Conexión como admin)."
-                                       Opacity="0.6"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                        FontSize="12"
                                        TextWrapping="Wrap"
                                        Margin="0,0,0,8" />

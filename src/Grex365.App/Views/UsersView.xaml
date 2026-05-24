@@ -22,7 +22,7 @@
         </StackPanel>
         <TextBlock Grid.Row="1"
                    Text="Buscar, ver y administrar cuentas (habilitar/deshabilitar, quitar licencias)"
-                   Opacity="0.7"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                    Margin="0,0,0,16" />
 
         <Grid Grid.Row="2">
@@ -79,11 +79,11 @@
                                        FontWeight="SemiBold"
                                        HorizontalAlignment="Center"
                                        Margin="0,12,0,4"
-                                       Opacity="0.7" />
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                             <TextBlock Text="UPN, nombre o email — pulsa Enter"
                                        FontSize="12"
                                        HorizontalAlignment="Center"
-                                       Opacity="0.5" />
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                         </StackPanel>
                         <ListBox ItemsSource="{Binding Users}"
                                  SelectedItem="{Binding SelectedUser}"
@@ -117,7 +117,7 @@
                                         </Border>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                            <TextBlock Text="{Binding UserPrincipalName}" Opacity="0.65" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding UserPrincipalName}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" TextTrimming="CharacterEllipsis" />
                                         </StackPanel>
                                         <Ellipse Grid.Column="2"
                                                  Width="8" Height="8"
@@ -162,14 +162,14 @@
                             <ColumnDefinition Width="160" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="UPN" Opacity="0.7" />
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="UPN" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedUser.UserPrincipalName}" />
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Mail" Opacity="0.7" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Mail" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedUser.Mail}" />
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Cuenta" Opacity="0.7" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Cuenta" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Grid.Row="2" Grid.Column="1"
                                    Text="{Binding SelectedUser.AccountEnabled, Converter={StaticResource BoolToOnOffConverter}}" />
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Licencias" Opacity="0.7" />
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Licencias" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedUser.AssignedLicenseCount}" />
                     </Grid>
 
@@ -230,7 +230,7 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" />
-                                        <TextBlock Text="{Binding Mail}" Opacity="0.7" />
+                                        <TextBlock Text="{Binding Mail}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                                     </StackPanel>
                                     <TextBlock Grid.Column="1" Text="{Binding GroupKind}" Opacity="0.8" />
                                 </Grid>

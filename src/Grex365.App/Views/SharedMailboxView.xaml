@@ -13,7 +13,7 @@
             <TextBlock Text="Buzones compartidos" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
             </StackPanel>
             <TextBlock Text="Conversión SharedMailbox → UserMailbox y gestión de permisos"
-                       Opacity="0.7"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                        Margin="0,0,0,16" />
 
             <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
@@ -60,13 +60,13 @@
                                 <ColumnDefinition Width="160" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Identity" Opacity="0.7" />
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Identity" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding MailboxInfo.Identity}" />
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Display name" Opacity="0.7" />
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Display name" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding MailboxInfo.DisplayName}" />
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Primary SMTP" Opacity="0.7" />
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Primary SMTP" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding MailboxInfo.PrimarySmtpAddress}" />
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Tipo" Opacity="0.7" />
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Tipo" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                             <TextBlock Grid.Row="3" Grid.Column="1"
                                        Text="{Binding MailboxInfo.RecipientTypeDetails}"
                                        FontWeight="SemiBold" />
@@ -93,7 +93,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="{Binding Permission}" FontWeight="SemiBold" />
                                     <TextBlock Grid.Column="1" Text="{Binding Principal}" />
-                                    <TextBlock Grid.Column="2" Text="{Binding Detail}" Opacity="0.7" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Detail}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -164,7 +164,7 @@
                                     <TextBlock Grid.Column="2" Text="{Binding Mailbox}" Opacity="0.85" />
                                     <TextBlock Grid.Column="3" Text="{Binding Principal}" Opacity="0.85" />
                                     <TextBlock Grid.Column="4" Text="{Binding Status}" FontWeight="SemiBold" />
-                                    <TextBlock Grid.Column="5" Text="{Binding Detail}" Opacity="0.7" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="5" Text="{Binding Detail}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

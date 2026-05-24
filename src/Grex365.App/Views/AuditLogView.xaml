@@ -21,7 +21,7 @@
         </StackPanel>
         <TextBlock Grid.Row="1"
                    Text="Acciones registradas por el sink local (Ok/Warn/Error). JSONL por mes en %LOCALAPPDATA%\Grex365\audit\"
-                   Opacity="0.7" Margin="0,0,0,16" />
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,16" />
 
         <Border Grid.Row="2"
                 CornerRadius="8" Padding="16" Margin="0,0,0,16"
@@ -33,42 +33,42 @@
                     <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
                             Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                         <StackPanel>
-                            <TextBlock Text="Total" Opacity="0.7" FontSize="11" />
+                            <TextBlock Text="Total" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
                             <TextBlock Text="{Binding Summary.TotalCount}" FontSize="20" FontWeight="SemiBold" />
                         </StackPanel>
                     </Border>
                     <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
                             Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                         <StackPanel>
-                            <TextBlock Text="OK" Opacity="0.7" FontSize="11" />
+                            <TextBlock Text="OK" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
                             <TextBlock Text="{Binding Summary.OkCount}" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource BrushSemanticOk}" />
                         </StackPanel>
                     </Border>
                     <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
                             Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                         <StackPanel>
-                            <TextBlock Text="WARN" Opacity="0.7" FontSize="11" />
+                            <TextBlock Text="WARN" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
                             <TextBlock Text="{Binding Summary.WarnCount}" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource BrushSemanticWarn}" />
                         </StackPanel>
                     </Border>
                     <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
                             Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                         <StackPanel>
-                            <TextBlock Text="ERROR" Opacity="0.7" FontSize="11" />
+                            <TextBlock Text="ERROR" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
                             <TextBlock Text="{Binding Summary.ErrorCount}" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource BrushSemanticError}" />
                         </StackPanel>
                     </Border>
                     <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
                             Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                         <StackPanel>
-                            <TextBlock Text="Últimas 24h" Opacity="0.7" FontSize="11" />
+                            <TextBlock Text="Últimas 24h" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
                             <TextBlock Text="{Binding Summary.Last24hCount}" FontSize="20" FontWeight="SemiBold" />
                         </StackPanel>
                     </Border>
                     <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
                             Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                         <StackPanel>
-                            <TextBlock Text="Tasa error" Opacity="0.7" FontSize="11" />
+                            <TextBlock Text="Tasa error" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
                             <TextBlock Text="{Binding Summary.ErrorRate, StringFormat=P1}" FontSize="20" FontWeight="SemiBold" />
                         </StackPanel>
                     </Border>
@@ -108,7 +108,7 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0"
                                                    Text="{Binding Timestamp, StringFormat=HH:mm}"
-                                                   Opacity="0.6"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                                    FontSize="11"
                                                    Margin="0,0,8,0"
                                                    VerticalAlignment="Center" />

@@ -20,7 +20,7 @@
         </StackPanel>
         <TextBlock Grid.Row="1"
                    Text="Verifica MX, SPF y DMARC vía nslookup (no requiere conexión a M365)"
-                   Opacity="0.7"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                    Margin="0,0,0,16" />
 
         <Grid Grid.Row="2" Margin="0,0,0,16">

@@ -33,10 +33,10 @@
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0"
                        Text="Buscar · creación masiva CSV"
-                       Opacity="0.7"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                        VerticalAlignment="Center" />
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                <TextBlock Text="Tipo:" VerticalAlignment="Center" Margin="0,0,6,0" Opacity="0.7" />
+                <TextBlock Text="Tipo:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 <RadioButton Content="Auto"
                              IsChecked="{Binding BulkTypeChoice, Converter={StaticResource StringEqualsConverter}, ConverterParameter=Auto}"
                              Margin="0,0,8,0"
@@ -56,7 +56,7 @@
                        Text="Dominio:"
                        VerticalAlignment="Center"
                        Margin="0,0,6,0"
-                       Opacity="0.7" />
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
             <ui:TextBox Grid.Column="3"
                         Width="180"
                         Text="{Binding BulkDomain, UpdateSourceTrigger=PropertyChanged}"
@@ -126,11 +126,11 @@
                                        FontWeight="SemiBold"
                                        HorizontalAlignment="Center"
                                        Margin="0,12,0,4"
-                                       Opacity="0.7" />
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                             <TextBlock Text="Nombre o email del grupo — pulsa Enter"
                                        FontSize="12"
                                        HorizontalAlignment="Center"
-                                       Opacity="0.5" />
+                                       Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                         </StackPanel>
                         <ListBox ItemsSource="{Binding Groups}"
                                  SelectedItem="{Binding SelectedGroup}"
@@ -159,7 +159,7 @@
                                         </Border>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                            <TextBlock Text="{Binding Mail, FallbackValue=—}" Opacity="0.65" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding Mail, FallbackValue=—}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" TextTrimming="CharacterEllipsis" />
                                         </StackPanel>
                                         <Border Grid.Column="2"
                                                 Padding="6,1"
@@ -229,7 +229,7 @@
                                     <TextBlock Grid.Column="0" Text="{Binding DisplayName, FallbackValue=—}" />
                                     <TextBlock Grid.Column="1"
                                                Text="{Binding Mail, FallbackValue=—}"
-                                               Opacity="0.7" />
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -285,7 +285,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="{Binding Input}" />
                                     <TextBlock Grid.Column="1" Text="{Binding Status}" FontWeight="SemiBold" />
-                                    <TextBlock Grid.Column="2" Text="{Binding Detail}" Opacity="0.7" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Detail}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -318,7 +318,7 @@
                                     <TextBlock Grid.Column="0" Text="{Binding GroupEmail}" />
                                     <TextBlock Grid.Column="1" Text="{Binding Action}" FontWeight="SemiBold" />
                                     <TextBlock Grid.Column="2" Text="{Binding UserEmail, FallbackValue=—}" />
-                                    <TextBlock Grid.Column="3" Text="{Binding Detail}" Opacity="0.7" />
+                                    <TextBlock Grid.Column="3" Text="{Binding Detail}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

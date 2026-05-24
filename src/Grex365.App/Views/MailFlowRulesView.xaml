@@ -19,7 +19,7 @@
         </StackPanel>
         <TextBlock Grid.Row="1"
                    Text="Transport rules de Exchange Online (Get-TransportRule). Solo lectura en esta version."
-                   Opacity="0.7" Margin="0,0,0,16" />
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,16" />
 
         <Border Grid.Row="2" CornerRadius="8" Padding="12" Margin="0,0,0,16"
                 Background="{DynamicResource ControlFillColorDefaultBrush}">

@@ -31,7 +31,7 @@
                                 VerticalAlignment="Center" />
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock Text="GREX365" FontSize="28" FontWeight="Light" />
-                    <TextBlock x:Name="VersionText" FontSize="12" Opacity="0.6"
+                    <TextBlock x:Name="VersionText" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                FontFamily="Cascadia Mono, Consolas" />
                 </StackPanel>
             </StackPanel>
@@ -54,13 +54,13 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{l:L10n Key=About.Version}" Opacity="0.7" />
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{l:L10n Key=About.Version}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     <TextBlock Grid.Row="0" Grid.Column="1" x:Name="VersionDetailText" />
 
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="{l:L10n Key=About.Runtime}" Opacity="0.7" Margin="0,6,0,0" />
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="{l:L10n Key=About.Runtime}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,6,0,0" />
                     <TextBlock Grid.Row="1" Grid.Column="1" x:Name="RuntimeText" Margin="0,6,0,0" />
 
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="{l:L10n Key=About.DataDir}" Opacity="0.7" Margin="0,6,0,0" />
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="{l:L10n Key=About.DataDir}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,6,0,0" />
                     <TextBlock Grid.Row="2" Grid.Column="1" x:Name="DataDirText"
                                Margin="0,6,0,0"
                                TextWrapping="Wrap"

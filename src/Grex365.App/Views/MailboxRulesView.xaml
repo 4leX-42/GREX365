@@ -16,7 +16,7 @@
                            VerticalAlignment="Center" />
             </StackPanel>
             <TextBlock Text="Out-of-Office (respuestas automáticas) · Forwarding (reenvío)"
-                       Opacity="0.7"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                        Margin="0,0,0,16" />
 
             <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
@@ -63,7 +63,7 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                            <TextBlock Text="Mensaje interno" Opacity="0.7" Margin="0,0,0,4" />
+                            <TextBlock Text="Mensaje interno" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
                             <ui:TextBox Text="{Binding InternalMessage, UpdateSourceTrigger=PropertyChanged}"
                                         AcceptsReturn="True"
                                         TextWrapping="Wrap"
@@ -71,7 +71,7 @@
                                         VerticalScrollBarVisibility="Auto" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                            <TextBlock Text="Mensaje externo" Opacity="0.7" Margin="0,0,0,4" />
+                            <TextBlock Text="Mensaje externo" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
                             <ui:TextBox Text="{Binding ExternalMessage, UpdateSourceTrigger=PropertyChanged}"
                                         AcceptsReturn="True"
                                         TextWrapping="Wrap"
@@ -86,11 +86,11 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                            <TextBlock Text="StartTime (sólo si Scheduled)" Opacity="0.7" Margin="0,0,0,4" />
+                            <TextBlock Text="StartTime (sólo si Scheduled)" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
                             <DatePicker SelectedDate="{Binding StartTime}" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                            <TextBlock Text="EndTime (sólo si Scheduled)" Opacity="0.7" Margin="0,0,0,4" />
+                            <TextBlock Text="EndTime (sólo si Scheduled)" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
                             <DatePicker SelectedDate="{Binding EndTime}" />
                         </StackPanel>
                     </Grid>
@@ -106,7 +106,7 @@
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
                     <TextBlock Text="Forwarding (reenvío)" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
-                    <TextBlock Text="{Binding CurrentForwardingDisplay}" Opacity="0.7" Margin="0,0,0,8" />
+                    <TextBlock Text="{Binding CurrentForwardingDisplay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,8" />
 
                     <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>

@@ -81,7 +81,7 @@
                             <ComboBoxItem Content="{l:L10n Key=Settings.Theme.Auto}" Tag="Auto" />
                         </ComboBox>
                         <TextBlock Text="{l:L10n Key=Settings.Theme.Hint}"
-                                   Opacity="0.55" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap" />
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap" />
 
                         <TextBlock Text="{l:L10n Key=Settings.LogLevel}" FontWeight="SemiBold" Margin="0,16,0,4" />
                         <ComboBox SelectedValue="{Binding LogLevel}"
@@ -94,7 +94,7 @@
                             <ComboBoxItem Content="{l:L10n Key=Settings.LogLevel.Error}" Tag="Error" />
                         </ComboBox>
                         <TextBlock Text="{l:L10n Key=Settings.LogLevel.Hint}"
-                                   Opacity="0.55"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                    FontSize="12"
                                    Margin="0,4,0,0" />
 
@@ -103,7 +103,7 @@
                                     PlaceholderText="{l:L10n Key=Settings.AppInsights.Placeholder}"
                                     Margin="0,0,0,4" />
                         <TextBlock Text="{l:L10n Key=Settings.AppInsights.Hint}"
-                                   Opacity="0.55"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                    FontSize="12"
                                    TextWrapping="Wrap" />
 
@@ -112,7 +112,7 @@
                                     PlaceholderText="{l:L10n Key=Settings.Tenant.IdPlaceholder}"
                                     Margin="0,0,0,4" />
                         <TextBlock Text="{l:L10n Key=Settings.Rbac.Hint}"
-                                   Opacity="0.55"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                    FontSize="12"
                                    TextWrapping="Wrap" />
                     </StackPanel>
@@ -127,7 +127,7 @@
                         Background="{DynamicResource ControlFillColorDefaultBrush}">
                     <StackPanel>
                         <TextBlock Text="{l:L10n Key=Settings.Plugins.Hint}"
-                                   Opacity="0.7"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                    TextWrapping="Wrap"
                                    Margin="0,0,0,12" />
                         <ItemsControl ItemsSource="{Binding Plugins}">
@@ -145,18 +145,18 @@
                                                   Margin="0,0,12,0" />
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Text="{Binding AssemblyFileName}" FontWeight="SemiBold" />
-                                            <TextBlock Text="{Binding Status}" Opacity="0.65" FontSize="12" />
+                                            <TextBlock Text="{Binding Status}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" />
                                         </StackPanel>
                                         <TextBlock Grid.Column="2"
                                                    Text="{Binding ModuleCountLabel}"
                                                    VerticalAlignment="Center"
-                                                   Opacity="0.7" />
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                         <TextBlock Text="{l:L10n Key=Settings.Plugins.Empty}"
-                                   Opacity="0.55"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                    FontSize="12"
                                    TextWrapping="Wrap"
                                    Margin="0,8,0,0" />
@@ -213,7 +213,7 @@
                 Padding="24,12">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <TextBlock Text="{Binding SaveStatus}"
-                           Opacity="0.8"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                            VerticalAlignment="Center"
                            Margin="0,0,16,0" />
                 <ui:Button Content="{l:L10n Key=Settings.Button.Reload}"

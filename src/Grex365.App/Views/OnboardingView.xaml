@@ -13,7 +13,7 @@
             <TextBlock Text="Onboarding" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
             </StackPanel>
             <TextBlock Text="Crear usuario · asignar licencias · añadir a grupos"
-                       Opacity="0.7"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                        Margin="0,0,0,16" />
 
             <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
@@ -136,7 +136,7 @@
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="{Binding Name}" FontWeight="SemiBold" />
                                     <TextBlock Grid.Column="1" Text="{Binding Status}" />
-                                    <TextBlock Grid.Column="2" Text="{Binding Detail}" Opacity="0.7" TextWrapping="Wrap" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Detail}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

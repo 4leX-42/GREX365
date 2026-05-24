@@ -15,21 +15,22 @@
             </ResourceDictionary.MergedDictionaries>
 
             <!-- ============================================================
-                 GREX365 — Futurista palette (Sprint L visual overhaul)
-                 Premium minimalist tech UI. Glass surfaces + accent glow.
+                 GREX365 — Azul corporativo palette (Sprint V refresh)
+                 Indigo deep → blue → sky. Sin purple. Institutional/premium.
                  Override de tokens wpf-ui (AccentFill*) + nuevos custom.
                  ============================================================ -->
 
-            <!-- Brand accent gradient (azul eléctrico → púrpura) — coherente light+dark -->
-            <Color x:Key="BrandAccentStart">#5B8DEF</Color>
-            <Color x:Key="BrandAccentMid">#7A78F0</Color>
-            <Color x:Key="BrandAccentEnd">#A66CF4</Color>
-            <Color x:Key="BrandAccentGlow">#665B8DEF</Color>
-            <Color x:Key="BrandCyan">#7AB7FF</Color>
-            <Color x:Key="BrandPurple">#B79DFB</Color>
+            <!-- Brand accent gradient (azul indigo → azul → sky) — coherente light+dark -->
+            <Color x:Key="BrandAccentStart">#1E40AF</Color>
+            <Color x:Key="BrandAccentMid">#2563EB</Color>
+            <Color x:Key="BrandAccentEnd">#3B82F6</Color>
+            <Color x:Key="BrandAccentGlow">#662563EB</Color>
+            <Color x:Key="BrandCyan">#60A5FA</Color>
+            <Color x:Key="BrandSky">#7DD3FC</Color>
 
-            <SolidColorBrush x:Key="BrandAccentSolid" Color="{StaticResource BrandAccentStart}" />
-            <SolidColorBrush x:Key="BrandAccentPurple" Color="{StaticResource BrandAccentEnd}" />
+            <SolidColorBrush x:Key="BrandAccentSolid" Color="{StaticResource BrandAccentMid}" />
+            <SolidColorBrush x:Key="BrandAccentDeep" Color="{StaticResource BrandAccentStart}" />
+            <SolidColorBrush x:Key="BrandAccentLight" Color="{StaticResource BrandAccentEnd}" />
             <SolidColorBrush x:Key="BrandAccentCyan" Color="{StaticResource BrandCyan}" />
 
             <LinearGradientBrush x:Key="BrandAccentGradient" StartPoint="0,0" EndPoint="1,1">
@@ -38,7 +39,7 @@
                 <GradientStop Color="{StaticResource BrandAccentEnd}" Offset="1" />
             </LinearGradientBrush>
 
-            <LinearGradientBrush x:Key="BrandAccentGradientSoft" StartPoint="0,0" EndPoint="1,1" Opacity="0.18">
+            <LinearGradientBrush x:Key="BrandAccentGradientSoft" StartPoint="0,0" EndPoint="1,1" Opacity="0.20">
                 <GradientStop Color="{StaticResource BrandAccentStart}" Offset="0" />
                 <GradientStop Color="{StaticResource BrandAccentEnd}" Offset="1" />
             </LinearGradientBrush>
@@ -49,11 +50,11 @@
             </LinearGradientBrush>
 
             <!-- Override wpf-ui accent for whole app (Buttons Primary, selected items, etc.) -->
-            <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="{StaticResource BrandAccentStart}" />
-            <SolidColorBrush x:Key="AccentFillColorSecondaryBrush" Color="{StaticResource BrandAccentMid}" />
+            <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="{StaticResource BrandAccentMid}" />
+            <SolidColorBrush x:Key="AccentFillColorSecondaryBrush" Color="{StaticResource BrandAccentStart}" />
             <SolidColorBrush x:Key="AccentFillColorTertiaryBrush" Color="{StaticResource BrandAccentEnd}" />
-            <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="{StaticResource BrandAccentStart}" />
-            <SolidColorBrush x:Key="AccentTextFillColorSecondaryBrush" Color="{StaticResource BrandAccentMid}" />
+            <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="{StaticResource BrandAccentMid}" />
+            <SolidColorBrush x:Key="AccentTextFillColorSecondaryBrush" Color="{StaticResource BrandAccentEnd}" />
             <SolidColorBrush x:Key="AccentTextFillColorTertiaryBrush" Color="{StaticResource BrandAccentEnd}" />
 
             <!-- Glass surfaces (semi-transparent over Mica backdrop) -->
@@ -64,8 +65,8 @@
 
             <!-- Border highlight gradient (subtle iluminated edge) -->
             <LinearGradientBrush x:Key="GlassBorderHighlight" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#664F8CFF" Offset="0" />
-                <GradientStop Color="#229B6CFF" Offset="1" />
+                <GradientStop Color="#661E40AF" Offset="0" />
+                <GradientStop Color="#223B82F6" Offset="1" />
             </LinearGradientBrush>
 
             <LinearGradientBrush x:Key="GlassBorderSubtle" StartPoint="0,0" EndPoint="1,1">
@@ -75,13 +76,13 @@
 
             <!-- Accent glow drop-shadow (for hover/selected glow) -->
             <DropShadowEffect x:Key="AccentGlowEffect"
-                              Color="{StaticResource BrandAccentStart}"
+                              Color="{StaticResource BrandAccentMid}"
                               BlurRadius="18"
                               ShadowDepth="0"
                               Opacity="0.55" />
 
             <DropShadowEffect x:Key="AccentGlowSoftEffect"
-                              Color="{StaticResource BrandAccentStart}"
+                              Color="{StaticResource BrandAccentMid}"
                               BlurRadius="10"
                               ShadowDepth="0"
                               Opacity="0.35" />
@@ -185,7 +186,22 @@
 
             <Style x:Key="CaptionText" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="11" />
-                <Setter Property="Opacity" Value="0.6" />
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            </Style>
+
+            <!-- Field hint text: descriptive text under inputs. Uses Secondary text brush
+                 for proper contrast in both light + dark themes (vs naive Opacity which
+                 fails dark theme legibility). -->
+            <Style x:Key="FieldHintText" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+                <Setter Property="Margin" Value="0,4,0,0" />
+            </Style>
+
+            <!-- Subtle muted text — slightly stronger than hint, for inline status -->
+            <Style x:Key="MutedText" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
             </Style>
 
             <Style x:Key="MetricValueText" TargetType="TextBlock">
@@ -270,7 +286,7 @@
             <Style x:Key="SettingsGroupHeader" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="11" />
                 <Setter Property="FontWeight" Value="SemiBold" />
-                <Setter Property="Opacity" Value="0.55" />
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
                 <Setter Property="Margin" Value="2,16,0,8" />
             </Style>
 
@@ -282,7 +298,7 @@
                 <Setter Property="VerticalAlignment" Value="Center" />
                 <Setter Property="HorizontalAlignment" Value="Center" />
                 <Setter Property="Margin" Value="0,0,16,0" />
-                <Setter Property="Opacity" Value="0.85" />
+                <Setter Property="Foreground" Value="{StaticResource BrandAccentSolid}" />
             </Style>
 
             <Style x:Key="SettingsCardTitle" TargetType="TextBlock">
@@ -294,7 +310,7 @@
 
             <Style x:Key="SettingsCardDescription" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="12" />
-                <Setter Property="Opacity" Value="0.6" />
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
                 <Setter Property="Margin" Value="0,2,0,0" />
                 <Setter Property="TextWrapping" Value="Wrap" />
             </Style>
@@ -429,16 +445,16 @@
                     <Setter.Value>
                         <ControlTemplate TargetType="ContentControl">
                             <Viewbox>
-                                <Canvas Width="40" Height="28">
-                                    <!-- G: D-shape estirada con stub a 60% altura, asimetría humana -->
-                                    <Path Stroke="{TemplateBinding Foreground}" StrokeThickness="3.2"
+                                <Canvas Width="42" Height="28">
+                                    <!-- G: clean D-shape, opening on right, with horizontal stub at midpoint -->
+                                    <Path Stroke="{TemplateBinding Foreground}" StrokeThickness="3"
                                           StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                           StrokeLineJoin="Round"
-                                          Data="M 16,3 L 5,3 A 9,11 0 0 0 5,25 L 16,25 A 5,5 0 0 0 21,20 L 21,15 L 13,15" />
-                                    <!-- X: dos diagonales con cruce off-center (55% vertical) -->
-                                    <Path Stroke="{TemplateBinding Foreground}" StrokeThickness="3.2"
+                                          Data="M 17,3 L 6,3 A 11,11 0 0 0 6,25 L 17,25 A 5,5 0 0 0 22,20 L 22,14 L 13,14" />
+                                    <!-- X: balanced diagonals -->
+                                    <Path Stroke="{TemplateBinding Foreground}" StrokeThickness="3"
                                           StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                          Data="M 26,3 L 38,25 M 38,3 L 26,25" />
+                                          Data="M 27,3 L 39,25 M 39,3 L 27,25" />
                                 </Canvas>
                             </Viewbox>
                         </ControlTemplate>
@@ -456,16 +472,17 @@
                     <Setter.Value>
                         <ControlTemplate TargetType="ContentControl">
                             <Border CornerRadius="14"
-                                    Background="{StaticResource BrandAccentGradient}">
+                                    Background="{StaticResource BrandAccentGradient}"
+                                    Effect="{StaticResource AccentGlowSoftEffect}">
                                 <Viewbox Margin="10">
-                                    <Canvas Width="40" Height="28">
-                                        <Path Stroke="White" StrokeThickness="3.2"
+                                    <Canvas Width="42" Height="28">
+                                        <Path Stroke="White" StrokeThickness="3"
                                               StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                               StrokeLineJoin="Round"
-                                              Data="M 16,3 L 5,3 A 9,11 0 0 0 5,25 L 16,25 A 5,5 0 0 0 21,20 L 21,15 L 13,15" />
-                                        <Path Stroke="White" StrokeThickness="3.2"
+                                              Data="M 17,3 L 6,3 A 11,11 0 0 0 6,25 L 17,25 A 5,5 0 0 0 22,20 L 22,14 L 13,14" />
+                                        <Path Stroke="White" StrokeThickness="3"
                                               StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                              Data="M 26,3 L 38,25 M 38,3 L 26,25" />
+                                              Data="M 27,3 L 39,25 M 39,3 L 27,25" />
                                     </Canvas>
                                 </Viewbox>
                             </Border>

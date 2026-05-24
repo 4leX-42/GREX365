@@ -26,7 +26,7 @@
         </StackPanel>
         <TextBlock Grid.Row="1"
                    Text="Detecta usuarios obsoletos, deshabilitados con licencia y otros hallazgos"
-                   Opacity="0.7"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                    Margin="0,0,0,16" />
 
         <StackPanel Grid.Row="2" Margin="0,0,0,16">
@@ -34,7 +34,7 @@
             <Border CornerRadius="8" Padding="10,8" Margin="0,0,0,10"
                     Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                 <StackPanel>
-                    <TextBlock Text="ESCENARIOS RÁPIDOS" FontSize="10" FontWeight="SemiBold" Opacity="0.55" Margin="0,0,0,6" />
+                    <TextBlock Text="ESCENARIOS RÁPIDOS" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,6" />
                     <WrapPanel Orientation="Horizontal">
                         <ui:Button Content="Cuentas en riesgo (deshab + licencia)"
                                    Appearance="Primary"
@@ -57,7 +57,7 @@
             <Border CornerRadius="8" Padding="10,8" Margin="0,0,0,8"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="IDENTIDAD" FontSize="10" FontWeight="SemiBold" Opacity="0.55" Margin="0,0,0,6" />
+                    <TextBlock Text="IDENTIDAD" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,6" />
                     <WrapPanel Orientation="Horizontal">
                         <ui:Button Content="Identidad + grupos"
                                    Margin="0,0,8,4"
@@ -75,11 +75,11 @@
                                    Margin="0,0,8,4"
                                    Command="{Binding RunActivityAuditCommand}"
                                    ToolTip="Descarga /reports/getOffice365GroupsActivityDetail" />
-                        <TextBlock VerticalAlignment="Center" Text="&gt;" Opacity="0.7" Margin="0,0,4,4" />
+                        <TextBlock VerticalAlignment="Center" Text="&gt;" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,4,4" />
                         <ui:NumberBox Width="60" Margin="0,0,2,4"
                                       Value="{Binding InactivityDays}" Minimum="1" Maximum="180"
                                       ToolTip="Días sin actividad (1-180)" />
-                        <TextBlock VerticalAlignment="Center" Text="d" Opacity="0.7" Margin="0,0,0,4" />
+                        <TextBlock VerticalAlignment="Center" Text="d" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
                     </WrapPanel>
                 </StackPanel>
             </Border>
@@ -88,7 +88,7 @@
             <Border CornerRadius="8" Padding="10,8" Margin="0,0,0,8"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="SEGURIDAD / TENANT" FontSize="10" FontWeight="SemiBold" Opacity="0.55" Margin="0,0,0,6" />
+                    <TextBlock Text="SEGURIDAD / TENANT" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,6" />
                     <WrapPanel Orientation="Horizontal">
                         <ui:Button Content="CA policies"
                                    Margin="0,0,8,4"
@@ -114,7 +114,7 @@
             <Border CornerRadius="8" Padding="10,8" Margin="0,0,0,8"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="MAIL / EXO" FontSize="10" FontWeight="SemiBold" Opacity="0.55" Margin="0,0,0,6" />
+                    <TextBlock Text="MAIL / EXO" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,6" />
                     <WrapPanel Orientation="Horizontal">
                         <ui:Button Content="Forwarding externo"
                                    Margin="0,0,8,4"
@@ -132,7 +132,7 @@
                                    Margin="0,0,8,4"
                                    Command="{Binding RunSharedMailboxSignInAuditCommand}"
                                    ToolTip="Shared boxes con AccountDisabled=false" />
-                        <TextBlock VerticalAlignment="Center" Text="Tope:" Opacity="0.7" Margin="8,0,4,4" />
+                        <TextBlock VerticalAlignment="Center" Text="Tope:" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="8,0,4,4" />
                         <ui:NumberBox Width="60" Margin="0,0,0,4"
                                       Value="{Binding InboxRuleScanCap}" Minimum="1" Maximum="5000"
                                       ToolTip="Cuántos buzones escanear (Get-InboxRule N+1)" />
@@ -181,7 +181,7 @@
             <Border CornerRadius="8" Padding="12" Margin="0,0,8,0"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="Usuarios" Opacity="0.7" />
+                    <TextBlock Text="Usuarios" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     <TextBlock Text="{Binding Summary.UsersTotal, FallbackValue=0}" FontSize="22" FontWeight="Bold" />
                     <TextBlock>
                         <Run Text="Habilitados: " />
@@ -194,25 +194,25 @@
             <Border CornerRadius="8" Padding="12" Margin="0,0,8,0"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="Stale members" Opacity="0.7" />
+                    <TextBlock Text="Stale members" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     <TextBlock Text="{Binding Summary.StaleMembers, FallbackValue=0}" FontSize="22" FontWeight="Bold" />
-                    <TextBlock Text=">180 días sin login" Opacity="0.6" />
+                    <TextBlock Text=">180 días sin login" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </Border>
             <Border CornerRadius="8" Padding="12" Margin="0,0,8,0"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="Stale guests" Opacity="0.7" />
+                    <TextBlock Text="Stale guests" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     <TextBlock Text="{Binding Summary.StaleGuests, FallbackValue=0}" FontSize="22" FontWeight="Bold" />
-                    <TextBlock Text=">90 días sin login" Opacity="0.6" />
+                    <TextBlock Text=">90 días sin login" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </Border>
             <Border CornerRadius="8" Padding="12"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="Deshab + licencia" Opacity="0.7" />
+                    <TextBlock Text="Deshab + licencia" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     <TextBlock Text="{Binding Summary.DisabledWithLicense, FallbackValue=0}" FontSize="22" FontWeight="Bold" />
-                    <TextBlock Text="Coste evitable" Opacity="0.6" />
+                    <TextBlock Text="Coste evitable" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </Border>
         </UniformGrid>
@@ -278,10 +278,10 @@
                                    FontWeight="SemiBold"
                                    HorizontalAlignment="Center"
                                    Margin="0,12,0,4"
-                                   Opacity="0.7" />
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Text="Lanza una auditoría desde la barra superior para empezar."
                                    HorizontalAlignment="Center"
-                                   Opacity="0.5" />
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                     </StackPanel>
                 <ListView ItemsSource="{Binding FindingsView}"
                           Background="Transparent"

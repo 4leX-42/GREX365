@@ -50,7 +50,7 @@
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                                 <TextBlock FontSize="10"
-                                           Opacity="0.5"
+                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                            FontFamily="Cascadia Mono, Consolas">
                                     <Run Text="v" /><Run Text="{x:Static local:App.AppVersion}" />
                                 </TextBlock>
@@ -95,7 +95,7 @@
                                         <TextBlock Text="{Binding Name}"
                                                    FontSize="11"
                                                    FontWeight="SemiBold"
-                                                   Opacity="0.55"
+                                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                                    Margin="14,14,0,4" />
                                     </DataTemplate>
                                 </GroupStyle.HeaderTemplate>
@@ -303,7 +303,7 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Grid.Column="0"
                                                    Text="{Binding Timestamp, StringFormat='yyyy-MM-dd HH:mm:ss'}"
-                                                   Opacity="0.55"
+                                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                                    FontFamily="Cascadia Mono,Consolas"
                                                    FontSize="11" />
                                         <Border Grid.Column="1"
