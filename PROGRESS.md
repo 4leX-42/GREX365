@@ -2,10 +2,10 @@
 
 > **Documento maestro de seguimiento.** Mapea el estado del proyecto contra `Plantamiento_arquitectura_de_la_herramienta.md` (roadmap arquitectónico) y `deep-research-report.md` (research técnico). Toda feature shipped y todo pendiente vive aquí.
 
-- Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0`
+- Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S+T local)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **652 passing** (xUnit + FluentAssertions) — 459 Core + 193 App
-- Última actualización: 2026-05-23 (sesión noche · Sprints P + Q + R)
+- Tests: **778 passing** (xUnit + FluentAssertions) — 480 Core + 298 App
+- Última actualización: 2026-05-24 (sesión · Sprints S + T)
 
 ## Auditoría técnica integral 2026-05-22
 
@@ -57,6 +57,36 @@
 - Sweep final `grep "Foreground=\"#\|Background=\"#"`: cero matches restantes — paleta 100% via DynamicResource.
 
 ## Bitácora sesiones
+
+### 2026-05-24 (sesión continuación autónoma) — Sprints S + T · i18n expansion + BulkGroupPlanner
+
+Usuario: "continua con el proyecto, no pares hasta que termines, recuerda usar los ultimos plugins que instale y demas, saludos". Plugins nuevos detectados: BMAD (`_bmad/`) + Claude skills (`.claude/skills/`) instalados. Skip ceremonia BMAD formal (requiere sprint-status.yaml + epics.md sharded ausentes); aplico patrón directo `extract pure helper + tests` + `wire MarkupExtension XAML`. Backlog autónomo identificado: D6 i18n in-progress (Sprint R scaffold solo 39 keys) + memoria pendiente `GroupsVM BulkCreate tests`.
+
+**Sprint S (i18n masivo + XAML MarkupExtension)** — 1 commit `8b7fbaa`:
+
+1. `feat(i18n)` L10n expansion + L10nExtension:
+   - `L10n.cs` dicts amplios ES+EN: 39 → 90 keys. Settings.* completo (40+ keys cubriendo Section.Connection/Plugins/Certificate, Connection.Cert/Traditional, Tenant.IdLabel/Placeholder/DomainLabel/Placeholder, EnforceTenantLock, LanguageLabel, Theme.Dark/Light/Auto/Hint, LogLevel.Debug/Information/Warning/Error/Hint, AppInsights/Placeholder/Hint, Rbac/Hint, Plugins.Hint/Empty/ModulesSuffix/Status.Loaded/Disabled/ErrorPrefix, Cert.AppId/TenantId/Organization/Thumbprint/Browse/Validate, Button.Reload/Save, SaveStatus.Prefix/ErrorPrefix/SavedLog). About.* (8 keys: Window.Title/TitleBar/Description/Version/Runtime/DataDir/Button.OpenDataDir/Close). Dialog.Close añadido. Common ampliado (Save/Delete/Edit/Add/Remove/Back/Next/Finish/Skip/Loading/Empty).
+   - `L10n.Format(key, args)` helper nuevo: `string.Format(template, args)` con fallback a template crudo si FormatException o args null/empty.
+   - `L10n.KnownKeys` exposed `EsStrings.Keys` para tests parity loop.
+   - `L10nExtension : MarkupExtension` (nuevo `Grex365.App.Xaml`): `{l:L10n Key=...}` en XAML — habilita binding-less translation. ProvideValue → `L10n.Get(Key)`, empty/null key → empty string.
+   - `SettingsWindow.xaml`: 28 strings hardcoded ES → `{l:L10n Key=...}`. `AboutWindow.xaml`: 13 strings → l:L10n. `SettingsViewModel.cs` localizado: plugin status strings (Cargado/Deshabilitado/"Error: " prefix) + SaveStatus prefix vía Format con timestamp + Error prefix via Format.
+   - `L10nTests +75` (37 → 112): theories Settings (42 ES + 8 EN), About (8 ES + 3 EN), Dialog/Common parity (23 ambos idiomas), Format (7: placeholder substitution, multi-args, no-args, invalid placeholder, null-args, ES/EN SaveStatus timestamp), KnownKeys + EN-parity-loop sobre KnownKeys.
+   - `L10nExtensionTests +6` (nuevo): ProvideValue known/null/empty/unknown key, Constructor Key property, defaults to null.
+
+**Sprint T (FirstRunWizard L10n + BulkGroupPlanner)** — 1 commit `7086892`:
+
+1. `feat(i18n+core)`:
+   - **L10n.cs +50 keys** `Wizard.*`: Window.Title/TitleBar, 5 step badges (Welcome→Summary), Welcome content (title/subtitle/SectionTitle/Bullet1-3/SkipHint), Connection (Title/Subtitle/DeviceCode/Cert + .Hint variantes), TenantLock (Title/Subtitle/Enable/IdLabel/DomainLabel/Hint), Theme (Title/Subtitle + Dark/Light/Auto + .Hint variantes), Summary (Title/Subtitle/Connection/TenantLock/Theme), Button.Skip, Status.Skipping/Saving/Saved, label templates ConnectionMethodLabel/TenantLockLabel (Cert/DeviceCode/Enabled/Disabled/Empty). EN parity total.
+   - `FirstRunWizardWindow.xaml`: 35 strings hardcoded ES → `{l:L10n Key=...}`. Botones nav (Atrás/Siguiente/Finalizar) usan Common.* keys (ya disponibles en Sprint S).
+   - `FirstRunWizardViewModel.cs`: `ConnectionMethodLabel` + `TenantLockLabel` ahora via L10n.Get + L10n.Format (template "Activado · ID/Dominio: {0} / {1}"). Status (Skipping/Saving/Saved/Error) localizadas. Error path usa Settings.SaveStatus.ErrorPrefix Format compartido.
+   - **`BulkGroupPlanner`** extract (`Grex365.Core.Groups`): refactor pure helper de `GroupsViewModel.BulkCreateFromCsvAsync`. Resuelve memoria backlog `GroupsVM BulkCreate tests` (item 3 pendiente Sprint S sessions previas): OpenFileDialog blocking hace VM no testable; planner puro sí. API: `Plan(rows, choice) → BulkGroupPlan` record (M365Rows/DlRows/distinct counts/breakdown/typeHint). `BuildConfirmMessage(plan, count, domain)` para `_dialogs.ConfirmAsync` text. `Summarize(results)` para StatusMessage final. VM ahora 3 líneas vs 25 inline.
+   - **Bug fixed planner**: empty/whitespace/unknown choice ahora cae a Auto path en lugar de "Forzado por usuario: TODOS los grupos como ." con string vacío (VM legacy comportamiento equivalente vía else clause; planner explicit guard mejora robustez).
+   - `L10nCollection.cs` xUnit serial fixture: tests L10n + L10nExtension + FirstRunWizardVM ahora `[Collection("L10n")]`. L10n estático no soporta parallel execution (Reset corre durante otro test). Fix race: 2 fails → 0.
+   - `FirstRunWizardVMTests +5`: English labels translated, empty-marker em-dash, mid-flight Saving status TCS, localized Saved status ES/EN. `BulkGroupPlannerTests` nuevo 16: Plan (8 Auto/ForcedM365/ForcedDl/case-insensitive/empty/null/unknown choice/distinct case-insensitive/breakdown omits zero-sides), BuildConfirmMessage (3: includes-fields, trims domain, null-guard), Summarize (4: null-guard, empty all-zero, counts by action, unknown ignored).
+
+**Estado final Sprints S+T**: 778 tests verdes (480 Core +21, 298 App +5 sobre 470/108 baseline Sprint R). Build clean 7 projects 0 errors. 2 commits locales (`8b7fbaa` + `7086892`), no pushed pendiente. D6 i18n status `🟡 in-progress` → close-ish: Settings + About + FirstRunWizard externalizados; remaining hardcoded ES principalmente en StatusMessage de page-VMs (Users/Groups/Audit/MailboxRules/etc) — backlog continuable bajo demanda.
+
+**Memoria nueva sesión**: actualizar `project_migration_progress.md` con `BulkGroupPlanner` + L10n + 778 tests si user pide. Sprint pattern aprendido: WPF MarkupExtension `MarkupExtensionReturnType(typeof(string))` simple + static singleton L10n.Get; tests deben serializarse via `[Collection]` cuando comparten estado estático.
 
 ### 2026-05-23 (sesión noche cont.) — Sprint R · i18n ES/EN scaffold + decisiones cerradas
 
