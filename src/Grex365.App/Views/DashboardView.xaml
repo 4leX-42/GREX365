@@ -4,67 +4,68 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:l="clr-namespace:Grex365.App.Xaml"
              mc:Ignorable="d">
     <ScrollViewer Style="{StaticResource PageRoot}">
         <StackPanel MaxWidth="1100" HorizontalAlignment="Stretch">
             <StackPanel Margin="0,0,0,20">
-                <TextBlock Text="DASHBOARD" Style="{StaticResource EyebrowText}" />
-                <TextBlock Text="Estado de la conexión"
+                <TextBlock Text="{l:L10n Key=Dashboard.Eyebrow}" Style="{StaticResource EyebrowText}" />
+                <TextBlock Text="{l:L10n Key=Dashboard.Title}"
                            Style="{StaticResource PageHeroTitle}" />
-                <TextBlock Text="Resumen del tenant y enlaces rápidos"
+                <TextBlock Text="{l:L10n Key=Dashboard.Subtitle}"
                            FontSize="13" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
             </StackPanel>
 
             <Border Style="{StaticResource Card}" Padding="14" Margin="0,0,0,12">
                 <StackPanel>
-                    <TextBlock Text="Acciones rápidas" Style="{StaticResource SectionTitleText}" />
+                    <TextBlock Text="{l:L10n Key=Dashboard.QuickActions}" Style="{StaticResource SectionTitleText}" />
                     <WrapPanel Orientation="Horizontal">
                         <ui:Button Margin="0,0,8,8"
                                    Appearance="Primary"
                                    Command="{Binding GoToCommand}"
-                                   CommandParameter="Conexión">
+                                   CommandParameter="Nav.Connection">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
-                                <TextBlock Text="Conectar" />
+                                <TextBlock Text="{l:L10n Key=Dashboard.Action.Connect}" />
                             </StackPanel>
                         </ui:Button>
                         <ui:Button Margin="0,0,8,8"
                                    Command="{Binding GoToCommand}"
-                                   CommandParameter="Salud tenant">
+                                   CommandParameter="Nav.Licenses">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
-                                <TextBlock Text="Salud tenant" />
+                                <TextBlock Text="{l:L10n Key=Dashboard.Action.Licenses}" />
                             </StackPanel>
                         </ui:Button>
                         <ui:Button Margin="0,0,8,8"
                                    Command="{Binding GoToCommand}"
-                                   CommandParameter="Usuarios">
+                                   CommandParameter="Nav.Users">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
-                                <TextBlock Text="Buscar usuario" />
+                                <TextBlock Text="{l:L10n Key=Dashboard.Action.SearchUser}" />
                             </StackPanel>
                         </ui:Button>
                         <ui:Button Margin="0,0,8,8"
                                    Command="{Binding GoToCommand}"
-                                   CommandParameter="Auditoría">
+                                   CommandParameter="Nav.Audit">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
-                                <TextBlock Text="Auditoría" />
+                                <TextBlock Text="{l:L10n Key=Dashboard.Action.Audit}" />
                             </StackPanel>
                         </ui:Button>
                         <ui:Button Margin="0,0,8,8"
                                    Command="{Binding GoToCommand}"
-                                   CommandParameter="Offboarding">
+                                   CommandParameter="Nav.Offboarding">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
-                                <TextBlock Text="Offboarding" />
+                                <TextBlock Text="{l:L10n Key=Dashboard.Action.Offboarding}" />
                             </StackPanel>
                         </ui:Button>
                     </WrapPanel>
                 </StackPanel>
             </Border>
 
-            <TextBlock Text="Estado" Style="{StaticResource SectionTitleText}" />
+            <TextBlock Text="{l:L10n Key=Dashboard.Section.Status}" Style="{StaticResource SectionTitleText}" />
 
             <UniformGrid Columns="2" Rows="2">
                 <Border Style="{StaticResource MetricCard}" RenderTransformOrigin="0.5,0.5">
@@ -76,14 +77,14 @@
                                        Margin="0,0,8,0"
                                        Foreground="{Binding GraphConnected, Converter={StaticResource BoolToBrushConverter}}"
                                        VerticalAlignment="Center" />
-                            <TextBlock Text="Microsoft Graph"
+                            <TextBlock Text="{l:L10n Key=Dashboard.Graph}"
                                        FontWeight="SemiBold"
                                        FontSize="13"
                                        VerticalAlignment="Center" />
                         </StackPanel>
                         <TextBlock Style="{StaticResource MetricValueText}"
                                    Text="{Binding GraphConnected, Converter={StaticResource BoolToOnOffConverter}}" />
-                        <TextBlock Style="{StaticResource CaptionText}" Text="Conexión SDK + REST" Margin="0,2,0,0" />
+                        <TextBlock Style="{StaticResource CaptionText}" Text="{l:L10n Key=Dashboard.Graph.Caption}" Margin="0,2,0,0" />
                     </StackPanel>
                 </Border>
 
@@ -96,27 +97,27 @@
                                        Margin="0,0,8,0"
                                        Foreground="{Binding ExchangeConnected, Converter={StaticResource BoolToBrushConverter}}"
                                        VerticalAlignment="Center" />
-                            <TextBlock Text="Exchange Online"
+                            <TextBlock Text="{l:L10n Key=Dashboard.Exchange}"
                                        FontWeight="SemiBold"
                                        FontSize="13"
                                        VerticalAlignment="Center" />
                         </StackPanel>
                         <TextBlock Style="{StaticResource MetricValueText}"
                                    Text="{Binding ExchangeConnected, Converter={StaticResource BoolToOnOffConverter}}" />
-                        <TextBlock Style="{StaticResource CaptionText}" Text="Cmdlets PowerShell remoto" Margin="0,2,0,0" />
+                        <TextBlock Style="{StaticResource CaptionText}" Text="{l:L10n Key=Dashboard.Exchange.Caption}" Margin="0,2,0,0" />
                     </StackPanel>
                 </Border>
 
                 <Border Style="{StaticResource MetricCard}" RenderTransformOrigin="0.5,0.5">
                     <StackPanel>
-                        <TextBlock Text="Tenant" FontWeight="SemiBold" FontSize="13" Opacity="0.85" />
+                        <TextBlock Text="{l:L10n Key=Dashboard.Tenant}" FontWeight="SemiBold" FontSize="13" Opacity="0.85" />
                         <TextBlock Margin="0,8,0,0"
-                                   Text="{Binding TenantDomain, FallbackValue=Sin conexión}"
+                                   Text="{Binding TenantDomain, FallbackValue=—, TargetNullValue=—}"
                                    FontSize="20"
                                    FontWeight="Bold"
                                    TextTrimming="CharacterEllipsis" />
                         <TextBlock Style="{StaticResource MonoText}"
-                                   Text="{Binding TenantId, FallbackValue=—}"
+                                   Text="{Binding TenantId, FallbackValue=—, TargetNullValue=—}"
                                    Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                    Margin="0,2,0,0"
                                    TextTrimming="CharacterEllipsis" />
@@ -125,20 +126,20 @@
 
                 <Border Style="{StaticResource MetricCard}" Margin="0,0,0,12">
                     <StackPanel>
-                        <TextBlock Text="Cuenta" FontWeight="SemiBold" FontSize="13" Opacity="0.85" />
+                        <TextBlock Text="{l:L10n Key=Dashboard.Account}" FontWeight="SemiBold" FontSize="13" Opacity="0.85" />
                         <TextBlock Margin="0,8,0,0"
-                                   Text="{Binding Account, FallbackValue=Sin conexión}"
+                                   Text="{Binding Account, FallbackValue=—, TargetNullValue=—}"
                                    FontSize="15"
                                    TextTrimming="CharacterEllipsis"
                                    TextWrapping="Wrap" />
                         <TextBlock Style="{StaticResource CaptionText}"
-                                   Text="App principal autenticada"
+                                   Text="{l:L10n Key=Dashboard.Account.Caption}"
                                    Margin="0,4,0,0" />
                     </StackPanel>
                 </Border>
             </UniformGrid>
 
-            <TextBlock Text="Última auditoría"
+            <TextBlock Text="{l:L10n Key=Dashboard.LastAudit}"
                        Style="{StaticResource SectionTitleText}"
                        Margin="0,12,0,0"
                        Visibility="{Binding HasLastAudit, Converter={StaticResource BoolToVisibilityConverter}}" />
@@ -159,33 +160,33 @@
                                        FontSize="16" />
                             <TextBlock Style="{StaticResource CaptionText}"
                                        Margin="0,4,0,0"
-                                       Text="{Binding LastAuditAt, StringFormat='Ejecutada {0:dd/MM/yyyy HH:mm} UTC'}" />
+                                       Text="{Binding LastAuditAt, StringFormat={l:L10n Key=Dashboard.LastAudit.RunAt}}" />
                         </StackPanel>
                         <ui:Button Grid.Column="1"
-                                   Content="Abrir Auditoría"
+                                   Content="{l:L10n Key=Dashboard.LastAudit.Open}"
                                    Command="{Binding GoToCommand}"
-                                   CommandParameter="Auditoría"
+                                   CommandParameter="Nav.Audit"
                                    VerticalAlignment="Center" />
                     </Grid>
                     <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                         <Border Background="{DynamicResource BrushSemanticErrorSoft}" CornerRadius="14" Padding="12,6" Margin="0,0,8,0"
                                 BorderBrush="{DynamicResource BrushSemanticError}" BorderThickness="1">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="ERROR" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticError}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{l:L10n Key=Dashboard.LastAudit.Pill.Error}" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticError}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding LastAuditErrors, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
                         <Border Background="{DynamicResource BrushSemanticWarnSoft}" CornerRadius="14" Padding="12,6" Margin="0,0,8,0"
                                 BorderBrush="{DynamicResource BrushSemanticWarn}" BorderThickness="1">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="WARN" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticWarn}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{l:L10n Key=Dashboard.LastAudit.Pill.Warn}" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticWarn}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding LastAuditWarnings, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
                         <Border Background="{DynamicResource BrushSemanticInfoSoft}" CornerRadius="14" Padding="12,6"
                                 BorderBrush="{DynamicResource BrushSemanticInfo}" BorderThickness="1">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="INFO" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticInfo}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{l:L10n Key=Dashboard.LastAudit.Pill.Info}" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticInfo}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding LastAuditInfo, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>

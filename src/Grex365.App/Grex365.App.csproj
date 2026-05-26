@@ -35,6 +35,10 @@
     <RootNamespace>Grex365.App</RootNamespace>
     <AssemblyName>Grex365</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- DPI awareness is set via app.manifest (true/PM) — canonical for WPF.
+         WFO0003 is a WinForms-only check that asks to use ApplicationHighDpiMode,
+         but WPF reads the manifest first. Suppress to keep manifest as source of truth. -->
+    <NoWarn>$(NoWarn);WFO0003</NoWarn>
   </PropertyGroup>
 
 </Project>

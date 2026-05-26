@@ -467,4 +467,71 @@ public class L10nTests : IDisposable
             en.Should().NotBe(key, because: $"EN should translate '{key}' (or fallback chain should mask it)");
         }
     }
+
+    [Theory]
+    [InlineData("Shell.Sidebar.Theme")]
+    [InlineData("Shell.Sidebar.Theme.Tooltip")]
+    [InlineData("Shell.Sidebar.Settings")]
+    [InlineData("Shell.Sidebar.Settings.Tooltip")]
+    [InlineData("Shell.Log.Title")]
+    [InlineData("Shell.Log.Filter.Info")]
+    [InlineData("Shell.Log.Filter.Ok")]
+    [InlineData("Shell.Log.Filter.Warn")]
+    [InlineData("Shell.Log.Filter.Err")]
+    [InlineData("Shell.Log.Filter.Dbg")]
+    [InlineData("Shell.Log.Button.Export")]
+    [InlineData("Shell.Log.Button.Export.Tooltip")]
+    [InlineData("Shell.Log.Button.Clear")]
+    [InlineData("Shell.Status.Graph")]
+    [InlineData("Shell.Status.Exchange")]
+    [InlineData("Shell.Status.Tenant")]
+    [InlineData("Shell.Status.Account")]
+    [InlineData("Shell.Status.Button.About")]
+    [InlineData("Shell.Status.Button.About.Tooltip")]
+    [InlineData("Shell.Status.Button.Log")]
+    [InlineData("Shell.Status.Button.Log.Tooltip")]
+    [InlineData("Shell.Status.Button.Disconnect")]
+    public void Initialize_Both_ShellKeys_Resolved(string key)
+    {
+        L10n.Initialize("es");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+
+        L10n.Initialize("en");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+    }
+
+    [Theory]
+    [InlineData("Dashboard.Eyebrow")]
+    [InlineData("Dashboard.Title")]
+    [InlineData("Dashboard.Subtitle")]
+    [InlineData("Dashboard.QuickActions")]
+    [InlineData("Dashboard.Action.Connect")]
+    [InlineData("Dashboard.Action.Licenses")]
+    [InlineData("Dashboard.Action.SearchUser")]
+    [InlineData("Dashboard.Action.Audit")]
+    [InlineData("Dashboard.Action.Offboarding")]
+    [InlineData("Dashboard.Section.Status")]
+    [InlineData("Dashboard.Graph")]
+    [InlineData("Dashboard.Graph.Caption")]
+    [InlineData("Dashboard.Exchange")]
+    [InlineData("Dashboard.Exchange.Caption")]
+    [InlineData("Dashboard.Tenant")]
+    [InlineData("Dashboard.Tenant.None")]
+    [InlineData("Dashboard.Account")]
+    [InlineData("Dashboard.Account.Caption")]
+    [InlineData("Dashboard.LastAudit")]
+    [InlineData("Dashboard.LastAudit.RunAt")]
+    [InlineData("Dashboard.LastAudit.Open")]
+    [InlineData("Dashboard.LastAudit.Pill.Error")]
+    [InlineData("Dashboard.LastAudit.Pill.Warn")]
+    [InlineData("Dashboard.LastAudit.Pill.Info")]
+    public void Initialize_Both_DashboardKeys_Resolved(string key)
+    {
+        L10n.Initialize("es");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+
+        L10n.Initialize("en");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+    }
+
 }

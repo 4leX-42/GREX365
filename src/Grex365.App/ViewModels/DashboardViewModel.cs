@@ -42,9 +42,11 @@ public sealed partial class DashboardViewModel : ObservableObject
     private void GoTo(string target)
     {
         var main = _services.GetRequiredService<MainViewModel>();
-        // resolve the same instance App uses
+        // Match by stable NavKey first (i18n-safe); fall back to localized Title.
         var matching = main.NavigationItems.FirstOrDefault(i =>
-            string.Equals(i.Title, target, StringComparison.OrdinalIgnoreCase));
+            string.Equals(i.NavKey, target, StringComparison.OrdinalIgnoreCase))
+            ?? main.NavigationItems.FirstOrDefault(i =>
+                string.Equals(i.Title, target, StringComparison.OrdinalIgnoreCase));
         if (matching is not null)
         {
             main.SelectedNavigation = matching;

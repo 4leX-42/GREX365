@@ -6,6 +6,7 @@
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:vm="clr-namespace:Grex365.App.ViewModels"
         xmlns:local="clr-namespace:Grex365.App"
+        xmlns:l="clr-namespace:Grex365.App.Xaml"
         xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
         mc:Ignorable="d"
         Title="GREX365"
@@ -65,14 +66,14 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <ui:Button Grid.Column="0"
-                                       Content="Tema"
+                                       Content="{l:L10n Key=Shell.Sidebar.Theme}"
                                        Margin="0,0,6,0"
-                                       ToolTip="Cambiar tema claro/oscuro"
+                                       ToolTip="{l:L10n Key=Shell.Sidebar.Theme.Tooltip}"
                                        Command="{Binding ToggleThemeCommand}" />
                             <ui:Button Grid.Column="1"
-                                       Content="Ajustes"
+                                       Content="{l:L10n Key=Shell.Sidebar.Settings}"
                                        HorizontalAlignment="Stretch"
-                                       ToolTip="Abrir Ajustes (Ctrl+,)"
+                                       ToolTip="{l:L10n Key=Shell.Sidebar.Settings.Tooltip}"
                                        Command="{Binding OpenSettingsCommand}" />
                         </Grid>
                     </Border>
@@ -261,7 +262,7 @@
                                            Margin="0,0,8,0"
                                            Opacity="0.85"
                                            VerticalAlignment="Center" />
-                                <TextBlock Text="Log de actividad"
+                                <TextBlock Text="{l:L10n Key=Shell.Log.Title}"
                                            FontWeight="SemiBold"
                                            FontSize="14"
                                            VerticalAlignment="Center" />
@@ -270,18 +271,18 @@
                                         Orientation="Horizontal"
                                         Margin="20,0,0,0"
                                         VerticalAlignment="Center">
-                                <CheckBox Content="Info" IsChecked="{Binding ShowInfo}" Margin="0,0,10,0" />
-                                <CheckBox Content="OK"   IsChecked="{Binding ShowOk}"   Margin="0,0,10,0" />
-                                <CheckBox Content="Warn" IsChecked="{Binding ShowWarn}" Margin="0,0,10,0" />
-                                <CheckBox Content="Err"  IsChecked="{Binding ShowError}" Margin="0,0,10,0" />
-                                <CheckBox Content="Dbg"  IsChecked="{Binding ShowDebug}" />
+                                <CheckBox Content="{l:L10n Key=Shell.Log.Filter.Info}" IsChecked="{Binding ShowInfo}" Margin="0,0,10,0" />
+                                <CheckBox Content="{l:L10n Key=Shell.Log.Filter.Ok}"   IsChecked="{Binding ShowOk}"   Margin="0,0,10,0" />
+                                <CheckBox Content="{l:L10n Key=Shell.Log.Filter.Warn}" IsChecked="{Binding ShowWarn}" Margin="0,0,10,0" />
+                                <CheckBox Content="{l:L10n Key=Shell.Log.Filter.Err}"  IsChecked="{Binding ShowError}" Margin="0,0,10,0" />
+                                <CheckBox Content="{l:L10n Key=Shell.Log.Filter.Dbg}"  IsChecked="{Binding ShowDebug}" />
                             </StackPanel>
                             <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                <ui:Button Content="Exportar"
+                                <ui:Button Content="{l:L10n Key=Shell.Log.Button.Export}"
                                            Margin="0,0,8,0"
-                                           ToolTip="Guardar log filtrado a .txt o .csv"
+                                           ToolTip="{l:L10n Key=Shell.Log.Button.Export.Tooltip}"
                                            Command="{Binding ExportLogCommand}" />
-                                <ui:Button Content="Limpiar"
+                                <ui:Button Content="{l:L10n Key=Shell.Log.Button.Clear}"
                                            Icon=""
                                            Command="{Binding ClearLogCommand}" />
                             </StackPanel>
@@ -352,26 +353,26 @@
                     <Border Width="7" Height="7" CornerRadius="4" Margin="0,0,8,0"
                             VerticalAlignment="Center"
                             Background="{Binding GraphConnected, Converter={StaticResource BoolToBrushConverter}}" />
-                    <TextBlock Text="Graph" FontSize="12" Opacity="0.75" VerticalAlignment="Center" />
+                    <TextBlock Text="{l:L10n Key=Shell.Status.Graph}" FontSize="12" Opacity="0.75" VerticalAlignment="Center" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,18,0">
                     <Border Width="7" Height="7" CornerRadius="4" Margin="0,0,8,0"
                             VerticalAlignment="Center"
                             Background="{Binding ExchangeConnected, Converter={StaticResource BoolToBrushConverter}}" />
-                    <TextBlock Text="Exchange" FontSize="12" Opacity="0.75" VerticalAlignment="Center" />
+                    <TextBlock Text="{l:L10n Key=Shell.Status.Exchange}" FontSize="12" Opacity="0.75" VerticalAlignment="Center" />
                 </StackPanel>
 
                 <Rectangle Grid.Column="2" Width="1" Margin="0,4,16,4"
                            Fill="{DynamicResource ControlStrokeColorDefaultBrush}" />
 
                 <TextBlock Grid.Column="3" VerticalAlignment="Center" Margin="0,0,16,0" FontSize="12">
-                    <Run Text="Tenant: " Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <Run Text="{l:L10n Key=Shell.Status.Tenant}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                     <Run Text="{Binding TenantDomain, FallbackValue=—}" />
                 </TextBlock>
 
                 <TextBlock Grid.Column="4" VerticalAlignment="Center" Margin="0,0,16,0" FontSize="12">
-                    <Run Text="Cuenta: " Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    <Run Text="{l:L10n Key=Shell.Status.Account}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                     <Run Text="{Binding Account, FallbackValue=—}" />
                 </TextBlock>
 
@@ -385,15 +386,15 @@
                 </TextBlock>
 
                 <StackPanel Grid.Column="6" Orientation="Horizontal">
-                    <ui:Button Content="Acerca de"
+                    <ui:Button Content="{l:L10n Key=Shell.Status.Button.About}"
                                Margin="0,0,8,0"
                                Command="{Binding OpenAboutCommand}"
-                               ToolTip="Acerca de GREX365 (F1)" />
-                    <ui:Button Content="Log"
+                               ToolTip="{l:L10n Key=Shell.Status.Button.About.Tooltip}" />
+                    <ui:Button Content="{l:L10n Key=Shell.Status.Button.Log}"
                                Margin="0,0,8,0"
                                Command="{Binding ToggleLogPanelCommand}"
-                               ToolTip="Mostrar/ocultar panel de log inferior (Ctrl+L)" />
-                    <ui:Button Content="Desconectar"
+                               ToolTip="{l:L10n Key=Shell.Status.Button.Log.Tooltip}" />
+                    <ui:Button Content="{l:L10n Key=Shell.Status.Button.Disconnect}"
                                Icon=""
                                Command="{Binding DisconnectAllCommand}" />
                 </StackPanel>
