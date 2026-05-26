@@ -125,7 +125,7 @@
                                                  VerticalAlignment="Center"
                                                  Margin="8,0,4,0"
                                                  Fill="{Binding AccountEnabled, Converter={StaticResource BoolToBrushConverter}}"
-                                                 ToolTip="{Binding AccountEnabled, Converter={StaticResource BoolToOnOffConverter}, ConverterParameter='Habilitado/Deshabilitado'}" />
+                                                 ToolTip="{Binding AccountEnabled, Converter={StaticResource BoolToOnOffConverter}, ConverterParameter='Status.Enabled/Status.Disabled'}" />
                                     </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
@@ -169,7 +169,7 @@
                         <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedUser.Mail}" />
                         <TextBlock Grid.Row="2" Grid.Column="0" Text="{l:L10n Key=Users.Field.Account}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Grid.Row="2" Grid.Column="1"
-                                   Text="{Binding SelectedUser.AccountEnabled, Converter={StaticResource BoolToOnOffConverter}}" />
+                                   Text="{Binding SelectedUser.AccountEnabled, Converter={StaticResource BoolToOnOffConverter}, ConverterParameter='Status.Enabled/Status.Disabled'}" />
                         <TextBlock Grid.Row="3" Grid.Column="0" Text="{l:L10n Key=Users.Field.Licenses}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedUser.AssignedLicenseCount}" />
                     </Grid>

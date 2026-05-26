@@ -136,11 +136,11 @@
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding User.Mail, FallbackValue=—}" FontSize="12" Margin="0,2" TextTrimming="CharacterEllipsis" />
 
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="{l:L10n Key=UserDetails.Field.Status}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="12" Margin="0,2" />
-                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding User.AccountEnabled, Converter={StaticResource BoolToOnOffConverter}, ConverterParameter='Habilitado/Deshabilitado'}" FontSize="12" Margin="0,2" FontWeight="SemiBold" Foreground="{Binding User.AccountEnabled, Converter={StaticResource BoolToBrushConverter}}" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding User.AccountEnabled, Converter={StaticResource BoolToOnOffConverter}, ConverterParameter='Status.Enabled/Status.Disabled'}" FontSize="12" Margin="0,2" FontWeight="SemiBold" Foreground="{Binding User.AccountEnabled, Converter={StaticResource BoolToBrushConverter}}" />
 
                             <TextBlock Grid.Row="3" Grid.Column="0" Text="{l:L10n Key=UserDetails.Field.Type}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="12" Margin="0,2" />
                             <TextBlock Grid.Row="3" Grid.Column="1" FontSize="12" Margin="0,2">
-                                <Run Text="{Binding User.IsGuest, Converter={StaticResource BoolToOnOffConverter}, ConverterParameter='Guest/Member', Mode=OneWay}" />
+                                <Run Text="{Binding User.IsGuest, Converter={StaticResource BoolToOnOffConverter}, ConverterParameter='UserType.Guest/UserType.Member', Mode=OneWay}" />
                             </TextBlock>
 
                             <TextBlock Grid.Row="4" Grid.Column="0" Text="{l:L10n Key=UserDetails.Field.Licenses}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="12" Margin="0,2" />

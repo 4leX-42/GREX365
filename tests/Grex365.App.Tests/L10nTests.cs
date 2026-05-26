@@ -299,6 +299,14 @@ public class L10nTests : IDisposable
     [InlineData("Common.Next")]
     [InlineData("Common.Finish")]
     [InlineData("Common.Skip")]
+    [InlineData("Common.Connected")]
+    [InlineData("Common.Disconnected")]
+    [InlineData("Status.Valid")]
+    [InlineData("Status.Invalid")]
+    [InlineData("Status.Enabled")]
+    [InlineData("Status.Disabled")]
+    [InlineData("UserType.Guest")]
+    [InlineData("UserType.Member")]
     public void Initialize_Both_DialogAndCommonKeys_Resolved(string key)
     {
         L10n.Initialize("es");

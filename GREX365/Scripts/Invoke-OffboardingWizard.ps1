@@ -482,5 +482,3 @@ Se mostrarán los pasos sin tocar el tenant.
     Stop-LogSession -Persist | Out-Null
     throw
 }
-
-

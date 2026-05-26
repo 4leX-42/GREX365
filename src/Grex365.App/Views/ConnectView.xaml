@@ -169,7 +169,7 @@
                             VerticalAlignment="Center"
                             Background="{Binding CertIsValid, Converter={StaticResource BoolToBrushConverter}}"
                             Opacity="0.9">
-                        <TextBlock Text="{Binding CertIsValid, Converter={StaticResource BoolToOnOffConverter}, ConverterParameter='válido/inválido'}"
+                        <TextBlock Text="{Binding CertIsValid, Converter={StaticResource BoolToOnOffConverter}, ConverterParameter='Status.Valid/Status.Invalid'}"
                                    FontSize="11" FontWeight="SemiBold" Foreground="White" />
                     </Border>
                 </Grid>

@@ -271,6 +271,16 @@ public static class L10n
         ["Common.Next"] = "Siguiente",
         ["Common.Finish"] = "Finalizar",
         ["Common.Skip"] = "Omitir",
+        ["Common.Connected"] = "conectado",
+        ["Common.Disconnected"] = "desconectado",
+
+        ["Status.Valid"] = "Válido",
+        ["Status.Invalid"] = "Inválido",
+        ["Status.Enabled"] = "Habilitado",
+        ["Status.Disabled"] = "Deshabilitado",
+
+        ["UserType.Guest"] = "Invitado",
+        ["UserType.Member"] = "Miembro",
 
         ["Shell.Sidebar.Theme"] = "Tema",
         ["Shell.Sidebar.Theme.Tooltip"] = "Cambiar tema claro/oscuro",
@@ -865,6 +875,16 @@ public static class L10n
         ["Common.Next"] = "Next",
         ["Common.Finish"] = "Finish",
         ["Common.Skip"] = "Skip",
+        ["Common.Connected"] = "connected",
+        ["Common.Disconnected"] = "disconnected",
+
+        ["Status.Valid"] = "Valid",
+        ["Status.Invalid"] = "Invalid",
+        ["Status.Enabled"] = "Enabled",
+        ["Status.Disabled"] = "Disabled",
+
+        ["UserType.Guest"] = "Guest",
+        ["UserType.Member"] = "Member",
 
         ["Shell.Sidebar.Theme"] = "Theme",
         ["Shell.Sidebar.Theme.Tooltip"] = "Toggle light/dark theme",
