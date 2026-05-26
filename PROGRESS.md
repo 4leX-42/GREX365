@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1224 passing** (xUnit + FluentAssertions) — 480 Core + 744 App
-- Última actualización: 2026-05-27 (sesión · Sprints AA–AF — D6 i18n cerrado, 20/20 surfaces)
+- Tests: **1248 passing** (xUnit + FluentAssertions) — 485 Core + 763 App
+- Última actualización: 2026-05-27 (sesión · Sprints AA–AI — i18n + converter L10n + prefs fail-soft + release scaffolding)
 
 ## Auditoría técnica integral 2026-05-22
 
@@ -57,6 +57,30 @@
 - Sweep final `grep "Foreground=\"#\|Background=\"#"`: cero matches restantes — paleta 100% via DynamicResource.
 
 ## Bitácora sesiones
+
+### 2026-05-27 (cont. autónoma) — Sprints AG–AI · converter L10n + prefs fail-soft + release scaffold
+
+**Sprint AG — BoolToOnOffConverter L10n** `<commit AG>`:
+- Cierra los 3 ConverterParameter hardcoded ES detectados en Sprint AB (`'Habilitado/Deshabilitado'`, `'Guest/Member'`, default `conectado/desconectado`).
+- Converter detecta dotted tokens como L10n keys (`Status.Enabled/Status.Disabled`) y resuelve via `L10n.Get` en convert time. Backwards-compat preservada: tokens sin dot tratados como literales.
+- +8 keys ES+EN — Common.Connected/Disconnected, Status.Valid/Invalid/Enabled/Disabled, UserType.Guest/Member.
+- 4 callsites XAML migrados (ConnectView CertIsValid, UserDetailsView 2x, UsersView 2x).
+- `BoolToOnOffConverterTests`: 11 tests cubren no-param + dotted + plain + mixed + unknown-key fallback + non-bool guard + ConvertBack throws.
+- **D6 i18n cerrado 100%** sin strings hardcoded ES restantes en surfaces migradas.
+
+**Sprint AH — H1.5.5 prefs fail-soft** `<commit AH>`:
+- Bug antes: launching con `user_preferences.json` corrupto (edit manual / disk truncation / version drift) → `JsonException` → app dead on arrival.
+- Fix: `JsonPreferencesStore` + `JsonCertConfigStore` `LoadAsync` catch `JsonException` + `IOException`, cuarentenan archivo via `CorruptFileQuarantine.MoveAside` → `*.corrupted-yyyyMMddHHmmss.bak`, retornan defaults.
+- `+5 tests` Core — corrupt-returns-defaults, quarantine-preserves-bytes, corrupt-then-save-overwrites, cert-corrupt-quarantines, empty-file-defaults.
+- ROADMAP H1.5.5 cerrado.
+
+**Sprint AI — H5.6 release scaffold** `<commit AI>`:
+- `CHANGELOG.md` root (Keep a Changelog ES) — scope a v2.0 rewrite, separa del legacy CHANGELOG en `GREX365/Seguimiento Claude/`. Documenta "how to cut a release" 6-step.
+- `.github/release-template.md` con `${TAG_NAME}`/`${TAG_NAME_ANCHOR}` placeholders. Cubre highlights, assets table (portable EXE / MSIX / appinstaller), instalación, verificación, breaking changes section, next steps.
+- CI workflow: nuevo job `release` (ubuntu-latest, permissions: contents:write) gated por `refs/tags/v*`, depende de publish + msix. Render template via sed, crea draft GH release via `softprops/action-gh-release@v2`, attachea Grex365.App.exe + .msix + .appinstaller. Prerelease auto-detect cuando tag contiene `-`.
+- ROADMAP H5.6 cerrado.
+
+**Total 9 commits this round** (Sprints AA–AI): tests 855 → **1248** (+393).
 
 ### 2026-05-27 (sesión cont. autónoma) — Sprints AC–AF · cerrar D6 i18n (20/20 surfaces)
 
