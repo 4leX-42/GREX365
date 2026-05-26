@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:l="clr-namespace:Grex365.App.Xaml"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
     <Grid Margin="32,28,32,16">
@@ -16,14 +17,14 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,4">
-            <TextBlock Text="LICENCIAS" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="Licencias del tenant"
+            <TextBlock Text="{l:L10n Key=TenantHealth.Eyebrow}" Style="{StaticResource EyebrowText}" />
+            <TextBlock Text="{l:L10n Key=TenantHealth.Title}"
                        FontSize="28"
                        FontWeight="Light"
                        VerticalAlignment="Center" />
         </StackPanel>
         <TextBlock Grid.Row="1" Style="{StaticResource PageSubtitleText}"
-                   Text="Consumo de SKUs, organización y conteo de usuarios/grupos. Carga automática al conectar." />
+                   Text="{l:L10n Key=TenantHealth.Subtitle}" />
 
         <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,0,0,16">
             <StackPanel Orientation="Horizontal">
@@ -32,10 +33,10 @@
                            Command="{Binding RefreshCommand}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
-                        <TextBlock Text="Refrescar" />
+                        <TextBlock Text="{l:L10n Key=TenantHealth.Refresh}" />
                     </StackPanel>
                 </ui:Button>
-                <ui:Button Margin="0,0,8,0" Command="{Binding CancelCommand}" Content="Cancelar" />
+                <ui:Button Margin="0,0,8,0" Command="{Binding CancelCommand}" Content="{l:L10n Key=TenantHealth.Cancel}" />
                 <ui:ProgressRing IsIndeterminate="True" Width="20" Height="20" Margin="8,0,8,0"
                                  Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}" />
                 <TextBlock VerticalAlignment="Center" Text="{Binding StatusMessage}" Opacity="0.85" />
@@ -46,7 +47,7 @@
                      Visibility="{Binding Health, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
             <Border Style="{StaticResource MetricCard}">
                 <StackPanel>
-                    <TextBlock Text="Organización" Opacity="0.75" FontSize="12" FontWeight="SemiBold" />
+                    <TextBlock Text="{l:L10n Key=TenantHealth.Card.Organization}" Opacity="0.75" FontSize="12" FontWeight="SemiBold" />
                     <TextBlock Margin="0,8,0,0"
                                Text="{Binding Health.DisplayName, FallbackValue=—}"
                                FontSize="18" FontWeight="SemiBold"
@@ -57,18 +58,18 @@
             </Border>
             <Border Style="{StaticResource MetricCard}">
                 <StackPanel>
-                    <TextBlock Text="Usuarios" Opacity="0.75" FontSize="12" FontWeight="SemiBold" />
+                    <TextBlock Text="{l:L10n Key=TenantHealth.Card.Users}" Opacity="0.75" FontSize="12" FontWeight="SemiBold" />
                     <TextBlock Style="{StaticResource MetricValueText}"
                                Text="{Binding Health.TotalUsers, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource CaptionText}" Text="Total en el directorio" />
+                    <TextBlock Style="{StaticResource CaptionText}" Text="{l:L10n Key=TenantHealth.Card.Users.Caption}" />
                 </StackPanel>
             </Border>
             <Border Style="{StaticResource MetricCard}" Margin="0,0,0,12">
                 <StackPanel>
-                    <TextBlock Text="Grupos" Opacity="0.75" FontSize="12" FontWeight="SemiBold" />
+                    <TextBlock Text="{l:L10n Key=TenantHealth.Card.Groups}" Opacity="0.75" FontSize="12" FontWeight="SemiBold" />
                     <TextBlock Style="{StaticResource MetricValueText}"
                                Text="{Binding Health.TotalGroups, FallbackValue=0}" />
-                    <TextBlock Style="{StaticResource CaptionText}" Text="M365, DL y seguridad" />
+                    <TextBlock Style="{StaticResource CaptionText}" Text="{l:L10n Key=TenantHealth.Card.Groups.Caption}" />
                 </StackPanel>
             </Border>
         </UniformGrid>
@@ -82,7 +83,7 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="Licencias"
+                    <TextBlock Grid.Column="0" Text="{l:L10n Key=TenantHealth.Licenses.Title}"
                                Style="{StaticResource SectionTitleText}"
                                VerticalAlignment="Center" Margin="0,0,16,0" />
 
@@ -113,7 +114,7 @@
                                      BorderThickness="0"
                                      Background="Transparent"
                                      VerticalAlignment="Center"
-                                     ToolTip="Buscar por nombre, SKU o categoría"
+                                     ToolTip="{l:L10n Key=TenantHealth.Filter.Tooltip}"
                                      Padding="0" />
                             <Button Grid.Column="2"
                                     Content="×"
@@ -124,27 +125,27 @@
                                     Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                     Command="{Binding ClearFilterCommand}"
                                     Visibility="{Binding LicenseFilter, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}"
-                                    ToolTip="Limpiar filtro" />
+                                    ToolTip="{l:L10n Key=TenantHealth.Filter.Clear.Tooltip}" />
                         </Grid>
                     </Border>
 
                     <ui:Button Grid.Column="2"
                                Margin="12,0,8,0"
                                Command="{Binding GoToUsersCommand}"
-                               ToolTip="Ir al módulo Usuarios para asignar/quitar licencias">
+                               ToolTip="{l:L10n Key=TenantHealth.Manage.Tooltip}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text=""
                                        FontFamily="{StaticResource IconFontFamily}"
                                        FontSize="13"
                                        Margin="0,0,6,0"
                                        VerticalAlignment="Center" />
-                            <TextBlock Text="Gestionar" VerticalAlignment="Center" />
+                            <TextBlock Text="{l:L10n Key=TenantHealth.Manage}" VerticalAlignment="Center" />
                         </StackPanel>
                     </ui:Button>
 
                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center"
                                 Visibility="{Binding Health, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
-                        <TextBlock Text="Total: " Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{l:L10n Key=TenantHealth.Total.Label}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock>
                             <Run Text="{Binding TotalConsumed, Mode=OneWay}" FontWeight="SemiBold" />
                             <Run Text=" / " />
@@ -222,7 +223,7 @@
                                                 <Run Text="{Binding Enabled, Mode=OneWay}" />
                                                 <Run Text=" · " Foreground="{DynamicResource TextFillColorDisabledBrush}" />
                                                 <Run Text="{Binding Available, Mode=OneWay}" />
-                                                <Run Text=" libres" />
+                                                <Run Text="{l:L10n Key=TenantHealth.License.FreeSuffix}" />
                                             </TextBlock>
                                         </StackPanel>
 

@@ -501,6 +501,62 @@ public class L10nTests : IDisposable
     }
 
     [Theory]
+    [InlineData("Groups.Eyebrow")]
+    [InlineData("Groups.Title")]
+    [InlineData("Groups.Subtitle")]
+    [InlineData("Groups.Type.Label")]
+    [InlineData("Groups.Type.Auto")]
+    [InlineData("Groups.Type.Auto.Tooltip")]
+    [InlineData("Groups.Type.M365")]
+    [InlineData("Groups.Type.M365.Tooltip")]
+    [InlineData("Groups.Type.DL")]
+    [InlineData("Groups.Type.DL.Tooltip")]
+    [InlineData("Groups.Domain.Label")]
+    [InlineData("Groups.Domain.Placeholder")]
+    [InlineData("Groups.Bulk.Create")]
+    [InlineData("Groups.Bulk.ExportLog")]
+    [InlineData("Groups.Search.Title")]
+    [InlineData("Groups.Search.Placeholder")]
+    [InlineData("Groups.Search.Button")]
+    [InlineData("Groups.Empty.Title")]
+    [InlineData("Groups.Empty.Hint")]
+    [InlineData("Groups.NoneSelected")]
+    [InlineData("Groups.RemoveSelected")]
+    [InlineData("Groups.ExportMembers")]
+    [InlineData("Groups.AddMembers.Label")]
+    [InlineData("Groups.AddMembers.Button")]
+    [InlineData("Groups.Import.Button")]
+    [InlineData("Groups.Export.Button")]
+    [InlineData("Groups.Cancel.Button")]
+    [InlineData("Groups.LastResults.Title")]
+    [InlineData("Groups.BulkResults.Title")]
+    [InlineData("TenantHealth.Eyebrow")]
+    [InlineData("TenantHealth.Title")]
+    [InlineData("TenantHealth.Subtitle")]
+    [InlineData("TenantHealth.Refresh")]
+    [InlineData("TenantHealth.Cancel")]
+    [InlineData("TenantHealth.Card.Organization")]
+    [InlineData("TenantHealth.Card.Users")]
+    [InlineData("TenantHealth.Card.Users.Caption")]
+    [InlineData("TenantHealth.Card.Groups")]
+    [InlineData("TenantHealth.Card.Groups.Caption")]
+    [InlineData("TenantHealth.Licenses.Title")]
+    [InlineData("TenantHealth.Filter.Tooltip")]
+    [InlineData("TenantHealth.Filter.Clear.Tooltip")]
+    [InlineData("TenantHealth.Manage")]
+    [InlineData("TenantHealth.Manage.Tooltip")]
+    [InlineData("TenantHealth.Total.Label")]
+    [InlineData("TenantHealth.License.FreeSuffix")]
+    public void Initialize_Both_BigViewsBatch_Resolved(string key)
+    {
+        L10n.Initialize("es");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+
+        L10n.Initialize("en");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+    }
+
+    [Theory]
     [InlineData("Onboarding.Eyebrow")]
     [InlineData("Onboarding.Title")]
     [InlineData("Onboarding.Subtitle")]
