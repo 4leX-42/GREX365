@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -18,6 +19,7 @@ public sealed partial class UsersViewModel : ObservableObject
     private readonly IUiLogSink _log;
     private readonly IRbacGuard _rbac;
     private readonly IDialogService _dialogs;
+    private readonly IConnectionStateMonitor? _monitor;
     private CancellationTokenSource? _cts;
     private CancellationTokenSource? _debounceCts;
 
@@ -32,12 +34,43 @@ public sealed partial class UsersViewModel : ObservableObject
     public ObservableCollection<BulkUserResult> BulkResults { get; } = new();
     public ObservableCollection<SkuInfo> AvailableSkus { get; } = new();
 
-    public UsersViewModel(IUsersService users, IUiLogSink log, IRbacGuard rbac, IDialogService dialogs)
+    public UsersViewModel(IUsersService users, IUiLogSink log, IRbacGuard rbac, IDialogService dialogs, IConnectionStateMonitor? monitor = null)
     {
         _users = users;
         _log = log;
         _rbac = rbac;
         _dialogs = dialogs;
+        _monitor = monitor;
+        if (_monitor is not null)
+        {
+            _monitor.PropertyChanged += OnMonitorChanged;
+            // Fire once on construction in case Graph is already connected
+            // (typical: VM singleton instantiated lazily after auto-connect completes).
+            if (_monitor.Current.GraphConnected)
+            {
+                _ = TryAutoLoadSkusAsync();
+            }
+        }
+    }
+
+    private void OnMonitorChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(IConnectionStateMonitor.Current)) return;
+        if (_monitor is null || !_monitor.Current.GraphConnected) return;
+        _ = TryAutoLoadSkusAsync();
+    }
+
+    private async Task TryAutoLoadSkusAsync()
+    {
+        if (AvailableSkus.Count > 0 || IsBusy) return;
+        try
+        {
+            await LoadSkusCommand.ExecuteAsync(null).ConfigureAwait(true);
+        }
+        catch
+        {
+            // LoadSkusAsync already surfaces errors via StatusMessage + log sink.
+        }
     }
 
     private async Task<bool> RequireAuthorizedAsync(string contextName)

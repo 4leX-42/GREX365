@@ -658,12 +658,17 @@
             <!-- ComboBox + ComboBoxItem styling.
                  WPF default ComboBox popup uses SystemColors hardcoded → light gray
                  background in dark theme. We restyle items (Background/Foreground/
-                 hover/selected) via wpf-ui tokens while keeping default ControlTemplate
-                 (full template override broke click-to-open). Background on ComboBox
-                 itself uses theme token so closed state matches surface. -->
+                 hover/selected) via brand-accent for explicit contrast (theme-agnostic):
+                   - Default: transparent bg, primary text — surface shows through popup base
+                   - Highlighted (hover): SubtleFillColorSecondaryBrush (theme-aware overlay)
+                   - Selected: BrandAccentSolid blue + Foreground=White (forced AAA contrast
+                     in BOTH light + dark themes — previous SubtleFillColorTertiaryBrush
+                     selection was invisible in light mode and washed out white text in dark)
+                 Keeps default ControlTemplate for the wrapping ComboBox (full template
+                 override broke click-to-open in earlier sprints). -->
             <Style TargetType="ComboBoxItem">
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
-                <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorTertiaryBrush}" />
+                <Setter Property="Background" Value="Transparent" />
                 <Setter Property="Padding" Value="10,6" />
                 <Setter Property="BorderThickness" Value="0" />
                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -673,8 +678,10 @@
                             <Border x:Name="Bd"
                                     Background="{TemplateBinding Background}"
                                     Padding="{TemplateBinding Padding}"
+                                    CornerRadius="3"
                                     SnapsToDevicePixels="True">
-                                <ContentPresenter VerticalAlignment="Center"
+                                <ContentPresenter x:Name="Cp"
+                                                  VerticalAlignment="Center"
                                                   TextElement.Foreground="{TemplateBinding Foreground}" />
                             </Border>
                             <ControlTemplate.Triggers>
@@ -682,8 +689,17 @@
                                     <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
                                 </Trigger>
                                 <Trigger Property="IsSelected" Value="True">
-                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource BrandAccentSolid}" />
+                                    <Setter TargetName="Cp" Property="TextElement.Foreground" Value="White" />
                                 </Trigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="IsSelected" Value="True" />
+                                        <Condition Property="IsHighlighted" Value="True" />
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource BrandAccentDeep}" />
+                                    <Setter TargetName="Cp" Property="TextElement.Foreground" Value="White" />
+                                </MultiTrigger>
                                 <Trigger Property="IsEnabled" Value="False">
                                     <Setter Property="Foreground" Value="{DynamicResource TextFillColorDisabledBrush}" />
                                 </Trigger>

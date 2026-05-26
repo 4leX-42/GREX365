@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Grex365.App.Services;
@@ -13,6 +14,7 @@ public sealed partial class OnboardingViewModel : ObservableObject
     private readonly IUsersService _users;
     private readonly IUiLogSink _log;
     private readonly IDialogService _dialogs;
+    private readonly IConnectionStateMonitor? _monitor;
     private CancellationTokenSource? _cts;
 
     [ObservableProperty] private string _displayName = string.Empty;
@@ -31,12 +33,41 @@ public sealed partial class OnboardingViewModel : ObservableObject
     public ObservableCollection<SkuInfo> AvailableSkus { get; } = new();
     public ObservableCollection<SkuInfo> SelectedSkus { get; } = new();
 
-    public OnboardingViewModel(IOnboardingService onboarding, IUsersService users, IUiLogSink log, IDialogService dialogs)
+    public OnboardingViewModel(IOnboardingService onboarding, IUsersService users, IUiLogSink log, IDialogService dialogs, IConnectionStateMonitor? monitor = null)
     {
         _onboarding = onboarding;
         _users = users;
         _log = log;
         _dialogs = dialogs;
+        _monitor = monitor;
+        if (_monitor is not null)
+        {
+            _monitor.PropertyChanged += OnMonitorChanged;
+            if (_monitor.Current.GraphConnected)
+            {
+                _ = TryAutoLoadSkusAsync();
+            }
+        }
+    }
+
+    private void OnMonitorChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(IConnectionStateMonitor.Current)) return;
+        if (_monitor is null || !_monitor.Current.GraphConnected) return;
+        _ = TryAutoLoadSkusAsync();
+    }
+
+    private async Task TryAutoLoadSkusAsync()
+    {
+        if (AvailableSkus.Count > 0 || IsBusy) return;
+        try
+        {
+            await LoadSkusCommand.ExecuteAsync(null).ConfigureAwait(true);
+        }
+        catch
+        {
+            // LoadSkusAsync surfaces errors via StatusMessage + log sink.
+        }
     }
 
     [RelayCommand]
