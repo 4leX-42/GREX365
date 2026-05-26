@@ -4,32 +4,33 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:l="clr-namespace:Grex365.App.Xaml"
              mc:Ignorable="d">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24" MaxWidth="900" HorizontalAlignment="Left">
             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-            <TextBlock Text="CERTIFICADO" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="Asistente de certificado" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
+            <TextBlock Text="{l:L10n Key=CertWizard.Eyebrow}" Style="{StaticResource EyebrowText}" />
+            <TextBlock Text="{l:L10n Key=CertWizard.Title}" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
         </StackPanel>
-            <TextBlock Text="Genera un certificado autofirmado para autenticación de la App Registration"
+            <TextBlock Text="{l:L10n Key=CertWizard.Subtitle}"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                        Margin="0,0,0,16" />
 
             <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="Nombre común (CN)" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <TextBlock Text="{l:L10n Key=CertWizard.Field.CommonName}" FontWeight="SemiBold" Margin="0,0,0,4" />
                     <ui:TextBox Text="{Binding CommonName, UpdateSourceTrigger=PropertyChanged}"
-                                PlaceholderText="Grex365-Local"
+                                PlaceholderText="{l:L10n Key=CertWizard.Field.CommonName.Placeholder}"
                                 Margin="0,0,0,12" />
 
-                    <TextBlock Text="Días de validez" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <TextBlock Text="{l:L10n Key=CertWizard.Field.ValidDays}" FontWeight="SemiBold" Margin="0,0,0,4" />
                     <ui:TextBox Text="{Binding ValidDays, UpdateSourceTrigger=PropertyChanged}"
                                 Width="120"
                                 HorizontalAlignment="Left"
                                 Margin="0,0,0,12" />
 
-                    <TextBlock Text="Carpeta de exportación (.cer)" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <TextBlock Text="{l:L10n Key=CertWizard.Field.ExportDir}" FontWeight="SemiBold" Margin="0,0,0,4" />
                     <Grid Margin="0,0,0,12">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -38,13 +39,13 @@
                         <ui:TextBox Grid.Column="0"
                                     Text="{Binding ExportDirectory, UpdateSourceTrigger=PropertyChanged}" />
                         <ui:Button Grid.Column="1"
-                                   Content="Examinar..."
+                                   Content="{l:L10n Key=CertWizard.Button.Browse}"
                                    Margin="8,0,0,0"
                                    Command="{Binding BrowseExportFolderCommand}" />
                     </Grid>
 
                     <StackPanel Orientation="Horizontal">
-                        <ui:Button Content="Generar e instalar"
+                        <ui:Button Content="{l:L10n Key=CertWizard.Button.Generate}"
                                    Appearance="Primary"
                                    Margin="0,0,8,0"
                                    Command="{Binding GenerateCommand}" />
@@ -63,7 +64,7 @@
                     Background="{DynamicResource ControlFillColorDefaultBrush}"
                     Visibility="{Binding Generated, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
                 <StackPanel>
-                    <TextBlock Text="Resultado" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,12" />
+                    <TextBlock Text="{l:L10n Key=CertWizard.Result}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,12" />
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -76,25 +77,25 @@
                             <ColumnDefinition Width="160" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Subject" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{l:L10n Key=CertWizard.Field.Subject}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Generated.Subject}" />
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Thumbprint" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="{l:L10n Key=CertWizard.Field.Thumbprint}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Grid.Row="1" Grid.Column="1"
                                    Text="{Binding Generated.Thumbprint}"
                                    FontFamily="Cascadia Mono,Consolas"
                                    FontWeight="Bold"
                                    IsHitTestVisible="True"
                                    Cursor="IBeam" />
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Válido desde" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="{l:L10n Key=CertWizard.Field.ValidFrom}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Generated.NotBefore, StringFormat='yyyy-MM-dd HH:mm'}" />
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Válido hasta" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="{l:L10n Key=CertWizard.Field.ValidTo}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Generated.NotAfter, StringFormat='yyyy-MM-dd HH:mm'}" />
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text=".cer exportado" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="{l:L10n Key=CertWizard.Field.CerPath}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Generated.CerPath}" TextWrapping="Wrap" />
                     </Grid>
 
                     <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                        <ui:Button Content="Abrir carpeta"
+                        <ui:Button Content="{l:L10n Key=CertWizard.Button.OpenFolder}"
                                    Margin="0,0,8,0"
                                    Command="{Binding OpenExportFolderCommand}" />
                     </StackPanel>
@@ -104,25 +105,25 @@
                             Padding="0,12,0,0"
                             Margin="0,12,0,0">
                         <StackPanel>
-                            <TextBlock Text="Exportar PFX (clave privada protegida con password)"
+                            <TextBlock Text="{l:L10n Key=CertWizard.Pfx.Title}"
                                        FontWeight="SemiBold"
                                        Margin="0,0,0,8" />
-                            <TextBlock Text="Solo si necesitas restaurar el certificado en otra estacion. NO lo subas a Azure (sube el .cer)."
+                            <TextBlock Text="{l:L10n Key=CertWizard.Pfx.Hint}"
                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                        FontSize="12"
                                        TextWrapping="Wrap"
                                        Margin="0,0,0,8" />
-                            <TextBlock Text="Ruta del .pfx" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4" />
+                            <TextBlock Text="{l:L10n Key=CertWizard.Pfx.PathLabel}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4" />
                             <ui:TextBox Text="{Binding PfxPath, UpdateSourceTrigger=PropertyChanged}"
-                                        PlaceholderText="C:\path\al\cert.pfx"
+                                        PlaceholderText="{l:L10n Key=CertWizard.Pfx.PathPlaceholder}"
                                         Margin="0,0,0,8" />
-                            <TextBlock Text="Password" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4" />
+                            <TextBlock Text="{l:L10n Key=CertWizard.Pfx.PasswordLabel}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4" />
                             <PasswordBox x:Name="PfxPasswordBox"
                                          Width="280"
                                          HorizontalAlignment="Left"
                                          Margin="0,0,0,8" />
                             <StackPanel Orientation="Horizontal">
-                                <ui:Button Content="Exportar .pfx"
+                                <ui:Button Content="{l:L10n Key=CertWizard.Pfx.Button.Export}"
                                            Margin="0,0,8,0"
                                            Click="ExportPfx_Click" />
                                 <TextBlock VerticalAlignment="Center"
@@ -137,26 +138,26 @@
                             Padding="0,12,0,0"
                             Margin="0,12,0,0">
                         <StackPanel>
-                            <TextBlock Text="Auto-configurar App Registration en Azure AD"
+                            <TextBlock Text="{l:L10n Key=CertWizard.AppReg.Title}"
                                        FontWeight="SemiBold"
                                        Margin="0,0,0,8" />
-                            <TextBlock Text="Requiere Graph conectado (usa 'Conectar (device code)' en Conexión como admin)."
+                            <TextBlock Text="{l:L10n Key=CertWizard.AppReg.Hint}"
                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                        FontSize="12"
                                        TextWrapping="Wrap"
                                        Margin="0,0,0,8" />
-                            <TextBlock Text="DisplayName" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4" />
+                            <TextBlock Text="{l:L10n Key=CertWizard.AppReg.DisplayName}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,4" />
                             <ui:TextBox Text="{Binding AppRegDisplayName, UpdateSourceTrigger=PropertyChanged}"
-                                        PlaceholderText="Grex365"
+                                        PlaceholderText="{l:L10n Key=CertWizard.AppReg.DisplayName.Placeholder}"
                                         Width="320"
                                         HorizontalAlignment="Left"
                                         Margin="0,0,0,8" />
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                <ui:Button Content="Crear App Registration + subir cert"
+                                <ui:Button Content="{l:L10n Key=CertWizard.AppReg.Button.Create}"
                                            Appearance="Primary"
                                            Margin="0,0,8,0"
                                            Command="{Binding CreateAppRegistrationCommand}" />
-                                <ui:Button Content="Abrir admin consent"
+                                <ui:Button Content="{l:L10n Key=CertWizard.AppReg.Button.Consent}"
                                            Margin="0,0,8,0"
                                            Command="{Binding OpenAdminConsentCommand}"
                                            Visibility="{Binding AppRegResult, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}" />
@@ -170,13 +171,10 @@
                             Padding="0,12,0,0"
                             Margin="0,12,0,0">
                         <StackPanel>
-                            <TextBlock Text="Próximos pasos" FontWeight="SemiBold" Margin="0,0,0,4" />
-                            <TextBlock TextWrapping="Wrap" Opacity="0.85">
-                                1. Subir el archivo .cer al App Registration en Azure AD (Certificates &amp; secrets → Certificates).<LineBreak />
-                                2. Anotar el Thumbprint y el Application (client) ID en Settings.<LineBreak />
-                                3. Conceder los permisos delegados/aplicación necesarios (Graph: User.ReadWrite.All, Group.ReadWrite.All, Organization.Read.All, AuditLog.Read.All; Exchange.ManageAsApp).<LineBreak />
-                                4. Volver a Conexión y pulsar Connect.
-                            </TextBlock>
+                            <TextBlock Text="{l:L10n Key=CertWizard.NextSteps}" FontWeight="SemiBold" Margin="0,0,0,4" />
+                            <TextBlock Text="{l:L10n Key=CertWizard.NextSteps.Body}"
+                                       TextWrapping="Wrap"
+                                       Opacity="0.85" />
                         </StackPanel>
                     </Border>
                 </StackPanel>

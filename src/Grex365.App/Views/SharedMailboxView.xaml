@@ -4,22 +4,23 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:l="clr-namespace:Grex365.App.Xaml"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="32,28,32,16">
             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                <TextBlock Text="BUZONES" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="Buzones compartidos" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
+                <TextBlock Text="{l:L10n Key=SharedMailbox.Eyebrow}" Style="{StaticResource EyebrowText}" />
+            <TextBlock Text="{l:L10n Key=SharedMailbox.Title}" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
             </StackPanel>
-            <TextBlock Text="Conversión SharedMailbox → UserMailbox y gestión de permisos"
+            <TextBlock Text="{l:L10n Key=SharedMailbox.Subtitle}"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                        Margin="0,0,0,16" />
 
             <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="Buzón objetivo" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <TextBlock Text="{l:L10n Key=SharedMailbox.TargetMailbox}" FontWeight="SemiBold" Margin="0,0,0,4" />
                     <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -28,17 +29,17 @@
                         </Grid.ColumnDefinitions>
                         <ui:TextBox Grid.Column="0"
                                     Text="{Binding MailboxIdentity, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="user@contoso.com / UPN / SMTP">
+                                    PlaceholderText="{l:L10n Key=SharedMailbox.Identity.Placeholder}">
                             <ui:TextBox.InputBindings>
                                 <KeyBinding Key="Enter" Command="{Binding LookupCommand}" />
                             </ui:TextBox.InputBindings>
                         </ui:TextBox>
                         <ui:Button Grid.Column="1"
-                                   Content="Consultar"
+                                   Content="{l:L10n Key=SharedMailbox.Button.Lookup}"
                                    Margin="8,0,0,0"
                                    Command="{Binding LookupCommand}" />
                         <ui:Button Grid.Column="2"
-                                   Content="Convertir a UserMailbox"
+                                   Content="{l:L10n Key=SharedMailbox.Button.ConvertRegular}"
                                    Appearance="Primary"
                                    Margin="8,0,0,0"
                                    Command="{Binding ConvertToRegularCommand}" />
@@ -60,13 +61,13 @@
                                 <ColumnDefinition Width="160" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Identity" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="{l:L10n Key=SharedMailbox.Field.Identity}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding MailboxInfo.Identity}" />
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Display name" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="{l:L10n Key=SharedMailbox.Field.DisplayName}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding MailboxInfo.DisplayName}" />
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Primary SMTP" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="{l:L10n Key=SharedMailbox.Field.PrimarySmtp}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding MailboxInfo.PrimarySmtpAddress}" />
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Tipo" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="{l:L10n Key=SharedMailbox.Field.Type}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                             <TextBlock Grid.Row="3" Grid.Column="1"
                                        Text="{Binding MailboxInfo.RecipientTypeDetails}"
                                        FontWeight="SemiBold" />
@@ -81,7 +82,7 @@
                     Background="{DynamicResource ControlFillColorDefaultBrush}"
                     Visibility="{Binding CurrentPermissions.Count, Converter={StaticResource CountToVisibilityConverter}, FallbackValue=Collapsed}">
                 <StackPanel>
-                    <TextBlock Text="Permisos actuales" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
+                    <TextBlock Text="{l:L10n Key=SharedMailbox.CurrentPermissions}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
                     <ItemsControl ItemsSource="{Binding CurrentPermissions}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type models:MailboxPermissionEntry}">
@@ -104,7 +105,7 @@
             <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="Aplicar permisos" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
+                    <TextBlock Text="{l:L10n Key=SharedMailbox.ApplyPermissions}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
                     <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -114,7 +115,7 @@
                         </Grid.ColumnDefinitions>
                         <ui:TextBox Grid.Column="0"
                                     Text="{Binding PermPrincipal, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="principal@contoso.com" />
+                                    PlaceholderText="{l:L10n Key=SharedMailbox.Permission.Principal.Placeholder}" />
                         <ComboBox Grid.Column="1"
                                   SelectedValue="{Binding PermAction}"
                                   SelectedValuePath="Tag"
@@ -133,17 +134,17 @@
                             <ComboBoxItem Content="SendOnBehalf" Tag="SendOnBehalf" />
                         </ComboBox>
                         <ui:Button Grid.Column="3"
-                                   Content="Aplicar"
+                                   Content="{l:L10n Key=SharedMailbox.Button.Apply}"
                                    Appearance="Primary"
                                    Margin="8,0,0,0"
                                    Command="{Binding ApplyPermissionCommand}" />
                     </Grid>
 
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <ui:Button Content="Importar CSV..."
+                        <ui:Button Content="{l:L10n Key=SharedMailbox.Button.ImportCsv}"
                                    Margin="0,0,8,0"
                                    Command="{Binding ImportPermissionsCsvCommand}" />
-                        <ui:Button Content="Exportar resultados..."
+                        <ui:Button Content="{l:L10n Key=SharedMailbox.Button.ExportResults}"
                                    Command="{Binding ExportPermissionResultsCommand}" />
                     </StackPanel>
 

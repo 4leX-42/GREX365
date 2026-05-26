@@ -4,18 +4,19 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:l="clr-namespace:Grex365.App.Xaml"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="32,28,32,16">
             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                <TextBlock Text="REGLAS" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="Reglas buzón"
+                <TextBlock Text="{l:L10n Key=MailboxRules.Eyebrow}" Style="{StaticResource EyebrowText}" />
+            <TextBlock Text="{l:L10n Key=MailboxRules.Title}"
                            FontSize="28"
                            FontWeight="Light"
                            VerticalAlignment="Center" />
             </StackPanel>
-            <TextBlock Text="Out-of-Office (respuestas automáticas) · Forwarding (reenvío)"
+            <TextBlock Text="{l:L10n Key=MailboxRules.Subtitle}"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                        Margin="0,0,0,16" />
 
@@ -29,13 +30,13 @@
                     </Grid.ColumnDefinitions>
                     <ui:TextBox Grid.Column="0"
                                 Text="{Binding Identity, UpdateSourceTrigger=PropertyChanged}"
-                                PlaceholderText="UPN o SMTP del buzón">
+                                PlaceholderText="{l:L10n Key=MailboxRules.Identity.Placeholder}">
                         <ui:TextBox.InputBindings>
                             <KeyBinding Key="Enter" Command="{Binding LoadCommand}" />
                         </ui:TextBox.InputBindings>
                     </ui:TextBox>
                     <ui:Button Grid.Column="1"
-                               Content="Cargar"
+                               Content="{l:L10n Key=MailboxRules.Button.Load}"
                                Margin="8,0,0,0"
                                Command="{Binding LoadCommand}" />
                     <ui:ProgressRing Grid.Column="2"
@@ -49,9 +50,9 @@
             <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="Out-of-Office (AutoReply)" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
+                    <TextBlock Text="{l:L10n Key=MailboxRules.AutoReply.Title}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <TextBlock Text="Estado:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock Text="{l:L10n Key=MailboxRules.AutoReply.StateLabel}" VerticalAlignment="Center" Margin="0,0,8,0" />
                         <ComboBox ItemsSource="{Binding AutoReplyStates}"
                                   SelectedItem="{Binding AutoReplyState}"
                                   Width="160" />
@@ -63,7 +64,7 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                            <TextBlock Text="Mensaje interno" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
+                            <TextBlock Text="{l:L10n Key=MailboxRules.AutoReply.InternalMessage}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
                             <ui:TextBox Text="{Binding InternalMessage, UpdateSourceTrigger=PropertyChanged}"
                                         AcceptsReturn="True"
                                         TextWrapping="Wrap"
@@ -71,7 +72,7 @@
                                         VerticalScrollBarVisibility="Auto" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                            <TextBlock Text="Mensaje externo" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
+                            <TextBlock Text="{l:L10n Key=MailboxRules.AutoReply.ExternalMessage}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
                             <ui:TextBox Text="{Binding ExternalMessage, UpdateSourceTrigger=PropertyChanged}"
                                         AcceptsReturn="True"
                                         TextWrapping="Wrap"
@@ -86,16 +87,16 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                            <TextBlock Text="StartTime (sólo si Scheduled)" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
+                            <TextBlock Text="{l:L10n Key=MailboxRules.AutoReply.StartTime}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
                             <DatePicker SelectedDate="{Binding StartTime}" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                            <TextBlock Text="EndTime (sólo si Scheduled)" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
+                            <TextBlock Text="{l:L10n Key=MailboxRules.AutoReply.EndTime}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
                             <DatePicker SelectedDate="{Binding EndTime}" />
                         </StackPanel>
                     </Grid>
 
-                    <ui:Button Content="Aplicar AutoReply"
+                    <ui:Button Content="{l:L10n Key=MailboxRules.AutoReply.Apply}"
                                Appearance="Primary"
                                Command="{Binding ApplyAutoReplyCommand}"
                                HorizontalAlignment="Left" />
@@ -105,7 +106,7 @@
             <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="Forwarding (reenvío)" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
+                    <TextBlock Text="{l:L10n Key=MailboxRules.Forwarding.Title}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
                     <TextBlock Text="{Binding CurrentForwardingDisplay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,8" />
 
                     <Grid Margin="0,0,0,8">
@@ -115,20 +116,20 @@
                         </Grid.ColumnDefinitions>
                         <ui:TextBox Grid.Column="0"
                                     Text="{Binding ForwardingSmtp, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="destino@dominio.com" />
+                                    PlaceholderText="{l:L10n Key=MailboxRules.Forwarding.Placeholder}" />
                         <CheckBox Grid.Column="1"
-                                  Content="Entregar también al buzón"
+                                  Content="{l:L10n Key=MailboxRules.Forwarding.DeliverBoth}"
                                   IsChecked="{Binding DeliverToMailboxAndForward}"
                                   VerticalAlignment="Center"
                                   Margin="12,0,0,0" />
                     </Grid>
 
                     <StackPanel Orientation="Horizontal">
-                        <ui:Button Content="Aplicar reenvío"
+                        <ui:Button Content="{l:L10n Key=MailboxRules.Forwarding.Apply}"
                                    Appearance="Primary"
                                    Margin="0,0,8,0"
                                    Command="{Binding ApplyForwardingCommand}" />
-                        <ui:Button Content="Quitar reenvío"
+                        <ui:Button Content="{l:L10n Key=MailboxRules.Forwarding.Clear}"
                                    Command="{Binding ClearForwardingCommand}" />
                     </StackPanel>
                 </StackPanel>
@@ -137,7 +138,7 @@
             <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="Permisos de calendario" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
+                    <TextBlock Text="{l:L10n Key=MailboxRules.Calendar.Title}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
 
                     <Grid Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
@@ -147,13 +148,13 @@
                         </Grid.ColumnDefinitions>
                         <ui:TextBox Grid.Column="0"
                                     Text="{Binding CalendarPrincipal, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="UPN o SMTP del concesionario" />
+                                    PlaceholderText="{l:L10n Key=MailboxRules.Calendar.Principal.Placeholder}" />
                         <ComboBox Grid.Column="1"
                                   ItemsSource="{Binding CalendarAccessOptions}"
                                   SelectedItem="{Binding CalendarAccess}"
                                   Margin="8,0,0,0" />
                         <ui:Button Grid.Column="2"
-                                   Content="Aplicar / Actualizar"
+                                   Content="{l:L10n Key=MailboxRules.Calendar.ApplyUpdate}"
                                    Appearance="Primary"
                                    Margin="8,0,0,0"
                                    Command="{Binding ApplyCalendarPermissionCommand}" />
@@ -165,11 +166,11 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0"
-                                   Text="Permisos actuales"
+                                   Text="{l:L10n Key=MailboxRules.Calendar.CurrentPermissions}"
                                    FontWeight="SemiBold"
                                    Opacity="0.8" />
                         <ui:Button Grid.Column="1"
-                                   Content="Quitar seleccionado"
+                                   Content="{l:L10n Key=MailboxRules.Calendar.RemoveSelected}"
                                    Command="{Binding RemoveCalendarPermissionCommand}" />
                     </Grid>
 
