@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:l="clr-namespace:Grex365.App.Xaml"
              mc:Ignorable="d">
     <Grid Margin="32,28,32,16">
         <Grid.RowDefinitions>
@@ -14,11 +15,11 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
-            <TextBlock Text="MAIL FLOW" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="Mail flow rules" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
+            <TextBlock Text="{l:L10n Key=MailFlow.Eyebrow}" Style="{StaticResource EyebrowText}" />
+            <TextBlock Text="{l:L10n Key=MailFlow.Title}" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
         </StackPanel>
         <TextBlock Grid.Row="1"
-                   Text="Transport rules de Exchange Online (Get-TransportRule). Solo lectura en esta version."
+                   Text="{l:L10n Key=MailFlow.Subtitle}"
                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,16" />
 
         <Border Grid.Row="2" CornerRadius="8" Padding="12" Margin="0,0,0,16"
@@ -30,14 +31,14 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <ui:Button Grid.Column="0"
-                           Content="Cargar"
+                           Content="{l:L10n Key=MailFlow.Load}"
                            Appearance="Primary"
                            Command="{Binding LoadCommand}" />
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
-                    <TextBlock Text="Filtro:" VerticalAlignment="Center" Margin="0,0,6,0" Opacity="0.8" />
+                    <TextBlock Text="{l:L10n Key=MailFlow.Filter.Label}" VerticalAlignment="Center" Margin="0,0,6,0" Opacity="0.8" />
                     <ui:TextBox Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}"
                                 Width="240"
-                                PlaceholderText="nombre o descripcion..." />
+                                PlaceholderText="{l:L10n Key=MailFlow.Filter.Placeholder}" />
                 </StackPanel>
                 <ui:ProgressRing Grid.Column="2"
                                  IsIndeterminate="True"
@@ -63,11 +64,11 @@
                           CanUserDeleteRows="False"
                           VirtualizingPanel.IsVirtualizing="True">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Prio"        Binding="{Binding Priority}"     Width="60"  ElementStyle="{StaticResource DataCellText}" />
-                        <DataGridTextColumn Header="State"       Binding="{Binding State}"        Width="80"  ElementStyle="{StaticResource DataCellText}" />
-                        <DataGridTextColumn Header="Mode"        Binding="{Binding Mode}"         Width="90"  ElementStyle="{StaticResource DataCellText}" />
-                        <DataGridTextColumn Header="Name"        Binding="{Binding Name}"         Width="260" ElementStyle="{StaticResource DataCellText}" />
-                        <DataGridTextColumn Header="Description" Binding="{Binding Description}"  Width="*"   ElementStyle="{StaticResource DataCellText}" />
+                        <DataGridTextColumn Header="{l:L10n Key=MailFlow.Column.Priority}"    Binding="{Binding Priority}"     Width="60"  ElementStyle="{StaticResource DataCellText}" />
+                        <DataGridTextColumn Header="{l:L10n Key=MailFlow.Column.State}"       Binding="{Binding State}"        Width="80"  ElementStyle="{StaticResource DataCellText}" />
+                        <DataGridTextColumn Header="{l:L10n Key=MailFlow.Column.Mode}"        Binding="{Binding Mode}"         Width="90"  ElementStyle="{StaticResource DataCellText}" />
+                        <DataGridTextColumn Header="{l:L10n Key=MailFlow.Column.Name}"        Binding="{Binding Name}"         Width="260" ElementStyle="{StaticResource DataCellText}" />
+                        <DataGridTextColumn Header="{l:L10n Key=MailFlow.Column.Description}" Binding="{Binding Description}"  Width="*"   ElementStyle="{StaticResource DataCellText}" />
                     </DataGrid.Columns>
                 </DataGrid>
             </DockPanel>

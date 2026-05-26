@@ -501,6 +501,61 @@ public class L10nTests : IDisposable
     }
 
     [Theory]
+    [InlineData("MailFlow.Eyebrow")]
+    [InlineData("MailFlow.Title")]
+    [InlineData("MailFlow.Subtitle")]
+    [InlineData("MailFlow.Load")]
+    [InlineData("MailFlow.Filter.Label")]
+    [InlineData("MailFlow.Filter.Placeholder")]
+    [InlineData("MailFlow.Column.Priority")]
+    [InlineData("MailFlow.Column.State")]
+    [InlineData("MailFlow.Column.Mode")]
+    [InlineData("MailFlow.Column.Name")]
+    [InlineData("MailFlow.Column.Description")]
+    [InlineData("Offboarding.Eyebrow")]
+    [InlineData("Offboarding.Title")]
+    [InlineData("Offboarding.Subtitle")]
+    [InlineData("Offboarding.Upn.Label")]
+    [InlineData("Offboarding.Upn.Placeholder")]
+    [InlineData("Offboarding.Option.Disable")]
+    [InlineData("Offboarding.Option.RemoveLicenses")]
+    [InlineData("Offboarding.Option.ConvertShared")]
+    [InlineData("Offboarding.Run")]
+    [InlineData("Offboarding.Cancel")]
+    [InlineData("Offboarding.Steps.Title")]
+    [InlineData("DomainCheck.Eyebrow")]
+    [InlineData("DomainCheck.Title")]
+    [InlineData("DomainCheck.Subtitle")]
+    [InlineData("DomainCheck.Placeholder")]
+    [InlineData("DomainCheck.Run")]
+    [InlineData("DomainCheck.Cancel")]
+    [InlineData("DomainCheck.Column.Type")]
+    [InlineData("DomainCheck.Column.Status")]
+    [InlineData("DomainCheck.Column.Value")]
+    [InlineData("PsConsole.Eyebrow")]
+    [InlineData("PsConsole.Title")]
+    [InlineData("PsConsole.Subtitle")]
+    [InlineData("PsConsole.Warning")]
+    [InlineData("PsConsole.Command.Label")]
+    [InlineData("PsConsole.Command.Placeholder")]
+    [InlineData("PsConsole.Run")]
+    [InlineData("PsConsole.Run.Tooltip")]
+    [InlineData("PsConsole.Cancel")]
+    [InlineData("PsConsole.Cancel.Tooltip")]
+    [InlineData("PsConsole.Clear")]
+    [InlineData("PsConsole.History.Prev.Tooltip")]
+    [InlineData("PsConsole.History.Next.Tooltip")]
+    [InlineData("PsConsole.Output.Title")]
+    public void Initialize_Both_SmallViewsBatch_Resolved(string key)
+    {
+        L10n.Initialize("es");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+
+        L10n.Initialize("en");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+    }
+
+    [Theory]
     [InlineData("Users.Eyebrow")]
     [InlineData("Users.Title")]
     [InlineData("Users.Subtitle")]

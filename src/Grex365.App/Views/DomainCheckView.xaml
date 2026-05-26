@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:l="clr-namespace:Grex365.App.Xaml"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
     <Grid Margin="32,28,32,16">
@@ -15,11 +16,11 @@
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,4">
-            <TextBlock Text="DOMINIO" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="Comprobación de dominio" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
+            <TextBlock Text="{l:L10n Key=DomainCheck.Eyebrow}" Style="{StaticResource EyebrowText}" />
+            <TextBlock Text="{l:L10n Key=DomainCheck.Title}" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
         </StackPanel>
         <TextBlock Grid.Row="1"
-                   Text="Verifica MX, SPF y DMARC vía nslookup (no requiere conexión a M365)"
+                   Text="{l:L10n Key=DomainCheck.Subtitle}"
                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                    Margin="0,0,0,16" />
 
@@ -32,18 +33,18 @@
             </Grid.ColumnDefinitions>
             <ui:TextBox Grid.Column="0"
                         Text="{Binding Domain, UpdateSourceTrigger=PropertyChanged}"
-                        PlaceholderText="contoso.com">
+                        PlaceholderText="{l:L10n Key=DomainCheck.Placeholder}">
                 <ui:TextBox.InputBindings>
                     <KeyBinding Key="Enter" Command="{Binding RunCommand}" />
                 </ui:TextBox.InputBindings>
             </ui:TextBox>
             <ui:Button Grid.Column="1"
-                       Content="Comprobar"
+                       Content="{l:L10n Key=DomainCheck.Run}"
                        Appearance="Primary"
                        Margin="8,0,0,0"
                        Command="{Binding RunCommand}" />
             <ui:Button Grid.Column="2"
-                       Content="Cancelar"
+                       Content="{l:L10n Key=DomainCheck.Cancel}"
                        Margin="8,0,0,0"
                        Command="{Binding CancelCommand}" />
             <ui:ProgressRing Grid.Column="3"
@@ -65,21 +66,21 @@
                           BorderThickness="0">
                     <ListView.View>
                         <GridView>
-                            <GridViewColumn Header="Tipo" Width="100">
+                            <GridViewColumn Header="{l:L10n Key=DomainCheck.Column.Type}" Width="100">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Type}" Style="{StaticResource DataCellText}" />
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
-                            <GridViewColumn Header="Estado" Width="100">
+                            <GridViewColumn Header="{l:L10n Key=DomainCheck.Column.Status}" Width="100">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Status}" Style="{StaticResource DataCellText}" />
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
-                            <GridViewColumn Header="Valor" Width="700">
+                            <GridViewColumn Header="{l:L10n Key=DomainCheck.Column.Value}" Width="700">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Value}" Style="{StaticResource DataMonoCellText}" />

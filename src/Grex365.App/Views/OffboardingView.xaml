@@ -4,41 +4,42 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:l="clr-namespace:Grex365.App.Xaml"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="32,28,32,16">
             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                <TextBlock Text="OFFBOARDING" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="Offboarding" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
+                <TextBlock Text="{l:L10n Key=Offboarding.Eyebrow}" Style="{StaticResource EyebrowText}" />
+            <TextBlock Text="{l:L10n Key=Offboarding.Title}" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
             </StackPanel>
-            <TextBlock Text="Deshabilitar cuenta, quitar licencias y convertir buzón a compartido"
+            <TextBlock Text="{l:L10n Key=Offboarding.Subtitle}"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                        Margin="0,0,0,16" />
 
             <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="UPN del usuario" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <TextBlock Text="{l:L10n Key=Offboarding.Upn.Label}" FontWeight="SemiBold" Margin="0,0,0,4" />
                     <ui:TextBox Text="{Binding Upn, UpdateSourceTrigger=PropertyChanged}"
-                                PlaceholderText="leaver@contoso.com"
+                                PlaceholderText="{l:L10n Key=Offboarding.Upn.Placeholder}"
                                 Margin="0,0,0,12" />
 
-                    <CheckBox Content="Deshabilitar cuenta (AccountEnabled=false)"
+                    <CheckBox Content="{l:L10n Key=Offboarding.Option.Disable}"
                               IsChecked="{Binding DisableAccount}"
                               Margin="0,0,0,4" />
-                    <CheckBox Content="Quitar todas las licencias asignadas"
+                    <CheckBox Content="{l:L10n Key=Offboarding.Option.RemoveLicenses}"
                               IsChecked="{Binding RemoveLicenses}"
                               Margin="0,0,0,4" />
-                    <CheckBox Content="Convertir buzón a SharedMailbox (libera licencia E3/E5)"
+                    <CheckBox Content="{l:L10n Key=Offboarding.Option.ConvertShared}"
                               IsChecked="{Binding ConvertMailboxToShared}" />
 
                     <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
-                        <ui:Button Content="Ejecutar offboarding"
+                        <ui:Button Content="{l:L10n Key=Offboarding.Run}"
                                    Appearance="Primary"
                                    Margin="0,0,8,0"
                                    Command="{Binding RunCommand}" />
-                        <ui:Button Content="Cancelar"
+                        <ui:Button Content="{l:L10n Key=Offboarding.Cancel}"
                                    Margin="0,0,8,0"
                                    Command="{Binding CancelCommand}" />
                         <ui:ProgressRing IsIndeterminate="True"
@@ -56,7 +57,7 @@
                     Background="{DynamicResource ControlFillColorDefaultBrush}"
                     Visibility="{Binding Steps.Count, Converter={StaticResource CountToVisibilityConverter}, FallbackValue=Collapsed}">
                 <StackPanel>
-                    <TextBlock Text="Pasos" FontWeight="SemiBold" Margin="0,0,0,8" />
+                    <TextBlock Text="{l:L10n Key=Offboarding.Steps.Title}" FontWeight="SemiBold" Margin="0,0,0,8" />
                     <ItemsControl ItemsSource="{Binding Steps}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type models:OffboardingStep}">
