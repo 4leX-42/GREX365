@@ -109,6 +109,7 @@
 
             <!-- Existing converters -->
             <conv:BoolToBrushConverter x:Key="BoolToBrushConverter" />
+            <conv:BoolToValidityBrushConverter x:Key="BoolToValidityBrushConverter" />
             <conv:BoolToOnOffConverter x:Key="BoolToOnOffConverter" />
             <conv:SeverityToBrushConverter x:Key="SeverityToBrushConverter" />
             <conv:AuditSeverityToBrushConverter x:Key="AuditSeverityToBrushConverter" />
@@ -128,7 +129,10 @@
             <Color x:Key="SemanticWarnColor">#FBBF24</Color>
             <Color x:Key="SemanticInfoColor">#60A5FA</Color>
             <Color x:Key="SemanticOkColor">#34D399</Color>
-            <Color x:Key="SemanticNeutralColor">#9CA3AF</Color>
+            <!-- SemanticNeutral darkened from slate-400 (#9CA3AF) to slate-600 (#4B5563)
+                 — white text on neutral badges (cert invalid, account disabled pills) was
+                 unreadable in both themes. Slate-600 keeps neutrality but lifts contrast. -->
+            <Color x:Key="SemanticNeutralColor">#4B5563</Color>
             <Color x:Key="SemanticDebugColor">#A78BFA</Color>
 
             <Color x:Key="SemanticErrorSoftColor">#55F87171</Color>

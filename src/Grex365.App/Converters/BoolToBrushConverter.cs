@@ -18,6 +18,23 @@ public sealed class BoolToBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+// Validity-specific brush: true = brand-accent blue (positive but not green), false = semantic error red.
+// Use when a boolean represents a pass/fail signal (cert valid/invalid, password rule met/unmet, etc.)
+// rather than a neutral on/off state — avoids the soft slate of BoolToBrushConverter when the false
+// case is actually a problem.
+public sealed class BoolToValidityBrushConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var key = value is bool b && b ? "BrandAccentSolid" : "BrushSemanticError";
+        if (Application.Current?.TryFindResource(key) is Brush brush) return brush;
+        return new SolidColorBrush(Color.FromRgb(0x6B, 0x72, 0x80));
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 public sealed class BoolToOnOffConverter : IValueConverter
 {
     // ConverterParameter conventions:
