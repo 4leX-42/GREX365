@@ -233,7 +233,7 @@ All major feature ports complete. See [`MIGRATION.md`](MIGRATION.md) for per-fea
 | 5.3 | `signtool` integrated into publish step | 🟡 | M | Hook opcional en CI (`SIGN_CERT_PFX_B64` + `SIGN_CERT_PASSWORD` secrets) — sin cert real configurado |
 | 5.4 | Velopack auto-update | 🔴 | M | Sustituido por MSIX `.appinstaller` template con auto-update |
 | 5.5 | GitHub Releases automated on tag | ✅ | S | CI workflow job `msix` triggered on `v*` tag |
-| 5.6 | Release notes template | 🔴 | S | Pending |
+| 5.6 | Release notes template | ✅ | S | `CHANGELOG.md` (Keep a Changelog) + `.github/release-template.md` + CI `release` job (softprops/action-gh-release v2) que renderiza el template + attacheas portable EXE + MSIX + appinstaller. Crea draft GH release con prerelease auto-detect (tag con `-`) — Sprint AI |
 | 5.7 | Versioning scheme (SemVer + Directory.Build.props) | ✅ | S | `Directory.Build.props` raíz con `<Version>0.2.0-alpha</Version>` single-source. `App.AppVersion` static lee `AssemblyInformationalVersionAttribute`. Sidebar header + status bar bind via `{x:Static local:App.AppVersion}` |
 | 5.8 | Install / uninstall docs | ✅ | S | `PACKAGING.md` (Intune/SCCM/AppInstaller) |
 | 5.9 | Real (purchased) code-signing cert decision | 🔴 | S | Open (D7) |

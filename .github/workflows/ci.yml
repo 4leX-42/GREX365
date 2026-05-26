@@ -154,3 +154,52 @@ jobs:
           path: |
             packaging/msix/out/Grex365.msix
             packaging/msix/out/Grex365.appinstaller
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [publish, msix]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download portable artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Grex365-${{ github.ref_name }}-portable
+          path: artifacts/portable
+
+      - name: Download MSIX artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Grex365-${{ github.ref_name }}-msix
+          path: artifacts/msix
+
+      - name: Render release body
+        id: body
+        shell: bash
+        run: |
+          tag='${{ github.ref_name }}'
+          anchor=$(echo "$tag" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]//g')
+          sed -e "s|\${TAG_NAME}|$tag|g" -e "s|\${TAG_NAME_ANCHOR}|$anchor|g" \
+            .github/release-template.md > rendered-body.md
+          {
+            echo 'body<<EOF'
+            cat rendered-body.md
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: GREX365 ${{ github.ref_name }}
+          body: ${{ steps.body.outputs.body }}
+          draft: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: |
+            artifacts/portable/Grex365.App.exe
+            artifacts/msix/Grex365.msix
+            artifacts/msix/Grex365.appinstaller
