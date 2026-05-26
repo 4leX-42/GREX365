@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:l="clr-namespace:Grex365.App.Xaml"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              x:Name="Root"
              mc:Ignorable="d"
@@ -39,7 +40,7 @@
                            VerticalAlignment="Center" />
             </Border>
             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                <TextBlock Text="DETALLE DE USUARIO"
+                <TextBlock Text="{l:L10n Key=UserDetails.Eyebrow}"
                            FontSize="10"
                            FontWeight="SemiBold"
                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
@@ -55,7 +56,7 @@
                            TextTrimming="CharacterEllipsis" />
             </StackPanel>
             <ui:Button Grid.Column="2"
-                       Content="Cerrar"
+                       Content="{l:L10n Key=UserDetails.Close}"
                        VerticalAlignment="Top"
                        Command="{Binding CloseCommand}" />
         </Grid>
@@ -80,20 +81,20 @@
                    Visibility="{Binding HasUser, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">
             <ui:Button Margin="0,0,8,8"
                        Command="{Binding ToggleAccountCommand}"
-                       Content="Habilitar / Deshabilitar"
-                       ToolTip="Cambia AccountEnabled del usuario" />
+                       Content="{l:L10n Key=UserDetails.Action.ToggleAccount}"
+                       ToolTip="{l:L10n Key=UserDetails.Action.ToggleAccount.Tooltip}" />
             <ui:Button Margin="0,0,8,8"
                        Command="{Binding ResetPasswordCommand}"
-                       Content="Reset password"
-                       ToolTip="Genera password temporal + force change next sign-in. Copia al portapapeles." />
+                       Content="{l:L10n Key=UserDetails.Action.ResetPassword}"
+                       ToolTip="{l:L10n Key=UserDetails.Action.ResetPassword.Tooltip}" />
             <ui:Button Margin="0,0,8,8"
                        Command="{Binding RevokeSessionsCommand}"
-                       Content="Revocar sessions"
-                       ToolTip="POST /users/{id}/revokeSignInSessions: fuerza re-auth en todas las sesiones activas" />
+                       Content="{l:L10n Key=UserDetails.Action.RevokeSessions}"
+                       ToolTip="{l:L10n Key=UserDetails.Action.RevokeSessions.Tooltip}" />
             <ui:Button Margin="0,0,8,8"
                        Command="{Binding RemoveAllLicensesCommand}"
-                       Content="Quitar todas"
-                       ToolTip="Quita TODAS las licencias asignadas (usa la lista de abajo para granular)" />
+                       Content="{l:L10n Key=UserDetails.Action.RemoveAllLicenses}"
+                       ToolTip="{l:L10n Key=UserDetails.Action.RemoveAllLicenses.Tooltip}" />
         </WrapPanel>
 
         <!-- Body -->
@@ -110,7 +111,7 @@
                         Margin="0,0,0,12"
                         Visibility="{Binding HasUser, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">
                     <StackPanel>
-                        <TextBlock Text="Identidad"
+                        <TextBlock Text="{l:L10n Key=UserDetails.Section.Identity}"
                                    FontSize="11"
                                    FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextFillColorTertiaryBrush}"
@@ -128,21 +129,21 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="UPN" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="12" Margin="0,2" />
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="{l:L10n Key=UserDetails.Field.Upn}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="12" Margin="0,2" />
                             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding User.UserPrincipalName}" FontSize="12" Margin="0,2" TextTrimming="CharacterEllipsis" />
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Mail" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="12" Margin="0,2" />
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="{l:L10n Key=UserDetails.Field.Mail}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="12" Margin="0,2" />
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding User.Mail, FallbackValue=—}" FontSize="12" Margin="0,2" TextTrimming="CharacterEllipsis" />
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Estado" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="12" Margin="0,2" />
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="{l:L10n Key=UserDetails.Field.Status}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="12" Margin="0,2" />
                             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding User.AccountEnabled, Converter={StaticResource BoolToOnOffConverter}, ConverterParameter='Habilitado/Deshabilitado'}" FontSize="12" Margin="0,2" FontWeight="SemiBold" Foreground="{Binding User.AccountEnabled, Converter={StaticResource BoolToBrushConverter}}" />
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Tipo" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="12" Margin="0,2" />
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="{l:L10n Key=UserDetails.Field.Type}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="12" Margin="0,2" />
                             <TextBlock Grid.Row="3" Grid.Column="1" FontSize="12" Margin="0,2">
                                 <Run Text="{Binding User.IsGuest, Converter={StaticResource BoolToOnOffConverter}, ConverterParameter='Guest/Member', Mode=OneWay}" />
                             </TextBlock>
 
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Licencias" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="12" Margin="0,2" />
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="{l:L10n Key=UserDetails.Field.Licenses}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="12" Margin="0,2" />
                             <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding User.AssignedLicenseCount, FallbackValue=0}" FontSize="12" Margin="0,2" />
                         </Grid>
                     </StackPanel>
@@ -162,10 +163,10 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Licencias asignadas" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            <TextBlock Grid.Column="0" Text="{l:L10n Key=UserDetails.Section.Licenses}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                             <TextBlock Grid.Column="1" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}">
                                 <Run Text="{Binding AssignedLicenses.Count, Mode=OneWay}" />
-                                <Run Text=" total" />
+                                <Run Text="{l:L10n Key=UserDetails.Licenses.TotalSuffix}" />
                             </TextBlock>
                         </Grid>
 
@@ -185,7 +186,7 @@
                                             </StackPanel>
                                         </StackPanel>
                                         <ui:Button Grid.Column="1"
-                                                   Content="Quitar"
+                                                   Content="{l:L10n Key=UserDetails.License.Remove}"
                                                    FontSize="11"
                                                    Padding="8,2"
                                                    Command="{Binding ElementName=Root, Path=DataContext.RemoveLicenseCommand}"
@@ -205,7 +206,7 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0"
-                                       Text="Asignar nueva licencia"
+                                       Text="{l:L10n Key=UserDetails.AssignNew}"
                                        FontSize="11"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextFillColorTertiaryBrush}"
@@ -237,7 +238,7 @@
                                              Background="Transparent"
                                              VerticalAlignment="Center"
                                              FontSize="11"
-                                             ToolTip="Filtrar por nombre, SKU o categoría"
+                                             ToolTip="{l:L10n Key=UserDetails.Filter.Tooltip}"
                                              Padding="0" />
                                     <Button Grid.Column="2"
                                             Content="×"
@@ -248,7 +249,7 @@
                                             Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                             Command="{Binding ClearAssignableSkuFilterCommand}"
                                             Visibility="{Binding AssignableSkuFilter, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}"
-                                            ToolTip="Limpiar filtro" />
+                                            ToolTip="{l:L10n Key=UserDetails.Filter.Clear.Tooltip}" />
                                 </Grid>
                             </Border>
                         </Grid>
@@ -267,14 +268,14 @@
                                             <TextBlock FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}">
                                                 <Run Text="(" />
                                                 <Run Text="{Binding Available, Mode=OneWay}" />
-                                                <Run Text=" libres)" />
+                                                <Run Text="{l:L10n Key=UserDetails.SkuFreeSuffix}" />
                                             </TextBlock>
                                         </StackPanel>
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
                             <ui:Button Grid.Column="1"
-                                       Content="Asignar"
+                                       Content="{l:L10n Key=UserDetails.Assign}"
                                        Margin="8,0,0,0"
                                        Command="{Binding AssignSelectedSkuCommand}" />
                         </Grid>
@@ -294,10 +295,10 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="Pertenencias" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            <TextBlock Grid.Column="0" Text="{l:L10n Key=UserDetails.Section.Memberships}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                             <TextBlock Grid.Column="1" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}">
                                 <Run Text="{Binding Memberships.Count, Mode=OneWay}" />
-                                <Run Text=" grupos" />
+                                <Run Text="{l:L10n Key=UserDetails.Memberships.GroupsSuffix}" />
                             </TextBlock>
                         </Grid>
                         <ItemsControl ItemsSource="{Binding Memberships}"

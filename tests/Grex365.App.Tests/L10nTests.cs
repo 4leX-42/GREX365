@@ -501,6 +501,74 @@ public class L10nTests : IDisposable
     }
 
     [Theory]
+    [InlineData("Users.Eyebrow")]
+    [InlineData("Users.Title")]
+    [InlineData("Users.Subtitle")]
+    [InlineData("Users.Search.Label")]
+    [InlineData("Users.Search.Placeholder")]
+    [InlineData("Users.Search.Button")]
+    [InlineData("Users.Search.Cancel")]
+    [InlineData("Users.Empty.Title")]
+    [InlineData("Users.Empty.Hint")]
+    [InlineData("Users.NoneSelected")]
+    [InlineData("Users.Field.Upn")]
+    [InlineData("Users.Field.Mail")]
+    [InlineData("Users.Field.Account")]
+    [InlineData("Users.Field.Licenses")]
+    [InlineData("Users.Action.Enable")]
+    [InlineData("Users.Action.Disable")]
+    [InlineData("Users.Action.RemoveLicenses")]
+    [InlineData("Users.Action.BulkCsv")]
+    [InlineData("Users.Action.ExportBulk")]
+    [InlineData("Users.Action.LoadSkus")]
+    [InlineData("Users.Action.AssignLicense")]
+    [InlineData("Users.MemberOf")]
+    public void Initialize_Both_UsersKeys_Resolved(string key)
+    {
+        L10n.Initialize("es");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+
+        L10n.Initialize("en");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+    }
+
+    [Theory]
+    [InlineData("UserDetails.Eyebrow")]
+    [InlineData("UserDetails.Close")]
+    [InlineData("UserDetails.Action.ToggleAccount")]
+    [InlineData("UserDetails.Action.ToggleAccount.Tooltip")]
+    [InlineData("UserDetails.Action.ResetPassword")]
+    [InlineData("UserDetails.Action.ResetPassword.Tooltip")]
+    [InlineData("UserDetails.Action.RevokeSessions")]
+    [InlineData("UserDetails.Action.RevokeSessions.Tooltip")]
+    [InlineData("UserDetails.Action.RemoveAllLicenses")]
+    [InlineData("UserDetails.Action.RemoveAllLicenses.Tooltip")]
+    [InlineData("UserDetails.Section.Identity")]
+    [InlineData("UserDetails.Field.Upn")]
+    [InlineData("UserDetails.Field.Mail")]
+    [InlineData("UserDetails.Field.Status")]
+    [InlineData("UserDetails.Field.Type")]
+    [InlineData("UserDetails.Field.Licenses")]
+    [InlineData("UserDetails.Section.Licenses")]
+    [InlineData("UserDetails.Licenses.TotalSuffix")]
+    [InlineData("UserDetails.License.Remove")]
+    [InlineData("UserDetails.AssignNew")]
+    [InlineData("UserDetails.Filter.Tooltip")]
+    [InlineData("UserDetails.Filter.Clear.Tooltip")]
+    [InlineData("UserDetails.SkuFreeSuffix")]
+    [InlineData("UserDetails.Assign")]
+    [InlineData("UserDetails.Section.Memberships")]
+    [InlineData("UserDetails.Memberships.GroupsSuffix")]
+    public void Initialize_Both_UserDetailsKeys_Resolved(string key)
+    {
+        L10n.Initialize("es");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+
+        L10n.Initialize("en");
+        L10n.Get(key).Should().NotBe(key).And.NotBeNullOrWhiteSpace();
+    }
+
+    [Theory]
     [InlineData("Dashboard.Eyebrow")]
     [InlineData("Dashboard.Title")]
     [InlineData("Dashboard.Subtitle")]
