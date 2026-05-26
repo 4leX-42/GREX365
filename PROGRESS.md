@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **901 passing** (xUnit + FluentAssertions) — 480 Core + 421 App
-- Última actualización: 2026-05-26 (sesión · Sprint AA — i18n shell+dashboard + DPI manifest cleanup)
+- Tests: **949 passing** (xUnit + FluentAssertions) — 480 Core + 469 App
+- Última actualización: 2026-05-26 (sesión · Sprints AA–AB — i18n shell+dashboard+users+userdetails)
 
 ## Auditoría técnica integral 2026-05-22
 
@@ -57,6 +57,18 @@
 - Sweep final `grep "Foreground=\"#\|Background=\"#"`: cero matches restantes — paleta 100% via DynamicResource.
 
 ## Bitácora sesiones
+
+### 2026-05-26 (sesión cont. autónoma) — Sprint AB · i18n Users + UserDetails
+
+**Sprint AB — UsersView + UserDetailsView** `c70f32d`:
+- L10n.cs: +48 keys ES+EN — `Users.*` (22): eyebrow/title/subtitle, search panel (label/placeholder/2 buttons), empty-state (title+hint), none-selected fallback, 4 detail row labels (UPN/Mail/Cuenta/Licencias), 7 action buttons (Enable/Disable/RemoveLic/BulkCsv/ExportBulk/LoadSkus/AssignLicense), "Pertenece a" section. `UserDetails.*` (26): eyebrow + Close, 4 quick-action pairs (Toggle/ResetPassword/RevokeSessions/RemoveAll con tooltips funcionales), Identidad section + 5 field labels, Licencias card (title/total suffix/per-license Remove), Assign-new flow (label + filter tooltip + clear tooltip + " libres)" suffix + Asignar button), Memberships card + " grupos" suffix.
+- UsersView.xaml: xmlns l + 14 reemplazos. Selected-user fallback usa `FallbackValue + TargetNullValue` pair para que cubra both null y unset.
+- UserDetailsView.xaml: 22 reemplazos. Tooltips de quick-actions migrados (incluye texto técnico API "POST /users/{id}/revokeSignInSessions...").
+- L10nTests: +48 Theory cases. **949 tests total** (480 Core + 469 App).
+
+Pendiente identificado: 3 sitios con strings hardcoded en `BoolToOnOffConverter` ConverterParameter — `'Habilitado/Deshabilitado'` y `'Guest/Member'` quedan ES-only. Requieren rewrite del converter (interpretar key vs literal) o multi-binding. Diferido a sprint dedicado.
+
+Coverage L10n actualizado: 8/20 superficies migradas — Users + UserDetails añadidas a (About, Wizard, Settings, ConnectView, Shell, Dashboard).
 
 ### 2026-05-26 (sesión cont. autónoma) — Sprint AA · i18n shell+dashboard + GoTo NavKey + DPI manifest hygiene
 
