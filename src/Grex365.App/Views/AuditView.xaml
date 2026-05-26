@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:l="clr-namespace:Grex365.App.Xaml"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
     <UserControl.InputBindings>
@@ -21,148 +22,143 @@
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,4">
-            <TextBlock Text="AUDITORÍA" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="Auditoría de identidades" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
+            <TextBlock Text="{l:L10n Key=Audit.Eyebrow}" Style="{StaticResource EyebrowText}" />
+            <TextBlock Text="{l:L10n Key=Audit.Title}" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
         </StackPanel>
         <TextBlock Grid.Row="1"
-                   Text="Detecta usuarios obsoletos, deshabilitados con licencia y otros hallazgos"
+                   Text="{l:L10n Key=Audit.Subtitle}"
                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                    Margin="0,0,0,16" />
 
         <StackPanel Grid.Row="2" Margin="0,0,0,16">
-            <!-- Pre-canned scenarios (combos comunes) -->
             <Border CornerRadius="8" Padding="10,8" Margin="0,0,0,10"
                     Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                 <StackPanel>
-                    <TextBlock Text="ESCENARIOS RÁPIDOS" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,6" />
+                    <TextBlock Text="{l:L10n Key=Audit.Section.Scenarios}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,6" />
                     <WrapPanel Orientation="Horizontal">
-                        <ui:Button Content="Cuentas en riesgo (deshab + licencia)"
+                        <ui:Button Content="{l:L10n Key=Audit.Scenario.RiskyAccounts}"
                                    Appearance="Primary"
                                    Margin="0,0,8,4"
                                    Command="{Binding RunScenarioRiskyAccountsCommand}"
-                                   ToolTip="Identidad + grupos + filtra automáticamente disabled-con-licencia (coste evitable + riesgo perdida info)." />
-                        <ui:Button Content="Acceso privilegiado"
+                                   ToolTip="{l:L10n Key=Audit.Scenario.RiskyAccounts.Tooltip}" />
+                        <ui:Button Content="{l:L10n Key=Audit.Scenario.Privileged}"
                                    Margin="0,0,8,4"
                                    Command="{Binding RunScenarioPrivilegedCommand}"
-                                   ToolTip="Privileged roles + MFA + CA policies — verifica posture admin." />
-                        <ui:Button Content="Higiene mail (BEC)"
+                                   ToolTip="{l:L10n Key=Audit.Scenario.Privileged.Tooltip}" />
+                        <ui:Button Content="{l:L10n Key=Audit.Scenario.MailHygiene}"
                                    Margin="0,0,8,4"
                                    Command="{Binding RunScenarioMailHygieneCommand}"
-                                   ToolTip="Forwarding externo + Inbox rules + Transport rules + Shared mailbox sign-in (vectores BEC clásicos)." />
+                                   ToolTip="{l:L10n Key=Audit.Scenario.MailHygiene.Tooltip}" />
                     </WrapPanel>
                 </StackPanel>
             </Border>
 
-            <!-- Identidad -->
             <Border CornerRadius="8" Padding="10,8" Margin="0,0,0,8"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="IDENTIDAD" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,6" />
+                    <TextBlock Text="{l:L10n Key=Audit.Section.Identity}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,6" />
                     <WrapPanel Orientation="Horizontal">
-                        <ui:Button Content="Identidad + grupos"
+                        <ui:Button Content="{l:L10n Key=Audit.Run.IdentityGroups}"
                                    Margin="0,0,8,4"
                                    Command="{Binding RunCommand}"
-                                   ToolTip="Identity audit (stale members + disabled+licensed) + Groups audit (sin owner / vacíos / guests en privados). Atajo: Ctrl+R" />
-                        <ui:Button Content="MFA coverage"
+                                   ToolTip="{l:L10n Key=Audit.Run.IdentityGroups.Tooltip}" />
+                        <ui:Button Content="{l:L10n Key=Audit.Run.Mfa}"
                                    Margin="0,0,8,4"
                                    Command="{Binding RunMfaCoverageAuditCommand}"
-                                   ToolTip="/reports/authenticationMethods/userRegistrationDetails: cobertura MFA. Admin sin MFA = ERROR crítico." />
-                        <ui:Button Content="Privileged roles"
+                                   ToolTip="{l:L10n Key=Audit.Run.Mfa.Tooltip}" />
+                        <ui:Button Content="{l:L10n Key=Audit.Run.PrivilegedRoles}"
                                    Margin="0,0,8,4"
                                    Command="{Binding RunPrivilegedRolesAuditCommand}"
-                                   ToolTip="/directoryRoles + members: detecta 0/1/&gt;5 Global Admins, guests con role admin, etc." />
-                        <ui:Button Content="Actividad grupos"
+                                   ToolTip="{l:L10n Key=Audit.Run.PrivilegedRoles.Tooltip}" />
+                        <ui:Button Content="{l:L10n Key=Audit.Run.Activity}"
                                    Margin="0,0,8,4"
                                    Command="{Binding RunActivityAuditCommand}"
-                                   ToolTip="Descarga /reports/getOffice365GroupsActivityDetail" />
+                                   ToolTip="{l:L10n Key=Audit.Run.Activity.Tooltip}" />
                         <TextBlock VerticalAlignment="Center" Text="&gt;" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,4,4" />
                         <ui:NumberBox Width="60" Margin="0,0,2,4"
                                       Value="{Binding InactivityDays}" Minimum="1" Maximum="180"
-                                      ToolTip="Días sin actividad (1-180)" />
+                                      ToolTip="{l:L10n Key=Audit.Inactivity.Tooltip}" />
                         <TextBlock VerticalAlignment="Center" Text="d" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,4" />
                     </WrapPanel>
                 </StackPanel>
             </Border>
 
-            <!-- Seguridad / Tenant -->
             <Border CornerRadius="8" Padding="10,8" Margin="0,0,0,8"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="SEGURIDAD / TENANT" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,6" />
+                    <TextBlock Text="{l:L10n Key=Audit.Section.Security}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,6" />
                     <WrapPanel Orientation="Horizontal">
-                        <ui:Button Content="CA policies"
+                        <ui:Button Content="{l:L10n Key=Audit.Run.CaPolicies}"
                                    Margin="0,0,8,4"
                                    Command="{Binding RunCaPoliciesAuditCommand}"
-                                   ToolTip="/identity/conditionalAccess/policies. Requiere Policy.Read.All." />
-                        <ui:Button Content="Tenant defaults"
+                                   ToolTip="{l:L10n Key=Audit.Run.CaPolicies.Tooltip}" />
+                        <ui:Button Content="{l:L10n Key=Audit.Run.TenantDefaults}"
                                    Margin="0,0,8,4"
                                    Command="{Binding RunTenantDefaultsAuditCommand}"
-                                   ToolTip="/policies/authorizationPolicy + securityDefaults" />
-                        <ui:Button Content="OAuth grants"
+                                   ToolTip="{l:L10n Key=Audit.Run.TenantDefaults.Tooltip}" />
+                        <ui:Button Content="{l:L10n Key=Audit.Run.OAuth}"
                                    Margin="0,0,8,4"
                                    Command="{Binding RunOAuthGrantsAuditCommand}"
-                                   ToolTip="/oauth2PermissionGrants — scopes peligrosos" />
-                        <ui:Button Content="App credentials"
+                                   ToolTip="{l:L10n Key=Audit.Run.OAuth.Tooltip}" />
+                        <ui:Button Content="{l:L10n Key=Audit.Run.AppCredentials}"
                                    Margin="0,0,8,4"
                                    Command="{Binding RunAppCredentialsAuditCommand}"
-                                   ToolTip="/applications passwordCredentials / keyCredentials expiry" />
+                                   ToolTip="{l:L10n Key=Audit.Run.AppCredentials.Tooltip}" />
                     </WrapPanel>
                 </StackPanel>
             </Border>
 
-            <!-- Mail / EXO -->
             <Border CornerRadius="8" Padding="10,8" Margin="0,0,0,8"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="MAIL / EXO" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,6" />
+                    <TextBlock Text="{l:L10n Key=Audit.Section.Mail}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,6" />
                     <WrapPanel Orientation="Horizontal">
-                        <ui:Button Content="Forwarding externo"
+                        <ui:Button Content="{l:L10n Key=Audit.Run.ExternalForwarding}"
                                    Margin="0,0,8,4"
                                    Command="{Binding RunExternalForwardingAuditCommand}"
-                                   ToolTip="Get-Mailbox + Get-AcceptedDomain: detecta ForwardingSmtpAddress externos" />
-                        <ui:Button Content="Inbox rules"
+                                   ToolTip="{l:L10n Key=Audit.Run.ExternalForwarding.Tooltip}" />
+                        <ui:Button Content="{l:L10n Key=Audit.Run.InboxRules}"
                                    Margin="0,0,8,4"
                                    Command="{Binding RunInboxRulesAuditCommand}"
-                                   ToolTip="Get-InboxRule por buzón — patrón BEC" />
-                        <ui:Button Content="Transport rules"
+                                   ToolTip="{l:L10n Key=Audit.Run.InboxRules.Tooltip}" />
+                        <ui:Button Content="{l:L10n Key=Audit.Run.TransportRules}"
                                    Margin="0,0,8,4"
                                    Command="{Binding RunTransportRulesAuditCommand}"
-                                   ToolTip="Get-TransportRule: ForwardTo/BCC/Redirect externos" />
-                        <ui:Button Content="Shared mailbox sign-in"
+                                   ToolTip="{l:L10n Key=Audit.Run.TransportRules.Tooltip}" />
+                        <ui:Button Content="{l:L10n Key=Audit.Run.SharedMailboxSignIn}"
                                    Margin="0,0,8,4"
                                    Command="{Binding RunSharedMailboxSignInAuditCommand}"
-                                   ToolTip="Shared boxes con AccountDisabled=false" />
-                        <TextBlock VerticalAlignment="Center" Text="Tope:" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="8,0,4,4" />
+                                   ToolTip="{l:L10n Key=Audit.Run.SharedMailboxSignIn.Tooltip}" />
+                        <TextBlock VerticalAlignment="Center" Text="{l:L10n Key=Audit.MailboxScanCap.Label}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="8,0,4,4" />
                         <ui:NumberBox Width="60" Margin="0,0,0,4"
                                       Value="{Binding InboxRuleScanCap}" Minimum="1" Maximum="5000"
-                                      ToolTip="Cuántos buzones escanear (Get-InboxRule N+1)" />
+                                      ToolTip="{l:L10n Key=Audit.MailboxScanCap.Tooltip}" />
                     </WrapPanel>
                 </StackPanel>
             </Border>
 
-            <!-- Row 3: Actions + status -->
             <WrapPanel Orientation="Horizontal">
-                <ui:Button Content="Cancelar"
+                <ui:Button Content="{l:L10n Key=Audit.Cancel}"
                            Margin="0,0,8,0"
                            Command="{Binding CancelCommand}"
-                           ToolTip="Cancelar audit en curso. Atajo: Esc" />
-                <ui:Button Content="Exportar CSV..."
+                           ToolTip="{l:L10n Key=Audit.Cancel.Tooltip}" />
+                <ui:Button Content="{l:L10n Key=Audit.Export.Csv}"
                            Margin="0,0,8,0"
                            Command="{Binding ExportFindingsCommand}"
-                           ToolTip="Exporta findings filtrados (respeta toggles ERROR/WARN/INFO + búsqueda). Atajo: Ctrl+E" />
-                <ui:Button Content="Exportar HTML..."
+                           ToolTip="{l:L10n Key=Audit.Export.Csv.Tooltip}" />
+                <ui:Button Content="{l:L10n Key=Audit.Export.Html}"
                            Margin="0,0,8,0"
                            Command="{Binding ExportFindingsHtmlCommand}"
-                           ToolTip="Informe HTML con tablas por severidad, totales y CSS embebido. Comparte con stakeholders." />
-                <ui:Button Content="Exportar JSON..."
+                           ToolTip="{l:L10n Key=Audit.Export.Html.Tooltip}" />
+                <ui:Button Content="{l:L10n Key=Audit.Export.Json}"
                            Margin="0,0,8,0"
                            Command="{Binding ExportFindingsJsonCommand}"
-                           ToolTip="Informe JSON machine-readable. Schema versionado para automatización/CI/baseline diff." />
-                <ui:Button Content="Cargar baseline..."
+                           ToolTip="{l:L10n Key=Audit.Export.Json.Tooltip}" />
+                <ui:Button Content="{l:L10n Key=Audit.Baseline.Load}"
                            Margin="0,0,8,0"
                            Command="{Binding LoadBaselineCommand}"
-                           ToolTip="Compara findings actuales contra un JSON exportado previamente. Muestra nuevos/resueltos/persistentes." />
-                <ui:Button Content="Limpiar baseline"
+                           ToolTip="{l:L10n Key=Audit.Baseline.Load.Tooltip}" />
+                <ui:Button Content="{l:L10n Key=Audit.Baseline.Clear}"
                            Margin="0,0,8,0"
                            Visibility="{Binding HasBaseline, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}"
                            Command="{Binding ClearBaselineCommand}" />
@@ -181,12 +177,12 @@
             <Border CornerRadius="8" Padding="12" Margin="0,0,8,0"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="Usuarios" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="{l:L10n Key=Audit.Summary.Users}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     <TextBlock Text="{Binding Summary.UsersTotal, FallbackValue=0}" FontSize="22" FontWeight="Bold" />
                     <TextBlock>
-                        <Run Text="Habilitados: " />
+                        <Run Text="{l:L10n Key=Audit.Summary.Enabled}" />
                         <Run Text="{Binding Summary.UsersEnabled, FallbackValue=0}" />
-                        <Run Text=" · Deshab: " />
+                        <Run Text="{l:L10n Key=Audit.Summary.Disabled}" />
                         <Run Text="{Binding Summary.UsersDisabled, FallbackValue=0}" />
                     </TextBlock>
                 </StackPanel>
@@ -194,25 +190,25 @@
             <Border CornerRadius="8" Padding="12" Margin="0,0,8,0"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="Stale members" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="{l:L10n Key=Audit.Summary.StaleMembers}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     <TextBlock Text="{Binding Summary.StaleMembers, FallbackValue=0}" FontSize="22" FontWeight="Bold" />
-                    <TextBlock Text=">180 días sin login" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="{l:L10n Key=Audit.Summary.StaleMembers.Caption}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </Border>
             <Border CornerRadius="8" Padding="12" Margin="0,0,8,0"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="Stale guests" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="{l:L10n Key=Audit.Summary.StaleGuests}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     <TextBlock Text="{Binding Summary.StaleGuests, FallbackValue=0}" FontSize="22" FontWeight="Bold" />
-                    <TextBlock Text=">90 días sin login" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="{l:L10n Key=Audit.Summary.StaleGuests.Caption}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </Border>
             <Border CornerRadius="8" Padding="12"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
-                    <TextBlock Text="Deshab + licencia" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="{l:L10n Key=Audit.Summary.DisabledLicensed}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     <TextBlock Text="{Binding Summary.DisabledWithLicense, FallbackValue=0}" FontSize="22" FontWeight="Bold" />
-                    <TextBlock Text="Coste evitable" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="{l:L10n Key=Audit.Summary.DisabledLicensed.Caption}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </Border>
         </UniformGrid>
@@ -227,7 +223,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0"
-                               Text="Hallazgos"
+                               Text="{l:L10n Key=Audit.Findings.Title}"
                                FontWeight="SemiBold"
                                VerticalAlignment="Center" />
                     <StackPanel Grid.Column="1"
@@ -236,30 +232,30 @@
                                 VerticalAlignment="Center">
                         <Border Background="{DynamicResource BrushSemanticErrorSoft}" CornerRadius="14" Padding="10,4" Margin="4,0" BorderBrush="{DynamicResource BrushSemanticError}" BorderThickness="1">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="ERROR" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticError}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{l:L10n Key=Audit.Findings.Pill.Error}" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticError}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding ErrorCount, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
                         <Border Background="{DynamicResource BrushSemanticWarnSoft}" CornerRadius="14" Padding="10,4" Margin="4,0" BorderBrush="{DynamicResource BrushSemanticWarn}" BorderThickness="1">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="WARN" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticWarn}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{l:L10n Key=Audit.Findings.Pill.Warn}" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticWarn}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding WarningCount, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
                         <Border Background="{DynamicResource BrushSemanticInfoSoft}" CornerRadius="14" Padding="10,4" Margin="4,0" BorderBrush="{DynamicResource BrushSemanticInfo}" BorderThickness="1">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="INFO" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticInfo}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{l:L10n Key=Audit.Findings.Pill.Info}" FontWeight="Bold" FontSize="11" Foreground="{DynamicResource BrushSemanticInfo}" Margin="0,0,8,0" VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding InfoCount, Mode=OneWay, FallbackValue=0}" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
                             </StackPanel>
                         </Border>
                     </StackPanel>
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                        <CheckBox Content="ERROR" IsChecked="{Binding ShowErrors}" Margin="4,0" Foreground="{DynamicResource BrushSemanticError}" FontWeight="SemiBold" />
-                        <CheckBox Content="WARN" IsChecked="{Binding ShowWarnings}" Margin="4,0" Foreground="{DynamicResource BrushSemanticWarn}" FontWeight="SemiBold" />
-                        <CheckBox Content="INFO" IsChecked="{Binding ShowInfo}" Margin="4,0" Foreground="{DynamicResource BrushSemanticInfo}" FontWeight="SemiBold" />
+                        <CheckBox Content="{l:L10n Key=Audit.Findings.Pill.Error}" IsChecked="{Binding ShowErrors}" Margin="4,0" Foreground="{DynamicResource BrushSemanticError}" FontWeight="SemiBold" />
+                        <CheckBox Content="{l:L10n Key=Audit.Findings.Pill.Warn}" IsChecked="{Binding ShowWarnings}" Margin="4,0" Foreground="{DynamicResource BrushSemanticWarn}" FontWeight="SemiBold" />
+                        <CheckBox Content="{l:L10n Key=Audit.Findings.Pill.Info}" IsChecked="{Binding ShowInfo}" Margin="4,0" Foreground="{DynamicResource BrushSemanticInfo}" FontWeight="SemiBold" />
                         <ui:TextBox Width="200"
                                     Margin="12,0,0,0"
-                                    PlaceholderText="Filtrar categoría / identity / detalle..."
+                                    PlaceholderText="{l:L10n Key=Audit.Findings.Filter.Placeholder}"
                                     Text="{Binding FindingsFilter, UpdateSourceTrigger=PropertyChanged}" />
                     </StackPanel>
                 </Grid>
@@ -268,18 +264,18 @@
                                 VerticalAlignment="Center"
                                 Margin="0,40"
                                 Visibility="{Binding Findings.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=invert}">
-                        <TextBlock Text=""
+                        <TextBlock Text=""
                                    FontFamily="{StaticResource IconFontFamily}"
                                    FontSize="48"
                                    HorizontalAlignment="Center"
                                    Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                        <TextBlock Text="Sin hallazgos todavía"
+                        <TextBlock Text="{l:L10n Key=Audit.Findings.Empty.Title}"
                                    FontSize="16"
                                    FontWeight="SemiBold"
                                    HorizontalAlignment="Center"
                                    Margin="0,12,0,4"
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        <TextBlock Text="Lanza una auditoría desde la barra superior para empezar."
+                        <TextBlock Text="{l:L10n Key=Audit.Findings.Empty.Hint}"
                                    HorizontalAlignment="Center"
                                    Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                     </StackPanel>
@@ -290,28 +286,28 @@
                           Visibility="{Binding Findings.Count, Converter={StaticResource CountToVisibilityConverter}}">
                     <ListView.View>
                         <GridView>
-                            <GridViewColumn Header="Categoría" Width="160">
+                            <GridViewColumn Header="{l:L10n Key=Audit.Column.Category}" Width="160">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Category}" Style="{StaticResource DataCellText}" />
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
-                            <GridViewColumn Header="Identity" Width="260">
+                            <GridViewColumn Header="{l:L10n Key=Audit.Column.Identity}" Width="260">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Identity}" Style="{StaticResource DataCellText}" />
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
-                            <GridViewColumn Header="Detalle" Width="380">
+                            <GridViewColumn Header="{l:L10n Key=Audit.Column.Detail}" Width="380">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Detail}" Style="{StaticResource DataCellText}" TextWrapping="Wrap" />
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
-                            <GridViewColumn Header="Severidad" Width="120">
+                            <GridViewColumn Header="{l:L10n Key=Audit.Column.Severity}" Width="120">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">

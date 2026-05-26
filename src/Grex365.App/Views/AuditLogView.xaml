@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:l="clr-namespace:Grex365.App.Xaml"
              xmlns:abs="clr-namespace:Grex365.Core.Abstractions;assembly=Grex365.Core"
              mc:Ignorable="d">
     <Grid Margin="32,28,32,16">
@@ -16,11 +17,11 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
-            <TextBlock Text="REGISTRO" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="Audit log" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
+            <TextBlock Text="{l:L10n Key=AuditLog.Eyebrow}" Style="{StaticResource EyebrowText}" />
+            <TextBlock Text="{l:L10n Key=AuditLog.Title}" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
         </StackPanel>
         <TextBlock Grid.Row="1"
-                   Text="Acciones registradas por el sink local (Ok/Warn/Error). JSONL por mes en %LOCALAPPDATA%\Grex365\audit\"
+                   Text="{l:L10n Key=AuditLog.Subtitle}"
                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,16" />
 
         <Border Grid.Row="2"
@@ -28,47 +29,47 @@
                 Background="{DynamicResource ControlFillColorDefaultBrush}"
                 Visibility="{Binding Summary, Converter={StaticResource NullToCollapsedConverter}}">
             <StackPanel>
-                <TextBlock Text="Métricas del mes" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8" />
+                <TextBlock Text="{l:L10n Key=AuditLog.Metrics.Title}" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8" />
                 <WrapPanel>
                     <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
                             Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                         <StackPanel>
-                            <TextBlock Text="Total" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
+                            <TextBlock Text="{l:L10n Key=AuditLog.Metric.Total}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
                             <TextBlock Text="{Binding Summary.TotalCount}" FontSize="20" FontWeight="SemiBold" />
                         </StackPanel>
                     </Border>
                     <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
                             Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                         <StackPanel>
-                            <TextBlock Text="OK" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
+                            <TextBlock Text="{l:L10n Key=AuditLog.Metric.Ok}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
                             <TextBlock Text="{Binding Summary.OkCount}" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource BrushSemanticOk}" />
                         </StackPanel>
                     </Border>
                     <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
                             Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                         <StackPanel>
-                            <TextBlock Text="WARN" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
+                            <TextBlock Text="{l:L10n Key=AuditLog.Metric.Warn}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
                             <TextBlock Text="{Binding Summary.WarnCount}" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource BrushSemanticWarn}" />
                         </StackPanel>
                     </Border>
                     <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
                             Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                         <StackPanel>
-                            <TextBlock Text="ERROR" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
+                            <TextBlock Text="{l:L10n Key=AuditLog.Metric.Error}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
                             <TextBlock Text="{Binding Summary.ErrorCount}" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource BrushSemanticError}" />
                         </StackPanel>
                     </Border>
                     <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
                             Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                         <StackPanel>
-                            <TextBlock Text="Últimas 24h" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
+                            <TextBlock Text="{l:L10n Key=AuditLog.Metric.Last24h}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
                             <TextBlock Text="{Binding Summary.Last24hCount}" FontSize="20" FontWeight="SemiBold" />
                         </StackPanel>
                     </Border>
                     <Border CornerRadius="6" Padding="12,8" Margin="0,0,8,8"
                             Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                         <StackPanel>
-                            <TextBlock Text="Tasa error" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
+                            <TextBlock Text="{l:L10n Key=AuditLog.Metric.ErrorRate}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11" />
                             <TextBlock Text="{Binding Summary.ErrorRate, StringFormat=P1}" FontSize="20" FontWeight="SemiBold" />
                         </StackPanel>
                     </Border>
@@ -80,7 +81,7 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                        <TextBlock Text="Top sources" FontWeight="SemiBold" FontSize="12" Opacity="0.85" Margin="0,0,0,4" />
+                        <TextBlock Text="{l:L10n Key=AuditLog.TopSources}" FontWeight="SemiBold" FontSize="12" Opacity="0.85" Margin="0,0,0,4" />
                         <ItemsControl ItemsSource="{Binding Summary.TopSources}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -97,7 +98,7 @@
                         </ItemsControl>
                     </StackPanel>
                     <StackPanel Grid.Column="1">
-                        <TextBlock Text="Errores recientes" FontWeight="SemiBold" FontSize="12" Opacity="0.85" Margin="0,0,0,4" />
+                        <TextBlock Text="{l:L10n Key=AuditLog.RecentErrors}" FontWeight="SemiBold" FontSize="12" Opacity="0.85" Margin="0,0,0,4" />
                         <ItemsControl ItemsSource="{Binding Summary.RecentErrors}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -135,18 +136,18 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="Mes:" VerticalAlignment="Center" Margin="0,0,6,0" Opacity="0.8" />
+                <TextBlock Grid.Column="0" Text="{l:L10n Key=AuditLog.Month.Label}" VerticalAlignment="Center" Margin="0,0,6,0" Opacity="0.8" />
                 <DatePicker Grid.Column="1" SelectedDate="{Binding Month}" Width="160" Margin="0,0,8,0" />
-                <ui:Button Grid.Column="2" Content="Cargar" Command="{Binding LoadCommand}" Appearance="Primary" />
+                <ui:Button Grid.Column="2" Content="{l:L10n Key=AuditLog.Load}" Command="{Binding LoadCommand}" Appearance="Primary" />
 
                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
-                    <TextBlock Text="Source:" VerticalAlignment="Center" Margin="0,0,6,0" Opacity="0.8" />
-                    <ui:TextBox Text="{Binding SourceFilter, UpdateSourceTrigger=PropertyChanged}" Width="140" PlaceholderText="filtrar..." />
-                    <TextBlock Text="Outcome:" VerticalAlignment="Center" Margin="12,0,6,0" Opacity="0.8" />
-                    <ui:TextBox Text="{Binding OutcomeFilter, UpdateSourceTrigger=PropertyChanged}" Width="120" PlaceholderText="OK/WARN/ERROR" />
+                    <TextBlock Text="{l:L10n Key=AuditLog.SourceFilter.Label}" VerticalAlignment="Center" Margin="0,0,6,0" Opacity="0.8" />
+                    <ui:TextBox Text="{Binding SourceFilter, UpdateSourceTrigger=PropertyChanged}" Width="140" PlaceholderText="{l:L10n Key=AuditLog.SourceFilter.Placeholder}" />
+                    <TextBlock Text="{l:L10n Key=AuditLog.OutcomeFilter.Label}" VerticalAlignment="Center" Margin="12,0,6,0" Opacity="0.8" />
+                    <ui:TextBox Text="{Binding OutcomeFilter, UpdateSourceTrigger=PropertyChanged}" Width="120" PlaceholderText="{l:L10n Key=AuditLog.OutcomeFilter.Placeholder}" />
                 </StackPanel>
 
-                <ui:Button Grid.Column="4" Content="Abrir carpeta" Margin="8,0,0,0" Command="{Binding OpenFolderCommand}" />
+                <ui:Button Grid.Column="4" Content="{l:L10n Key=AuditLog.OpenFolder}" Margin="8,0,0,0" Command="{Binding OpenFolderCommand}" />
                 <ui:ProgressRing Grid.Column="5" IsIndeterminate="True" Width="20" Height="20" Margin="8,0,0,0"
                                  Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}" />
             </Grid>
@@ -169,11 +170,11 @@
                           CanUserDeleteRows="False"
                           VirtualizingPanel.IsVirtualizing="True">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat=yyyy-MM-dd HH:mm:ss}" Width="160" ElementStyle="{StaticResource DataMonoCellText}" />
-                        <DataGridTextColumn Header="Actor"     Binding="{Binding Actor}"                                       Width="120" ElementStyle="{StaticResource DataCellText}" />
-                        <DataGridTextColumn Header="Source"    Binding="{Binding Source}"                                      Width="120" ElementStyle="{StaticResource DataCellText}" />
-                        <DataGridTextColumn Header="Outcome"   Binding="{Binding Outcome}"                                     Width="80"  ElementStyle="{StaticResource DataCellText}" />
-                        <DataGridTextColumn Header="Message"   Binding="{Binding Message}"                                     Width="*"   ElementStyle="{StaticResource DataCellText}" />
+                        <DataGridTextColumn Header="{l:L10n Key=AuditLog.Column.Timestamp}" Binding="{Binding Timestamp, StringFormat=yyyy-MM-dd HH:mm:ss}" Width="160" ElementStyle="{StaticResource DataMonoCellText}" />
+                        <DataGridTextColumn Header="{l:L10n Key=AuditLog.Column.Actor}"     Binding="{Binding Actor}"                                       Width="120" ElementStyle="{StaticResource DataCellText}" />
+                        <DataGridTextColumn Header="{l:L10n Key=AuditLog.Column.Source}"    Binding="{Binding Source}"                                      Width="120" ElementStyle="{StaticResource DataCellText}" />
+                        <DataGridTextColumn Header="{l:L10n Key=AuditLog.Column.Outcome}"   Binding="{Binding Outcome}"                                     Width="80"  ElementStyle="{StaticResource DataCellText}" />
+                        <DataGridTextColumn Header="{l:L10n Key=AuditLog.Column.Message}"   Binding="{Binding Message}"                                     Width="*"   ElementStyle="{StaticResource DataCellText}" />
                     </DataGrid.Columns>
                 </DataGrid>
             </DockPanel>
