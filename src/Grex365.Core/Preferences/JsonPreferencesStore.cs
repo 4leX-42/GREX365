@@ -27,9 +27,24 @@ public sealed class JsonPreferencesStore : IPreferencesStore
             return new UserPreferences();
         }
 
-        await using var stream = File.OpenRead(_filePath);
-        var prefs = await JsonSerializer.DeserializeAsync<UserPreferences>(stream, JsonOptions, cancellationToken).ConfigureAwait(false);
-        return prefs ?? new UserPreferences();
+        try
+        {
+            await using var stream = File.OpenRead(_filePath);
+            var prefs = await JsonSerializer.DeserializeAsync<UserPreferences>(stream, JsonOptions, cancellationToken).ConfigureAwait(false);
+            return prefs ?? new UserPreferences();
+        }
+        catch (JsonException)
+        {
+            // Corrupt JSON (manual edit / disk truncation / version drift): quarantine the
+            // bad file so the user can recover values manually, then start fresh with defaults
+            // rather than throwing on app startup.
+            CorruptFileQuarantine.MoveAside(_filePath);
+            return new UserPreferences();
+        }
+        catch (IOException)
+        {
+            return new UserPreferences();
+        }
     }
 
     public async Task SaveAsync(UserPreferences preferences, CancellationToken cancellationToken = default)
@@ -63,8 +78,20 @@ public sealed class JsonCertConfigStore : ICertConfigStore
             return null;
         }
 
-        await using var stream = File.OpenRead(_filePath);
-        return await JsonSerializer.DeserializeAsync<CertConfig>(stream, JsonOptions, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await using var stream = File.OpenRead(_filePath);
+            return await JsonSerializer.DeserializeAsync<CertConfig>(stream, JsonOptions, cancellationToken).ConfigureAwait(false);
+        }
+        catch (JsonException)
+        {
+            CorruptFileQuarantine.MoveAside(_filePath);
+            return null;
+        }
+        catch (IOException)
+        {
+            return null;
+        }
     }
 
     public async Task SaveAsync(CertConfig config, CancellationToken cancellationToken = default)
@@ -80,5 +107,31 @@ public sealed class JsonCertConfigStore : ICertConfigStore
             File.Delete(_filePath);
         }
         return Task.CompletedTask;
+    }
+}
+
+internal static class CorruptFileQuarantine
+{
+    // Renames a corrupt config file to "<name>.corrupted-yyyyMMddHHmmss.bak" so the
+    // user can still inspect/recover values manually. Best-effort: silently swallows
+    // any I/O failure (target locked, perm denied) — the caller has already decided
+    // to proceed with defaults.
+    public static string? MoveAside(string filePath)
+    {
+        try
+        {
+            var stamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+            var backup = filePath + $".corrupted-{stamp}.bak";
+            File.Move(filePath, backup, overwrite: true);
+            return backup;
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
+        }
     }
 }

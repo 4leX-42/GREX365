@@ -132,7 +132,7 @@ Goal: rock-solid services usable from any UI, fully tested.
 | 1.5.2 | `ICertConfigStore` + JSON impl | ✅ | S | |
 | 1.5.3 | Unit tests roundtrip | ✅ | S | |
 | 1.5.4 | Schema version + migration logic | 🔴 | S | Future-proof if shape changes |
-| 1.5.5 | Validation on load (corrupted file → default + warn) | 🔴 | S | |
+| 1.5.5 | Validation on load (corrupted file → default + warn) | ✅ | S | `JsonPreferencesStore` + `JsonCertConfigStore` catch `JsonException` + quarantine corrupt file to `*.corrupted-yyyyMMddHHmmss.bak` + return defaults (Sprint AH) |
 | 1.5.6 | Read legacy paths if found (`GREX365/config/*.json`) | ✅ | S | `LegacyPreferencesImporter` invoked on App startup |
 
 ### 1.6 Logging

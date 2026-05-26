@@ -103,6 +103,81 @@ public class PreferencesStoreTests : IDisposable
         loaded.CertThumbprint.Should().Be("ABCDEF");
     }
 
+    [Fact]
+    public async Task Load_CorruptJson_ReturnsDefaults()
+    {
+        var path = Path.Combine(_tempDir, "user_preferences.json");
+        await File.WriteAllTextAsync(path, "{this is not valid json");
+
+        var store = new JsonPreferencesStore(_tempDir);
+        var loaded = await store.LoadAsync();
+
+        loaded.Should().NotBeNull();
+        loaded.ConnectionMethod.Should().BeNull();
+        loaded.Role.Should().Be("operator");
+    }
+
+    [Fact]
+    public async Task Load_CorruptJson_QuarantinesOriginalFile()
+    {
+        var path = Path.Combine(_tempDir, "user_preferences.json");
+        var corruptContent = "{\"Theme\":\"Dark\"  truncated";
+        await File.WriteAllTextAsync(path, corruptContent);
+
+        var store = new JsonPreferencesStore(_tempDir);
+        _ = await store.LoadAsync();
+
+        File.Exists(path).Should().BeFalse("the corrupt file should have been moved aside");
+
+        var backup = Directory.EnumerateFiles(_tempDir, "user_preferences.json.corrupted-*.bak").Single();
+        var preserved = await File.ReadAllTextAsync(backup);
+        preserved.Should().Be(corruptContent, "quarantine preserves bytes for user recovery");
+    }
+
+    [Fact]
+    public async Task Load_CorruptThenSave_OverwritesFreshFile()
+    {
+        var path = Path.Combine(_tempDir, "user_preferences.json");
+        await File.WriteAllTextAsync(path, "{broken");
+
+        var store = new JsonPreferencesStore(_tempDir);
+        var loaded = await store.LoadAsync();
+        loaded.Theme = "Light";
+        await store.SaveAsync(loaded);
+
+        var reloaded = await store.LoadAsync();
+        reloaded.Theme.Should().Be("Light");
+    }
+
+    [Fact]
+    public async Task CertConfig_Load_CorruptJson_ReturnsNull_AndQuarantines()
+    {
+        var path = Path.Combine(_tempDir, "exo-app-params.json");
+        await File.WriteAllTextAsync(path, "{not valid");
+
+        var store = new JsonCertConfigStore(_tempDir);
+        var loaded = await store.LoadAsync();
+
+        loaded.Should().BeNull();
+        File.Exists(path).Should().BeFalse();
+        Directory.EnumerateFiles(_tempDir, "exo-app-params.json.corrupted-*.bak").Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task Load_EmptyFile_ReturnsDefaults_NoQuarantine()
+    {
+        // Empty file is treated as JsonException (empty input) — should fall through
+        // to defaults like any other corrupt content.
+        var path = Path.Combine(_tempDir, "user_preferences.json");
+        await File.WriteAllTextAsync(path, "");
+
+        var store = new JsonPreferencesStore(_tempDir);
+        var loaded = await store.LoadAsync();
+
+        loaded.Should().NotBeNull();
+        loaded.Role.Should().Be("operator");
+    }
+
     public void Dispose()
     {
         try
