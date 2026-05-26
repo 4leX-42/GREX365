@@ -1,9 +1,9 @@
 # GREX365 — Roadmap & status
 
 > Comprehensive punch list. Updated on every meaningful change.
-> Date created: 2026-05-15. Last update: 2026-05-23.
+> Date created: 2026-05-15. Last update: 2026-05-26.
 >
-> **Live source of truth: [`PROGRESS.md`](../PROGRESS.md)** (sessions bitácora + 532 tests detail).
+> **Live source of truth: [`PROGRESS.md`](../PROGRESS.md)** (sessions bitácora + 901 tests detail).
 > This file tracks H0–H6 hitos. PROGRESS.md tracks per-session deltas.
 >
 > Legend: ✅ done · 🟡 in progress · 🔴 not started · ⚪ deferred · ❌ rejected
@@ -16,10 +16,10 @@
 
 ---
 
-## 📍 Status snapshot (2026-05-23)
+## 📍 Status snapshot (2026-05-26)
 
-- **Build**: 7 projects (Core + PS + App + Tests Core + Tests App + SamplePlugin + Tests transitive), 0 errors, 0 warnings
-- **Tests**: 532 passing (xUnit + FluentAssertions + Moq) — 401 Core + 131 App
+- **Build**: 7 projects (Core + PS + App + Tests Core + Tests App + SamplePlugin + Tests transitive), 0 errors, 0 warnings (WFO0003 suppressed — see PROGRESS Sprint AA)
+- **Tests**: 901 passing (xUnit + FluentAssertions + Moq) — 480 Core + 421 App
 - **Nav modules en app**: 15 (Dashboard · Conexión · Licencias · Usuarios · Grupos · Onboarding · Offboarding · Buzones · Reglas de buzón · Flujo de correo · Auditoría · Registro de auditoría · Consola PS · Asistente cert · Comprobación DNS) + Plugins category dinámico
 - **Fase 1** (refactor backend + scaffolding) — ✅ DONE
 - **Fase 2** (PS engine + async) — ✅ DONE
@@ -143,7 +143,7 @@ Goal: rock-solid services usable from any UI, fully tested.
 | 1.6.2 | `UiLogSink` ObservableCollection | ✅ | S | |
 | 1.6.3 | Audit log separate file (who did what when) | ✅ | M | `FileAuditLog` JSONL en `%LOCALAPPDATA%\Grex365\audit\audit-YYYY-MM.jsonl` (thread-safe + AuditLogView viewer) |
 | 1.6.4 | Log severity filter in UI | ✅ | S | Checkboxes Info/Ok/Warn/Err/Dbg en log panel (Dbg oculto por defecto) |
-| 1.6.5 | Log export (copy/save to file) | 🔴 | S | Pending — file is on disk but no in-UI export button |
+| 1.6.5 | Log export (copy/save to file) | ✅ | S | `MainViewModel.ExportLogAsync` + sidebar "Exportar" button — .txt / .csv via `SaveFileDialog`, filtered entries only |
 
 ---
 
@@ -166,9 +166,9 @@ Goal: the bug that started this conversation is fully fixed in the new app.
 | 2.11 | Replace fake `IsConnected` with real state | ✅ | M | Wired to H1.2.5 + H1.3.6 + dispatcher marshalling |
 | 2.12 | Cert config validation UI (warn if cert expired, missing in store) | ✅ | S | `ICertValidator` runs before Connect, blocks if invalid |
 | 2.13 | Theme toggle (light/dark) | ✅ | S | Botón Tema en sidebar + persistencia `UserPreferences.Theme` |
-| 2.14 | Window restore (size, position) on relaunch | 🔴 | S | Pending |
+| 2.14 | Window restore (size, position) on relaunch | ✅ | S | `MainWindow.RestoreWindowState`/`SaveWindowState` + `WindowPlacementGuard` (off-screen guard for RDP/multi-monitor disconnects) — persisted in `UserPreferences` |
 | 2.15 | App icon + branding | 🟡 | S | MSIX assets placeholder; in-app sin branding final |
-| 2.16 | About dialog (version, repo link) | 🔴 | S | Pending |
+| 2.16 | About dialog (version, repo link) | ✅ | S | `AboutWindow.xaml` (F1 shortcut) — version + .NET runtime + data dir + open-folder button |
 
 ---
 
@@ -216,7 +216,7 @@ All major feature ports complete. See [`MIGRATION.md`](MIGRATION.md) for per-fea
 | 4.8 | Per-monitor DPI testing | 🔴 | S | Pending — manifest declara `<dpiAware>True/PM</dpiAware>` pero no testeado real |
 | 4.9 | Accessibility pass (keyboard nav, screen reader) | 🔴 | M | Pending — glyphs en columnas refuerzan color (audit) pero no auditado |
 | 4.10 | App icon + splash | 🟡 | S | MSIX assets placeholder shipped; arte definitivo pendiente |
-| 4.11 | Spanish/English locale toggle | 🔴 | M | Open decision (D6) — ES-only por ahora |
+| 4.11 | Spanish/English locale toggle | 🟡 | M | D6 in progress. L10n.cs static dicts (es+en) + `L10nExtension` MarkupExtension. 6 superficies migradas (AboutWindow, FirstRunWizard, Settings, ConnectView, MainWindow shell, DashboardView). 14 views pendientes — Sprint AA |
 | 4.12 | Focus-ring accent en inputs (TextBox/PasswordBox/ComboBox) | ✅ | S | App.xaml global Styles con `IsKeyboardFocused`/`IsKeyboardFocusWithin` → `BrandAccentSolid` border + `AccentGlowSoftEffect` |
 | 4.13 | Page transition animations | ✅ | S | ContentControl ControlTemplate fade-in (Sprint F) + Sprint M restraint pass (120ms fade only) |
 | 4.14 | Card hover + elevation | ✅ | S | CardHover + MetricCard + HeroCard con storyboards (Sprint L) |

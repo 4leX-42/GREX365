@@ -2,10 +2,10 @@
 
 > **Documento maestro de seguimiento.** Mapea el estado del proyecto contra `Plantamiento_arquitectura_de_la_herramienta.md` (roadmap arquitectónico) y `deep-research-report.md` (research técnico). Toda feature shipped y todo pendiente vive aquí.
 
-- Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S+T local)
+- Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **855 passing** (xUnit + FluentAssertions) — 480 Core + 375 App
-- Última actualización: 2026-05-24 (sesión · Sprints S–Y, UI overhaul)
+- Tests: **901 passing** (xUnit + FluentAssertions) — 480 Core + 421 App
+- Última actualización: 2026-05-26 (sesión · Sprint AA — i18n shell+dashboard + DPI manifest cleanup)
 
 ## Auditoría técnica integral 2026-05-22
 
@@ -57,6 +57,30 @@
 - Sweep final `grep "Foreground=\"#\|Background=\"#"`: cero matches restantes — paleta 100% via DynamicResource.
 
 ## Bitácora sesiones
+
+### 2026-05-26 (sesión cont. autónoma) — Sprint AA · i18n shell+dashboard + GoTo NavKey + DPI manifest hygiene
+
+User request: continuar el proyecto, usar plugins/skills disponibles. Rebase + push de 11 commits locales (Sprints U–Z + license filter) tras pull --rebase de README update upstream.
+
+**Sprint AA — i18n shell + Dashboard** `<pending push>`:
+- L10n.cs: +46 nuevas keys ES+EN — `Shell.Sidebar.*` (Theme/Settings + tooltips), `Shell.Log.*` (title + 5 filtros + 2 botones + tooltip), `Shell.Status.*` (Graph/Exchange/Tenant/Account + About/Log/Disconnect buttons), `Dashboard.*` (eyebrow/title/subtitle/quick-actions/status/metrics/last-audit/pills).
+- MainWindow.xaml: xmlns `l="clr-namespace:Grex365.App.Xaml"` + reemplazo `{l:L10n Key=…}` en sidebar 4 botones, log panel título + 5 checkboxes + 2 botones, status bar 6 labels + 3 botones. 22 strings migrados.
+- DashboardView.xaml: refactor completo via `Write` — eyebrow/title/subtitle, 5 quick-action buttons, 4 metric cards (Graph/Exchange/Tenant/Account) con captions, Last-audit panel (botón "Abrir Auditoría" + 3 pills ERROR/WARN/INFO + timestamp formato). 24 strings.
+- DashboardViewModel.GoTo: bug fix — match por stable `NavKey` primero, fallback a `Title`. Antes solo matcheaba por Title localizado → CommandParameter "Salud tenant" silently broken tras rename a "Licencias" (Sprint O). Dashboard CommandParameter values switched to NavKey ("Nav.Connection"/"Nav.Licenses"/etc.) → i18n-safe.
+- L10nTests: +46 nuevos casos Theory (22 Shell keys + 24 Dashboard keys) ES+EN dual-check. **901 tests** (480 Core + 421 App).
+
+**Build hygiene**:
+- Grex365.App.csproj: `<NoWarn>$(NoWarn);WFO0003</NoWarn>` — WinForms-only DPI advisory que pide `ApplicationHighDpiMode`. app.manifest sigue canónico para WPF (`true/PM`), property conflictaría. Comentario explica decisión.
+
+**Repo cleanup**:
+- 13 PNGs root-level eliminados — capturas dev ad-hoc, sin referencias en docs/code (grep verified). PROGRESS/docs/README text-only.
+- `.gitignore`: `_bmad/` (replaces narrow `_bmad/custom/config.user.toml`) + `.claude/skills/` añadidos — checkouts per-developer.
+
+**Coverage L10n actualizado** (de 4 superficies a 6):
+- ✓ AboutWindow, FirstRunWizardWindow, SettingsWindow, Views/ConnectView (Sprints S–U)
+- ✓ MainWindow shell (Sprint AA)
+- ✓ Views/DashboardView (Sprint AA)
+- ⏳ Pendientes: Users, Groups, TenantHealth, Onboarding, Offboarding, SharedMailbox, MailboxRules, MailFlowRules, Audit, AuditLog, PsConsole, CertWizard, DomainCheck, UserDetails (14 views restantes).
 
 ### 2026-05-24 (sesión cont. autónoma — UX overhaul) — Sprints V–Y · paleta azul + contrast + tray + silent notifications
 
