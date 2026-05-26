@@ -19,7 +19,7 @@
 ## 📍 Status snapshot (2026-05-26)
 
 - **Build**: 7 projects (Core + PS + App + Tests Core + Tests App + SamplePlugin + Tests transitive), 0 errors, 0 warnings (WFO0003 suppressed — see PROGRESS Sprint AA)
-- **Tests**: 901 passing (xUnit + FluentAssertions + Moq) — 480 Core + 421 App
+- **Tests**: 1224 passing (xUnit + FluentAssertions + Moq) — 480 Core + 744 App
 - **Nav modules en app**: 15 (Dashboard · Conexión · Licencias · Usuarios · Grupos · Onboarding · Offboarding · Buzones · Reglas de buzón · Flujo de correo · Auditoría · Registro de auditoría · Consola PS · Asistente cert · Comprobación DNS) + Plugins category dinámico
 - **Fase 1** (refactor backend + scaffolding) — ✅ DONE
 - **Fase 2** (PS engine + async) — ✅ DONE
@@ -216,7 +216,7 @@ All major feature ports complete. See [`MIGRATION.md`](MIGRATION.md) for per-fea
 | 4.8 | Per-monitor DPI testing | 🔴 | S | Pending — manifest declara `<dpiAware>True/PM</dpiAware>` pero no testeado real |
 | 4.9 | Accessibility pass (keyboard nav, screen reader) | 🔴 | M | Pending — glyphs en columnas refuerzan color (audit) pero no auditado |
 | 4.10 | App icon + splash | 🟡 | S | MSIX assets placeholder shipped; arte definitivo pendiente |
-| 4.11 | Spanish/English locale toggle | 🟡 | M | D6 in progress. L10n.cs static dicts (es+en) + `L10nExtension` MarkupExtension. 6 superficies migradas (AboutWindow, FirstRunWizard, Settings, ConnectView, MainWindow shell, DashboardView). 14 views pendientes — Sprint AA |
+| 4.11 | Spanish/English locale toggle | ✅ | M | D6 cerrado (Sprints AA–AF). L10n.cs static dicts (es+en) + `L10nExtension` MarkupExtension. **20/20 superficies** migradas. 3 ConverterParameter strings hardcoded ES deferred (BoolToOnOffConverter — requiere rewrite) |
 | 4.12 | Focus-ring accent en inputs (TextBox/PasswordBox/ComboBox) | ✅ | S | App.xaml global Styles con `IsKeyboardFocused`/`IsKeyboardFocusWithin` → `BrandAccentSolid` border + `AccentGlowSoftEffect` |
 | 4.13 | Page transition animations | ✅ | S | ContentControl ControlTemplate fade-in (Sprint F) + Sprint M restraint pass (120ms fade only) |
 | 4.14 | Card hover + elevation | ✅ | S | CardHover + MetricCard + HeroCard con storyboards (Sprint L) |
@@ -269,7 +269,7 @@ All major feature ports complete. See [`MIGRATION.md`](MIGRATION.md) for per-fea
 | D3 | Report format: CSV / XLSX / HTML / DataGrid only? | H3.9 | ✅ Closed — CSV + HTML + JSON shipped (Sprint J-K). XLSX descartado (sin Excel dependency); DataGrid in-app ya existe via AuditView |
 | D4 | Roles + UI modes: keep or drop for v1? | H3.7 | ✅ Dropped — RBAC guard cubre |
 | D5 | Templates: keep or drop for v1? | H3.8 | 🔴 Open — no demand observado, deferred a iteración post-v1.0 |
-| D6 | i18n: Spanish only, or Spanish + English? | H4.11 | 🟡 In progress — Sprint R scaffold L10n JSON + Settings switcher (es default, en parcial). Hot-swap via restart required |
+| D6 | i18n: Spanish only, or Spanish + English? | H4.11 | ✅ Closed — Spanish + English shipped. Switcher en Settings (restart-required hot-swap). 20/20 surfaces migradas. 3 ConverterParameter strings deferred a sprint dedicado |
 | D7 | Code-signing cert: self-signed forever or buy real? | H5.9 | 🔴 Open — decision por user (cost OV/EV cert $100-300/yr vs SmartScreen friction interno) |
 | D8 | Min target OS: Win10 1809+ or Win11 only? | many | ✅ Closed — Win10 1809+ de-facto via `.NET 10` runtime + app.manifest supportedOS GUIDs. Win11 inherita Win10 GUID en manifest |
 | D9 | Tenant lock: keep legacy preference? | H1.2.6 | ✅ Kept + enforced post-auth (cert + device-code) |

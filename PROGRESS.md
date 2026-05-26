@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **949 passing** (xUnit + FluentAssertions) — 480 Core + 469 App
-- Última actualización: 2026-05-26 (sesión · Sprints AA–AB — i18n shell+dashboard+users+userdetails)
+- Tests: **1224 passing** (xUnit + FluentAssertions) — 480 Core + 744 App
+- Última actualización: 2026-05-27 (sesión · Sprints AA–AF — D6 i18n cerrado, 20/20 surfaces)
 
 ## Auditoría técnica integral 2026-05-22
 
@@ -57,6 +57,38 @@
 - Sweep final `grep "Foreground=\"#\|Background=\"#"`: cero matches restantes — paleta 100% via DynamicResource.
 
 ## Bitácora sesiones
+
+### 2026-05-27 (sesión cont. autónoma) — Sprints AC–AF · cerrar D6 i18n (20/20 surfaces)
+
+Tras Sprints AA+AB (Shell+Dashboard+Users+UserDetails), continuar batch hasta agotar las 12 superficies restantes. **D6 i18n cerrado en MVP scope.**
+
+**Sprint AC — 4 small views** `<commit AC>`:
+- MailFlow, Offboarding, DomainCheck, PsConsole (~365 líneas combined)
+- +45 keys ES+EN (11+11+9+14)
+- +45 tests Theory en SmallViewsBatch. Total tests: **994**
+
+**Sprint AD — 4 medium views** `<commit AD>`:
+- Onboarding, SharedMailbox, MailboxRules, CertWizard (~700 líneas combined)
+- +89 keys ES+EN (22+17+22+28). Multi-line NextSteps body cubre 4 instrucciones admin
+- +89 tests Theory en MediumViewsBatch. Total tests: **1083**
+
+**Sprint AE — Groups + TenantHealth** `<commit AE>`:
+- GroupsView (330) + TenantHealthView (245) — big surfaces
+- +46 keys ES+EN. Groups incluye bulk-create panel con tooltips por RadioButton + Auto/M365/DL
+- Surgical edits (no rewrite) para preservar animaciones + license card ProgressBar templates
+- +46 tests. Total tests: **1129**
+
+**Sprint AF — AuditView + AuditLogView** `<commit AF>`:
+- Cerrar las 2 últimas superficies (339 + 182 líneas)
+- +95 keys ES+EN (70 Audit + 25 AuditLog) — la batch más grande del proyecto. Cubre 13 security audits con tooltips, 3 quick-scenario buttons, 4 sections (Identity/Security/Mail), 4 KPI summary cards, findings filter + pills + columns, AuditLog monthly metrics chips + DataGrid headers
+- AuditSeverityToGlyph/Brush converters preservados — pure visual mappings sin texto
+- +95 tests Theory en AuditBatch. Total tests: **1224**
+
+**Coverage final L10n D6: 20/20 superficies migradas**:
+About · Wizard · Settings · ConnectView · MainWindow shell · Dashboard · Users · UserDetails · MailFlow · Offboarding · DomainCheck · PsConsole · Onboarding · SharedMailbox · MailboxRules · CertWizard · Groups · TenantHealth (Licencias) · Audit · AuditLog
+
+**Pendientes (deferred to dedicated sprint)**:
+- 3 ConverterParameter strings hardcoded ES en `BoolToOnOffConverter` (`'Habilitado/Deshabilitado'` x2, `'Guest/Member'`) — requieren rewrite del converter para aceptar L10n keys o multi-binding
 
 ### 2026-05-26 (sesión cont. autónoma) — Sprint AB · i18n Users + UserDetails
 
