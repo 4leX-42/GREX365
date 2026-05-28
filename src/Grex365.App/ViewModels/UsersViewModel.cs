@@ -91,7 +91,13 @@ public sealed partial class UsersViewModel : ObservableObject
         if (AvailableSkus.Count > 0 || IsBusy) return;
         try
         {
-            await LoadSkusCommand.ExecuteAsync(null).ConfigureAwait(true);
+            // Call the loader method directly rather than LoadSkusCommand.ExecuteAsync:
+            // AsyncRelayCommand spins a MonitorTask that calls UpdateCanExecute() →
+            // ButtonBase.get_Command() on completion. When the task completes off the UI
+            // thread that read crashes (cross-thread DependencyObject access). Invoking
+            // the method directly skips the command machinery entirely; the concurrency
+            // guard above already prevents overlap with a manual click.
+            await LoadSkusAsync().ConfigureAwait(true);
         }
         catch
         {
