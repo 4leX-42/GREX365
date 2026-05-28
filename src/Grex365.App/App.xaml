@@ -709,107 +709,19 @@
                 </Setter>
             </Style>
 
-            <!-- ComboBox: full self-contained template. wpf-ui's DefaultComboBoxStyle
-                 popup background rendered translucent/white over some windows (Settings
-                 dialogs) → non-selected items showed light text on a white popup =
-                 unreadable in dark theme. We own the popup surface here with a SOLID
-                 theme-aware brush (SolidBackgroundFillColorSecondaryBrush) so every
-                 dropdown is dark-readable in dark theme and light in light theme. -->
-            <Style TargetType="ComboBox">
+            <!-- ComboBox dropdown popup surface fix.
+                 wpf-ui's own ComboBox template has working click-to-open, but its
+                 ComboBoxDropDownBackground rendered translucent/near-white over dialog
+                 windows (Settings) in dark theme → non-selected items were unreadable.
+                 Keep wpf-ui's template (BasedOn DefaultComboBoxStyle) and just override
+                 the popup brushes with SOLID, theme-aware ones. The Color tokens are
+                 swapped by wpf-ui per Dark/Light, so a DynamicResource Color keeps the
+                 brush adapting to the active theme. -->
+            <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="{DynamicResource SolidBackgroundFillColorSecondary}" />
+            <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="{DynamicResource ControlStrokeColorDefault}" />
+
+            <Style TargetType="ComboBox" BasedOn="{StaticResource DefaultComboBoxStyle}">
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
-                <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
-                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
-                <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="Padding" Value="10,6" />
-                <Setter Property="MinHeight" Value="32" />
-                <Setter Property="VerticalContentAlignment" Value="Center" />
-                <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="ComboBox">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <Border x:Name="MainBorder"
-                                        Grid.ColumnSpan="2"
-                                        Background="{TemplateBinding Background}"
-                                        BorderBrush="{TemplateBinding BorderBrush}"
-                                        BorderThickness="{TemplateBinding BorderThickness}"
-                                        CornerRadius="4" />
-
-                                <ToggleButton Grid.ColumnSpan="2"
-                                              Focusable="False"
-                                              ClickMode="Press"
-                                              Background="Transparent"
-                                              BorderThickness="0"
-                                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
-                                    <ToggleButton.Template>
-                                        <ControlTemplate TargetType="ToggleButton">
-                                            <Border Background="{TemplateBinding Background}" />
-                                        </ControlTemplate>
-                                    </ToggleButton.Template>
-                                </ToggleButton>
-
-                                <ContentPresenter x:Name="ContentSite"
-                                                  Grid.Column="0"
-                                                  Margin="{TemplateBinding Padding}"
-                                                  IsHitTestVisible="False"
-                                                  VerticalAlignment="Center"
-                                                  HorizontalAlignment="Left"
-                                                  Content="{TemplateBinding SelectionBoxItem}"
-                                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                                                  ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
-                                                  TextElement.Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-
-                                <TextBlock Grid.Column="1"
-                                           Text="&#xE70D;"
-                                           FontFamily="{StaticResource IconFontFamily}"
-                                           FontSize="11"
-                                           Margin="0,0,10,0"
-                                           VerticalAlignment="Center"
-                                           IsHitTestVisible="False"
-                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-
-                                <Popup x:Name="PART_Popup"
-                                       Grid.ColumnSpan="2"
-                                       AllowsTransparency="True"
-                                       Placement="Bottom"
-                                       PopupAnimation="Slide"
-                                       Focusable="False"
-                                       IsOpen="{TemplateBinding IsDropDownOpen}">
-                                    <Border MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
-                                            MaxHeight="{TemplateBinding MaxDropDownHeight}"
-                                            Margin="0,4,0,8"
-                                            Padding="3"
-                                            CornerRadius="6"
-                                            Background="{DynamicResource SolidBackgroundFillColorSecondaryBrush}"
-                                            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
-                                            BorderThickness="1"
-                                            Effect="{StaticResource CardElevation}">
-                                        <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                                      HorizontalScrollBarVisibility="Disabled">
-                                            <ItemsPresenter SnapsToDevicePixels="True" />
-                                        </ScrollViewer>
-                                    </Border>
-                                </Popup>
-                            </Grid>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                                    <Setter TargetName="MainBorder" Property="BorderBrush" Value="{StaticResource BrandAccentSolid}" />
-                                </Trigger>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="MainBorder" Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
-                                </Trigger>
-                                <Trigger Property="IsEnabled" Value="False">
-                                    <Setter TargetName="MainBorder" Property="Opacity" Value="0.5" />
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
             </Style>
 
             <!-- CheckBox accent (override stock blue) -->
