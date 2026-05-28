@@ -45,7 +45,7 @@ public sealed partial class OnboardingViewModel : ObservableObject
             _monitor.PropertyChanged += OnMonitorChanged;
             if (_monitor.Current.GraphConnected)
             {
-                _ = TryAutoLoadSkusAsync();
+                DispatchAutoLoad();
             }
         }
     }
@@ -54,7 +54,23 @@ public sealed partial class OnboardingViewModel : ObservableObject
     {
         if (e.PropertyName != nameof(IConnectionStateMonitor.Current)) return;
         if (_monitor is null || !_monitor.Current.GraphConnected) return;
-        _ = TryAutoLoadSkusAsync();
+        // ConnectionStateMonitor fires from its 1s background poll loop — marshal
+        // to UI dispatcher before mutating ObservableCollection (AvailableSkus is
+        // bound to a ComboBox CollectionView) or triggering AsyncRelayCommand.
+        DispatchAutoLoad();
+    }
+
+    private void DispatchAutoLoad()
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+        {
+            _ = TryAutoLoadSkusAsync();
+        }
+        else
+        {
+            dispatcher.InvokeAsync(() => _ = TryAutoLoadSkusAsync());
+        }
     }
 
     private async Task TryAutoLoadSkusAsync()

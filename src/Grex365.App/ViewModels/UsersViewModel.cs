@@ -46,9 +46,11 @@ public sealed partial class UsersViewModel : ObservableObject
             _monitor.PropertyChanged += OnMonitorChanged;
             // Fire once on construction in case Graph is already connected
             // (typical: VM singleton instantiated lazily after auto-connect completes).
+            // Use dispatcher path so this also handles VM resolution from a
+            // background thread (e.g. when monitor sends ctor through DI mid-poll).
             if (_monitor.Current.GraphConnected)
             {
-                _ = TryAutoLoadSkusAsync();
+                DispatchAutoLoad();
             }
         }
     }
@@ -57,7 +59,26 @@ public sealed partial class UsersViewModel : ObservableObject
     {
         if (e.PropertyName != nameof(IConnectionStateMonitor.Current)) return;
         if (_monitor is null || !_monitor.Current.GraphConnected) return;
-        _ = TryAutoLoadSkusAsync();
+        // ConnectionStateMonitor fires PropertyChanged from its 1s background poll
+        // loop — we must marshal to the UI dispatcher before touching
+        // ObservableCollection (AvailableSkus has a CollectionView bound to it via
+        // ComboBox.ItemsSource, which requires Dispatcher-thread mutations) and
+        // before triggering an AsyncRelayCommand whose CanExecute callbacks read
+        // DependencyObject state on completion.
+        DispatchAutoLoad();
+    }
+
+    private void DispatchAutoLoad()
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+        {
+            _ = TryAutoLoadSkusAsync();
+        }
+        else
+        {
+            dispatcher.InvokeAsync(() => _ = TryAutoLoadSkusAsync());
+        }
     }
 
     private async Task TryAutoLoadSkusAsync()
