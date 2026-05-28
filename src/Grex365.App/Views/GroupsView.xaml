@@ -200,7 +200,8 @@
                                    FontWeight="SemiBold"
                                    FontSize="16"
                                    VerticalAlignment="Center" />
-                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                    Visibility="{Binding SelectedGroup, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
                             <ui:Button Content="{l:L10n Key=Groups.RemoveSelected}"
                                        Margin="0,0,8,0"
                                        Command="{Binding RemoveSelectedMemberCommand}" />
@@ -209,12 +210,31 @@
                         </StackPanel>
                     </Grid>
 
+                    <!-- Empty-state: no group selected -->
+                    <StackPanel Grid.Row="1"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Margin="0,24"
+                                Visibility="{Binding SelectedGroup, Converter={StaticResource NullToCollapsedConverter}, ConverterParameter=invert, FallbackValue=Visible}">
+                        <TextBlock Text=""
+                                   FontFamily="{StaticResource IconFontFamily}"
+                                   FontSize="40"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                        <TextBlock Text="{l:L10n Key=Groups.NoneSelected.Hint}"
+                                   FontSize="12"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,12,0,0"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    </StackPanel>
+
                     <ListBox Grid.Row="1"
                              ItemsSource="{Binding Members}"
                              SelectedItem="{Binding SelectedMember}"
                              Background="Transparent"
                              BorderThickness="0"
-                             VirtualizingPanel.IsVirtualizing="True">
+                             VirtualizingPanel.IsVirtualizing="True"
+                             Visibility="{Binding SelectedGroup, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
                         <ListBox.ItemContainerStyle>
                             <Style TargetType="ListBoxItem">
                                 <EventSetter Event="MouseDoubleClick" Handler="MemberItem_DoubleClick" />
@@ -239,15 +259,18 @@
                     <TextBlock Grid.Row="2"
                                Text="{l:L10n Key=Groups.AddMembers.Label}"
                                FontWeight="SemiBold"
-                               Margin="0,12,0,4" />
+                               Margin="0,12,0,4"
+                               Visibility="{Binding SelectedGroup, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}" />
                     <ui:TextBox Grid.Row="3"
                                 Text="{Binding NewMembersText, UpdateSourceTrigger=PropertyChanged}"
                                 AcceptsReturn="True"
                                 TextWrapping="Wrap"
                                 Height="80"
-                                VerticalScrollBarVisibility="Auto" />
+                                VerticalScrollBarVisibility="Auto"
+                                Visibility="{Binding SelectedGroup, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}" />
 
-                    <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,8,0,0">
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,8,0,0"
+                                Visibility="{Binding SelectedGroup, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
                         <ui:Button Content="{l:L10n Key=Groups.AddMembers.Button}"
                                    Appearance="Primary"
                                    Margin="0,0,8,0"

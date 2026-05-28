@@ -42,7 +42,8 @@
                                    Content="{l:L10n Key=SharedMailbox.Button.ConvertRegular}"
                                    Appearance="Primary"
                                    Margin="8,0,0,0"
-                                   Command="{Binding ConvertToRegularCommand}" />
+                                   Command="{Binding ConvertToRegularCommand}"
+                                   Visibility="{Binding MailboxInfo, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}" />
                     </Grid>
 
                     <Border BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
@@ -106,7 +107,8 @@
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
                 <StackPanel>
                     <TextBlock Text="{l:L10n Key=SharedMailbox.ApplyPermissions}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
-                    <Grid Margin="0,0,0,8">
+                    <Grid Margin="0,0,0,8"
+                          Visibility="{Binding MailboxInfo, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />

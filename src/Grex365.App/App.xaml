@@ -666,7 +666,7 @@
                      selection was invisible in light mode and washed out white text in dark)
                  Keeps default ControlTemplate for the wrapping ComboBox (full template
                  override broke click-to-open in earlier sprints). -->
-            <Style TargetType="ComboBoxItem">
+            <Style TargetType="ComboBoxItem" BasedOn="{StaticResource DefaultComboBoxItemStyle}">
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="Padding" Value="10,6" />
@@ -709,12 +709,8 @@
                 </Setter>
             </Style>
 
-            <Style TargetType="ComboBox">
+            <Style TargetType="ComboBox" BasedOn="{StaticResource DefaultComboBoxStyle}">
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
-                <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
-                <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
-                <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="Padding" Value="8,6" />
                 <Style.Triggers>
                     <Trigger Property="IsKeyboardFocusWithin" Value="True">
                         <Setter Property="BorderBrush" Value="{StaticResource BrandAccentSolid}" />

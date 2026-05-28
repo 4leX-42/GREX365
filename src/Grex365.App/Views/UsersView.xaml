@@ -14,13 +14,26 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
-            <TextBlock Text="{l:L10n Key=Users.Eyebrow}" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="{l:L10n Key=Users.Title}"
-                       FontSize="28"
-                       FontWeight="Light"
-                       VerticalAlignment="Center" />
-        </StackPanel>
+        <Grid Grid.Row="0" Margin="0,0,0,4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <TextBlock Text="{l:L10n Key=Users.Eyebrow}" Style="{StaticResource EyebrowText}" />
+                <TextBlock Text="{l:L10n Key=Users.Title}"
+                           FontSize="28"
+                           FontWeight="Light"
+                           VerticalAlignment="Center" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <ui:Button Content="{l:L10n Key=Users.Action.BulkCsv}"
+                           Margin="0,0,8,0"
+                           Command="{Binding ImportBulkCsvCommand}" />
+                <ui:Button Content="{l:L10n Key=Users.Action.ExportBulk}"
+                           Command="{Binding ExportBulkResultsCommand}" />
+            </StackPanel>
+        </Grid>
         <TextBlock Grid.Row="1"
                    Text="{l:L10n Key=Users.Subtitle}"
                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
@@ -174,7 +187,8 @@
                         <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedUser.AssignedLicenseCount}" />
                     </Grid>
 
-                    <StackPanel Grid.Row="2" Margin="0,8,0,8">
+                    <StackPanel Grid.Row="2" Margin="0,8,0,8"
+                                Visibility="{Binding SelectedUser, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
                         <WrapPanel Orientation="Horizontal" Margin="0,0,0,8">
                             <ui:Button Content="{l:L10n Key=Users.Action.Enable}"
                                        Margin="0,0,8,4"
@@ -185,12 +199,6 @@
                             <ui:Button Content="{l:L10n Key=Users.Action.RemoveLicenses}"
                                        Margin="0,0,8,4"
                                        Command="{Binding RemoveLicensesCommand}" />
-                            <ui:Button Content="{l:L10n Key=Users.Action.BulkCsv}"
-                                       Margin="0,0,8,4"
-                                       Command="{Binding ImportBulkCsvCommand}" />
-                            <ui:Button Content="{l:L10n Key=Users.Action.ExportBulk}"
-                                       Margin="0,0,8,4"
-                                       Command="{Binding ExportBulkResultsCommand}" />
                         </WrapPanel>
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -217,11 +225,32 @@
                                    Opacity="0.8" />
                     </StackPanel>
 
-                    <TextBlock Grid.Row="3" Text="{l:L10n Key=Users.MemberOf}" FontWeight="SemiBold" Margin="0,8,0,4" />
+                    <TextBlock Grid.Row="3" Text="{l:L10n Key=Users.MemberOf}" FontWeight="SemiBold" Margin="0,8,0,4"
+                               Visibility="{Binding SelectedUser, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}" />
+
+                    <!-- Empty-state: no user selected (mirrors left search panel) -->
+                    <StackPanel Grid.Row="4"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Margin="0,24"
+                                Visibility="{Binding SelectedUser, Converter={StaticResource NullToCollapsedConverter}, ConverterParameter=invert, FallbackValue=Visible}">
+                        <TextBlock Text=""
+                                   FontFamily="{StaticResource IconFontFamily}"
+                                   FontSize="40"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                        <TextBlock Text="{l:L10n Key=Users.NoneSelected.Hint}"
+                                   FontSize="12"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,12,0,0"
+                                   Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                    </StackPanel>
+
                     <ListBox Grid.Row="4"
                              ItemsSource="{Binding Memberships}"
                              Background="Transparent"
-                             BorderThickness="0">
+                             BorderThickness="0"
+                             Visibility="{Binding SelectedUser, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
                         <ListBox.ItemTemplate>
                             <DataTemplate DataType="{x:Type models:GroupSummary}">
                                 <Grid Margin="4,4">

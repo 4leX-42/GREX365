@@ -33,6 +33,11 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
     [ObservableProperty] private string _calendarAccess = CalendarAccessRights.Reviewer;
     [ObservableProperty] private CalendarPermissionEntry? _selectedCalendarPermission;
 
+    // True once a mailbox has been successfully loaded — gates the rule-editing
+    // cards (auto-reply / forwarding / calendar) so they stay hidden until there
+    // is an actual target mailbox to act on.
+    [ObservableProperty] private bool _rulesLoaded;
+
     public ObservableCollection<CalendarPermissionEntry> CalendarPermissions { get; } = new();
     public IReadOnlyList<string> CalendarAccessOptions { get; } = CalendarAccessRights.All;
 
@@ -104,6 +109,7 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
                 _log.Progress.Report(LogEntry.Warn("MailboxRules", "Calendar perms no cargados: " + ex.Message));
             }
 
+            RulesLoaded = true;
             StatusMessage = L10n.Get("MailboxRules.Status.RulesLoaded");
         }
         catch (OperationCanceledException)
