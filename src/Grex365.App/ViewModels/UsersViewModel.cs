@@ -77,7 +77,12 @@ public sealed partial class UsersViewModel : ObservableObject
         }
         else
         {
-            dispatcher.InvokeAsync(() => _ = TryAutoLoadSkusAsync());
+            // Func<Task> overload — keeps the async chain bound to the dispatcher so the
+            // AsyncRelayCommand completes (and mutates the bound AvailableSkus
+            // CollectionView) on the UI thread. The Action overload fire-and-forgets the
+            // inner Task and its continuations lose UI affinity → cross-thread
+            // CollectionView crash when auto-connect fires from the monitor poll thread.
+            dispatcher.InvokeAsync(TryAutoLoadSkusAsync);
         }
     }
 

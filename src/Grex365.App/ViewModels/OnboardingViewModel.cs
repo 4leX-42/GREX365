@@ -69,7 +69,10 @@ public sealed partial class OnboardingViewModel : ObservableObject
         }
         else
         {
-            dispatcher.InvokeAsync(() => _ = TryAutoLoadSkusAsync());
+            // Func<Task> overload — keeps the async chain on the dispatcher so collection
+            // mutations + AsyncRelayCommand completion stay on the UI thread (the Action
+            // overload fire-and-forgets the inner Task → cross-thread CollectionView crash).
+            dispatcher.InvokeAsync(TryAutoLoadSkusAsync);
         }
     }
 
