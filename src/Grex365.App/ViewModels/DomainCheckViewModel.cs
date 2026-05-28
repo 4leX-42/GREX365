@@ -14,7 +14,7 @@ public sealed partial class DomainCheckViewModel : ObservableObject
     private CancellationTokenSource? _cts;
 
     [ObservableProperty] private string _domain = string.Empty;
-    [ObservableProperty] private string _statusMessage = "Indica un dominio y pulsa Comprobar.";
+    [ObservableProperty] private string _statusMessage = L10n.Get("DomainCheck.Status.Initial");
     [ObservableProperty] private bool _isBusy;
 
     public ObservableCollection<DnsRecord> Records { get; } = new();
@@ -30,14 +30,14 @@ public sealed partial class DomainCheckViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(Domain))
         {
-            StatusMessage = "Dominio vacío.";
+            StatusMessage = L10n.Get("DomainCheck.Status.EmptyDomain");
             return;
         }
         _cts = new CancellationTokenSource();
         IsBusy = true;
         RunCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
-        StatusMessage = $"Consultando {Domain}...";
+        StatusMessage = L10n.Format("DomainCheck.Status.Querying", Domain);
         Records.Clear();
         try
         {
@@ -48,16 +48,16 @@ public sealed partial class DomainCheckViewModel : ObservableObject
             }
             var problems = result.Records.Count(r => r.Status is "MISSING" or "ERROR");
             StatusMessage = problems == 0
-                ? $"OK · {result.Records.Count} registros"
-                : $"{problems} alertas · revisar tabla";
+                ? L10n.Format("DomainCheck.Status.OkSummary", result.Records.Count)
+                : L10n.Format("DomainCheck.Status.Alerts", problems);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("DNS", ex.Message, ex));
         }
         finally

@@ -50,7 +50,7 @@ public sealed partial class CertWizardViewModel : ObservableObject
     {
         var dlg = new OpenFolderDialog
         {
-            Title = "Carpeta de exportación del .cer"
+            Title = L10n.Get("CertWizard.Dialog.ExportFolder")
         };
         if (string.IsNullOrWhiteSpace(ExportDirectory) is false && Directory.Exists(ExportDirectory))
         {
@@ -66,7 +66,7 @@ public sealed partial class CertWizardViewModel : ObservableObject
     private async Task GenerateAsync()
     {
         IsBusy = true;
-        StatusMessage = "Generando certificado...";
+        StatusMessage = L10n.Get("CertWizard.Status.Generating");
         try
         {
             var cn = CommonName?.Trim() ?? string.Empty;
@@ -75,7 +75,7 @@ public sealed partial class CertWizardViewModel : ObservableObject
 
             var result = await Task.Run(() => _generator.GenerateAndStore(cn, days, dir, _log.Progress)).ConfigureAwait(true);
             Generated = result;
-            StatusMessage = $"Generado. Thumbprint={result.Thumbprint}";
+            StatusMessage = L10n.Format("CertWizard.Status.Generated", result.Thumbprint);
             if (string.IsNullOrWhiteSpace(PfxPath))
             {
                 PfxPath = Path.Combine(dir, $"grex365-{result.Thumbprint}.pfx");
@@ -83,7 +83,7 @@ public sealed partial class CertWizardViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Cert", ex.Message, ex));
         }
         finally
@@ -96,17 +96,17 @@ public sealed partial class CertWizardViewModel : ObservableObject
     {
         if (Generated is null)
         {
-            PfxStatus = "Genera primero un certificado.";
+            PfxStatus = L10n.Get("CertWizard.Status.GenerateFirst");
             return;
         }
         if (string.IsNullOrEmpty(password))
         {
-            PfxStatus = "Password requerido.";
+            PfxStatus = L10n.Get("CertWizard.Status.PasswordRequired");
             return;
         }
         if (string.IsNullOrWhiteSpace(PfxPath))
         {
-            PfxStatus = "Ruta PFX requerida.";
+            PfxStatus = L10n.Get("CertWizard.Status.PfxPathRequired");
             return;
         }
 
@@ -114,11 +114,11 @@ public sealed partial class CertWizardViewModel : ObservableObject
         {
             var result = await Task.Run(() => _generator.ExportPfx(Generated.Thumbprint, PfxPath, password, _log.Progress))
                 .ConfigureAwait(true);
-            PfxStatus = $"OK · {result.BytesWritten:N0} bytes en {result.PfxPath}";
+            PfxStatus = L10n.Format("CertWizard.Status.PfxOk", result.BytesWritten, result.PfxPath);
         }
         catch (Exception ex)
         {
-            PfxStatus = "Error: " + ex.Message;
+            PfxStatus = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Cert", ex.Message, ex));
         }
     }
@@ -128,22 +128,22 @@ public sealed partial class CertWizardViewModel : ObservableObject
     {
         if (Generated is null)
         {
-            AppRegStatus = "Genera primero un certificado.";
+            AppRegStatus = L10n.Get("CertWizard.Status.GenerateFirst");
             return;
         }
         if (!_graph.IsConnected)
         {
-            AppRegStatus = "Graph no está conectado. Usa 'Conectar (device code)' en Conexión primero.";
+            AppRegStatus = L10n.Get("CertWizard.Status.GraphNotConnected");
             return;
         }
         if (string.IsNullOrWhiteSpace(AppRegDisplayName))
         {
-            AppRegStatus = "DisplayName requerido.";
+            AppRegStatus = L10n.Get("CertWizard.Status.DisplayNameRequired");
             return;
         }
 
         IsBusy = true;
-        AppRegStatus = "Creando App Registration y subiendo cert...";
+        AppRegStatus = L10n.Get("CertWizard.Status.CreatingAppReg");
         try
         {
             var cerBytes = await File.ReadAllBytesAsync(Generated.CerPath).ConfigureAwait(true);
@@ -161,12 +161,12 @@ public sealed partial class CertWizardViewModel : ObservableObject
                 Organization: AppRegDisplayName.Trim(),
                 CertThumbprint: Generated.Thumbprint)).ConfigureAwait(true);
 
-            AppRegStatus = $"OK · AppId={result.AppId}. Abre el link de admin consent para conceder los permisos.";
+            AppRegStatus = L10n.Format("CertWizard.Status.AppRegOk", result.AppId);
             _log.Progress.Report(LogEntry.Ok("AppReg", AppRegStatus));
         }
         catch (Exception ex)
         {
-            AppRegStatus = "Error: " + ex.Message;
+            AppRegStatus = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("AppReg", ex.Message, ex));
         }
         finally

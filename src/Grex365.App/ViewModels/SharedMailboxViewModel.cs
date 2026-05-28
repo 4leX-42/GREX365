@@ -53,11 +53,11 @@ public sealed partial class SharedMailboxViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(MailboxIdentity))
         {
-            StatusMessage = "Indica un buzón.";
+            StatusMessage = L10n.Get("SharedMailbox.Status.EnterMailbox");
             return;
         }
         IsBusy = true;
-        StatusMessage = "Consultando buzón...";
+        StatusMessage = L10n.Get("SharedMailbox.Status.Querying");
         try
         {
             MailboxInfo = await _service.GetMailboxAsync(MailboxIdentity.Trim(), _log.Progress).ConfigureAwait(true);
@@ -71,21 +71,21 @@ public sealed partial class SharedMailboxViewModel : ObservableObject
                     {
                         CurrentPermissions.Add(p);
                     }
-                    StatusMessage = $"Tipo: {MailboxInfo.RecipientTypeDetails} · {perms.Count} permisos activos";
+                    StatusMessage = L10n.Format("SharedMailbox.Status.LookupSummary", MailboxInfo.RecipientTypeDetails, perms.Count);
                 }
                 catch (Exception permEx)
                 {
-                    StatusMessage = $"Tipo: {MailboxInfo.RecipientTypeDetails} · perms: {permEx.Message}";
+                    StatusMessage = L10n.Format("SharedMailbox.Status.LookupPermsError", MailboxInfo.RecipientTypeDetails, permEx.Message);
                 }
             }
             else
             {
-                StatusMessage = "Buzón no encontrado.";
+                StatusMessage = L10n.Get("SharedMailbox.Status.NotFound");
             }
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Mailbox", ex.Message, ex));
         }
         finally
@@ -99,23 +99,23 @@ public sealed partial class SharedMailboxViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(MailboxIdentity))
         {
-            StatusMessage = "Indica un buzón.";
+            StatusMessage = L10n.Get("SharedMailbox.Status.EnterMailbox");
             return;
         }
         if (!await RequireAuthorizedAsync("Convert mailbox").ConfigureAwait(true)) return;
         IsBusy = true;
-        StatusMessage = "Convirtiendo a UserMailbox...";
+        StatusMessage = L10n.Get("SharedMailbox.Status.Converting");
         try
         {
             MailboxInfo = await _service.ConvertToRegularAsync(MailboxIdentity.Trim(), _log.Progress).ConfigureAwait(true);
             StatusMessage = MailboxInfo is null
-                ? "Sin confirmación."
-                : $"Resultado: {MailboxInfo.RecipientTypeDetails}";
+                ? L10n.Get("SharedMailbox.Status.NoConfirmation")
+                : L10n.Format("SharedMailbox.Status.ConvertResult", MailboxInfo.RecipientTypeDetails);
             _log.Progress.Report(LogEntry.Ok("Mailbox", StatusMessage));
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Mailbox", ex.Message, ex));
         }
         finally
@@ -129,7 +129,7 @@ public sealed partial class SharedMailboxViewModel : ObservableObject
     {
         var dlg = new OpenFileDialog
         {
-            Title = "CSV de permisos (Action;Permission;Mailbox;Principal)",
+            Title = L10n.Get("SharedMailbox.Dialog.BulkCsv"),
             Filter = "CSV (*.csv)|*.csv|Todos|*.*",
             CheckFileExists = true
         };
@@ -141,13 +141,13 @@ public sealed partial class SharedMailboxViewModel : ObservableObject
         if (!await RequireAuthorizedAsync("Bulk mailbox perms").ConfigureAwait(true)) return;
 
         IsBusy = true;
-        StatusMessage = $"Procesando {Path.GetFileName(dlg.FileName)}...";
+        StatusMessage = L10n.Format("SharedMailbox.Status.Processing", Path.GetFileName(dlg.FileName));
         try
         {
             var rows = FlexibleCsvReader.Read(dlg.FileName);
             if (rows.Count == 0)
             {
-                StatusMessage = "CSV vacío.";
+                StatusMessage = L10n.Get("SharedMailbox.Status.CsvEmpty");
                 return;
             }
 
@@ -174,12 +174,12 @@ public sealed partial class SharedMailboxViewModel : ObservableObject
                 }
             }
 
-            StatusMessage = $"CSV: OK={ok}  Invalido={inv}  Error={err}";
+            StatusMessage = L10n.Format("SharedMailbox.Status.CsvSummary", ok, inv, err);
             _log.Progress.Report(LogEntry.Ok("Mailbox", StatusMessage));
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Mailbox", ex.Message, ex));
         }
         finally
@@ -193,13 +193,13 @@ public sealed partial class SharedMailboxViewModel : ObservableObject
     {
         if (PermissionResults.Count == 0)
         {
-            StatusMessage = "Sin resultados para exportar.";
+            StatusMessage = L10n.Get("Common.Status.NoResultsToExport");
             return;
         }
 
         var dlg = new SaveFileDialog
         {
-            Title = "Guardar resultados",
+            Title = L10n.Get("Common.Dialog.SaveResults"),
             Filter = "CSV (*.csv)|*.csv",
             FileName = $"mailbox_permissions_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
         };
@@ -222,11 +222,11 @@ public sealed partial class SharedMailboxViewModel : ObservableObject
                 sb.Append(Escape(r.Detail)).AppendLine();
             }
             File.WriteAllText(dlg.FileName, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
-            StatusMessage = $"Exportado: {Path.GetFileName(dlg.FileName)}";
+            StatusMessage = L10n.Format("Common.Status.Exported", Path.GetFileName(dlg.FileName));
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Mailbox", ex.Message, ex));
         }
     }
@@ -238,23 +238,23 @@ public sealed partial class SharedMailboxViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(MailboxIdentity) || string.IsNullOrWhiteSpace(PermPrincipal))
         {
-            StatusMessage = "Falta buzón o principal.";
+            StatusMessage = L10n.Get("SharedMailbox.Status.MissingMailboxOrPrincipal");
             return;
         }
         if (!await RequireAuthorizedAsync("Apply mailbox perm").ConfigureAwait(true)) return;
         IsBusy = true;
-        StatusMessage = $"{PermAction} {PermPermission} {MailboxIdentity} ↔ {PermPrincipal}...";
+        StatusMessage = L10n.Format("SharedMailbox.Status.ApplyingPerm", PermAction, PermPermission, MailboxIdentity, PermPrincipal);
         try
         {
             var r = await _service.ApplyPermissionAsync(
                 PermAction, PermPermission, MailboxIdentity.Trim(), PermPrincipal.Trim(), _log.Progress)
                 .ConfigureAwait(true);
             PermissionResults.Insert(0, r);
-            StatusMessage = $"{r.Status}: {r.Detail}";
+            StatusMessage = L10n.Format("SharedMailbox.Status.ApplyResult", r.Status, r.Detail);
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Mailbox", ex.Message, ex));
         }
         finally

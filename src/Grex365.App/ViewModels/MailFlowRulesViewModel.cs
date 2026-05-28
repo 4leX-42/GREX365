@@ -14,7 +14,7 @@ public sealed partial class MailFlowRulesViewModel : ObservableObject
     private readonly IExchangeConnection _exo;
 
     [ObservableProperty] private bool _isBusy;
-    [ObservableProperty] private string _statusMessage = "Pulsa 'Cargar' para listar las transport rules.";
+    [ObservableProperty] private string _statusMessage = L10n.Get("MailFlow.Status.Initial");
     [ObservableProperty] private string _filter = string.Empty;
 
     private readonly List<TransportRuleSummary> _all = new();
@@ -35,23 +35,23 @@ public sealed partial class MailFlowRulesViewModel : ObservableObject
     {
         if (!_exo.IsConnected)
         {
-            StatusMessage = "Exchange Online no está conectado.";
+            StatusMessage = L10n.Get("MailFlow.Status.NotConnected");
             return;
         }
 
         IsBusy = true;
-        StatusMessage = "Cargando reglas...";
+        StatusMessage = L10n.Get("MailFlow.Status.Loading");
         try
         {
             var rules = await _service.GetRulesAsync(_log.Progress).ConfigureAwait(true);
             _all.Clear();
             _all.AddRange(rules);
             ApplyFilter();
-            StatusMessage = $"{rules.Count} reglas · {Filtered.Count} filtradas";
+            StatusMessage = L10n.Format("MailFlow.Status.Summary", rules.Count, Filtered.Count);
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("MailFlow", ex.Message, ex));
         }
         finally

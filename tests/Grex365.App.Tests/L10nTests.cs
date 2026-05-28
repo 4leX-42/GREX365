@@ -7,7 +7,7 @@ namespace Grex365.App.Tests;
 public class L10nTests : IDisposable
 {
     public L10nTests() => L10n.Reset();
-    public void Dispose() => L10n.Reset();
+    public void Dispose() => L10n.Initialize("es");
 
     [Fact]
     public void Configure_PrimaryDict_GetReturnsValue()

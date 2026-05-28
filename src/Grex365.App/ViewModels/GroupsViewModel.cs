@@ -74,7 +74,7 @@ public sealed partial class GroupsViewModel : ObservableObject
         EnsureToken();
         IsBusy = true;
         CancelCommand.NotifyCanExecuteChanged();
-        StatusMessage = "Buscando...";
+        StatusMessage = L10n.Get("Groups.Status.Searching");
         try
         {
             Groups.Clear();
@@ -83,16 +83,16 @@ public sealed partial class GroupsViewModel : ObservableObject
             {
                 Groups.Add(g);
             }
-            StatusMessage = $"{found.Count} grupos.";
+            StatusMessage = L10n.Format("Groups.Status.GroupsFound", found.Count);
             _log.Progress.Report(LogEntry.Info("Groups", $"Search '{SearchQuery}' -> {found.Count} resultados"));
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Groups", ex.Message, ex));
         }
         finally
@@ -165,15 +165,15 @@ public sealed partial class GroupsViewModel : ObservableObject
             {
                 Members.Add(m);
             }
-            StatusMessage = $"{members.Count} miembros.";
+            StatusMessage = L10n.Format("Groups.Status.MembersCount", members.Count);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error miembros: " + ex.Message;
+            StatusMessage = L10n.Format("Groups.Status.MembersError", ex.Message);
             _log.Progress.Report(LogEntry.Error("Groups", ex.Message, ex));
         }
         finally
@@ -187,13 +187,13 @@ public sealed partial class GroupsViewModel : ObservableObject
     {
         if (SelectedGroup is null)
         {
-            StatusMessage = "Selecciona un grupo primero.";
+            StatusMessage = L10n.Get("Groups.Status.SelectGroupFirst");
             return;
         }
 
         var dlg = new OpenFileDialog
         {
-            Title = "Seleccionar CSV de miembros",
+            Title = L10n.Get("Groups.Dialog.SelectMembersCsv"),
             Filter = "CSV (*.csv)|*.csv|Todos los archivos|*.*",
             CheckFileExists = true
         };
@@ -205,7 +205,7 @@ public sealed partial class GroupsViewModel : ObservableObject
         EnsureToken();
         IsBusy = true;
         CancelCommand.NotifyCanExecuteChanged();
-        StatusMessage = $"Leyendo {Path.GetFileName(dlg.FileName)}...";
+        StatusMessage = L10n.Format("Groups.Status.Reading", Path.GetFileName(dlg.FileName));
         try
         {
             var rows = FlexibleCsvReader.Read(dlg.FileName);
@@ -223,11 +223,11 @@ public sealed partial class GroupsViewModel : ObservableObject
 
             if (identifiers.Count == 0)
             {
-                StatusMessage = "CSV sin columnas Email/Id útiles.";
+                StatusMessage = L10n.Get("Groups.Status.CsvNoUsefulColumns");
                 return;
             }
 
-            StatusMessage = $"Añadiendo {identifiers.Count} desde CSV...";
+            StatusMessage = L10n.Format("Groups.Status.AddingFromCsv", identifiers.Count);
             var results = await _groups.AddMembersAsync(SelectedGroup.Id, identifiers, _log.Progress, _cts!.Token).ConfigureAwait(true);
             LastAddResults.Clear();
             foreach (var r in results)
@@ -237,18 +237,18 @@ public sealed partial class GroupsViewModel : ObservableObject
             var ok = results.Count(r => r.Status == "AGREGADO");
             var existed = results.Count(r => r.Status == "YA_EXISTE");
             var errors = results.Count(r => r.Status is "ERROR" or "NO_RESUELTO");
-            StatusMessage = $"CSV: OK={ok}  YaExistia={existed}  Error={errors}";
+            StatusMessage = L10n.Format("Groups.Status.CsvSummary", ok, existed, errors);
             DisposeToken();
             await LoadMembersAsync(SelectedGroup.Id).ConfigureAwait(true);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
             DisposeToken();
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Groups", ex.Message, ex));
             DisposeToken();
         }
@@ -259,19 +259,19 @@ public sealed partial class GroupsViewModel : ObservableObject
     {
         if (SelectedGroup is null || SelectedMember is null)
         {
-            StatusMessage = "Selecciona un miembro.";
+            StatusMessage = L10n.Get("Groups.Status.SelectMember");
             return;
         }
 
         if (!await RequireAuthorizedAsync("Remove member").ConfigureAwait(true)) return;
 
         var ok = await _dialogs.ConfirmAsync(
-            $"Eliminar a {SelectedMember.DisplayName ?? SelectedMember.Id} del grupo {SelectedGroup.DisplayName}?",
-            "Confirmar eliminación",
+            L10n.Format("Groups.Confirm.RemoveMemberBody", SelectedMember.DisplayName ?? SelectedMember.Id, SelectedGroup.DisplayName),
+            L10n.Get("Groups.Confirm.RemoveMemberTitle"),
             DialogIcon.Warning).ConfigureAwait(true);
         if (!ok)
         {
-            StatusMessage = "Cancelado por el usuario.";
+            StatusMessage = L10n.Get("Common.Status.CancelledByUser");
             return;
         }
 
@@ -279,20 +279,20 @@ public sealed partial class GroupsViewModel : ObservableObject
         IsBusy = true;
         CancelCommand.NotifyCanExecuteChanged();
         var target = SelectedMember;
-        StatusMessage = $"Eliminando {target.DisplayName ?? target.Id}...";
+        StatusMessage = L10n.Format("Groups.Status.Removing", target.DisplayName ?? target.Id);
         try
         {
             await _groups.RemoveMemberAsync(SelectedGroup.Id, target.Id, _log.Progress, _cts!.Token).ConfigureAwait(true);
             Members.Remove(target);
-            StatusMessage = $"Eliminado: {target.DisplayName ?? target.Id}";
+            StatusMessage = L10n.Format("Groups.Status.Removed", target.DisplayName ?? target.Id);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Groups", ex.Message, ex));
         }
         finally
@@ -306,13 +306,13 @@ public sealed partial class GroupsViewModel : ObservableObject
     {
         if (SelectedGroup is null || Members.Count == 0)
         {
-            StatusMessage = "Sin miembros para exportar.";
+            StatusMessage = L10n.Get("Groups.Status.NoMembersToExport");
             return;
         }
 
         var dlg = new SaveFileDialog
         {
-            Title = "Guardar miembros",
+            Title = L10n.Get("Groups.Dialog.SaveMembers"),
             Filter = "CSV (*.csv)|*.csv",
             FileName = $"members_{SelectedGroup.DisplayName}_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
         };
@@ -333,12 +333,12 @@ public sealed partial class GroupsViewModel : ObservableObject
                 sb.Append(Escape(m.UserPrincipalName)).AppendLine();
             }
             File.WriteAllText(dlg.FileName, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
-            StatusMessage = $"Exportado: {Path.GetFileName(dlg.FileName)}";
+            StatusMessage = L10n.Format("Common.Status.Exported", Path.GetFileName(dlg.FileName));
             _log.Progress.Report(LogEntry.Ok("Groups", "Miembros exportados: " + dlg.FileName));
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Groups", ex.Message, ex));
         }
     }
@@ -348,13 +348,13 @@ public sealed partial class GroupsViewModel : ObservableObject
     {
         if (LastAddResults.Count == 0)
         {
-            StatusMessage = "Sin resultados para exportar.";
+            StatusMessage = L10n.Get("Common.Status.NoResultsToExport");
             return;
         }
 
         var dlg = new SaveFileDialog
         {
-            Title = "Guardar resultados",
+            Title = L10n.Get("Common.Dialog.SaveResults"),
             Filter = "CSV (*.csv)|*.csv",
             FileName = $"add_members_result_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
         };
@@ -374,12 +374,12 @@ public sealed partial class GroupsViewModel : ObservableObject
                 sb.Append(Escape(r.Detail)).AppendLine();
             }
             File.WriteAllText(dlg.FileName, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
-            StatusMessage = $"Exportado: {Path.GetFileName(dlg.FileName)}";
+            StatusMessage = L10n.Format("Common.Status.Exported", Path.GetFileName(dlg.FileName));
             _log.Progress.Report(LogEntry.Ok("Groups", "Resultados exportados: " + dlg.FileName));
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Groups", ex.Message, ex));
         }
     }
@@ -392,13 +392,13 @@ public sealed partial class GroupsViewModel : ObservableObject
         var domain = (BulkDomain ?? string.Empty).Trim().TrimStart('@');
         if (string.IsNullOrEmpty(domain))
         {
-            StatusMessage = "Indica el dominio (ej: contoso.com).";
+            StatusMessage = L10n.Get("Groups.Status.EnterDomain");
             return;
         }
 
         var dlg = new OpenFileDialog
         {
-            Title = "CSV con Email + GroupName (forward-fill activo)",
+            Title = L10n.Get("Groups.Dialog.BulkCsv"),
             Filter = "CSV (*.csv)|*.csv|Todos|*.*",
             CheckFileExists = true
         };
@@ -415,13 +415,13 @@ public sealed partial class GroupsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error CSV: " + ex.Message;
+            StatusMessage = L10n.Format("Groups.Status.CsvError", ex.Message);
             return;
         }
 
         if (rows.Count == 0)
         {
-            StatusMessage = "CSV sin filas válidas (Email + GroupName).";
+            StatusMessage = L10n.Get("Groups.Status.CsvNoValidRows");
             return;
         }
 
@@ -430,17 +430,17 @@ public sealed partial class GroupsViewModel : ObservableObject
         var plan = BulkGroupPlanner.Plan(rows, BulkTypeChoice);
         var confirmMsg = BulkGroupPlanner.BuildConfirmMessage(plan, rows.Count, domain);
 
-        var ok = await _dialogs.ConfirmAsync(confirmMsg, "Confirmar creación masiva").ConfigureAwait(true);
+        var ok = await _dialogs.ConfirmAsync(confirmMsg, L10n.Get("Groups.Confirm.BulkCreateTitle")).ConfigureAwait(true);
         if (!ok)
         {
-            StatusMessage = "Cancelado por el usuario.";
+            StatusMessage = L10n.Get("Common.Status.CancelledByUser");
             return;
         }
 
         EnsureToken();
         IsBusy = true;
         CancelCommand.NotifyCanExecuteChanged();
-        StatusMessage = $"Creando {plan.Breakdown}...";
+        StatusMessage = L10n.Format("Groups.Status.Creating", plan.Breakdown);
         BulkCreateResults.Clear();
         try
         {
@@ -463,11 +463,11 @@ public sealed partial class GroupsViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("BulkGroups", ex.Message, ex));
         }
         finally
@@ -481,12 +481,12 @@ public sealed partial class GroupsViewModel : ObservableObject
     {
         if (BulkCreateResults.Count == 0)
         {
-            StatusMessage = "Sin resultados que exportar.";
+            StatusMessage = L10n.Get("Common.Status.NoResultsToExport");
             return;
         }
         var dlg = new SaveFileDialog
         {
-            Title = "Guardar log de creación",
+            Title = L10n.Get("Groups.Dialog.SaveCreateLog"),
             Filter = "CSV (*.csv)|*.csv",
             FileName = $"new_groups_log_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
         };
@@ -507,11 +507,11 @@ public sealed partial class GroupsViewModel : ObservableObject
                 sb.Append(Escape(r.Detail)).AppendLine();
             }
             File.WriteAllText(dlg.FileName, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
-            StatusMessage = $"Exportado: {Path.GetFileName(dlg.FileName)}";
+            StatusMessage = L10n.Format("Common.Status.Exported", Path.GetFileName(dlg.FileName));
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
         }
     }
 
@@ -520,7 +520,7 @@ public sealed partial class GroupsViewModel : ObservableObject
     {
         if (SelectedGroup is null)
         {
-            StatusMessage = "Selecciona un grupo primero.";
+            StatusMessage = L10n.Get("Groups.Status.SelectGroupFirst");
             return;
         }
 
@@ -532,14 +532,14 @@ public sealed partial class GroupsViewModel : ObservableObject
 
         if (lines.Count == 0)
         {
-            StatusMessage = "Sin entradas para añadir.";
+            StatusMessage = L10n.Get("Groups.Status.NoEntriesToAdd");
             return;
         }
 
         EnsureToken();
         IsBusy = true;
         CancelCommand.NotifyCanExecuteChanged();
-        StatusMessage = $"Añadiendo {lines.Count}...";
+        StatusMessage = L10n.Format("Groups.Status.Adding", lines.Count);
         try
         {
             var results = await _groups.AddMembersAsync(SelectedGroup.Id, lines, _log.Progress, _cts!.Token).ConfigureAwait(true);
@@ -551,17 +551,17 @@ public sealed partial class GroupsViewModel : ObservableObject
             var ok = results.Count(r => r.Status == "AGREGADO");
             var existed = results.Count(r => r.Status == "YA_EXISTE");
             var errors = results.Count(r => r.Status == "ERROR" || r.Status == "NO_RESUELTO");
-            StatusMessage = $"OK={ok}  YaExistia={existed}  Error={errors}";
+            StatusMessage = L10n.Format("Groups.Status.AddSummary", ok, existed, errors);
             DisposeToken();
             await LoadMembersAsync(SelectedGroup.Id).ConfigureAwait(true);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Groups", ex.Message, ex));
         }
         finally

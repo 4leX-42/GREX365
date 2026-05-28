@@ -11,7 +11,7 @@ public class BoolToOnOffConverterTests : IDisposable
     private readonly BoolToOnOffConverter _conv = new();
 
     public BoolToOnOffConverterTests() => L10n.Reset();
-    public void Dispose() => L10n.Reset();
+    public void Dispose() => L10n.Initialize("es");
 
     [Fact]
     public void NoParameter_TrueValue_ReturnsCommonConnectedFromL10n()

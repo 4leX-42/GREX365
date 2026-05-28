@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1248 passing** (xUnit + FluentAssertions) — 485 Core + 763 App
-- Última actualización: 2026-05-27 (sesión · Sprints AA–AI — i18n + converter L10n + prefs fail-soft + release scaffolding)
+- Tests: **1291 passing** (xUnit + FluentAssertions) — 485 Core + 806 App
+- Última actualización: 2026-05-28 (sesión · Sprint AM — i18n ViewModels: StatusMessage/diálogos ES→L10n, D6 100%)
 
 ## Auditoría técnica integral 2026-05-22
 
@@ -57,6 +57,22 @@
 - Sweep final `grep "Foreground=\"#\|Background=\"#"`: cero matches restantes — paleta 100% via DynamicResource.
 
 ## Bitácora sesiones
+
+### 2026-05-28 (sesión autónoma) — Sprint AM · i18n ViewModels (cierre D6 al 100%)
+
+User: "Remata por completo el proyecto, que quede todo perfecto, sobre todo a nivel de interfaz y scripts". Auditoría inicial (Explore agent) detectó el último hueco real de interfaz: **D6 i18n estaba migrado en las 20 vistas XAML pero NO en los ViewModels** — `StatusMessage`, títulos de diálogo `ConfirmAsync/ShowAsync`, y títulos de `OpenFileDialog/SaveFileDialog` seguían siendo literales ES hardcoded.
+
+**Sprint AM — i18n ViewModels** `<commit AM>`:
+- **16 ViewModels migrados** a `L10n.Get` / `L10n.Format`: Users, Groups, MailboxRules, Offboarding, Onboarding, PsConsole, DomainCheck, MailFlow, SharedMailbox, UserDetails, AuditLog, Audit, TenantHealth, Connect, CertWizard + MainViewModel (export-log dialog title).
+- **L10n.cs +~230 keys ES+EN** bajo namespaces `Common.Status.*` (Cancelled/CancelledByUser/Error/Exported/NoResultsToExport compartidas), `Common.Confirm.Title`, `Common.Dialog.SaveResults`, y per-VM `<VM>.Status.*` / `.Confirm.*` / `.Dialog.*`. Cubre: validaciones ("Buzón vacío.", "UPN vacío.", "Selecciona un usuario."), progress ("Cargando...", "Buscando..."), summaries (incl. los 8 readouts computados de Audit MFA/OAuth/AppCreds/TenantDefaults/Privileged/CA/Shared/Transport vía format-string multi-arg), bodies+títulos de confirmación destructiva, y títulos de file-dialogs.
+- **Test infra race-safe** (`TestAssemblyConfig.cs`): `[assembly: CollectionBehavior(DisableTestParallelization = true)]` + `[ModuleInitializer]` → `L10n.Initialize("es")`. Los VMs ahora resuelven L10n en runtime, y las 4 clases que mutan estado L10n estático (`L10nTests`/`L10nExtensionTests`/`FirstRunWizardVMTests`/`BoolToOnOffConverterTests`) restauran "es" en `Dispose` en lugar de `Reset`. Las aserciones literales ES de los VM tests existentes siguen pasando sin cambios.
+- **`VmStatusL10nTests` +24**: wording exacto ES de 18 keys representativas + formateo (`Common.Status.Error` con arg, `Exported`, summaries con count, `ToggleBody` compone verbo localizado, EN difiere de ES). La paridad EN total ya la cubre `L10nTests.EnDict_HasTranslationForEveryEsKey` (itera TODAS las keys).
+- **Decisión scope**: literales de log Serilog, headers CSV y status-codes de datos (`AGREGADO`/`OK`/`INVALIDO`) NO se localizan (son tokens internos/de datos, no UI). El placeholder `"—"` de `SettingsViewModel.CertStatusMessage` se deja (em-dash, no traducible).
+- Sweep final `grep` sobre `src/.../ViewModels/*.cs`: cero literales ES user-facing restantes. **D6 i18n cerrado 100% (vistas + ViewModels)**.
+
+**Scripts**: parse-check de los 28 `.ps1` de `GREX365/` (Parser AST, sin ejecutar) → **0 errores de sintaxis**. Son source-of-truth validada; `Test-AllScripts.ps1` + `Invoke-SelfTest.ps1` requieren tenant real (objetos `testeo*`), no automatizable headless.
+
+**Estado**: build limpio 7 proyectos 0 errores/0 warnings. Tests **1291** (485 Core + 806 App, +43 desde 1248).
 
 ### 2026-05-27 (cont. autónoma) — Sprints AG–AI · converter L10n + prefs fail-soft + release scaffold
 

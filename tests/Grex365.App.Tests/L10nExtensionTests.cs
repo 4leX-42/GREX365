@@ -8,7 +8,7 @@ namespace Grex365.App.Tests;
 public class L10nExtensionTests : IDisposable
 {
     public L10nExtensionTests() => L10n.Reset();
-    public void Dispose() => L10n.Reset();
+    public void Dispose() => L10n.Initialize("es");
 
     [Fact]
     public void ProvideValue_KnownKey_ReturnsTranslation()

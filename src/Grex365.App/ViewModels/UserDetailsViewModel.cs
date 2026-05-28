@@ -97,19 +97,19 @@ public sealed partial class UserDetailsViewModel : ObservableObject
         AssignedLicenses.Clear();
         AssignableSkus.Clear();
         IsBusy = true;
-        StatusMessage = "Cargando perfil...";
+        StatusMessage = L10n.Get("UserDetails.Status.LoadingProfile");
         try
         {
             var user = await _users.GetByIdAsync(userId, token).ConfigureAwait(true);
             if (user is null)
             {
-                StatusMessage = "Usuario no encontrado.";
+                StatusMessage = L10n.Get("UserDetails.Status.NotFound");
                 return;
             }
             User = user;
             HasUser = true;
 
-            StatusMessage = "Cargando grupos...";
+            StatusMessage = L10n.Get("UserDetails.Status.LoadingGroups");
             try
             {
                 var groups = await _users.GetGroupMembershipsAsync(userId, token).ConfigureAwait(true);
@@ -123,7 +123,7 @@ public sealed partial class UserDetailsViewModel : ObservableObject
                 _log.Progress.Report(LogEntry.Warn("UserDetails", $"Grupos: {ex.Message}"));
             }
 
-            StatusMessage = "Cargando licencias...";
+            StatusMessage = L10n.Get("UserDetails.Status.LoadingLicenses");
             try
             {
                 if (_allSkus.Count == 0)
@@ -166,15 +166,15 @@ public sealed partial class UserDetailsViewModel : ObservableObject
                 _log.Progress.Report(LogEntry.Warn("UserDetails", $"Licencias: {ex.Message}"));
             }
 
-            StatusMessage = $"{User.DisplayName} · {Memberships.Count} grupos · {AssignedLicenses.Count} licencias";
+            StatusMessage = L10n.Format("UserDetails.Status.Summary", User.DisplayName, Memberships.Count, AssignedLicenses.Count);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("UserDetails", ex.Message, ex));
         }
         finally
@@ -192,12 +192,14 @@ public sealed partial class UserDetailsViewModel : ObservableObject
         if (User is null || string.IsNullOrEmpty(User.Id)) return;
         var newState = !User.AccountEnabled;
         var ok = await _dialogs.ConfirmAsync(
-            (newState ? "Habilitar" : "Deshabilitar") + $" la cuenta {User.UserPrincipalName}?",
-            "Confirmar").ConfigureAwait(true);
+            L10n.Format("UserDetails.Confirm.ToggleBody",
+                newState ? L10n.Get("UserDetails.Verb.Enable") : L10n.Get("UserDetails.Verb.Disable"),
+                User.UserPrincipalName),
+            L10n.Get("Common.Confirm.Title")).ConfigureAwait(true);
         if (!ok) return;
 
         IsBusy = true;
-        StatusMessage = newState ? "Habilitando..." : "Deshabilitando...";
+        StatusMessage = newState ? L10n.Get("UserDetails.Status.Enabling") : L10n.Get("UserDetails.Status.Disabling");
         try
         {
             await _users.SetAccountEnabledAsync(User.Id, newState, _log.Progress).ConfigureAwait(true);
@@ -205,7 +207,7 @@ public sealed partial class UserDetailsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("UserDetails", ex.Message, ex));
         }
         finally
@@ -219,12 +221,12 @@ public sealed partial class UserDetailsViewModel : ObservableObject
     {
         if (row is null || User is null || string.IsNullOrEmpty(User.Id)) return;
         var ok = await _dialogs.ConfirmAsync(
-            $"Quitar la licencia '{row.FriendlyName}' ({row.SkuPartNumber}) de {User.UserPrincipalName}?",
-            "Confirmar").ConfigureAwait(true);
+            L10n.Format("UserDetails.Confirm.RemoveLicenseBody", row.FriendlyName, row.SkuPartNumber, User.UserPrincipalName),
+            L10n.Get("Common.Confirm.Title")).ConfigureAwait(true);
         if (!ok) return;
 
         IsBusy = true;
-        StatusMessage = $"Quitando {row.FriendlyName}...";
+        StatusMessage = L10n.Format("UserDetails.Status.RemovingLicense", row.FriendlyName);
         try
         {
             await _users.RemoveLicenseAsync(User.Id, row.SkuId, _log.Progress).ConfigureAwait(true);
@@ -232,7 +234,7 @@ public sealed partial class UserDetailsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("UserDetails", ex.Message, ex));
         }
         finally
@@ -248,7 +250,7 @@ public sealed partial class UserDetailsViewModel : ObservableObject
         var sku = SelectedSkuToAdd;
         var info = SkuCatalog.Resolve(sku.SkuPartNumber);
         IsBusy = true;
-        StatusMessage = $"Asignando {info.FriendlyName}...";
+        StatusMessage = L10n.Format("UserDetails.Status.AssigningLicense", info.FriendlyName);
         try
         {
             await _users.AssignLicenseAsync(User.Id, sku.SkuId, _log.Progress).ConfigureAwait(true);
@@ -257,7 +259,7 @@ public sealed partial class UserDetailsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("UserDetails", ex.Message, ex));
         }
         finally
@@ -271,24 +273,24 @@ public sealed partial class UserDetailsViewModel : ObservableObject
     {
         if (User is null || string.IsNullOrEmpty(User.Id)) return;
         var ok = await _dialogs.ConfirmAsync(
-            $"Restablecer la contraseña de {User.UserPrincipalName}?\n\nSe generará una nueva contraseña aleatoria y se forzará cambio en el siguiente inicio de sesión.",
-            "Confirmar reset password").ConfigureAwait(true);
+            L10n.Format("UserDetails.Confirm.ResetPasswordBody", User.UserPrincipalName),
+            L10n.Get("UserDetails.Confirm.ResetPasswordTitle")).ConfigureAwait(true);
         if (!ok) return;
 
         IsBusy = true;
-        StatusMessage = "Reseteando password...";
+        StatusMessage = L10n.Get("UserDetails.Status.ResettingPassword");
         try
         {
             var newPwd = await _users.ResetPasswordAsync(User.Id, true, _log.Progress).ConfigureAwait(true);
             _clipboard.SetText(newPwd);
             await _dialogs.ShowAsync(
-                $"Password temporal:\n\n{newPwd}\n\n(Copiada al portapapeles.)",
-                "Password reseteada").ConfigureAwait(true);
-            StatusMessage = "Password reseteada. (Forzará cambio próximo inicio.)";
+                L10n.Format("UserDetails.Dialog.PasswordResetBody", newPwd),
+                L10n.Get("UserDetails.Dialog.PasswordResetTitle")).ConfigureAwait(true);
+            StatusMessage = L10n.Get("UserDetails.Status.PasswordReset");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("UserDetails", ex.Message, ex));
         }
         finally
@@ -302,21 +304,21 @@ public sealed partial class UserDetailsViewModel : ObservableObject
     {
         if (User is null || string.IsNullOrEmpty(User.Id)) return;
         var ok = await _dialogs.ConfirmAsync(
-            $"Revocar TODAS las sign-in sessions de {User.UserPrincipalName}?\n\nForzará re-autenticación en cualquier sesión activa (web, Teams, Outlook, etc).",
-            "Confirmar revoke sessions",
+            L10n.Format("UserDetails.Confirm.RevokeSessionsBody", User.UserPrincipalName),
+            L10n.Get("UserDetails.Confirm.RevokeSessionsTitle"),
             DialogIcon.Warning).ConfigureAwait(true);
         if (!ok) return;
 
         IsBusy = true;
-        StatusMessage = "Revocando sessions...";
+        StatusMessage = L10n.Get("UserDetails.Status.RevokingSessions");
         try
         {
             await _users.RevokeSignInSessionsAsync(User.Id, _log.Progress).ConfigureAwait(true);
-            StatusMessage = "Sign-in sessions revocadas.";
+            StatusMessage = L10n.Get("UserDetails.Status.SessionsRevoked");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("UserDetails", ex.Message, ex));
         }
         finally
@@ -330,13 +332,13 @@ public sealed partial class UserDetailsViewModel : ObservableObject
     {
         if (User is null || string.IsNullOrEmpty(User.Id)) return;
         var ok = await _dialogs.ConfirmAsync(
-            $"Quitar TODAS las licencias asignadas a {User.UserPrincipalName}?",
-            "Confirmar",
+            L10n.Format("UserDetails.Confirm.RemoveAllLicensesBody", User.UserPrincipalName),
+            L10n.Get("Common.Confirm.Title"),
             DialogIcon.Warning).ConfigureAwait(true);
         if (!ok) return;
 
         IsBusy = true;
-        StatusMessage = "Quitando licencias...";
+        StatusMessage = L10n.Get("UserDetails.Status.RemovingLicenses");
         try
         {
             await _users.RemoveAllLicensesAsync(User.Id, _log.Progress).ConfigureAwait(true);
@@ -344,7 +346,7 @@ public sealed partial class UserDetailsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("UserDetails", ex.Message, ex));
         }
         finally

@@ -18,7 +18,7 @@ public sealed partial class AuditLogViewModel : ObservableObject
     [ObservableProperty] private DateTime _month = new(DateTime.Today.Year, DateTime.Today.Month, 1);
     [ObservableProperty] private string _sourceFilter = string.Empty;
     [ObservableProperty] private string _outcomeFilter = string.Empty;
-    [ObservableProperty] private string _statusMessage = "Pulsa 'Cargar' para leer el mes seleccionado.";
+    [ObservableProperty] private string _statusMessage = L10n.Get("AuditLog.Status.Initial");
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private AuditMetrics? _summary;
 
@@ -35,7 +35,7 @@ public sealed partial class AuditLogViewModel : ObservableObject
     private async Task LoadAsync()
     {
         IsBusy = true;
-        StatusMessage = $"Cargando {Month:yyyy-MM}...";
+        StatusMessage = L10n.Format("AuditLog.Status.Loading", Month.ToString("yyyy-MM"));
         try
         {
             var records = await _audit.ReadMonthAsync(Month.Year, Month.Month).ConfigureAwait(true);
@@ -43,11 +43,11 @@ public sealed partial class AuditLogViewModel : ObservableObject
             _all.AddRange(records);
             ApplyFilters();
             Summary = MetricsAggregator.Compute(records);
-            StatusMessage = $"{records.Count} registros en {Month:yyyy-MM} · {Filtered.Count} filtrados";
+            StatusMessage = L10n.Format("AuditLog.Status.Summary", records.Count, Month.ToString("yyyy-MM"), Filtered.Count);
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("AuditLog", ex.Message, ex));
         }
         finally
@@ -84,7 +84,7 @@ public sealed partial class AuditLogViewModel : ObservableObject
         var dir = Path.GetDirectoryName(path);
         if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir))
         {
-            StatusMessage = "Carpeta de auditoría aún no existe.";
+            StatusMessage = L10n.Get("AuditLog.Status.FolderNotExist");
             return;
         }
         try
@@ -93,7 +93,7 @@ public sealed partial class AuditLogViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error al abrir: " + ex.Message;
+            StatusMessage = L10n.Format("AuditLog.Status.OpenError", ex.Message);
         }
     }
 }

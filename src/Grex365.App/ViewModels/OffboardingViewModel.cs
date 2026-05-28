@@ -19,7 +19,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
     [ObservableProperty] private bool _disableAccount = true;
     [ObservableProperty] private bool _removeLicenses = true;
     [ObservableProperty] private bool _convertMailboxToShared = true;
-    [ObservableProperty] private string _statusMessage = "Indica un UPN y pulsa 'Ejecutar offboarding'.";
+    [ObservableProperty] private string _statusMessage = L10n.Get("Offboarding.Status.Initial");
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private OffboardingResult? _result;
 
@@ -38,17 +38,17 @@ public sealed partial class OffboardingViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(Upn))
         {
-            StatusMessage = "UPN vacío.";
+            StatusMessage = L10n.Get("Offboarding.Status.EmptyUpn");
             return;
         }
 
         var actions = new List<string>();
-        if (DisableAccount) actions.Add("deshabilitar la cuenta");
-        if (RemoveLicenses) actions.Add("quitar todas las licencias");
-        if (ConvertMailboxToShared) actions.Add("convertir buzón a SharedMailbox");
+        if (DisableAccount) actions.Add(L10n.Get("Offboarding.Action.DisableAccount"));
+        if (RemoveLicenses) actions.Add(L10n.Get("Offboarding.Action.RemoveLicenses"));
+        if (ConvertMailboxToShared) actions.Add(L10n.Get("Offboarding.Action.ConvertShared"));
         if (actions.Count == 0)
         {
-            StatusMessage = "Ninguna acción seleccionada.";
+            StatusMessage = L10n.Get("Offboarding.Status.NoActionSelected");
             return;
         }
 
@@ -62,12 +62,12 @@ public sealed partial class OffboardingViewModel : ObservableObject
 
         var summary = string.Join(", ", actions);
         var ok = await _dialogs.ConfirmAsync(
-            $"Offboarding de {Upn}:\n\n  {summary}\n\n¿Continuar?",
-            "Confirmar offboarding",
+            L10n.Format("Offboarding.Confirm.Body", Upn, summary),
+            L10n.Get("Offboarding.Confirm.Title"),
             DialogIcon.Warning).ConfigureAwait(true);
         if (!ok)
         {
-            StatusMessage = "Cancelado por el usuario.";
+            StatusMessage = L10n.Get("Common.Status.CancelledByUser");
             return;
         }
 
@@ -75,7 +75,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
         IsBusy = true;
         RunCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
-        StatusMessage = $"Ejecutando offboarding de {Upn}...";
+        StatusMessage = L10n.Format("Offboarding.Status.Running", Upn);
         Steps.Clear();
         Result = null;
 
@@ -89,16 +89,16 @@ public sealed partial class OffboardingViewModel : ObservableObject
                 Steps.Add(step);
             }
             StatusMessage = result.Success
-                ? $"Offboarding OK · {result.Steps.Count} pasos"
-                : $"Offboarding con errores · {result.Steps.Count(s => s.Status == "ERROR")} fallos";
+                ? L10n.Format("Offboarding.Status.SuccessSummary", result.Steps.Count)
+                : L10n.Format("Offboarding.Status.ErrorSummary", result.Steps.Count(s => s.Status == "ERROR"));
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Offboarding", ex.Message, ex));
         }
         finally

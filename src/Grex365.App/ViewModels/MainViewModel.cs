@@ -352,7 +352,7 @@ public sealed partial class MainViewModel : ObservableObject
             var stamp = DateTimeOffset.Now.ToString("yyyyMMdd-HHmmss");
             var dlg = new Microsoft.Win32.SaveFileDialog
             {
-                Title = "Exportar log",
+                Title = L10n.Get("Shell.Dialog.ExportLog"),
                 FileName = $"grex365-log-{stamp}.txt",
                 DefaultExt = ".txt",
                 Filter = "Texto (*.txt)|*.txt|CSV (*.csv)|*.csv|Todos|*.*",

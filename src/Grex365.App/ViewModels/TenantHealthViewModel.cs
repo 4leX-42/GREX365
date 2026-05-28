@@ -20,7 +20,7 @@ public sealed partial class TenantHealthViewModel : ObservableObject
     private bool _autoLoadAttempted;
 
     [ObservableProperty] private TenantHealth? _health;
-    [ObservableProperty] private string _statusMessage = "Conecta Graph para cargar licencias.";
+    [ObservableProperty] private string _statusMessage = L10n.Get("TenantHealth.Status.ConnectGraph");
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private int _totalConsumed;
     [ObservableProperty] private int _totalEnabled;
@@ -100,7 +100,7 @@ public sealed partial class TenantHealthViewModel : ObservableObject
         IsBusy = true;
         RefreshCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
-        StatusMessage = "Cargando licencias del tenant...";
+        StatusMessage = L10n.Get("TenantHealth.Status.Loading");
 
         try
         {
@@ -114,16 +114,16 @@ public sealed partial class TenantHealthViewModel : ObservableObject
             TotalConsumed = h.Licenses.Sum(l => l.Consumed);
             TotalEnabled = h.Licenses.Sum(l => l.Enabled);
             OverallPercent = TotalEnabled > 0 ? (TotalConsumed * 100.0 / TotalEnabled) : 0;
-            StatusMessage = $"{h.TotalUsers} usuarios · {h.TotalGroups} grupos · {h.Licenses.Count} SKUs · {TotalConsumed}/{TotalEnabled} asientos consumidos";
+            StatusMessage = L10n.Format("TenantHealth.Status.Summary", h.TotalUsers, h.TotalGroups, h.Licenses.Count, TotalConsumed, TotalEnabled);
             LicensesView.Refresh();
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("TenantHealth", ex.Message, ex));
         }
         finally

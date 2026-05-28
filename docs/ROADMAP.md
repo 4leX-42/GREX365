@@ -216,7 +216,7 @@ All major feature ports complete. See [`MIGRATION.md`](MIGRATION.md) for per-fea
 | 4.8 | Per-monitor DPI testing | 🔴 | S | Pending — manifest declara `<dpiAware>True/PM</dpiAware>` pero no testeado real |
 | 4.9 | Accessibility pass (keyboard nav, screen reader) | 🔴 | M | Pending — glyphs en columnas refuerzan color (audit) pero no auditado |
 | 4.10 | App icon + splash | 🟡 | S | MSIX assets placeholder shipped; arte definitivo pendiente |
-| 4.11 | Spanish/English locale toggle | ✅ | M | D6 cerrado (Sprints AA–AF). L10n.cs static dicts (es+en) + `L10nExtension` MarkupExtension. **20/20 superficies** migradas. 3 ConverterParameter strings hardcoded ES deferred (BoolToOnOffConverter — requiere rewrite) |
+| 4.11 | Spanish/English locale toggle | ✅ | M | D6 cerrado **100%** (Sprints AA–AF vistas + **AM ViewModels**). L10n.cs static dicts (es+en) + `L10nExtension` MarkupExtension. 20/20 vistas XAML + 16 ViewModels (StatusMessage/diálogos/file-dialog titles) migrados. Log Serilog + CSV headers + data status-codes intencionalmente NO localizados |
 | 4.12 | Focus-ring accent en inputs (TextBox/PasswordBox/ComboBox) | ✅ | S | App.xaml global Styles con `IsKeyboardFocused`/`IsKeyboardFocusWithin` → `BrandAccentSolid` border + `AccentGlowSoftEffect` |
 | 4.13 | Page transition animations | ✅ | S | ContentControl ControlTemplate fade-in (Sprint F) + Sprint M restraint pass (120ms fade only) |
 | 4.14 | Card hover + elevation | ✅ | S | CardHover + MetricCard + HeroCard con storyboards (Sprint L) |

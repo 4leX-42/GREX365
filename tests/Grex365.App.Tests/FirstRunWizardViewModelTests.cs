@@ -11,7 +11,7 @@ namespace Grex365.App.Tests;
 public class FirstRunWizardViewModelTests : IDisposable
 {
     public FirstRunWizardViewModelTests() => L10n.Initialize("es");
-    public void Dispose() => L10n.Reset();
+    public void Dispose() => L10n.Initialize("es");
 
     private static Mock<IPreferencesStore> MakePrefsMock(UserPreferences? initial = null)
     {

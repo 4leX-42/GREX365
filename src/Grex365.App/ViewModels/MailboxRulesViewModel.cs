@@ -16,7 +16,7 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
     private CancellationTokenSource? _cts;
 
     [ObservableProperty] private string _identity = string.Empty;
-    [ObservableProperty] private string _statusMessage = "Indica un buzón y pulsa 'Cargar'.";
+    [ObservableProperty] private string _statusMessage = L10n.Get("MailboxRules.Status.Initial");
     [ObservableProperty] private bool _isBusy;
 
     [ObservableProperty] private AutoReplyState _autoReplyState = AutoReplyState.Disabled;
@@ -27,7 +27,7 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
 
     [ObservableProperty] private string _forwardingSmtp = string.Empty;
     [ObservableProperty] private bool _deliverToMailboxAndForward = true;
-    [ObservableProperty] private string _currentForwardingDisplay = "(sin configurar)";
+    [ObservableProperty] private string _currentForwardingDisplay = L10n.Get("MailboxRules.Display.NotConfigured");
 
     [ObservableProperty] private string _calendarPrincipal = string.Empty;
     [ObservableProperty] private string _calendarAccess = CalendarAccessRights.Reviewer;
@@ -64,12 +64,12 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(Identity))
         {
-            StatusMessage = "Buzón vacío.";
+            StatusMessage = L10n.Get("MailboxRules.Status.EmptyMailbox");
             return;
         }
         EnsureToken();
         IsBusy = true;
-        StatusMessage = $"Cargando reglas de {Identity}...";
+        StatusMessage = L10n.Format("MailboxRules.Status.Loading", Identity);
         try
         {
             var ar = await _rules.GetAutoReplyAsync(Identity.Trim(), _log.Progress, _cts!.Token).ConfigureAwait(true);
@@ -89,7 +89,7 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
                 DeliverToMailboxAndForward = fwd.DeliverToMailboxAndForward;
                 CurrentForwardingDisplay = string.IsNullOrWhiteSpace(fwd.ForwardingSmtpAddress)
                     && string.IsNullOrWhiteSpace(fwd.ForwardingAddress)
-                    ? "(sin configurar)"
+                    ? L10n.Get("MailboxRules.Display.NotConfigured")
                     : $"SMTP: {fwd.ForwardingSmtpAddress ?? "—"} · Dir: {fwd.ForwardingAddress ?? "—"} · Deliver: {fwd.DeliverToMailboxAndForward}";
             }
 
@@ -104,15 +104,15 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
                 _log.Progress.Report(LogEntry.Warn("MailboxRules", "Calendar perms no cargados: " + ex.Message));
             }
 
-            StatusMessage = "Reglas cargadas.";
+            StatusMessage = L10n.Get("MailboxRules.Status.RulesLoaded");
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("MailboxRules", ex.Message, ex));
         }
         finally
@@ -126,7 +126,7 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(Identity))
         {
-            StatusMessage = "Buzón vacío.";
+            StatusMessage = L10n.Get("MailboxRules.Status.EmptyMailbox");
             return;
         }
         if (!await RequireAuthorizedAsync("Apply AutoReply").ConfigureAwait(true)) return;
@@ -139,15 +139,15 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
 
         EnsureToken();
         IsBusy = true;
-        StatusMessage = $"Aplicando AutoReply {AutoReplyState}...";
+        StatusMessage = L10n.Format("MailboxRules.Status.ApplyingAutoReply", AutoReplyState);
         try
         {
             await _rules.SetAutoReplyAsync(Identity.Trim(), config, _log.Progress, _cts!.Token).ConfigureAwait(true);
-            StatusMessage = $"AutoReply: {AutoReplyState}";
+            StatusMessage = L10n.Format("MailboxRules.Status.AutoReplyResult", AutoReplyState);
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("MailboxRules", ex.Message, ex));
         }
         finally
@@ -161,30 +161,30 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(Identity))
         {
-            StatusMessage = "Buzón vacío.";
+            StatusMessage = L10n.Get("MailboxRules.Status.EmptyMailbox");
             return;
         }
         if (!await RequireAuthorizedAsync("Apply forwarding").ConfigureAwait(true)) return;
         var ok = await _dialogs.ConfirmAsync(
-            $"Aplicar reenvío de {Identity} hacia {ForwardingSmtp}?\nDeliver a buzón original: {DeliverToMailboxAndForward}",
-            "Confirmar reenvío").ConfigureAwait(true);
+            L10n.Format("MailboxRules.Confirm.ForwardingBody", Identity, ForwardingSmtp, DeliverToMailboxAndForward),
+            L10n.Get("MailboxRules.Confirm.ForwardingTitle")).ConfigureAwait(true);
         if (!ok)
         {
-            StatusMessage = "Cancelado por el usuario.";
+            StatusMessage = L10n.Get("Common.Status.CancelledByUser");
             return;
         }
         EnsureToken();
         IsBusy = true;
-        StatusMessage = $"Aplicando reenvío...";
+        StatusMessage = L10n.Get("MailboxRules.Status.ApplyingForwarding");
         try
         {
             await _rules.SetForwardingAsync(Identity.Trim(), ForwardingSmtp.Trim(), DeliverToMailboxAndForward, _log.Progress, _cts!.Token).ConfigureAwait(true);
             CurrentForwardingDisplay = $"SMTP: {ForwardingSmtp} · Deliver: {DeliverToMailboxAndForward}";
-            StatusMessage = "Reenvío aplicado.";
+            StatusMessage = L10n.Get("MailboxRules.Status.ForwardingApplied");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("MailboxRules", ex.Message, ex));
         }
         finally
@@ -198,33 +198,33 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(Identity))
         {
-            StatusMessage = "Buzón vacío.";
+            StatusMessage = L10n.Get("MailboxRules.Status.EmptyMailbox");
             return;
         }
         if (!await RequireAuthorizedAsync("Clear forwarding").ConfigureAwait(true)) return;
         var ok = await _dialogs.ConfirmAsync(
-            $"Quitar reenvío de {Identity}?",
-            "Confirmar",
+            L10n.Format("MailboxRules.Confirm.ClearForwardingBody", Identity),
+            L10n.Get("Common.Confirm.Title"),
             DialogIcon.Warning).ConfigureAwait(true);
         if (!ok)
         {
-            StatusMessage = "Cancelado por el usuario.";
+            StatusMessage = L10n.Get("Common.Status.CancelledByUser");
             return;
         }
         EnsureToken();
         IsBusy = true;
-        StatusMessage = "Limpiando reenvío...";
+        StatusMessage = L10n.Get("MailboxRules.Status.ClearingForwarding");
         try
         {
             await _rules.ClearForwardingAsync(Identity.Trim(), _log.Progress, _cts!.Token).ConfigureAwait(true);
             ForwardingSmtp = string.Empty;
             DeliverToMailboxAndForward = false;
-            CurrentForwardingDisplay = "(sin configurar)";
-            StatusMessage = "Reenvío eliminado.";
+            CurrentForwardingDisplay = L10n.Get("MailboxRules.Display.NotConfigured");
+            StatusMessage = L10n.Get("MailboxRules.Status.ForwardingCleared");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("MailboxRules", ex.Message, ex));
         }
         finally
@@ -238,24 +238,24 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(Identity) || string.IsNullOrWhiteSpace(CalendarPrincipal))
         {
-            StatusMessage = "Indica buzón y principal.";
+            StatusMessage = L10n.Get("MailboxRules.Status.EnterMailboxAndPrincipal");
             return;
         }
         if (!await RequireAuthorizedAsync("Apply calendar perm").ConfigureAwait(true)) return;
         EnsureToken();
         IsBusy = true;
-        StatusMessage = $"Aplicando {CalendarAccess} a {CalendarPrincipal}...";
+        StatusMessage = L10n.Format("MailboxRules.Status.ApplyingCalendar", CalendarAccess, CalendarPrincipal);
         try
         {
             await _rules.ApplyCalendarPermissionAsync(Identity.Trim(), CalendarPrincipal.Trim(), CalendarAccess, _log.Progress, _cts!.Token).ConfigureAwait(true);
             var refreshed = await _rules.GetCalendarPermissionsAsync(Identity.Trim(), _log.Progress, _cts.Token).ConfigureAwait(true);
             CalendarPermissions.Clear();
             foreach (var c in refreshed) CalendarPermissions.Add(c);
-            StatusMessage = "Permiso calendario aplicado.";
+            StatusMessage = L10n.Get("MailboxRules.Status.CalendarApplied");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("MailboxRules", ex.Message, ex));
         }
         finally
@@ -269,32 +269,32 @@ public sealed partial class MailboxRulesViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(Identity) || SelectedCalendarPermission is null)
         {
-            StatusMessage = "Selecciona un permiso.";
+            StatusMessage = L10n.Get("MailboxRules.Status.SelectPermission");
             return;
         }
         if (!await RequireAuthorizedAsync("Remove calendar perm").ConfigureAwait(true)) return;
         var target = SelectedCalendarPermission;
         var ok = await _dialogs.ConfirmAsync(
-            $"Quitar permiso calendario a {target.Principal} ({target.AccessRights})?",
-            "Confirmar",
+            L10n.Format("MailboxRules.Confirm.RemoveCalendarBody", target.Principal, target.AccessRights),
+            L10n.Get("Common.Confirm.Title"),
             DialogIcon.Warning).ConfigureAwait(true);
         if (!ok)
         {
-            StatusMessage = "Cancelado por el usuario.";
+            StatusMessage = L10n.Get("Common.Status.CancelledByUser");
             return;
         }
         EnsureToken();
         IsBusy = true;
-        StatusMessage = $"Quitando {target.Principal}...";
+        StatusMessage = L10n.Format("MailboxRules.Status.RemovingPermission", target.Principal);
         try
         {
             await _rules.RemoveCalendarPermissionAsync(Identity.Trim(), target.Principal, _log.Progress, _cts!.Token).ConfigureAwait(true);
             CalendarPermissions.Remove(target);
-            StatusMessage = "Permiso eliminado.";
+            StatusMessage = L10n.Get("MailboxRules.Status.PermissionRemoved");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("MailboxRules", ex.Message, ex));
         }
         finally

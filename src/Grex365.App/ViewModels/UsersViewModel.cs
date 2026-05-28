@@ -122,7 +122,7 @@ public sealed partial class UsersViewModel : ObservableObject
         EnsureToken();
         IsBusy = true;
         CancelCommand.NotifyCanExecuteChanged();
-        StatusMessage = "Buscando usuarios...";
+        StatusMessage = L10n.Get("Users.Status.Searching");
         try
         {
             Users.Clear();
@@ -131,15 +131,15 @@ public sealed partial class UsersViewModel : ObservableObject
             {
                 Users.Add(u);
             }
-            StatusMessage = $"{found.Count} usuarios.";
+            StatusMessage = L10n.Format("Users.Status.UsersFound", found.Count);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Users", ex.Message, ex));
         }
         finally
@@ -160,15 +160,15 @@ public sealed partial class UsersViewModel : ObservableObject
             {
                 Memberships.Add(g);
             }
-            StatusMessage = $"{groups.Count} membresías.";
+            StatusMessage = L10n.Format("Users.Status.MembershipsCount", groups.Count);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Users", ex.Message, ex));
         }
         finally
@@ -187,7 +187,7 @@ public sealed partial class UsersViewModel : ObservableObject
     {
         if (SelectedUser is null)
         {
-            StatusMessage = "Selecciona un usuario.";
+            StatusMessage = L10n.Get("Users.Status.SelectUser");
             return;
         }
         if (!enabled)
@@ -195,22 +195,22 @@ public sealed partial class UsersViewModel : ObservableObject
             if (!await RequireAuthorizedAsync("Disable user").ConfigureAwait(true)) return;
 
             var ok = await _dialogs.ConfirmAsync(
-                $"Deshabilitar la cuenta de {SelectedUser.DisplayName} ({SelectedUser.UserPrincipalName})?",
-                "Confirmar deshabilitación",
+                L10n.Format("Users.Confirm.DisableBody", SelectedUser.DisplayName, SelectedUser.UserPrincipalName),
+                L10n.Get("Users.Confirm.DisableTitle"),
                 DialogIcon.Warning).ConfigureAwait(true);
             if (!ok)
             {
-                StatusMessage = "Cancelado por el usuario.";
+                StatusMessage = L10n.Get("Common.Status.CancelledByUser");
                 return;
             }
         }
         EnsureToken();
         IsBusy = true;
-        StatusMessage = enabled ? "Habilitando..." : "Deshabilitando...";
+        StatusMessage = enabled ? L10n.Get("Users.Status.Enabling") : L10n.Get("Users.Status.Disabling");
         try
         {
             await _users.SetAccountEnabledAsync(SelectedUser.Id, enabled, _log.Progress, _cts!.Token).ConfigureAwait(true);
-            StatusMessage = enabled ? "Habilitado." : "Deshabilitado.";
+            StatusMessage = enabled ? L10n.Get("Users.Status.Enabled") : L10n.Get("Users.Status.Disabled");
             // refresh user
             var refreshed = await _users.GetByIdAsync(SelectedUser.Id, _cts.Token).ConfigureAwait(true);
             if (refreshed is not null)
@@ -225,7 +225,7 @@ public sealed partial class UsersViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Users", ex.Message, ex));
         }
         finally
@@ -239,7 +239,7 @@ public sealed partial class UsersViewModel : ObservableObject
     {
         EnsureToken();
         IsBusy = true;
-        StatusMessage = "Cargando SKUs...";
+        StatusMessage = L10n.Get("Users.Status.LoadingSkus");
         try
         {
             var skus = await _users.ListSkusAsync(_cts!.Token).ConfigureAwait(true);
@@ -248,15 +248,15 @@ public sealed partial class UsersViewModel : ObservableObject
             {
                 AvailableSkus.Add(s);
             }
-            StatusMessage = $"{skus.Count} SKUs disponibles.";
+            StatusMessage = L10n.Format("Users.Status.SkusAvailable", skus.Count);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Users", ex.Message, ex));
         }
         finally
@@ -270,29 +270,29 @@ public sealed partial class UsersViewModel : ObservableObject
     {
         if (SelectedUser is null)
         {
-            StatusMessage = "Selecciona un usuario.";
+            StatusMessage = L10n.Get("Users.Status.SelectUser");
             return;
         }
         if (SelectedSku is null)
         {
-            StatusMessage = "Selecciona un SKU (botón Cargar SKUs).";
+            StatusMessage = L10n.Get("Users.Status.SelectSku");
             return;
         }
         if (SelectedSku.Available <= 0)
         {
             var ok = await _dialogs.ConfirmAsync(
-                $"El SKU {SelectedSku.SkuPartNumber} no tiene asientos libres ({SelectedSku.Available}/{SelectedSku.Enabled}). Continuar?",
-                "Confirmar asignación",
+                L10n.Format("Users.Confirm.AssignNoSeatsBody", SelectedSku.SkuPartNumber, SelectedSku.Available, SelectedSku.Enabled),
+                L10n.Get("Users.Confirm.AssignTitle"),
                 DialogIcon.Warning).ConfigureAwait(true);
             if (!ok)
             {
-                StatusMessage = "Cancelado por el usuario.";
+                StatusMessage = L10n.Get("Common.Status.CancelledByUser");
                 return;
             }
         }
         EnsureToken();
         IsBusy = true;
-        StatusMessage = $"Asignando {SelectedSku.SkuPartNumber}...";
+        StatusMessage = L10n.Format("Users.Status.Assigning", SelectedSku.SkuPartNumber);
         try
         {
             await _users.AssignLicenseAsync(SelectedUser.Id, SelectedSku.SkuId, _log.Progress, _cts!.Token).ConfigureAwait(true);
@@ -306,11 +306,11 @@ public sealed partial class UsersViewModel : ObservableObject
                     SelectedUser = refreshed;
                 }
             }
-            StatusMessage = $"Licencia {SelectedSku.SkuPartNumber} asignada.";
+            StatusMessage = L10n.Format("Users.Status.LicenseAssigned", SelectedSku.SkuPartNumber);
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Users", ex.Message, ex));
         }
         finally
@@ -324,7 +324,7 @@ public sealed partial class UsersViewModel : ObservableObject
     {
         if (SelectedUser is null)
         {
-            StatusMessage = "Selecciona un usuario.";
+            StatusMessage = L10n.Get("Users.Status.SelectUser");
             return;
         }
         if (SelectedUser.AssignedLicenseCount > 0)
@@ -332,18 +332,18 @@ public sealed partial class UsersViewModel : ObservableObject
             if (!await RequireAuthorizedAsync("Remove licenses").ConfigureAwait(true)) return;
 
             var ok = await _dialogs.ConfirmAsync(
-                $"Quitar {SelectedUser.AssignedLicenseCount} licencias de {SelectedUser.DisplayName}?",
-                "Confirmar retirada de licencias",
+                L10n.Format("Users.Confirm.RemoveLicensesBody", SelectedUser.AssignedLicenseCount, SelectedUser.DisplayName),
+                L10n.Get("Users.Confirm.RemoveLicensesTitle"),
                 DialogIcon.Warning).ConfigureAwait(true);
             if (!ok)
             {
-                StatusMessage = "Cancelado por el usuario.";
+                StatusMessage = L10n.Get("Common.Status.CancelledByUser");
                 return;
             }
         }
         EnsureToken();
         IsBusy = true;
-        StatusMessage = "Quitando licencias...";
+        StatusMessage = L10n.Get("Users.Status.RemovingLicenses");
         try
         {
             await _users.RemoveAllLicensesAsync(SelectedUser.Id, _log.Progress, _cts!.Token).ConfigureAwait(true);
@@ -357,11 +357,11 @@ public sealed partial class UsersViewModel : ObservableObject
                     SelectedUser = refreshed;
                 }
             }
-            StatusMessage = "Licencias retiradas.";
+            StatusMessage = L10n.Get("Users.Status.LicensesRemoved");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Users", ex.Message, ex));
         }
         finally
@@ -375,7 +375,7 @@ public sealed partial class UsersViewModel : ObservableObject
     {
         var dlg = new OpenFileDialog
         {
-            Title = "CSV de usuarios (UPN;Action) — Action=enable|disable|remove-licenses|assign:<SkuPartNumber>",
+            Title = L10n.Get("Users.Dialog.BulkCsv"),
             Filter = "CSV (*.csv)|*.csv|Todos|*.*",
             CheckFileExists = true
         };
@@ -389,7 +389,7 @@ public sealed partial class UsersViewModel : ObservableObject
         EnsureToken();
         IsBusy = true;
         CancelCommand.NotifyCanExecuteChanged();
-        StatusMessage = $"Procesando {Path.GetFileName(dlg.FileName)}...";
+        StatusMessage = L10n.Format("Users.Status.Processing", Path.GetFileName(dlg.FileName));
         BulkResults.Clear();
         try
         {
@@ -404,7 +404,7 @@ public sealed partial class UsersViewModel : ObservableObject
             IReadOnlyList<SkuInfo> skus = Array.Empty<SkuInfo>();
             if (parsed.Any(p => p.Action.Kind == BulkUserActionKind.AssignLicense))
             {
-                StatusMessage = "Cargando SKUs disponibles...";
+                StatusMessage = L10n.Get("Users.Status.LoadingSkusAvailable");
                 skus = await _users.ListSkusAsync(_cts!.Token).ConfigureAwait(true);
             }
 
@@ -478,15 +478,15 @@ public sealed partial class UsersViewModel : ObservableObject
                 }
             }
 
-            StatusMessage = $"Bulk: OK={ok}  Skip={skipped}  Err={err}";
+            StatusMessage = L10n.Format("Users.Status.BulkSummary", ok, skipped, err);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Users", ex.Message, ex));
         }
         finally
@@ -500,12 +500,12 @@ public sealed partial class UsersViewModel : ObservableObject
     {
         if (BulkResults.Count == 0)
         {
-            StatusMessage = "Sin resultados para exportar.";
+            StatusMessage = L10n.Get("Common.Status.NoResultsToExport");
             return;
         }
         var dlg = new SaveFileDialog
         {
-            Title = "Guardar resultados",
+            Title = L10n.Get("Common.Dialog.SaveResults"),
             Filter = "CSV (*.csv)|*.csv",
             FileName = $"users_bulk_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
         };
@@ -525,11 +525,11 @@ public sealed partial class UsersViewModel : ObservableObject
                 sb.Append(Escape(r.Detail)).AppendLine();
             }
             File.WriteAllText(dlg.FileName, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
-            StatusMessage = $"Exportado: {Path.GetFileName(dlg.FileName)}";
+            StatusMessage = L10n.Format("Common.Status.Exported", Path.GetFileName(dlg.FileName));
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
         }
     }
 

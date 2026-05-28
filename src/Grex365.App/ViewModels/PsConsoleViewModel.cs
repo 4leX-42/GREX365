@@ -17,7 +17,7 @@ public sealed partial class PsConsoleViewModel : ObservableObject
 
     [ObservableProperty] private string _inputText = string.Empty;
     [ObservableProperty] private string _outputText = string.Empty;
-    [ObservableProperty] private string _statusMessage = "Escribe un comando y pulsa Ejecutar (o Ctrl+Enter).";
+    [ObservableProperty] private string _statusMessage = L10n.Get("PsConsole.Status.Initial");
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private int _historyIndex = -1;
 
@@ -35,7 +35,7 @@ public sealed partial class PsConsoleViewModel : ObservableObject
         var script = (InputText ?? string.Empty).Trim();
         if (string.IsNullOrEmpty(script))
         {
-            StatusMessage = "Comando vacío.";
+            StatusMessage = L10n.Get("PsConsole.Status.EmptyCommand");
             return;
         }
 
@@ -49,7 +49,7 @@ public sealed partial class PsConsoleViewModel : ObservableObject
         IsBusy = true;
         RunCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
-        StatusMessage = "Ejecutando...";
+        StatusMessage = L10n.Get("PsConsole.Status.Running");
 
         try
         {
@@ -65,22 +65,22 @@ public sealed partial class PsConsoleViewModel : ObservableObject
             sb.AppendLine();
             OutputText = sb.ToString();
             StatusMessage = result.Success
-                ? $"OK · {result.Output.Count} resultado(s)"
-                : $"ERROR · {result.Errors.Count} error(es)";
+                ? L10n.Format("PsConsole.Status.OkSummary", result.Output.Count)
+                : L10n.Format("PsConsole.Status.ErrorSummary", result.Errors.Count);
         }
         catch (OperationCanceledException)
         {
             sb.AppendLine("[CANCELADO]");
             sb.AppendLine();
             OutputText = sb.ToString();
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
             sb.AppendLine($"[EXCEPCION] {ex.Message}");
             sb.AppendLine();
             OutputText = sb.ToString();
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("PsConsole", ex.Message, ex));
         }
         finally
@@ -123,7 +123,7 @@ public sealed partial class PsConsoleViewModel : ObservableObject
     private void Clear()
     {
         OutputText = string.Empty;
-        StatusMessage = "Salida limpiada.";
+        StatusMessage = L10n.Get("PsConsole.Status.OutputCleared");
     }
 
     [RelayCommand]

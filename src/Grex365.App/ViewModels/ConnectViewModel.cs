@@ -34,7 +34,7 @@ public sealed partial class ConnectViewModel : ObservableObject
     private string? _account;
 
     [ObservableProperty]
-    private string _statusMessage = "Sin conectar.";
+    private string _statusMessage = L10n.Get("Connect.Status.Initial");
 
     [ObservableProperty]
     private bool _isBusy;
@@ -44,7 +44,7 @@ public sealed partial class ConnectViewModel : ObservableObject
     [ObservableProperty] private string? _deviceCodeMessage;
     [ObservableProperty] private bool _deviceCodePromptVisible;
 
-    [ObservableProperty] private string _exoModuleStatus = "(no comprobado)";
+    [ObservableProperty] private string _exoModuleStatus = L10n.Get("Connect.Exo.NotChecked");
     [ObservableProperty] private bool _exoModuleAvailable;
 
     [ObservableProperty] private string? _certAppId;
@@ -84,7 +84,7 @@ public sealed partial class ConnectViewModel : ObservableObject
             var config = await _certStore.LoadAsync().ConfigureAwait(true);
             if (config is null)
             {
-                CertStatusMessage = "Sin config (exo-app-params.json no encontrado).";
+                CertStatusMessage = L10n.Get("Connect.Cert.NoConfig");
                 CertIsValid = false;
                 return;
             }
@@ -97,7 +97,7 @@ public sealed partial class ConnectViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            CertStatusMessage = "Error cargando cert: " + ex.Message;
+            CertStatusMessage = L10n.Format("Connect.Cert.LoadError", ex.Message);
             CertIsValid = false;
         }
     }
@@ -120,7 +120,7 @@ public sealed partial class ConnectViewModel : ObservableObject
             var config = await _certStore.LoadAsync(_cts.Token).ConfigureAwait(true);
             if (config is null)
             {
-                StatusMessage = "Falta configuración de certificado (exo-app-params.json).";
+                StatusMessage = L10n.Get("Connect.Status.MissingCertConfig");
                 _log.Progress.Report(LogEntry.Warn("Connect", StatusMessage));
                 return;
             }
@@ -128,13 +128,13 @@ public sealed partial class ConnectViewModel : ObservableObject
             var validation = _certValidator.Validate(config);
             if (!validation.IsValid)
             {
-                StatusMessage = "Cert inválido: " + validation.Message;
+                StatusMessage = L10n.Format("Connect.Status.CertInvalid", validation.Message);
                 _log.Progress.Report(LogEntry.Error("Connect", StatusMessage));
                 return;
             }
             _log.Progress.Report(LogEntry.Info("Connect", validation.Message));
 
-            StatusMessage = "Conectando...";
+            StatusMessage = L10n.Get("Connect.Status.Connecting");
             await _graph.ConnectByCertificateAsync(config, _log.Progress, _cts.Token).ConfigureAwait(true);
 
             try
@@ -145,20 +145,20 @@ public sealed partial class ConnectViewModel : ObservableObject
             {
                 _log.Progress.Report(LogEntry.Error("TenantLock", violation.Message, violation));
                 await _graph.DisconnectAsync(_cts.Token).ConfigureAwait(true);
-                StatusMessage = "Tenant lock: " + violation.Message;
+                StatusMessage = L10n.Format("Connect.Status.TenantLock", violation.Message);
                 return;
             }
 
             await _exchange.ConnectByCertificateAsync(config, _log.Progress, _cts.Token).ConfigureAwait(true);
-            StatusMessage = "Conectado.";
+            StatusMessage = L10n.Get("Connect.Status.Connected");
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Connect", ex.Message, ex));
         }
         finally
@@ -197,7 +197,7 @@ public sealed partial class ConnectViewModel : ObservableObject
             var config = await _certStore.LoadAsync(_cts.Token).ConfigureAwait(true);
             var tenantHint = config?.TenantId;
 
-            StatusMessage = "Esperando codigo de dispositivo...";
+            StatusMessage = L10n.Get("Connect.Status.WaitingDeviceCode");
             await _graph.ConnectByDeviceCodeAsync(
                 tenantHint,
                 (prompt, ct) =>
@@ -209,7 +209,7 @@ public sealed partial class ConnectViewModel : ObservableObject
                         DeviceCodeVerificationUri = prompt.VerificationUri;
                         DeviceCodeMessage = prompt.Message;
                         DeviceCodePromptVisible = true;
-                        StatusMessage = $"Pega el codigo {prompt.UserCode} en {prompt.VerificationUri}";
+                        StatusMessage = L10n.Format("Connect.Status.DeviceCodePrompt", prompt.UserCode, prompt.VerificationUri);
                     }
                     if (dispatcher is not null && !dispatcher.CheckAccess())
                     {
@@ -233,7 +233,7 @@ public sealed partial class ConnectViewModel : ObservableObject
                     "TenantLock",
                     "TenantId no resuelto tras device-code login — abortando por seguridad."));
                 await _graph.DisconnectAsync(_cts.Token).ConfigureAwait(true);
-                StatusMessage = "Tenant lock: TenantId no resuelto.";
+                StatusMessage = L10n.Get("Connect.Status.TenantLockUnresolved");
                 return;
             }
             {
@@ -245,21 +245,21 @@ public sealed partial class ConnectViewModel : ObservableObject
                 {
                     _log.Progress.Report(LogEntry.Error("TenantLock", violation.Message, violation));
                     await _graph.DisconnectAsync(_cts.Token).ConfigureAwait(true);
-                    StatusMessage = "Tenant lock: " + violation.Message;
+                    StatusMessage = L10n.Format("Connect.Status.TenantLock", violation.Message);
                     return;
                 }
             }
 
             DeviceCodePromptVisible = false;
-            StatusMessage = $"Conectado a Graph como {_graph.Account ?? "?"}.";
+            StatusMessage = L10n.Format("Connect.Status.ConnectedGraphAs", _graph.Account ?? "?");
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Connect", ex.Message, ex));
         }
         finally
@@ -282,12 +282,12 @@ public sealed partial class ConnectViewModel : ObservableObject
             var status = await _exchange.ProbeModuleAsync(_log.Progress).ConfigureAwait(true);
             ExoModuleAvailable = status.Installed;
             ExoModuleStatus = status.Installed
-                ? $"OK · ExchangeOnlineManagement {status.Version}"
-                : $"NO instalado ({status.Detail ?? "?"})";
+                ? L10n.Format("Connect.Exo.Ok", status.Version)
+                : L10n.Format("Connect.Exo.NotInstalled", status.Detail ?? "?");
         }
         catch (Exception ex)
         {
-            ExoModuleStatus = "Probe error: " + ex.Message;
+            ExoModuleStatus = L10n.Format("Connect.Exo.ProbeError", ex.Message);
             _log.Progress.Report(LogEntry.Error("EXO", ex.Message, ex));
         }
     }
@@ -300,18 +300,18 @@ public sealed partial class ConnectViewModel : ObservableObject
             return;
         }
         IsBusy = true;
-        ExoModuleStatus = "Instalando ExchangeOnlineManagement (PSGallery)...";
+        ExoModuleStatus = L10n.Get("Connect.Exo.Installing");
         try
         {
             var status = await _exchange.InstallModuleAsync(_log.Progress).ConfigureAwait(true);
             ExoModuleAvailable = status.Installed;
             ExoModuleStatus = status.Installed
-                ? $"Instalado · {status.Version}"
-                : $"Instalacion fallida: {status.Detail ?? "?"}";
+                ? L10n.Format("Connect.Exo.Installed", status.Version)
+                : L10n.Format("Connect.Exo.InstallFailed", status.Detail ?? "?");
         }
         catch (Exception ex)
         {
-            ExoModuleStatus = "Error: " + ex.Message;
+            ExoModuleStatus = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("EXO", ex.Message, ex));
         }
         finally
@@ -328,7 +328,7 @@ public sealed partial class ConnectViewModel : ObservableObject
             await _exchange.DisconnectAsync(_log.Progress).ConfigureAwait(true);
             await _graph.DisconnectAsync().ConfigureAwait(true);
             _rbac.Invalidate();
-            StatusMessage = "Desconectado.";
+            StatusMessage = L10n.Get("Connect.Status.Disconnected");
         }
         catch (Exception ex)
         {

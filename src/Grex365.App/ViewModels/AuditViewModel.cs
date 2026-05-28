@@ -120,7 +120,7 @@ public sealed partial class AuditViewModel : ObservableObject
         _cts = new CancellationTokenSource();
         IsBusy = true;
         NotifyAllCommands();
-        StatusMessage = "Ejecutando auditoría de identidades...";
+        StatusMessage = L10n.Get("Audit.Status.RunningIdentity");
         Findings.Clear();
         try
         {
@@ -135,15 +135,15 @@ public sealed partial class AuditViewModel : ObservableObject
 
             AddFindingsSorted("Identidad + grupos", findings.Concat(groupFindings));
 
-            StatusMessage = $"{summary.UsersTotal} usuarios · {findings.Count + groupFindings.Count} hallazgos totales";
+            StatusMessage = L10n.Format("Audit.Status.IdentitySummary", summary.UsersTotal, findings.Count + groupFindings.Count);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
         }
         finally
@@ -164,14 +164,14 @@ public sealed partial class AuditViewModel : ObservableObject
         }
         if (InactivityDays < 1)
         {
-            StatusMessage = "Umbral de inactividad debe ser >= 1.";
+            StatusMessage = L10n.Get("Audit.Status.ThresholdMin");
             return;
         }
 
         _cts = new CancellationTokenSource();
         IsBusy = true;
         NotifyAllCommands();
-        StatusMessage = $"Descargando reporte actividad grupos (>{InactivityDays}d)...";
+        StatusMessage = L10n.Format("Audit.Status.DownloadingGroupActivity", InactivityDays);
         Findings.Clear();
         Summary = null;
         try
@@ -180,15 +180,15 @@ public sealed partial class AuditViewModel : ObservableObject
                 .RunGroupActivityAuditAsync(InactivityDays, _log.Progress, _cts.Token)
                 .ConfigureAwait(true);
             AddFindingsSorted("Actividad grupos", findings);
-            StatusMessage = $"{findings.Count} grupos inactivos (>{InactivityDays}d).";
+            StatusMessage = L10n.Format("Audit.Status.InactiveGroups", findings.Count, InactivityDays);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
         }
         finally
@@ -210,7 +210,7 @@ public sealed partial class AuditViewModel : ObservableObject
         _cts = new CancellationTokenSource();
         IsBusy = true;
         NotifyAllCommands();
-        StatusMessage = "Escaneando buzones con forwarding externo...";
+        StatusMessage = L10n.Get("Audit.Status.ScanningForwarding");
         Findings.Clear();
         Summary = null;
         try
@@ -219,15 +219,15 @@ public sealed partial class AuditViewModel : ObservableObject
                 .ScanExternalForwardingAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
             AddFindingsSorted("Forwarding externo", findings);
-            StatusMessage = $"{findings.Count} forwards externos detectados.";
+            StatusMessage = L10n.Format("Audit.Status.ForwardsDetected", findings.Count);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("ExoAudit", ex.Message, ex));
         }
         finally
@@ -249,7 +249,7 @@ public sealed partial class AuditViewModel : ObservableObject
         _cts = new CancellationTokenSource();
         IsBusy = true;
         NotifyAllCommands();
-        StatusMessage = "Descargando userRegistrationDetails...";
+        StatusMessage = L10n.Get("Audit.Status.DownloadingUserReg");
         Findings.Clear();
         Summary = null;
         try
@@ -261,17 +261,18 @@ public sealed partial class AuditViewModel : ObservableObject
             var adminPct = summary.AdminsTotal > 0
                 ? (summary.AdminsTotal - summary.AdminsWithoutMfa) * 100.0 / summary.AdminsTotal
                 : 100.0;
-            StatusMessage = $"MFA: admins {summary.AdminsWithoutMfa}/{summary.AdminsTotal} sin MFA ({adminPct:F0}% cobertura) · " +
-                            $"miembros {summary.MembersWithoutMfa}/{summary.MembersTotal} · " +
-                            $"invitados {summary.GuestsWithoutMfa}/{summary.GuestsTotal}";
+            StatusMessage = L10n.Format("Audit.Status.MfaSummary",
+                summary.AdminsWithoutMfa, summary.AdminsTotal, adminPct,
+                summary.MembersWithoutMfa, summary.MembersTotal,
+                summary.GuestsWithoutMfa, summary.GuestsTotal);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
         }
         finally
@@ -293,7 +294,7 @@ public sealed partial class AuditViewModel : ObservableObject
         _cts = new CancellationTokenSource();
         IsBusy = true;
         NotifyAllCommands();
-        StatusMessage = "Descargando /oauth2PermissionGrants...";
+        StatusMessage = L10n.Get("Audit.Status.DownloadingOAuth");
         Findings.Clear();
         Summary = null;
         try
@@ -302,18 +303,17 @@ public sealed partial class AuditViewModel : ObservableObject
                 .RunOAuthGrantsAuditAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
             AddFindingsSorted("OAuth grants", findings);
-            StatusMessage = $"OAuth grants: {summary.TotalGrants} totales · " +
-                            $"{summary.UniqueClients} apps · " +
-                            $"tenant-wide alto-riesgo={summary.TenantWideHighRisk} · " +
-                            $"user-consented alto-riesgo={summary.UserConsentedHighRisk}";
+            StatusMessage = L10n.Format("Audit.Status.OAuthSummary",
+                summary.TotalGrants, summary.UniqueClients,
+                summary.TenantWideHighRisk, summary.UserConsentedHighRisk);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
         }
         finally
@@ -335,7 +335,7 @@ public sealed partial class AuditViewModel : ObservableObject
         _cts = new CancellationTokenSource();
         IsBusy = true;
         NotifyAllCommands();
-        StatusMessage = "Descargando /applications + credenciales...";
+        StatusMessage = L10n.Get("Audit.Status.DownloadingApps");
         Findings.Clear();
         Summary = null;
         try
@@ -344,17 +344,16 @@ public sealed partial class AuditViewModel : ObservableObject
                 .RunAppCredentialsAuditAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
             AddFindingsSorted("App credentials", findings);
-            StatusMessage = $"App creds: {summary.Total} totales · " +
-                            $"{summary.Expired} expired · {summary.ExpiringSoon} expiring · " +
-                            $"{summary.LongLived} long-lived";
+            StatusMessage = L10n.Format("Audit.Status.AppCredsSummary",
+                summary.Total, summary.Expired, summary.ExpiringSoon, summary.LongLived);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
         }
         finally
@@ -376,7 +375,7 @@ public sealed partial class AuditViewModel : ObservableObject
         _cts = new CancellationTokenSource();
         IsBusy = true;
         NotifyAllCommands();
-        StatusMessage = "Descargando authorizationPolicy + securityDefaults...";
+        StatusMessage = L10n.Get("Audit.Status.DownloadingAuthPolicy");
         Findings.Clear();
         Summary = null;
         try
@@ -385,16 +384,16 @@ public sealed partial class AuditViewModel : ObservableObject
                 .RunTenantDefaultsAuditAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
             AddFindingsSorted("Tenant defaults", findings);
-            StatusMessage = $"Tenant defaults: SecurityDefaults={(summary.SecurityDefaultsEnabled ? "ON" : "OFF")} · " +
-                            $"{findings.Count} hallazgos";
+            StatusMessage = L10n.Format("Audit.Status.TenantDefaultsSummary",
+                summary.SecurityDefaultsEnabled ? "ON" : "OFF", findings.Count);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
         }
         finally
@@ -457,7 +456,7 @@ public sealed partial class AuditViewModel : ObservableObject
         _cts = new CancellationTokenSource();
         IsBusy = true;
         NotifyAllCommands();
-        StatusMessage = "Enumerando roles privilegiados y miembros...";
+        StatusMessage = L10n.Get("Audit.Status.EnumeratingRoles");
         Findings.Clear();
         Summary = null;
         try
@@ -466,17 +465,17 @@ public sealed partial class AuditViewModel : ObservableObject
                 .RunPrivilegedRolesAuditAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
             AddFindingsSorted("Privileged roles", findings);
-            StatusMessage = $"Admins: {summary.UniqueAdmins} únicos · GA={summary.GlobalAdmins} · " +
-                            $"guests={summary.GuestsWithAdminRole} · disabled={summary.DisabledWithAdminRole} · " +
-                            $"SP={summary.ServicePrincipalsWithAdminRole}";
+            StatusMessage = L10n.Format("Audit.Status.PrivilegedSummary",
+                summary.UniqueAdmins, summary.GlobalAdmins, summary.GuestsWithAdminRole,
+                summary.DisabledWithAdminRole, summary.ServicePrincipalsWithAdminRole);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
         }
         finally
@@ -498,7 +497,7 @@ public sealed partial class AuditViewModel : ObservableObject
         _cts = new CancellationTokenSource();
         IsBusy = true;
         NotifyAllCommands();
-        StatusMessage = "Descargando Conditional Access policies...";
+        StatusMessage = L10n.Get("Audit.Status.DownloadingCa");
         Findings.Clear();
         Summary = null;
         try
@@ -507,17 +506,16 @@ public sealed partial class AuditViewModel : ObservableObject
                 .RunConditionalAccessAuditAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
             AddFindingsSorted("CA policies", findings);
-            StatusMessage = $"CA: {summary.Total} policies · " +
-                            $"{summary.Enabled} enabled · {summary.Disabled} disabled · " +
-                            $"{summary.ReportOnly} report-only · {findings.Count} hallazgos";
+            StatusMessage = L10n.Format("Audit.Status.CaSummary",
+                summary.Total, summary.Enabled, summary.Disabled, summary.ReportOnly, findings.Count);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
         }
         finally
@@ -539,7 +537,7 @@ public sealed partial class AuditViewModel : ObservableObject
         _cts = new CancellationTokenSource();
         IsBusy = true;
         NotifyAllCommands();
-        StatusMessage = "Enumerando shared mailboxes + estado sign-in...";
+        StatusMessage = L10n.Get("Audit.Status.EnumeratingShared");
         Findings.Clear();
         Summary = null;
         try
@@ -548,17 +546,16 @@ public sealed partial class AuditViewModel : ObservableObject
                 .ScanSharedMailboxSignInAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
             AddFindingsSorted("Shared mailbox sign-in", findings);
-            StatusMessage = $"Shared boxes: {summary.Total} totales · " +
-                            $"sign-in enabled={summary.SignInEnabled} · " +
-                            $"disabled={summary.SignInDisabled} · unknown={summary.Unknown}";
+            StatusMessage = L10n.Format("Audit.Status.SharedSummary",
+                summary.Total, summary.SignInEnabled, summary.SignInDisabled, summary.Unknown);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("ExoAudit", ex.Message, ex));
         }
         finally
@@ -580,7 +577,7 @@ public sealed partial class AuditViewModel : ObservableObject
         _cts = new CancellationTokenSource();
         IsBusy = true;
         NotifyAllCommands();
-        StatusMessage = "Get-TransportRule + Get-AcceptedDomain...";
+        StatusMessage = L10n.Get("Audit.Status.TransportScan");
         Findings.Clear();
         Summary = null;
         try
@@ -589,17 +586,17 @@ public sealed partial class AuditViewModel : ObservableObject
                 .ScanTransportRulesAsync(_log.Progress, _cts.Token)
                 .ConfigureAwait(true);
             AddFindingsSorted("Transport rules", findings);
-            StatusMessage = $"Transport rules: {summary.Total} totales · {summary.Enabled} enabled · " +
-                            $"fwd-ext={summary.WithExternalForward} bcc-ext={summary.WithExternalBcc} " +
-                            $"redir-ext={summary.WithExternalRedirect} · {findings.Count} hallazgos";
+            StatusMessage = L10n.Format("Audit.Status.TransportSummary",
+                summary.Total, summary.Enabled, summary.WithExternalForward,
+                summary.WithExternalBcc, summary.WithExternalRedirect, findings.Count);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("ExoAudit", ex.Message, ex));
         }
         finally
@@ -620,13 +617,13 @@ public sealed partial class AuditViewModel : ObservableObject
         }
         if (InboxRuleScanCap < 1)
         {
-            StatusMessage = "El tope de buzones debe ser >= 1.";
+            StatusMessage = L10n.Get("Audit.Status.MailboxCapMin");
             return;
         }
         _cts = new CancellationTokenSource();
         IsBusy = true;
         NotifyAllCommands();
-        StatusMessage = $"Escaneando inbox rules (hasta {InboxRuleScanCap} buzones)...";
+        StatusMessage = L10n.Format("Audit.Status.ScanningInbox", InboxRuleScanCap);
         Findings.Clear();
         Summary = null;
         try
@@ -635,15 +632,15 @@ public sealed partial class AuditViewModel : ObservableObject
                 .ScanInboxRulesAsync(InboxRuleScanCap, _log.Progress, _cts.Token)
                 .ConfigureAwait(true);
             AddFindingsSorted("Inbox rules", findings);
-            StatusMessage = $"{findings.Count} reglas sospechosas detectadas.";
+            StatusMessage = L10n.Format("Audit.Status.SuspiciousRules", findings.Count);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("ExoAudit", ex.Message, ex));
         }
         finally
@@ -744,15 +741,15 @@ public sealed partial class AuditViewModel : ObservableObject
             var raw = await runner().ConfigureAwait(true);
             var filtered = keep is null ? raw : raw.Where(keep);
             AddFindingsSorted(name, filtered);
-            StatusMessage = $"{name}: {Findings.Count} hallazgos";
+            StatusMessage = L10n.Format("Audit.Status.ScenarioSummary", name, Findings.Count);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
         }
         finally
@@ -769,13 +766,13 @@ public sealed partial class AuditViewModel : ObservableObject
     {
         if (Findings.Count == 0)
         {
-            StatusMessage = "Sin hallazgos para exportar.";
+            StatusMessage = L10n.Get("Audit.Status.NoFindingsToExport");
             return;
         }
 
         var dlg = new SaveFileDialog
         {
-            Title = "Guardar hallazgos",
+            Title = L10n.Get("Audit.Dialog.SaveFindings"),
             Filter = "CSV (*.csv)|*.csv",
             FileName = $"identity_audit_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
         };
@@ -797,12 +794,12 @@ public sealed partial class AuditViewModel : ObservableObject
                 sb.Append(Escape(f.Severity)).AppendLine();
             }
             File.WriteAllText(dlg.FileName, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
-            StatusMessage = $"Exportado: {Path.GetFileName(dlg.FileName)}";
+            StatusMessage = L10n.Format("Common.Status.Exported", Path.GetFileName(dlg.FileName));
             _log.Progress.Report(LogEntry.Ok("Audit", "Hallazgos exportados: " + dlg.FileName));
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
         }
     }
@@ -814,7 +811,7 @@ public sealed partial class AuditViewModel : ObservableObject
     {
         var dlg = new OpenFileDialog
         {
-            Title = "Cargar baseline JSON",
+            Title = L10n.Get("Audit.Dialog.LoadBaseline"),
             Filter = "JSON (*.json)|*.json|Todos|*.*"
         };
         if (dlg.ShowDialog() != true)
@@ -828,7 +825,7 @@ public sealed partial class AuditViewModel : ObservableObject
             var envelope = AuditReportJsonBuilder.Parse(json);
             if (envelope is null)
             {
-                StatusMessage = "Baseline vacío o inválido.";
+                StatusMessage = L10n.Get("Audit.Status.BaselineEmpty");
                 return;
             }
 
@@ -844,7 +841,7 @@ public sealed partial class AuditViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error baseline: " + ex.Message;
+            StatusMessage = L10n.Format("Audit.Status.BaselineError", ex.Message);
             _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
         }
     }
@@ -854,7 +851,7 @@ public sealed partial class AuditViewModel : ObservableObject
     {
         BaselineSummary = null;
         HasBaseline = false;
-        StatusMessage = "Baseline borrado.";
+        StatusMessage = L10n.Get("Audit.Status.BaselineCleared");
     }
 
     [RelayCommand]
@@ -862,13 +859,13 @@ public sealed partial class AuditViewModel : ObservableObject
     {
         if (Findings.Count == 0)
         {
-            StatusMessage = "Sin hallazgos para exportar.";
+            StatusMessage = L10n.Get("Audit.Status.NoFindingsToExport");
             return;
         }
 
         var dlg = new SaveFileDialog
         {
-            Title = "Guardar informe JSON",
+            Title = L10n.Get("Audit.Dialog.SaveJsonReport"),
             Filter = "JSON (*.json)|*.json",
             FileName = $"audit_report_{DateTime.Now:yyyyMMdd_HHmmss}.json"
         };
@@ -881,18 +878,18 @@ public sealed partial class AuditViewModel : ObservableObject
         {
             var rows = FindingsView.Cast<AuditFinding>().ToList();
             var ctx = new AuditReportContext(
-                Title: "GREX365 — Informe de auditoría",
+                Title: L10n.Get("Audit.Report.Title"),
                 GeneratedAt: DateTime.Now,
                 TenantDomain: _graph?.TenantId,
                 GeneratedBy: Environment.UserName);
             var json = AuditReportJsonBuilder.Build(rows, ctx);
             File.WriteAllText(dlg.FileName, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-            StatusMessage = $"Exportado: {Path.GetFileName(dlg.FileName)}";
+            StatusMessage = L10n.Format("Common.Status.Exported", Path.GetFileName(dlg.FileName));
             _log.Progress.Report(LogEntry.Ok("Audit", "Informe JSON exportado: " + dlg.FileName));
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
         }
     }
@@ -902,13 +899,13 @@ public sealed partial class AuditViewModel : ObservableObject
     {
         if (Findings.Count == 0)
         {
-            StatusMessage = "Sin hallazgos para exportar.";
+            StatusMessage = L10n.Get("Audit.Status.NoFindingsToExport");
             return;
         }
 
         var dlg = new SaveFileDialog
         {
-            Title = "Guardar informe HTML",
+            Title = L10n.Get("Audit.Dialog.SaveHtmlReport"),
             Filter = "HTML (*.html)|*.html",
             FileName = $"audit_report_{DateTime.Now:yyyyMMdd_HHmmss}.html"
         };
@@ -921,18 +918,18 @@ public sealed partial class AuditViewModel : ObservableObject
         {
             var rows = FindingsView.Cast<AuditFinding>().ToList();
             var ctx = new AuditReportContext(
-                Title: "GREX365 — Informe de auditoría",
+                Title: L10n.Get("Audit.Report.Title"),
                 GeneratedAt: DateTime.Now,
                 TenantDomain: _graph?.TenantId,
                 GeneratedBy: Environment.UserName);
             var html = AuditReportHtmlBuilder.Build(rows, ctx);
             File.WriteAllText(dlg.FileName, html, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
-            StatusMessage = $"Exportado: {Path.GetFileName(dlg.FileName)}";
+            StatusMessage = L10n.Format("Common.Status.Exported", Path.GetFileName(dlg.FileName));
             _log.Progress.Report(LogEntry.Ok("Audit", "Informe HTML exportado: " + dlg.FileName));
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
         }
     }

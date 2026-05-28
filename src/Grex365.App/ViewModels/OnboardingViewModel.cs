@@ -25,7 +25,7 @@ public sealed partial class OnboardingViewModel : ObservableObject
     [ObservableProperty] private bool _forceChangePassword = true;
     [ObservableProperty] private string _groupsText = string.Empty;
     [ObservableProperty] private SkuInfo? _selectedSku;
-    [ObservableProperty] private string _statusMessage = "Completa los campos y pulsa 'Ejecutar onboarding'.";
+    [ObservableProperty] private string _statusMessage = L10n.Get("Onboarding.Status.Initial");
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private OnboardingResult? _result;
 
@@ -91,7 +91,7 @@ public sealed partial class OnboardingViewModel : ObservableObject
     {
         EnsureToken();
         IsBusy = true;
-        StatusMessage = "Cargando SKUs...";
+        StatusMessage = L10n.Get("Users.Status.LoadingSkus");
         try
         {
             var skus = await _users.ListSkusAsync(_cts!.Token).ConfigureAwait(true);
@@ -100,15 +100,15 @@ public sealed partial class OnboardingViewModel : ObservableObject
             {
                 AvailableSkus.Add(s);
             }
-            StatusMessage = $"{skus.Count} SKUs disponibles.";
+            StatusMessage = L10n.Format("Users.Status.SkusAvailable", skus.Count);
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Onboarding", ex.Message, ex));
         }
         finally
@@ -154,15 +154,15 @@ public sealed partial class OnboardingViewModel : ObservableObject
             ForceChangePasswordNextSignIn: ForceChangePassword);
 
         var summary = new List<string>();
-        summary.Add($"Crear {options.Upn}");
-        if (options.SkuIds.Count > 0) summary.Add($"{options.SkuIds.Count} licencia(s)");
-        if (options.GroupIdentifiers.Count > 0) summary.Add($"{options.GroupIdentifiers.Count} grupo(s)");
+        summary.Add(L10n.Format("Onboarding.Confirm.PartCreate", options.Upn));
+        if (options.SkuIds.Count > 0) summary.Add(L10n.Format("Onboarding.Confirm.PartLicenses", options.SkuIds.Count));
+        if (options.GroupIdentifiers.Count > 0) summary.Add(L10n.Format("Onboarding.Confirm.PartGroups", options.GroupIdentifiers.Count));
         var ok = await _dialogs.ConfirmAsync(
-            $"Onboarding:\n\n  {string.Join(", ", summary)}\n\n¿Continuar?",
-            "Confirmar onboarding").ConfigureAwait(true);
+            L10n.Format("Onboarding.Confirm.Body", string.Join(", ", summary)),
+            L10n.Get("Onboarding.Confirm.Title")).ConfigureAwait(true);
         if (!ok)
         {
-            StatusMessage = "Cancelado por el usuario.";
+            StatusMessage = L10n.Get("Common.Status.CancelledByUser");
             return;
         }
 
@@ -170,7 +170,7 @@ public sealed partial class OnboardingViewModel : ObservableObject
         IsBusy = true;
         RunCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
-        StatusMessage = $"Ejecutando onboarding de {options.Upn}...";
+        StatusMessage = L10n.Format("Onboarding.Status.Running", options.Upn);
         Steps.Clear();
         Result = null;
 
@@ -183,16 +183,16 @@ public sealed partial class OnboardingViewModel : ObservableObject
                 Steps.Add(step);
             }
             StatusMessage = result.Success
-                ? $"Onboarding OK · {result.Steps.Count} pasos"
-                : $"Onboarding con errores · {result.Steps.Count(s => s.Status == "ERROR")} fallos";
+                ? L10n.Format("Onboarding.Status.SuccessSummary", result.Steps.Count)
+                : L10n.Format("Onboarding.Status.ErrorSummary", result.Steps.Count(s => s.Status == "ERROR"));
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Cancelado.";
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
         }
         catch (Exception ex)
         {
-            StatusMessage = "Error: " + ex.Message;
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
             _log.Progress.Report(LogEntry.Error("Onboarding", ex.Message, ex));
         }
         finally
