@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Grex365.App.Services;
@@ -7,14 +8,36 @@ using Grex365.Core.Models;
 
 namespace Grex365.App.ViewModels;
 
+// One user queued for offboarding, with a per-account exception (delegate the resulting
+// shared mailbox to someone) and a live status.
+public sealed partial class OffboardingTarget : ObservableObject
+{
+    public OffboardingTarget(string upn, string? displayName)
+    {
+        Upn = upn;
+        DisplayName = string.IsNullOrWhiteSpace(displayName) ? upn : displayName!;
+    }
+
+    public string Upn { get; }
+    public string DisplayName { get; }
+
+    [ObservableProperty] private string _delegateTo = string.Empty;
+    [ObservableProperty] private string _status = "PENDIENTE";
+}
+
 public sealed partial class OffboardingViewModel : ObservableObject
 {
     private readonly IOffboardingService _service;
     private readonly IUiLogSink _log;
     private readonly IRbacGuard _rbac;
     private readonly IDialogService _dialogs;
+    private readonly IUsersService? _users;
+    private readonly IAuditService? _audit;
+    private readonly ISharedMailboxService? _mailboxes;
     private CancellationTokenSource? _cts;
+    private CancellationTokenSource? _debounceCts;
 
+    // --- single-user form (kept for the manual path + unit tests) ---
     [ObservableProperty] private string _upn = string.Empty;
     [ObservableProperty] private bool _disableAccount = true;
     [ObservableProperty] private bool _removeLicenses = true;
@@ -22,15 +45,277 @@ public sealed partial class OffboardingViewModel : ObservableObject
     [ObservableProperty] private string _statusMessage = L10n.Get("Offboarding.Status.Initial");
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private OffboardingResult? _result;
-
     public ObservableCollection<OffboardingStep> Steps { get; } = new();
 
-    public OffboardingViewModel(IOffboardingService service, IUiLogSink log, IRbacGuard rbac, IDialogService dialogs)
+    // --- batch / discovery / search / live log ---
+    [ObservableProperty] private string _searchQuery = string.Empty;
+    [ObservableProperty] private string _delegateToAll = string.Empty;
+    public ObservableCollection<UserSummary> Suggestions { get; } = new();
+    public ObservableCollection<OffboardingTarget> Candidates { get; } = new();
+    public ObservableCollection<OffboardingTarget> Targets { get; } = new();
+    public ObservableCollection<string> LiveLog { get; } = new();
+
+    public OffboardingViewModel(
+        IOffboardingService service,
+        IUiLogSink log,
+        IRbacGuard rbac,
+        IDialogService dialogs,
+        IUsersService? users = null,
+        IAuditService? audit = null,
+        ISharedMailboxService? mailboxes = null)
     {
         _service = service;
         _log = log;
         _rbac = rbac;
         _dialogs = dialogs;
+        _users = users;
+        _audit = audit;
+        _mailboxes = mailboxes;
+    }
+
+    // ---------- live log ----------
+    private const int MaxLogLines = 600;
+
+    private void AppendLog(string line)
+    {
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher is not null && !dispatcher.CheckAccess())
+        {
+            dispatcher.InvokeAsync(() => AppendLog(line));
+            return;
+        }
+        LiveLog.Add($"{DateTime.Now:HH:mm:ss}  {line}");
+        while (LiveLog.Count > MaxLogLines) LiveLog.RemoveAt(0);
+    }
+
+    [RelayCommand]
+    private void ClearLog() => LiveLog.Clear();
+
+    // Progress that mirrors every backend log line into the in-section live console and the
+    // global log panel.
+    private IProgress<LogEntry> LiveProgress() => new Progress<LogEntry>(e =>
+    {
+        var sev = (e.Severity.ToString().ToUpperInvariant() + "    ")[..4];
+        AppendLog($"{sev} [{e.Source}] {e.Message}");
+        _log.Progress.Report(e);
+    });
+
+    // ---------- typeahead search (live, no Enter) ----------
+    partial void OnSearchQueryChanged(string value)
+    {
+        if (_users is null) return;
+        _debounceCts?.Cancel();
+        _debounceCts = new CancellationTokenSource();
+        var token = _debounceCts.Token;
+        var snapshot = value ?? string.Empty;
+
+        _ = Task.Run(async () =>
+        {
+            try { await Task.Delay(250, token).ConfigureAwait(false); }
+            catch (OperationCanceledException) { return; }
+
+            await Application.Current.Dispatcher.InvokeAsync(async () =>
+            {
+                if (token.IsCancellationRequested) return;
+                if (!string.Equals(SearchQuery, snapshot, StringComparison.Ordinal)) return;
+                if (snapshot.Trim().Length < 2)
+                {
+                    Suggestions.Clear();
+                    return;
+                }
+                try
+                {
+                    var found = await _users.SearchAsync(snapshot.Trim(), token).ConfigureAwait(true);
+                    if (token.IsCancellationRequested) return;
+                    Suggestions.Clear();
+                    foreach (var u in found.Take(15)) Suggestions.Add(u);
+                }
+                catch { /* surfaced elsewhere; typeahead stays quiet */ }
+            });
+        });
+    }
+
+    [RelayCommand]
+    private void AddTarget(UserSummary? user)
+    {
+        if (user is null || string.IsNullOrWhiteSpace(user.UserPrincipalName)) return;
+        AddTargetUpn(user.UserPrincipalName, user.DisplayName);
+        SearchQuery = string.Empty;
+        Suggestions.Clear();
+    }
+
+    private void AddTargetUpn(string upn, string? displayName)
+    {
+        if (Targets.Any(t => string.Equals(t.Upn, upn, StringComparison.OrdinalIgnoreCase))) return;
+        Targets.Add(new OffboardingTarget(upn, displayName));
+    }
+
+    [RelayCommand]
+    private void RemoveTarget(OffboardingTarget? target)
+    {
+        if (target is not null) Targets.Remove(target);
+    }
+
+    [RelayCommand]
+    private void ClearTargets() => Targets.Clear();
+
+    // ---------- candidate discovery (disabled accounts that still hold licenses) ----------
+    [RelayCommand(CanExecute = nameof(CanRun))]
+    private async Task FindCandidatesAsync()
+    {
+        if (_audit is null)
+        {
+            StatusMessage = L10n.Get("Offboarding.Candidates.NoService");
+            return;
+        }
+        _cts = new CancellationTokenSource();
+        IsBusy = true;
+        NotifyCommands();
+        StatusMessage = L10n.Get("Offboarding.Candidates.Searching");
+        Candidates.Clear();
+        try
+        {
+            var (_, findings) = await _audit.RunIdentityAuditAsync(LiveProgress(), _cts.Token).ConfigureAwait(true);
+            foreach (var f in findings.Where(f => f.IsAutoFixable))
+            {
+                Candidates.Add(new OffboardingTarget(f.Identity, f.Identity) { Status = f.Detail });
+            }
+            StatusMessage = L10n.Format("Offboarding.Candidates.Found", Candidates.Count);
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
+            _log.Progress.Report(LogEntry.Error("Offboarding", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+            _cts?.Dispose();
+            _cts = null;
+            NotifyCommands();
+        }
+    }
+
+    [RelayCommand]
+    private void AddCandidate(OffboardingTarget? candidate)
+    {
+        if (candidate is not null) AddTargetUpn(candidate.Upn, candidate.DisplayName);
+    }
+
+    [RelayCommand]
+    private void AddAllCandidates()
+    {
+        foreach (var c in Candidates) AddTargetUpn(c.Upn, c.DisplayName);
+    }
+
+    // ---------- batch run ----------
+    [RelayCommand(CanExecute = nameof(CanRun))]
+    private async Task RunBatchAsync()
+    {
+        if (Targets.Count == 0)
+        {
+            StatusMessage = L10n.Get("Offboarding.Batch.NoTargets");
+            return;
+        }
+        if (!DisableAccount && !RemoveLicenses && !ConvertMailboxToShared)
+        {
+            StatusMessage = L10n.Get("Offboarding.Status.NoActionSelected");
+            return;
+        }
+
+        var decision = await _rbac.EvaluateAsync().ConfigureAwait(true);
+        if (!decision.Allowed)
+        {
+            StatusMessage = decision.Reason;
+            _log.Progress.Report(LogEntry.Warn("RBAC", $"Offboarding bloqueado: {decision.Reason}"));
+            return;
+        }
+
+        var ok = await _dialogs.ConfirmAsync(
+            L10n.Format("Offboarding.Batch.Confirm", Targets.Count),
+            L10n.Get("Offboarding.Confirm.Title"),
+            DialogIcon.Warning).ConfigureAwait(true);
+        if (!ok)
+        {
+            StatusMessage = L10n.Get("Common.Status.CancelledByUser");
+            return;
+        }
+
+        _cts = new CancellationTokenSource();
+        IsBusy = true;
+        NotifyCommands();
+        var live = LiveProgress();
+        var okCount = 0; var errCount = 0;
+
+        try
+        {
+            foreach (var target in Targets.ToList())
+            {
+                _cts.Token.ThrowIfCancellationRequested();
+                target.Status = "RUNNING";
+                AppendLog($"════ {target.Upn} ════");
+                StatusMessage = L10n.Format("Offboarding.Status.Running", target.Upn);
+
+                var options = new OffboardingOptions(DisableAccount, RemoveLicenses, ConvertMailboxToShared);
+                var stepProgress = new Progress<OffboardingStep>(s => AppendLog($"   [{s.Status}] {s.Name} — {s.Detail}"));
+
+                try
+                {
+                    var result = await _service.RunAsync(target.Upn, options, live, stepProgress, _cts.Token).ConfigureAwait(true);
+
+                    // Per-account exception: delegate the (now shared) mailbox to someone.
+                    var del = !string.IsNullOrWhiteSpace(target.DelegateTo) ? target.DelegateTo : DelegateToAll;
+                    if (result.Success && !string.IsNullOrWhiteSpace(del) && _mailboxes is not null)
+                    {
+                        AppendLog($"   delegando buzón → {del.Trim()} (FullAccess)…");
+                        var pr = await _mailboxes.ApplyPermissionAsync("add", "FullAccess", target.Upn, del.Trim(), live, _cts.Token).ConfigureAwait(true);
+                        AppendLog($"   [{pr.Status}] delegación FullAccess — {pr.Detail}");
+                        if (pr.Status != "OK") result = result with { Success = false };
+                    }
+
+                    target.Status = result.Success ? "OK" : "ERROR";
+                    if (result.Success) okCount++; else errCount++;
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception ex)
+                {
+                    target.Status = "ERROR";
+                    errCount++;
+                    AppendLog($"   ERROR: {ex.Message}");
+                }
+            }
+            StatusMessage = L10n.Format("Offboarding.Batch.Summary", okCount, errCount, Targets.Count);
+            AppendLog($"── fin: {okCount} OK · {errCount} ERROR / {Targets.Count} ──");
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
+            AppendLog("── cancelado ──");
+        }
+        finally
+        {
+            IsBusy = false;
+            _cts?.Dispose();
+            _cts = null;
+            NotifyCommands();
+        }
+    }
+
+    // Entry point used by Audit "Corregir": queue the user and run the batch (live, here).
+    public async Task RunCorrectiveAsync(string upn)
+    {
+        DisableAccount = true;
+        RemoveLicenses = true;
+        ConvertMailboxToShared = true;
+        AddTargetUpn(upn, null);
+        await RunBatchAsync().ConfigureAwait(true);
+        Result = new OffboardingResult(upn, Targets.FirstOrDefault(t =>
+            string.Equals(t.Upn, upn, StringComparison.OrdinalIgnoreCase))?.Status == "OK",
+            Array.Empty<OffboardingStep>());
     }
 
     // Upserts a streamed step by Name so RUNNING→OK/ERROR updates in place (UI thread).
@@ -45,20 +330,6 @@ public sealed partial class OffboardingViewModel : ObservableObject
             }
         }
         Steps.Add(step);
-    }
-
-    // Entry point used by Audit "Corregir": preset the recommended corrective options and
-    // run, so the work happens here in the dedicated Offboarding section.
-    public async Task RunCorrectiveAsync(string upn)
-    {
-        Upn = upn;
-        DisableAccount = true;
-        RemoveLicenses = true;
-        ConvertMailboxToShared = true;
-        if (RunCommand.CanExecute(null))
-        {
-            await RunCommand.ExecuteAsync(null).ConfigureAwait(true);
-        }
     }
 
     [RelayCommand(CanExecute = nameof(CanRun))]
@@ -101,8 +372,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
 
         _cts = new CancellationTokenSource();
         IsBusy = true;
-        RunCommand.NotifyCanExecuteChanged();
-        CancelCommand.NotifyCanExecuteChanged();
+        NotifyCommands();
         StatusMessage = L10n.Format("Offboarding.Status.Running", Upn);
         Steps.Clear();
         Result = null;
@@ -113,7 +383,6 @@ public sealed partial class OffboardingViewModel : ObservableObject
             var stepProgress = new Progress<OffboardingStep>(UpsertStep);
             var result = await _service.RunAsync(Upn.Trim(), options, _log.Progress, stepProgress, _cts.Token).ConfigureAwait(true);
             Result = result;
-            // If nothing streamed live (e.g. a non-streaming service), fall back to the final list.
             if (Steps.Count == 0)
             {
                 foreach (var step in result.Steps) Steps.Add(step);
@@ -136,13 +405,20 @@ public sealed partial class OffboardingViewModel : ObservableObject
             IsBusy = false;
             _cts?.Dispose();
             _cts = null;
-            RunCommand.NotifyCanExecuteChanged();
-            CancelCommand.NotifyCanExecuteChanged();
+            NotifyCommands();
         }
     }
 
     [RelayCommand(CanExecute = nameof(CanCancel))]
     private void Cancel() => _cts?.Cancel();
+
+    private void NotifyCommands()
+    {
+        RunCommand.NotifyCanExecuteChanged();
+        RunBatchCommand.NotifyCanExecuteChanged();
+        FindCandidatesCommand.NotifyCanExecuteChanged();
+        CancelCommand.NotifyCanExecuteChanged();
+    }
 
     private bool CanRun() => !IsBusy;
     private bool CanCancel() => IsBusy;
