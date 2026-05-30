@@ -46,6 +46,30 @@ public sealed partial class AuditViewModel : ObservableObject
     public ObservableCollection<AuditFinding> Findings { get; } = new();
     public ICollectionView FindingsView { get; }
 
+    // Live corrective-action panel (independent side panel; not a modal dialog).
+    [ObservableProperty] private bool _correctivePanelVisible;
+    [ObservableProperty] private bool _correctiveRunning;
+    [ObservableProperty] private string _correctiveUser = string.Empty;
+    [ObservableProperty] private string _correctiveSummary = string.Empty;
+    public ObservableCollection<OffboardingStep> CorrectiveSteps { get; } = new();
+
+    // Upserts a streamed step by Name so RUNNING→OK/ERROR updates in place (UI thread).
+    private void UpsertStep(OffboardingStep step)
+    {
+        for (var i = 0; i < CorrectiveSteps.Count; i++)
+        {
+            if (string.Equals(CorrectiveSteps[i].Name, step.Name, StringComparison.Ordinal))
+            {
+                CorrectiveSteps[i] = step;
+                return;
+            }
+        }
+        CorrectiveSteps.Add(step);
+    }
+
+    [RelayCommand]
+    private void CloseCorrectivePanel() => CorrectivePanelVisible = false;
+
     public AuditViewModel(
         IAuditService audit,
         IExoForwardingAuditService exoAudit,
@@ -711,50 +735,9 @@ public sealed partial class AuditViewModel : ObservableObject
             }
         }
 
-        // Best-effort pre-check to surface blockers (size / holds / already-shared) and to
-        // decide whether the convert step is needed at all.
-        MailboxInfo? mailbox = null;
-        try
-        {
-            // Prefer the external pwsh path (reliable EXO V3); fall back to the in-proc service.
-            if (_externalExo is not null)
-            {
-                mailbox = await _externalExo.GetMailboxFactsAsync(upn, _log.Progress, _cts?.Token ?? default).ConfigureAwait(true);
-            }
-            else if (_mailboxes is not null)
-            {
-                mailbox = await _mailboxes.GetMailboxAsync(upn, _log.Progress).ConfigureAwait(true);
-            }
-        }
-        catch (Exception ex)
-        {
-            _log.Progress.Report(LogEntry.Info("Audit", $"Pre-check buzón {upn} no disponible: {ex.Message}"));
-        }
-
-        var alreadyShared = mailbox?.IsSharedMailbox == true;
-        var warnings = string.Empty;
-        if (mailbox is null)
-        {
-            warnings += L10n.Get("Audit.Fix.NoMailbox");
-        }
-        else
-        {
-            if (alreadyShared)
-            {
-                warnings += L10n.Get("Audit.Fix.AlreadyShared");
-            }
-            if (mailbox.ExceedsUnlicensedSharedLimit)
-            {
-                warnings += L10n.Format("Audit.Fix.Warn.Oversize", mailbox.TotalItemSizeGb ?? 0);
-            }
-            if (mailbox.HasBlockingHold)
-            {
-                warnings += L10n.Get("Audit.Fix.Warn.Hold");
-            }
-        }
-
+        // Quick confirmation (the detailed plan + warnings now stream live in the panel).
         var ok = await _dialogs.ConfirmAsync(
-            L10n.Format("Audit.Fix.Body", upn, warnings),
+            L10n.Format("Audit.Fix.Body", upn, string.Empty),
             L10n.Get("Audit.Fix.Title"),
             DialogIcon.Warning).ConfigureAwait(true);
         if (!ok)
@@ -763,33 +746,72 @@ public sealed partial class AuditViewModel : ObservableObject
             return;
         }
 
+        // Open the independent live panel.
+        CorrectiveSteps.Clear();
+        CorrectiveUser = upn;
+        CorrectiveSummary = string.Empty;
+        CorrectiveRunning = true;
+        CorrectivePanelVisible = true;
+
         _cts = new CancellationTokenSource();
         IsBusy = true;
         NotifyAllCommands();
         StatusMessage = L10n.Format("Audit.Fix.Running", upn);
+
+        // Progress captured on the UI thread → callbacks marshal back here, safe for the
+        // ObservableCollection bound to the panel.
+        var stepProgress = new Progress<OffboardingStep>(UpsertStep);
+
         try
         {
-            // Convert only when the mailbox isn't already shared. The service still gates
-            // license removal on a successful conversion when convert is requested.
+            // Step 1 (visible): pre-check the mailbox so we surface holds/size/already-shared.
+            UpsertStep(new OffboardingStep("Pre-check buzón", "RUNNING", "…"));
+            MailboxInfo? mailbox = null;
+            try
+            {
+                if (_externalExo is not null)
+                {
+                    mailbox = await _externalExo.GetMailboxFactsAsync(upn, _log.Progress, _cts.Token).ConfigureAwait(true);
+                }
+                else if (_mailboxes is not null)
+                {
+                    mailbox = await _mailboxes.GetMailboxAsync(upn, _log.Progress).ConfigureAwait(true);
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.Progress.Report(LogEntry.Info("Audit", $"Pre-check buzón {upn} no disponible: {ex.Message}"));
+            }
+
+            var alreadyShared = mailbox?.IsSharedMailbox == true;
+            if (mailbox is null)
+            {
+                UpsertStep(new OffboardingStep("Pre-check buzón", "OMITIDO", "No se pudo leer el buzón (¿Exchange?). Continuando; si la conversión falla NO se quitan licencias."));
+            }
+            else
+            {
+                var facts = $"Tipo={mailbox.RecipientTypeDetails}";
+                if (mailbox.TotalItemSizeGb is { } gb) facts += $" · {gb} GB";
+                if (mailbox.HasBlockingHold) facts += " · ⚠ retención (hold)";
+                if (mailbox.ExceedsUnlicensedSharedLimit) facts += " · ⚠ >50 GB";
+                UpsertStep(new OffboardingStep("Pre-check buzón", "OK", facts));
+            }
+
             var options = new OffboardingOptions(
                 DisableAccount: true,
                 RemoveLicenses: true,
                 ConvertMailboxToShared: !alreadyShared);
 
-            var result = await _offboarding.RunAsync(upn, options, _log.Progress, _cts.Token).ConfigureAwait(true);
-            var okSteps = result.Steps.Count(s => s.Status == "OK");
-            StatusMessage = L10n.Format("Audit.Fix.Done", upn, okSteps, result.Steps.Count);
+            var result = await _offboarding.RunAsync(upn, options, _log.Progress, stepProgress, _cts.Token).ConfigureAwait(true);
 
-            // Step-by-step breakdown so the admin sees exactly what happened.
-            var breakdown = string.Join("\n", result.Steps.Select(s => $"[{s.Status}] {s.Name} — {s.Detail}"));
-            await _dialogs.ShowAsync(
-                breakdown,
-                L10n.Format("Audit.Fix.ResultTitle", upn),
-                result.Success ? DialogIcon.Info : DialogIcon.Warning).ConfigureAwait(true);
+            var okSteps = result.Steps.Count(s => s.Status == "OK");
+            CorrectiveSummary = result.Success
+                ? L10n.Format("Audit.Fix.Done", upn, okSteps, result.Steps.Count)
+                : L10n.Format("Audit.Fix.Failed", upn);
+            StatusMessage = CorrectiveSummary;
 
             if (result.Success)
             {
-                // Drop the resolved finding from the live list so the view reflects the fix.
                 var stale = Findings.FirstOrDefault(f => f.IsAutoFixable &&
                     string.Equals(f.Identity, upn, StringComparison.OrdinalIgnoreCase));
                 if (stale is not null)
@@ -800,15 +822,18 @@ public sealed partial class AuditViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = L10n.Get("Common.Status.Cancelled");
+            CorrectiveSummary = L10n.Get("Common.Status.Cancelled");
+            StatusMessage = CorrectiveSummary;
         }
         catch (Exception ex)
         {
-            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
+            CorrectiveSummary = L10n.Format("Common.Status.Error", ex.Message);
+            StatusMessage = CorrectiveSummary;
             _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
         }
         finally
         {
+            CorrectiveRunning = false;
             IsBusy = false;
             _cts?.Dispose();
             _cts = null;

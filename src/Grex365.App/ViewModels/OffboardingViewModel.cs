@@ -82,7 +82,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
         try
         {
             var options = new OffboardingOptions(DisableAccount, RemoveLicenses, ConvertMailboxToShared);
-            var result = await _service.RunAsync(Upn.Trim(), options, _log.Progress, _cts.Token).ConfigureAwait(true);
+            var result = await _service.RunAsync(Upn.Trim(), options, _log.Progress, cancellationToken: _cts.Token).ConfigureAwait(true);
             Result = result;
             foreach (var step in result.Steps)
             {

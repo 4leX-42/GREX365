@@ -26,7 +26,7 @@ public class OffboardingViewModelTests
         public void StubRunOk()
         {
             Service.Setup(s => s.RunAsync(It.IsAny<string>(), It.IsAny<OffboardingOptions>(),
-                It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+                It.IsAny<IProgress<LogEntry>>(), It.IsAny<IProgress<OffboardingStep>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new OffboardingResult("u@a", true, new List<OffboardingStep>
                 {
                     new("Buscar", "OK", "found"),
@@ -110,6 +110,7 @@ public class OffboardingViewModelTests
             "jane@a",
             It.Is<OffboardingOptions>(o => o.DisableAccount && !o.RemoveLicenses && !o.ConvertMailboxToShared),
             It.IsAny<IProgress<LogEntry>>(),
+            It.IsAny<IProgress<OffboardingStep>>(),
             It.IsAny<CancellationToken>()), Times.Once);
         h.Vm.Result.Should().NotBeNull();
         h.Vm.Steps.Should().HaveCount(2);
@@ -123,7 +124,7 @@ public class OffboardingViewModelTests
         h.Vm.Upn = "jane@a";
         h.Dialogs.ConfirmResult = true;
         h.Service.Setup(s => s.RunAsync(It.IsAny<string>(), It.IsAny<OffboardingOptions>(),
-            It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            It.IsAny<IProgress<LogEntry>>(), It.IsAny<IProgress<OffboardingStep>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new OffboardingResult("jane@a", false, new[]
             {
                 new OffboardingStep("Buscar", "OK", ""),

@@ -661,6 +661,9 @@ public static class L10n
         ["Audit.Fix.Running"] = "Corrigiendo {0}…",
         ["Audit.Fix.Done"] = "{0}: {1}/{2} pasos OK.",
         ["Audit.Fix.ResultTitle"] = "Resultado offboarding · {0}",
+        ["Audit.Fix.Failed"] = "{0}: la corrección falló o quedó incompleta. Revisa los pasos.",
+        ["Audit.Fix.PanelTitle"] = "Corrección offboarding",
+        ["Audit.Fix.Close"] = "Cerrar",
 
         ["AuditLog.Eyebrow"] = "REGISTRO",
         ["AuditLog.Title"] = "Audit log",
@@ -1529,6 +1532,9 @@ public static class L10n
         ["Audit.Fix.Running"] = "Fixing {0}…",
         ["Audit.Fix.Done"] = "{0}: {1}/{2} steps OK.",
         ["Audit.Fix.ResultTitle"] = "Offboarding result · {0}",
+        ["Audit.Fix.Failed"] = "{0}: fix failed or incomplete. Review the steps.",
+        ["Audit.Fix.PanelTitle"] = "Offboarding fix",
+        ["Audit.Fix.Close"] = "Close",
 
         ["AuditLog.Eyebrow"] = "LOG",
         ["AuditLog.Title"] = "Audit log",

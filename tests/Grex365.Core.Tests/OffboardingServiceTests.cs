@@ -8,14 +8,17 @@ namespace Grex365.Core.Tests;
 
 public class OffboardingServiceTests
 {
-    private static UserSummary SampleUser() =>
-        new("uid", "Jane Doe", "jane@a", "jane@a", true, false, 2, null);
+    private static UserSummary SampleUser(int licenses = 2) =>
+        new("uid", "Jane Doe", "jane@a", "jane@a", true, false, licenses, null);
 
     private static Mock<IUsersService> UsersOk()
     {
         var m = new Mock<IUsersService>();
+        // First read = initial lookup (still licensed); subsequent reads = post-removal
+        // verification (0 licenses), so VerifyLicensesRemovedAsync confirms immediately.
+        var n = 0;
         m.Setup(u => u.GetByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(SampleUser());
+            .ReturnsAsync(() => n++ == 0 ? SampleUser(2) : SampleUser(0));
         return m;
     }
 
@@ -135,6 +138,6 @@ public class OffboardingServiceTests
         var r = await sut.RunAsync("jane@a", new OffboardingOptions(false, false, true));
 
         r.Success.Should().BeFalse();
-        r.Steps.Should().Contain(s => s.Name.StartsWith("Mailbox") && s.Status == "ERROR" && s.Detail.Contains("EXO down"));
+        r.Steps.Should().Contain(s => s.Name.Contains("compartido") && s.Status == "ERROR" && s.Detail.Contains("EXO down"));
     }
 }
