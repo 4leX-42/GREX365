@@ -58,6 +58,7 @@
             <ui:Button Grid.Column="2"
                        Content="{l:L10n Key=UserDetails.Close}"
                        VerticalAlignment="Top"
+                       Visibility="{Binding ShowClose, ElementName=Root, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Visible}"
                        Command="{Binding CloseCommand}" />
         </Grid>
 
@@ -236,6 +237,8 @@
                                              Text="{Binding AssignableSkuFilter, UpdateSourceTrigger=PropertyChanged, Delay=120}"
                                              BorderThickness="0"
                                              Background="Transparent"
+                                             Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                                             CaretBrush="{DynamicResource TextFillColorPrimaryBrush}"
                                              VerticalAlignment="Center"
                                              FontSize="11"
                                              ToolTip="{l:L10n Key=UserDetails.Filter.Tooltip}"

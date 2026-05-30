@@ -113,6 +113,8 @@
                                      Text="{Binding LicenseFilter, UpdateSourceTrigger=PropertyChanged, Delay=120}"
                                      BorderThickness="0"
                                      Background="Transparent"
+                                     Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                                     CaretBrush="{DynamicResource TextFillColorPrimaryBrush}"
                                      VerticalAlignment="Center"
                                      ToolTip="{l:L10n Key=TenantHealth.Filter.Tooltip}"
                                      Padding="0" />

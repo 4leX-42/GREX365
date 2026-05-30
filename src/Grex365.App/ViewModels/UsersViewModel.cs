@@ -20,8 +20,15 @@ public sealed partial class UsersViewModel : ObservableObject
     private readonly IRbacGuard _rbac;
     private readonly IDialogService _dialogs;
     private readonly IConnectionStateMonitor? _monitor;
+    private readonly IUserDetailsHost? _detailsHost;
     private CancellationTokenSource? _cts;
     private CancellationTokenSource? _debounceCts;
+
+    // Rich detail panel shown inline in the right column. Same singleton instance the
+    // Groups drawer reuses; loading is driven through the host so the VM populates
+    // memberships/licenses itself. On the Users page the shell suppresses the drawer
+    // (see MainViewModel) so this inline view is the only surface that renders it.
+    public UserDetailsViewModel? UserDetailsVm { get; }
 
     [ObservableProperty] private string _searchQuery = string.Empty;
     [ObservableProperty] private UserSummary? _selectedUser;
@@ -34,13 +41,15 @@ public sealed partial class UsersViewModel : ObservableObject
     public ObservableCollection<BulkUserResult> BulkResults { get; } = new();
     public ObservableCollection<SkuInfo> AvailableSkus { get; } = new();
 
-    public UsersViewModel(IUsersService users, IUiLogSink log, IRbacGuard rbac, IDialogService dialogs, IConnectionStateMonitor? monitor = null)
+    public UsersViewModel(IUsersService users, IUiLogSink log, IRbacGuard rbac, IDialogService dialogs, IConnectionStateMonitor? monitor = null, IUserDetailsHost? detailsHost = null, UserDetailsViewModel? userDetailsVm = null)
     {
         _users = users;
         _log = log;
         _rbac = rbac;
         _dialogs = dialogs;
         _monitor = monitor;
+        _detailsHost = detailsHost;
+        UserDetailsVm = userDetailsVm;
         if (_monitor is not null)
         {
             _monitor.PropertyChanged += OnMonitorChanged;
@@ -120,11 +129,22 @@ public sealed partial class UsersViewModel : ObservableObject
     partial void OnSelectedUserChanged(UserSummary? value)
     {
         Memberships.Clear();
-        if (value is null)
+        if (value is null || string.IsNullOrEmpty(value.Id))
         {
             return;
         }
-        _ = LoadMembershipsAsync(value.Id);
+        // Single-click selection loads the inline detail panel (right column). The rich
+        // UserDetailsViewModel fetches profile/memberships/licenses itself, so we no longer
+        // duplicate the membership fetch here. Falls back to the legacy in-VM load only when
+        // no host is wired (e.g. unit tests construct the VM without one).
+        if (_detailsHost is not null)
+        {
+            _detailsHost.RequestOpen(value.Id);
+        }
+        else
+        {
+            _ = LoadMembershipsAsync(value.Id);
+        }
     }
 
     [RelayCommand]

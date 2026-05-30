@@ -248,6 +248,9 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
         CurrentPage = (ObservableObject)_services.GetRequiredService(value.ViewModelType);
+        // Users renders the detail panel inline, so the slide-out drawer is redundant there.
+        // Recompute its visibility whenever the active page changes.
+        SyncUserDrawerVisibility();
         _ = PersistNavAsync(value.NavKey);
     }
 
@@ -297,13 +300,18 @@ public sealed partial class MainViewModel : ObservableObject
         var dispatcher = Application.Current?.Dispatcher;
         if (dispatcher is not null && !dispatcher.CheckAccess())
         {
-            dispatcher.Invoke(() => UserDrawerOpen = _userDetailsHost.IsOpen);
+            dispatcher.Invoke(SyncUserDrawerVisibility);
         }
         else
         {
-            UserDrawerOpen = _userDetailsHost.IsOpen;
+            SyncUserDrawerVisibility();
         }
     }
+
+    // Drawer shows only when the host is open AND we're not on the Users page (which embeds
+    // the same detail panel inline). Both the host opening and page navigation feed in here.
+    private void SyncUserDrawerVisibility()
+        => UserDrawerOpen = _userDetailsHost.IsOpen && CurrentPage is not UsersViewModel;
 
     private void OnAuditStoreChanged(object? sender, PropertyChangedEventArgs e)
     {

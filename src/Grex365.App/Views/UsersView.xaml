@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:l="clr-namespace:Grex365.App.Xaml"
+             xmlns:views="clr-namespace:Grex365.App.Views"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
     <Grid Margin="32,28,32,16">
@@ -104,11 +105,6 @@
                                  Background="Transparent"
                                  BorderThickness="0"
                                  Visibility="{Binding Users.Count, Converter={StaticResource CountToVisibilityConverter}}">
-                            <ListBox.ItemContainerStyle>
-                                <Style TargetType="ListBoxItem">
-                                    <EventSetter Event="MouseDoubleClick" Handler="UserItem_DoubleClick" />
-                                </Style>
-                            </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate DataType="{x:Type models:UserSummary}">
                                     <Grid Margin="0,6">
@@ -149,88 +145,16 @@
 
             <Border Grid.Column="1" CornerRadius="8" Margin="8,0,0,0"
                     Background="{DynamicResource ControlFillColorDefaultBrush}">
-                <Grid Margin="12">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
+                <Grid>
+                    <!-- Rich detail panel — visible by default, populated on selection (1 click).
+                         Same VM the Groups drawer reuses; ShowClose hidden since closing makes
+                         no sense inline. -->
+                    <views:UserDetailsView DataContext="{Binding UserDetailsVm}"
+                                           ShowClose="False"
+                                           Visibility="{Binding SelectedUser, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}" />
 
-                    <TextBlock Grid.Row="0"
-                               Text="{Binding SelectedUser.DisplayName, FallbackValue={l:L10n Key=Users.NoneSelected}, TargetNullValue={l:L10n Key=Users.NoneSelected}}"
-                               FontWeight="SemiBold"
-                               FontSize="18"
-                               Margin="0,0,0,8" />
-
-                    <Grid Grid.Row="1" Margin="0,0,0,8"
-                          Visibility="{Binding SelectedUser, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="160" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{l:L10n Key=Users.Field.Upn}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedUser.UserPrincipalName}" />
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="{l:L10n Key=Users.Field.Mail}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedUser.Mail}" />
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="{l:L10n Key=Users.Field.Account}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        <TextBlock Grid.Row="2" Grid.Column="1"
-                                   Text="{Binding SelectedUser.AccountEnabled, Converter={StaticResource BoolToOnOffConverter}, ConverterParameter='Status.Enabled/Status.Disabled'}" />
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="{l:L10n Key=Users.Field.Licenses}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedUser.AssignedLicenseCount}" />
-                    </Grid>
-
-                    <StackPanel Grid.Row="2" Margin="0,8,0,8"
-                                Visibility="{Binding SelectedUser, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
-                        <WrapPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <ui:Button Content="{l:L10n Key=Users.Action.Enable}"
-                                       Margin="0,0,8,4"
-                                       Command="{Binding EnableCommand}" />
-                            <ui:Button Content="{l:L10n Key=Users.Action.Disable}"
-                                       Margin="0,0,8,4"
-                                       Command="{Binding DisableCommand}" />
-                            <ui:Button Content="{l:L10n Key=Users.Action.RemoveLicenses}"
-                                       Margin="0,0,8,4"
-                                       Command="{Binding RemoveLicensesCommand}" />
-                        </WrapPanel>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <ui:Button Grid.Column="0"
-                                       Content="{l:L10n Key=Users.Action.LoadSkus}"
-                                       Margin="0,0,8,0"
-                                       Command="{Binding LoadSkusCommand}" />
-                            <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding AvailableSkus}"
-                                      SelectedItem="{Binding SelectedSku}"
-                                      DisplayMemberPath="Display"
-                                      Margin="0,0,8,0" />
-                            <ui:Button Grid.Column="2"
-                                       Content="{l:L10n Key=Users.Action.AssignLicense}"
-                                       Appearance="Primary"
-                                       Command="{Binding AssignLicenseCommand}" />
-                        </Grid>
-                        <TextBlock Margin="0,8,0,0"
-                                   Text="{Binding StatusMessage}"
-                                   Opacity="0.8" />
-                    </StackPanel>
-
-                    <TextBlock Grid.Row="3" Text="{l:L10n Key=Users.MemberOf}" FontWeight="SemiBold" Margin="0,8,0,4"
-                               Visibility="{Binding SelectedUser, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}" />
-
-                    <!-- Empty-state: no user selected (mirrors left search panel) -->
-                    <StackPanel Grid.Row="4"
-                                HorizontalAlignment="Center"
+                    <!-- Empty-state: no user selected -->
+                    <StackPanel HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 Margin="0,24"
                                 Visibility="{Binding SelectedUser, Converter={StaticResource NullToCollapsedConverter}, ConverterParameter=invert, FallbackValue=Visible}">
@@ -245,28 +169,6 @@
                                    Margin="0,12,0,0"
                                    Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                     </StackPanel>
-
-                    <ListBox Grid.Row="4"
-                             ItemsSource="{Binding Memberships}"
-                             Background="Transparent"
-                             BorderThickness="0"
-                             Visibility="{Binding SelectedUser, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate DataType="{x:Type models:GroupSummary}">
-                                <Grid Margin="4,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="120" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" />
-                                        <TextBlock Text="{Binding Mail}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                    </StackPanel>
-                                    <TextBlock Grid.Column="1" Text="{Binding GroupKind}" Opacity="0.8" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
                 </Grid>
             </Border>
         </Grid>
