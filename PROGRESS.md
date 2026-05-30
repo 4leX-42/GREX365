@@ -4,8 +4,15 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1291 passing** (xUnit + FluentAssertions) — 485 Core + 806 App
-- Última actualización: 2026-05-28 (sesión · Sprint AM — i18n ViewModels: StatusMessage/diálogos ES→L10n, D6 100%)
+- Tests: **1293 passing** (xUnit + FluentAssertions) — 487 Core + 806 App
+- Última actualización: 2026-05-30 (sesión · Sprint AN — UX remate: panel Usuarios inline, búsqueda Licencias, hardening Auditoría, offboarding guiado)
+
+## Sprint AN · 2026-05-30 — Remate funcional + UX
+
+- **Usuarios**: panel de detalle rico (`UserDetailsView`) ahora embebido inline en la columna derecha, se carga al seleccionar (1 clic). Drawer se mantiene solo para Groups; se suprime en la página Usuarios (`MainViewModel.SyncUserDrawerVisibility`). `UserDetailsView.ShowClose` DP nueva.
+- **Licencias**: arreglada la lupa de búsqueda — `NullToCollapsedConverter` trataba `""` como no-nulo y dejaba la "×" siempre visible; ahora colapsa con string vacío. Foreground/CaretBrush explícitos en los TextBox de filtro (legibilidad modo oscuro).
+- **Auditoría hardening**: guards de respuesta null en Graph (/users, /groups, miembros); pre-check de conexión Exchange en los 4 scans EXO (mensaje accionable en vez de error cmdlet críptico).
+- **Offboarding guiado** (acción "Corregir" en hallazgos Disabled+License): flujo recomendado MS — bloquear sign-in + revocar sesiones → convertir buzón a compartido → liberar licencias. **Bug corregido**: `OffboardingService` quitaba licencias ANTES de convertir (pérdida de datos: borrado a 30 días). Ahora convierte primero y omite la liberación de licencia si la conversión falla. `MailboxInfo` enriquecido (hold/archive/tamaño) para avisos pre-acción (límite 50 GB, retención).
 
 ## Auditoría técnica integral 2026-05-22
 
