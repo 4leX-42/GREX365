@@ -148,10 +148,13 @@
                 <Grid>
                     <!-- Rich detail panel — visible by default, populated on selection (1 click).
                          Same VM the Groups drawer reuses; ShowClose hidden since closing makes
-                         no sense inline. -->
-                    <views:UserDetailsView DataContext="{Binding UserDetailsVm}"
-                                           ShowClose="False"
-                                           Visibility="{Binding SelectedUser, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}" />
+                         no sense inline. The wrapper keeps the UsersViewModel DataContext so the
+                         Visibility binds SelectedUser; the inner view's DataContext is the
+                         UserDetailsViewModel it renders. -->
+                    <ContentControl Visibility="{Binding SelectedUser, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
+                        <views:UserDetailsView DataContext="{Binding UserDetailsVm}"
+                                               ShowClose="False" />
+                    </ContentControl>
 
                     <!-- Empty-state: no user selected -->
                     <StackPanel HorizontalAlignment="Center"
