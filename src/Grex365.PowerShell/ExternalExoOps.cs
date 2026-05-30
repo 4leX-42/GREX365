@@ -106,13 +106,16 @@ public sealed class ExternalExoOps : IExternalExoOps
     {
         var full = $$"""
             $ErrorActionPreference = 'Stop'
+            $ProgressPreference = 'SilentlyContinue'
+            $InformationPreference = 'SilentlyContinue'
+            $WarningPreference = 'SilentlyContinue'
             Import-Module ExchangeOnlineManagement -ErrorAction Stop
-            Connect-ExchangeOnline -AppId {{Lit(cfg.AppId)}} -CertificateThumbprint {{Lit(cfg.CertThumbprint)}} -Organization {{Lit(cfg.Organization)}} -ShowBanner:$false -ErrorAction Stop
+            Connect-ExchangeOnline -AppId {{Lit(cfg.AppId)}} -CertificateThumbprint {{Lit(cfg.CertThumbprint)}} -Organization {{Lit(cfg.Organization)}} -ShowBanner:$false -InformationAction SilentlyContinue -ErrorAction Stop | Out-Null
             try {
             {{body}}
             }
             finally {
-                Disconnect-ExchangeOnline -Confirm:$false -ErrorAction SilentlyContinue | Out-Null
+                Disconnect-ExchangeOnline -Confirm:$false -InformationAction SilentlyContinue -ErrorAction SilentlyContinue *> $null
             }
             """;
 
@@ -152,6 +155,16 @@ public sealed class ExternalExoOps : IExternalExoOps
         proc.ErrorDataReceived += (_, e) =>
         {
             if (string.IsNullOrEmpty(e.Data)) return;
+            // The EXO module serialises non-text stream records to stderr as CLIXML noise
+            // ("#< CLIXML", "<Objs ...>"). It is not an error — drop it so the live log
+            // stays clean instead of showing scary XML warnings.
+            var t = e.Data.TrimStart();
+            if (t.StartsWith("#< CLIXML", StringComparison.Ordinal) ||
+                t.StartsWith("<Objs", StringComparison.Ordinal) ||
+                t.StartsWith("<", StringComparison.Ordinal))
+            {
+                return;
+            }
             errors.AppendLine(e.Data);
             progress?.Report(LogEntry.Warn("EXO", e.Data));
         };
