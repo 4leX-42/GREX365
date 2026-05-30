@@ -94,7 +94,7 @@
                             BorderThickness="1"
                             Padding="10,7"
                             MinHeight="38"
-                            Width="320"
+                            Width="160"
                             HorizontalAlignment="Left"
                             Background="{DynamicResource ControlFillColorDefaultBrush}">
                         <Grid>
