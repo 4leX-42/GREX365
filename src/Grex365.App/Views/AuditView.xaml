@@ -284,6 +284,37 @@
                           BorderThickness="0"
                           ScrollViewer.HorizontalScrollBarVisibility="Auto"
                           Visibility="{Binding Findings.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                    <ListView.ItemContainerStyle>
+                        <!-- Clean rows: padded, rounded, subtle hover/selected. Replaces the
+                             default thin GridView row + harsh gray hover bar. -->
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="Padding" Value="8,9" />
+                            <Setter Property="Margin" Value="0,1" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListViewItem">
+                                        <Border x:Name="Bd"
+                                                CornerRadius="6"
+                                                Padding="{TemplateBinding Padding}"
+                                                Background="Transparent">
+                                            <GridViewRowPresenter VerticalAlignment="Center"
+                                                                  Content="{TemplateBinding Content}"
+                                                                  Columns="{TemplateBinding GridView.ColumnCollection}" />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListView.ItemContainerStyle>
                     <ListView.View>
                         <GridView>
                             <GridViewColumn Header="{l:L10n Key=Audit.Column.Category}" Width="160">

@@ -808,16 +808,17 @@ public sealed partial class AuditViewModel : ObservableObject
     {
         await RunScenarioCommonAsync(
             "Cuentas en riesgo",
-            "Identidad + grupos · filtrando deshab+licencia / stale+licencia...",
+            "Identidad · deshab+licencia / cuentas inactivas...",
             async () =>
             {
-                var identityTask = _audit.RunIdentityAuditAsync(_log.Progress, _cts!.Token);
-                var groupsTask = _audit.RunGroupsAuditAsync(_log.Progress, _cts!.Token);
-                await Task.WhenAll(identityTask, groupsTask).ConfigureAwait(true);
-                var (summary, findings) = await identityTask.ConfigureAwait(true);
-                var groupFindings = await groupsTask.ConfigureAwait(true);
+                // Only the identity audit matters here — the keep-filter discards every
+                // group finding, so running the (slow, per-group) groups audit was pure
+                // wasted work. Identity-only makes this scenario much faster.
+                var (summary, findings) = await _audit
+                    .RunIdentityAuditAsync(_log.Progress, _cts!.Token)
+                    .ConfigureAwait(true);
                 Summary = summary;
-                return findings.Concat(groupFindings);
+                return findings;
             },
             keep: f =>
                 f.Category.Contains("disabled", StringComparison.OrdinalIgnoreCase) ||

@@ -8,12 +8,23 @@ public sealed class IdentityAuditAnalyzer
     public static readonly TimeSpan GuestStaleAfter = TimeSpan.FromDays(90);
 
     private readonly DateTimeOffset _now;
+    private readonly bool _signInActivityAvailable;
+    private readonly IReadOnlyDictionary<Guid, string>? _skuPartNumbers;
     private readonly List<AuditFinding> _findings = new();
     private readonly Totals _totals = new();
 
-    public IdentityAuditAnalyzer(DateTimeOffset now)
+    // signInActivityAvailable=false when the tenant lacks AuditLog.Read.All: last-sign-in
+    // data is then null for EVERY user, so we must NOT flag stale (it would falsely mark
+    // the whole directory). skuPartNumbers maps assigned licence GUIDs to SKU part numbers
+    // so the Disabled+License finding can name the actual licences.
+    public IdentityAuditAnalyzer(
+        DateTimeOffset now,
+        bool signInActivityAvailable = true,
+        IReadOnlyDictionary<Guid, string>? skuPartNumbers = null)
     {
         _now = now;
+        _signInActivityAvailable = signInActivityAvailable;
+        _skuPartNumbers = skuPartNumbers;
     }
 
     public IReadOnlyList<AuditFinding> Findings => _findings;
@@ -39,10 +50,12 @@ public sealed class IdentityAuditAnalyzer
             _totals.DisabledWithLicense++;
             _findings.Add(new AuditFinding(
                 AuditFinding.DisabledWithLicenseCategory, upn,
-                $"Deshabilitado con {user.AssignedLicenseCount} licencias asignadas", "WARN"));
+                $"Deshabilitado · {user.AssignedLicenseCount} licencias{DescribeLicenses(user)}", "WARN"));
         }
 
-        if (user.AccountEnabled)
+        // Stale detection requires real last-sign-in data. Skip entirely when unavailable
+        // (AuditLog.Read.All missing) — otherwise every enabled user would be flagged.
+        if (user.AccountEnabled && _signInActivityAvailable)
         {
             var cutoff = user.IsGuest ? _now - GuestStaleAfter : _now - MemberStaleAfter;
             if (user.LastSignIn is null || user.LastSignIn < cutoff)
@@ -65,6 +78,22 @@ public sealed class IdentityAuditAnalyzer
         }
     }
 
+    // ": Microsoft 365 E5, Power BI Pro" when SKU names can be resolved, else "".
+    private string DescribeLicenses(UserSnapshot user)
+    {
+        if (_skuPartNumbers is null || user.AssignedSkuIds is null || user.AssignedSkuIds.Count == 0)
+        {
+            return " asignadas";
+        }
+        var names = user.AssignedSkuIds
+            .Select(id => _skuPartNumbers.TryGetValue(id, out var part) ? part : id.ToString())
+            .Select(part => SkuCatalog.Resolve(part).FriendlyName)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        return names.Count == 0 ? " asignadas" : ": " + string.Join(", ", names);
+    }
+
     private sealed class Totals
     {
         public int UsersTotal;
@@ -83,4 +112,5 @@ public sealed record UserSnapshot(
     bool AccountEnabled,
     bool IsGuest,
     int AssignedLicenseCount,
-    DateTimeOffset? LastSignIn);
+    DateTimeOffset? LastSignIn,
+    IReadOnlyList<Guid>? AssignedSkuIds = null);

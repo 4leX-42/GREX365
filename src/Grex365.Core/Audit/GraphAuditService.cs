@@ -23,7 +23,8 @@ public sealed class GraphAuditService : IAuditService
 
         progress?.Report(LogEntry.Info("Audit", "Cargando usuarios..."));
 
-        var analyzer = new IdentityAuditAnalyzer(DateTimeOffset.UtcNow);
+        // Map license GUIDs -> SKU part numbers so findings can name the actual licences.
+        var skuPartNumbers = await LoadSkuPartNumbersAsync(client, progress, cancellationToken).ConfigureAwait(false);
         bool signInActivityAvailable = true;
 
         UserCollectionResponse? response;
@@ -58,6 +59,8 @@ public sealed class GraphAuditService : IAuditService
                 req.Headers.Add("ConsistencyLevel", "eventual");
             }, cancellationToken).ConfigureAwait(false);
         }
+
+        var analyzer = new IdentityAuditAnalyzer(DateTimeOffset.UtcNow, signInActivityAvailable, skuPartNumbers);
 
         if (response is not null)
         {
@@ -820,5 +823,36 @@ public sealed class GraphAuditService : IAuditService
         AccountEnabled: u.AccountEnabled ?? false,
         IsGuest: string.Equals(u.UserType, "Guest", StringComparison.OrdinalIgnoreCase),
         AssignedLicenseCount: u.AssignedLicenses?.Count ?? 0,
-        LastSignIn: u.SignInActivity?.LastSignInDateTime);
+        LastSignIn: u.SignInActivity?.LastSignInDateTime,
+        AssignedSkuIds: u.AssignedLicenses?
+            .Where(l => l.SkuId.HasValue)
+            .Select(l => l.SkuId!.Value)
+            .ToList());
+
+    // /subscribedSkus → { skuId GUID : skuPartNumber }. Best-effort; on failure findings
+    // simply fall back to the licence count without names.
+    private static async Task<IReadOnlyDictionary<Guid, string>?> LoadSkuPartNumbersAsync(
+        GraphServiceClient client,
+        IProgress<LogEntry>? progress,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var resp = await client.SubscribedSkus.GetAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+            var map = new Dictionary<Guid, string>();
+            foreach (var sku in resp?.Value ?? new())
+            {
+                if (sku.SkuId is { } id && !string.IsNullOrWhiteSpace(sku.SkuPartNumber))
+                {
+                    map[id] = sku.SkuPartNumber!;
+                }
+            }
+            return map.Count > 0 ? map : null;
+        }
+        catch (Exception ex)
+        {
+            progress?.Report(LogEntry.Warn("Audit", $"No se pudieron cargar subscribedSkus (nombres de licencia): {ex.Message}"));
+            return null;
+        }
+    }
 }
