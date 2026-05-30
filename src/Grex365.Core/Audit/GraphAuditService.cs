@@ -88,15 +88,9 @@ public sealed class GraphAuditService : IAuditService
 
         var summary = analyzer.BuildSummary();
         var findings = analyzer.Findings.ToList();
-        if (!signInActivityAvailable)
-        {
-            findings.Insert(0, new AuditFinding(
-                "Permiso faltante: AuditLog.Read.All",
-                "(tenant)",
-                "El AppReg no tiene AuditLog.Read.All concedido. Stale-user detection deshabilitada. " +
-                "Concede admin consent al permiso para habilitar la detección de usuarios inactivos.",
-                "WARN"));
-        }
+        // Note: we no longer inject a synthetic "missing permission" finding here — it
+        // inflated the finding count (15 vs 14 real users) and duplicated the Info log line
+        // already emitted above. The missing-AuditLog.Read.All condition is surfaced in the log.
         progress?.Report(LogEntry.Ok("Audit", $"Procesados {summary.UsersTotal} usuarios; {findings.Count} hallazgos"));
         return (summary, findings);
     }
