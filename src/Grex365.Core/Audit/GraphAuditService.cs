@@ -41,17 +41,12 @@ public sealed class GraphAuditService : IAuditService
                 req.Headers.Add("ConsistencyLevel", "eventual");
             }, cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // The signInActivity field needs AuditLog.Read.All. Without it Graph returns a
             // bare 403 Forbidden whose message often does NOT contain "AuditLog.Read.All",
             // so we can't rely on string matching — ANY failure of the enriched query falls
-            // back to the same query without signInActivity. Info, not Warn (no toast); the
-            // condition is surfaced as a finding row below.
-            progress?.Report(LogEntry.Info(
-                "Audit",
-                $"signInActivity no disponible ({ex.Message}). Detección de inactividad deshabilitada " +
-                "(requiere AuditLog.Read.All). Reintentando sin actividad de sign-in..."));
+            // back silently to the same query without signInActivity (no log noise).
             signInActivityAvailable = false;
             response = await client.Users.GetAsync(req =>
             {
