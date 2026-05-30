@@ -7,11 +7,15 @@ public sealed class OffboardingService : IOffboardingService
 {
     private readonly IUsersService _users;
     private readonly ISharedMailboxService _mailboxes;
+    private readonly IExternalExoOps? _externalExo;
 
-    public OffboardingService(IUsersService users, ISharedMailboxService mailboxes)
+    // externalExo (when wired) runs the mailbox conversion via an external pwsh process —
+    // the in-process EXO path is unreliable. Falls back to the in-proc service when absent.
+    public OffboardingService(IUsersService users, ISharedMailboxService mailboxes, IExternalExoOps? externalExo = null)
     {
         _users = users;
         _mailboxes = mailboxes;
+        _externalExo = externalExo;
     }
 
     public async Task<OffboardingResult> RunAsync(
@@ -81,7 +85,9 @@ public sealed class OffboardingService : IOffboardingService
         {
             try
             {
-                var info = await _mailboxes.ConvertToSharedAsync(upn, progress, cancellationToken).ConfigureAwait(false);
+                var info = _externalExo is not null
+                    ? await _externalExo.ConvertToSharedAsync(upn, progress, cancellationToken).ConfigureAwait(false)
+                    : await _mailboxes.ConvertToSharedAsync(upn, progress, cancellationToken).ConfigureAwait(false);
                 var detail = info is null ? "Aplicado" : $"Tipo final: {info.RecipientTypeDetails}";
                 convertSucceeded = info is null || info.IsSharedMailbox;
                 steps.Add(new OffboardingStep("Mailbox->Shared", "OK", detail));

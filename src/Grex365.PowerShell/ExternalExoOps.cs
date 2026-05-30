@@ -1,0 +1,202 @@
+using System.Diagnostics;
+using System.Text;
+using System.Text.Json;
+using Grex365.Core.Abstractions;
+using Grex365.Core.Models;
+
+namespace Grex365.PowerShell;
+
+public sealed class ExternalExoOps : IExternalExoOps
+{
+    private const string JsonMarker = "###GREX-JSON###";
+    private readonly ICertConfigStore _certStore;
+
+    public ExternalExoOps(ICertConfigStore certStore)
+    {
+        _certStore = certStore;
+    }
+
+    public async Task<MailboxInfo?> GetMailboxFactsAsync(
+        string identity,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
+        var id = Lit(identity);
+        var body = $$"""
+            $id = {{id}}
+            $m = Get-Mailbox -Identity $id -ErrorAction Stop
+            $bytes = $null
+            try {
+                $s = Get-EXOMailboxStatistics -Identity $id -Properties TotalItemSize -ErrorAction Stop
+                $t = [string]$s.TotalItemSize
+                if ($t -match '\(([\d,]+) bytes\)') { $bytes = [int64]($matches[1] -replace ',','') }
+            } catch { }
+            $holds = 0; if ($m.InPlaceHolds) { $holds = @($m.InPlaceHolds).Count }
+            $arch = $false
+            if ($m.ArchiveStatus -and [string]$m.ArchiveStatus -ne 'None') { $arch = $true }
+            $o = [PSCustomObject]@{
+                Identity             = [string]$m.Identity
+                DisplayName          = [string]$m.DisplayName
+                PrimarySmtpAddress   = [string]$m.PrimarySmtpAddress
+                RecipientTypeDetails = [string]$m.RecipientTypeDetails
+                LitigationHoldEnabled= [bool]$m.LitigationHoldEnabled
+                InPlaceHoldCount     = [int]$holds
+                ArchiveEnabled       = [bool]$arch
+                TotalItemBytes       = $bytes
+            }
+            Write-Output ('{{JsonMarker}}' + ($o | ConvertTo-Json -Compress))
+            """;
+
+        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        return Parse(json);
+    }
+
+    public async Task<MailboxInfo?> ConvertToSharedAsync(
+        string identity,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
+        var id = Lit(identity);
+        var body = $$"""
+            $id = {{id}}
+            $cur = Get-Mailbox -Identity $id -ErrorAction Stop
+            if ($cur.RecipientTypeDetails -ne 'SharedMailbox') {
+                Set-Mailbox -Identity $id -Type Shared -ErrorAction Stop
+                Write-Output 'Set-Mailbox -Type Shared aplicado; esperando propagacion...'
+            }
+            $final = [string]$cur.RecipientTypeDetails
+            $deadline = (Get-Date).AddSeconds(150)
+            while ($final -ne 'SharedMailbox' -and (Get-Date) -lt $deadline) {
+                Start-Sleep -Seconds 8
+                try { $final = [string](Get-Mailbox -Identity $id -ErrorAction Stop).RecipientTypeDetails } catch { }
+            }
+            $m = Get-Mailbox -Identity $id -ErrorAction Stop
+            $o = [PSCustomObject]@{
+                Identity             = [string]$m.Identity
+                DisplayName          = [string]$m.DisplayName
+                PrimarySmtpAddress   = [string]$m.PrimarySmtpAddress
+                RecipientTypeDetails = [string]$m.RecipientTypeDetails
+            }
+            Write-Output ('{{JsonMarker}}' + ($o | ConvertTo-Json -Compress))
+            """;
+
+        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        return Parse(json);
+    }
+
+    private async Task<CertConfig> RequireConfigAsync(CancellationToken ct)
+    {
+        var cfg = await _certStore.LoadAsync(ct).ConfigureAwait(false);
+        if (cfg is null || string.IsNullOrWhiteSpace(cfg.CertThumbprint))
+        {
+            throw new InvalidOperationException(
+                "No hay configuración de certificado para Exchange Online. Conéctate por certificado primero.");
+        }
+        return cfg;
+    }
+
+    // Wraps the body in connect/disconnect and runs it in an external pwsh process.
+    private async Task<string?> RunAsync(
+        CertConfig cfg,
+        string body,
+        IProgress<LogEntry>? progress,
+        CancellationToken cancellationToken)
+    {
+        var full = $$"""
+            $ErrorActionPreference = 'Stop'
+            Import-Module ExchangeOnlineManagement -ErrorAction Stop
+            Connect-ExchangeOnline -AppId {{Lit(cfg.AppId)}} -CertificateThumbprint {{Lit(cfg.CertThumbprint)}} -Organization {{Lit(cfg.Organization)}} -ShowBanner:$false -ErrorAction Stop
+            try {
+            {{body}}
+            }
+            finally {
+                Disconnect-ExchangeOnline -Confirm:$false -ErrorAction SilentlyContinue | Out-Null
+            }
+            """;
+
+        var encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(full));
+
+        var psi = new ProcessStartInfo
+        {
+            FileName = ExeResolver.ResolvePwsh(),
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+        };
+        psi.ArgumentList.Add("-NoLogo");
+        psi.ArgumentList.Add("-NoProfile");
+        psi.ArgumentList.Add("-NonInteractive");
+        psi.ArgumentList.Add("-EncodedCommand");
+        psi.ArgumentList.Add(encoded);
+
+        using var proc = new Process { StartInfo = psi };
+        string? jsonLine = null;
+        var errors = new StringBuilder();
+
+        proc.OutputDataReceived += (_, e) =>
+        {
+            if (string.IsNullOrEmpty(e.Data)) return;
+            var idx = e.Data.IndexOf(JsonMarker, StringComparison.Ordinal);
+            if (idx >= 0)
+            {
+                jsonLine = e.Data[(idx + JsonMarker.Length)..];
+            }
+            else
+            {
+                progress?.Report(LogEntry.Info("EXO", e.Data));
+            }
+        };
+        proc.ErrorDataReceived += (_, e) =>
+        {
+            if (string.IsNullOrEmpty(e.Data)) return;
+            errors.AppendLine(e.Data);
+            progress?.Report(LogEntry.Warn("EXO", e.Data));
+        };
+
+        proc.Start();
+        proc.BeginOutputReadLine();
+        proc.BeginErrorReadLine();
+
+        await using (cancellationToken.Register(() =>
+        {
+            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
+        }).ConfigureAwait(false))
+        {
+            await proc.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        if (proc.ExitCode != 0 && jsonLine is null)
+        {
+            throw new InvalidOperationException(
+                "Operación Exchange Online falló: " + (errors.Length > 0 ? errors.ToString().Trim() : $"pwsh exit {proc.ExitCode}"));
+        }
+        return jsonLine;
+    }
+
+    private static MailboxInfo? Parse(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return null;
+        using var doc = JsonDocument.Parse(json);
+        var r = doc.RootElement;
+        string S(string n) => r.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString()! : string.Empty;
+        bool B(string n) => r.TryGetProperty(n, out var v) && (v.ValueKind == JsonValueKind.True || (v.ValueKind == JsonValueKind.String && bool.TryParse(v.GetString(), out var b) && b));
+        int I(string n) => r.TryGetProperty(n, out var v) && v.TryGetInt32(out var i) ? i : 0;
+        long? L(string n) => r.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt64(out var l) ? l : null;
+
+        return new MailboxInfo(
+            Identity: S("Identity"),
+            DisplayName: S("DisplayName"),
+            PrimarySmtpAddress: S("PrimarySmtpAddress"),
+            RecipientTypeDetails: S("RecipientTypeDetails"),
+            LitigationHoldEnabled: B("LitigationHoldEnabled"),
+            InPlaceHoldCount: I("InPlaceHoldCount"),
+            ArchiveEnabled: B("ArchiveEnabled"),
+            TotalItemBytes: L("TotalItemBytes"));
+    }
+
+    // PowerShell single-quoted literal (doubles embedded quotes) — safe for injection.
+    private static string Lit(string? value) => "'" + (value ?? string.Empty).Replace("'", "''") + "'";
+}

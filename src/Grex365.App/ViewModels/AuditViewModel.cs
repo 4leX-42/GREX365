@@ -22,6 +22,7 @@ public sealed partial class AuditViewModel : ObservableObject
     private readonly IGraphConnection? _graph;
     private readonly IOffboardingService? _offboarding;
     private readonly ISharedMailboxService? _mailboxes;
+    private readonly IExternalExoOps? _externalExo;
     private readonly IDialogService? _dialogs;
     private readonly IRbacGuard? _rbac;
     private CancellationTokenSource? _cts;
@@ -54,7 +55,8 @@ public sealed partial class AuditViewModel : ObservableObject
         IOffboardingService? offboarding = null,
         ISharedMailboxService? mailboxes = null,
         IDialogService? dialogs = null,
-        IRbacGuard? rbac = null)
+        IRbacGuard? rbac = null,
+        IExternalExoOps? externalExo = null)
     {
         _audit = audit;
         _exoAudit = exoAudit;
@@ -65,6 +67,7 @@ public sealed partial class AuditViewModel : ObservableObject
         _mailboxes = mailboxes;
         _dialogs = dialogs;
         _rbac = rbac;
+        _externalExo = externalExo;
         FindingsView = CollectionViewSource.GetDefaultView(Findings);
         FindingsView.Filter = FindingsFilterPredicate;
         Findings.CollectionChanged += (_, _) => RecomputeCounts();
@@ -711,16 +714,21 @@ public sealed partial class AuditViewModel : ObservableObject
         // Best-effort pre-check to surface blockers (size / holds / already-shared) and to
         // decide whether the convert step is needed at all.
         MailboxInfo? mailbox = null;
-        if (_mailboxes is not null)
+        try
         {
-            try
+            // Prefer the external pwsh path (reliable EXO V3); fall back to the in-proc service.
+            if (_externalExo is not null)
+            {
+                mailbox = await _externalExo.GetMailboxFactsAsync(upn, _log.Progress, _cts?.Token ?? default).ConfigureAwait(true);
+            }
+            else if (_mailboxes is not null)
             {
                 mailbox = await _mailboxes.GetMailboxAsync(upn, _log.Progress).ConfigureAwait(true);
             }
-            catch (Exception ex)
-            {
-                _log.Progress.Report(LogEntry.Warn("Audit", $"Pre-check buzón {upn}: {ex.Message}"));
-            }
+        }
+        catch (Exception ex)
+        {
+            _log.Progress.Report(LogEntry.Info("Audit", $"Pre-check buzón {upn} no disponible: {ex.Message}"));
         }
 
         var alreadyShared = mailbox?.IsSharedMailbox == true;
@@ -771,6 +779,13 @@ public sealed partial class AuditViewModel : ObservableObject
             var result = await _offboarding.RunAsync(upn, options, _log.Progress, _cts.Token).ConfigureAwait(true);
             var okSteps = result.Steps.Count(s => s.Status == "OK");
             StatusMessage = L10n.Format("Audit.Fix.Done", upn, okSteps, result.Steps.Count);
+
+            // Step-by-step breakdown so the admin sees exactly what happened.
+            var breakdown = string.Join("\n", result.Steps.Select(s => $"[{s.Status}] {s.Name} — {s.Detail}"));
+            await _dialogs.ShowAsync(
+                breakdown,
+                L10n.Format("Audit.Fix.ResultTitle", upn),
+                result.Success ? DialogIcon.Info : DialogIcon.Warning).ConfigureAwait(true);
 
             if (result.Success)
             {

@@ -660,6 +660,7 @@ public static class L10n
         ["Audit.Fix.NoMailbox"] = "\n\n⚠ No se pudo consultar el buzón (¿Exchange conectado?). Si la conversión falla, NO se liberarán licencias.",
         ["Audit.Fix.Running"] = "Corrigiendo {0}…",
         ["Audit.Fix.Done"] = "{0}: {1}/{2} pasos OK.",
+        ["Audit.Fix.ResultTitle"] = "Resultado offboarding · {0}",
 
         ["AuditLog.Eyebrow"] = "REGISTRO",
         ["AuditLog.Title"] = "Audit log",
@@ -1527,6 +1528,7 @@ public static class L10n
         ["Audit.Fix.NoMailbox"] = "\n\n⚠ Could not query the mailbox (is Exchange connected?). If conversion fails, licenses will NOT be released.",
         ["Audit.Fix.Running"] = "Fixing {0}…",
         ["Audit.Fix.Done"] = "{0}: {1}/{2} steps OK.",
+        ["Audit.Fix.ResultTitle"] = "Offboarding result · {0}",
 
         ["AuditLog.Eyebrow"] = "LOG",
         ["AuditLog.Title"] = "Audit log",

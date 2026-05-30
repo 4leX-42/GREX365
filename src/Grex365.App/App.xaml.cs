@@ -120,6 +120,7 @@ public partial class App : Application
                 services.AddSingleton<IGroupsService, GraphGroupsService>();
                 services.AddSingleton<IDistributionListsService, DistributionListsService>();
                 services.AddSingleton<ISharedMailboxService, SharedMailboxService>();
+                services.AddSingleton<IExternalExoOps, ExternalExoOps>();
                 services.AddSingleton<IMailboxRulesService, MailboxRulesService>();
                 services.AddSingleton<IMailFlowRulesService, MailFlowRulesService>();
                 services.AddSingleton<IAuditService, GraphAuditService>();
