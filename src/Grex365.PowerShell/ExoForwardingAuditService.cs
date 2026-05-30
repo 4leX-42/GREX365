@@ -8,16 +8,32 @@ namespace Grex365.PowerShell;
 public sealed class ExoForwardingAuditService : IExoForwardingAuditService
 {
     private readonly IPowerShellRunner _runner;
+    private readonly IExchangeConnection? _exchange;
 
-    public ExoForwardingAuditService(IPowerShellRunner runner)
+    public ExoForwardingAuditService(IPowerShellRunner runner, IExchangeConnection? exchange = null)
     {
         _runner = runner;
+        _exchange = exchange;
+    }
+
+    // EXO cmdlets (Get-AcceptedDomain, Get-Mailbox, ...) fail with a cryptic
+    // "term not recognized" / "OrgIdHeaderNotPresent" error when there's no live
+    // Exchange Online session. Fail fast with an actionable message instead.
+    private void EnsureExchangeConnected()
+    {
+        if (_exchange is not null && !_exchange.IsConnected)
+        {
+            throw new InvalidOperationException(
+                "No hay conexión con Exchange Online. Conéctate (certificado) en la pestaña " +
+                "Conexión antes de ejecutar auditorías de correo.");
+        }
     }
 
     public async Task<IReadOnlyList<AuditFinding>> ScanExternalForwardingAsync(
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
+        EnsureExchangeConnected();
         progress?.Report(LogEntry.Info("ExoAudit", "Get-AcceptedDomain..."));
 
         const string domainsScript = """
@@ -79,6 +95,7 @@ public sealed class ExoForwardingAuditService : IExoForwardingAuditService
             throw new ArgumentOutOfRangeException(nameof(maxMailboxes), "Debe ser >= 1.");
         }
 
+        EnsureExchangeConnected();
         progress?.Report(LogEntry.Info("ExoAudit", "Get-AcceptedDomain..."));
         const string domainsScript = """
             param()
@@ -196,6 +213,7 @@ public sealed class ExoForwardingAuditService : IExoForwardingAuditService
             IProgress<LogEntry>? progress = null,
             CancellationToken cancellationToken = default)
     {
+        EnsureExchangeConnected();
         progress?.Report(LogEntry.Info("ExoAudit", "Get-AcceptedDomain..."));
         const string domainsScript = """
             param()
@@ -261,6 +279,7 @@ public sealed class ExoForwardingAuditService : IExoForwardingAuditService
             IProgress<LogEntry>? progress = null,
             CancellationToken cancellationToken = default)
     {
+        EnsureExchangeConnected();
         progress?.Report(LogEntry.Info("ExoAudit", "Enumerando shared mailboxes y estado AccountDisabled..."));
 
         const string script = """

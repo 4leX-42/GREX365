@@ -59,17 +59,24 @@ public sealed class GraphAuditService : IAuditService
             }, cancellationToken).ConfigureAwait(false);
         }
 
-        var iterator = PageIterator<User, UserCollectionResponse>.CreatePageIterator(
-            client,
-            response!,
-            user =>
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                analyzer.Visit(ToSnapshot(user));
-                return true;
-            });
+        if (response is not null)
+        {
+            var iterator = PageIterator<User, UserCollectionResponse>.CreatePageIterator(
+                client,
+                response,
+                user =>
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    analyzer.Visit(ToSnapshot(user));
+                    return true;
+                });
 
-        await iterator.IterateAsync(cancellationToken).ConfigureAwait(false);
+            await iterator.IterateAsync(cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            progress?.Report(LogEntry.Warn("Audit", "El endpoint /users devolvió una respuesta vacía."));
+        }
 
         var summary = analyzer.BuildSummary();
         var findings = analyzer.Findings.ToList();
@@ -110,16 +117,23 @@ public sealed class GraphAuditService : IAuditService
             req.Headers.Add("ConsistencyLevel", "eventual");
         }, cancellationToken).ConfigureAwait(false);
 
-        var iterator = PageIterator<Group, GroupCollectionResponse>.CreatePageIterator(
-            client,
-            response!,
-            group =>
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                groups.Add(group);
-                return true;
-            });
-        await iterator.IterateAsync(cancellationToken).ConfigureAwait(false);
+        if (response is not null)
+        {
+            var iterator = PageIterator<Group, GroupCollectionResponse>.CreatePageIterator(
+                client,
+                response,
+                group =>
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    groups.Add(group);
+                    return true;
+                });
+            await iterator.IterateAsync(cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            progress?.Report(LogEntry.Warn("Audit", "El endpoint /groups devolvió una respuesta vacía."));
+        }
 
         progress?.Report(LogEntry.Info("Audit", $"Analizando {groups.Count} grupos en paralelo..."));
 
@@ -771,9 +785,13 @@ public sealed class GraphAuditService : IAuditService
                     req.QueryParameters.Select = new[] { "id", "displayName", "userType", "userPrincipalName", "mail" };
                     req.QueryParameters.Top = 999;
                 }, ct).ConfigureAwait(false);
+                if (membersResp is null)
+                {
+                    return;
+                }
                 var guestIterator = PageIterator<DirectoryObject, DirectoryObjectCollectionResponse>.CreatePageIterator(
                     client,
-                    membersResp!,
+                    membersResp,
                     member =>
                     {
                         if (member is User u && string.Equals(u.UserType, "Guest", StringComparison.OrdinalIgnoreCase))
