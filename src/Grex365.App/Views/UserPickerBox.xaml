@@ -1,0 +1,44 @@
+<UserControl x:Class="Grex365.App.Views.UserPickerBox"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
+             x:Name="Root">
+    <Grid>
+        <ui:TextBox x:Name="Input"
+                    PlaceholderText="{Binding Placeholder, ElementName=Root}"
+                    TextChanged="Input_TextChanged"
+                    LostKeyboardFocus="Input_LostFocus" />
+        <Popup x:Name="Pop"
+               PlacementTarget="{Binding ElementName=Input}"
+               Placement="Bottom"
+               StaysOpen="False"
+               AllowsTransparency="True"
+               MinWidth="{Binding ActualWidth, ElementName=Input}">
+            <Border Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    MaxHeight="260"
+                    Margin="0,2,0,0">
+                <ListBox x:Name="List"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         MaxHeight="258"
+                         PreviewMouseLeftButtonUp="List_Pick"
+                         KeyDown="List_KeyDown"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type models:UserSummary}">
+                            <StackPanel Margin="4,3">
+                                <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" FontSize="13" />
+                                <TextBlock Text="{Binding UserPrincipalName}" FontSize="11"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>
