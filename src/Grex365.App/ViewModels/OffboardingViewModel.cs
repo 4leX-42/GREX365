@@ -190,7 +190,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
         IsBusy = true;
         NotifyCommands();
         StatusMessage = L10n.Get("Offboarding.Candidates.Searching");
-        AppendLog("Buscando candidatos (deshabilitados con licencia)…", "HEADER");
+        AppendLog("Buscando usuarios (deshabilitados con licencia)…", "HEADER");
         Candidates.Clear();
         try
         {
@@ -198,9 +198,9 @@ public sealed partial class OffboardingViewModel : ObservableObject
             foreach (var f in findings.Where(f => f.IsAutoFixable))
             {
                 Candidates.Add(new OffboardingTarget(f.Identity, f.Identity) { Status = f.Detail });
-                AppendLog($"candidato: {f.Identity} — {f.Detail}", "OK");
+                AppendLog($"usuario: {f.Identity} — {f.Detail}", "OK");
             }
-            AppendLog($"{Candidates.Count} candidatos encontrados.", "HEADER");
+            AppendLog($"{Candidates.Count} usuarios encontrados.", "HEADER");
             StatusMessage = L10n.Format("Offboarding.Candidates.Found", Candidates.Count);
         }
         catch (OperationCanceledException)
