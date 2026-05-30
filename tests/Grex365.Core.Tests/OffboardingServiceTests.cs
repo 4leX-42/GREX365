@@ -95,6 +95,35 @@ public class OffboardingServiceTests
     }
 
     [Fact]
+    public async Task AllStepsEnabled_RevokesSessions_AndConvertsBeforeRemovingLicense()
+    {
+        var users = UsersOk();
+        var mbx = MailboxOk();
+        var sut = new OffboardingService(users.Object, mbx.Object);
+
+        await sut.RunAsync("jane@a", new OffboardingOptions(true, true, true));
+
+        // Blocking sign-in must also revoke active sessions.
+        users.Verify(u => u.RevokeSignInSessionsAsync("uid", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ConvertFails_SkipsLicenseRemoval_ToAvoidStrandingMailbox()
+    {
+        var users = UsersOk();
+        var mbx = new Mock<ISharedMailboxService>();
+        mbx.Setup(s => s.ConvertToSharedAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("EXO down"));
+
+        var sut = new OffboardingService(users.Object, mbx.Object);
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(DisableAccount: false, RemoveLicenses: true, ConvertMailboxToShared: true));
+
+        r.Success.Should().BeFalse();
+        r.Steps.Should().Contain(s => s.Name.Contains("Quitar licencias") && s.Status == "OMITIDO");
+        users.Verify(u => u.RemoveAllLicensesAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
     public async Task MailboxFails_ReportsErrorButDoesNotThrow()
     {
         var users = UsersOk();

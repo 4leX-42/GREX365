@@ -44,12 +44,29 @@ public sealed class OffboardingService : IOffboardingService
         steps.Add(new OffboardingStep("Buscar usuario", "OK",
             $"{user.DisplayName} (enabled={user.AccountEnabled}, lic={user.AssignedLicenseCount})"));
 
+        // Step order follows Microsoft's "remove a former employee" guidance:
+        //   block sign-in (+ revoke sessions) → convert mailbox to shared → remove licenses.
+        // The mailbox MUST be converted to shared *while still licensed*; removing the
+        // license first starts a 30-day deletion clock and hides the convert option. We
+        // therefore convert before removing licenses and skip license removal if the
+        // conversion failed, so the mailbox is never stranded for deletion.
+
         if (options.DisableAccount)
         {
             try
             {
                 await _users.SetAccountEnabledAsync(user.Id, false, progress, cancellationToken).ConfigureAwait(false);
-                steps.Add(new OffboardingStep("Deshabilitar cuenta", "OK", "AccountEnabled=false"));
+                // Disabling alone doesn't invalidate already-issued tokens — revoke sessions too.
+                try
+                {
+                    await _users.RevokeSignInSessionsAsync(user.Id, progress, cancellationToken).ConfigureAwait(false);
+                    steps.Add(new OffboardingStep("Deshabilitar cuenta", "OK", "AccountEnabled=false; sesiones revocadas"));
+                }
+                catch (Exception revokeEx)
+                {
+                    steps.Add(new OffboardingStep("Deshabilitar cuenta", "OK",
+                        $"AccountEnabled=false; revoke sesiones falló: {revokeEx.Message}"));
+                }
             }
             catch (Exception ex)
             {
@@ -58,33 +75,47 @@ public sealed class OffboardingService : IOffboardingService
             }
         }
 
-        if (options.RemoveLicenses)
-        {
-            try
-            {
-                await _users.RemoveAllLicensesAsync(user.Id, progress, cancellationToken).ConfigureAwait(false);
-                steps.Add(new OffboardingStep("Quitar licencias", "OK",
-                    user.AssignedLicenseCount == 0 ? "Sin licencias asignadas" : $"{user.AssignedLicenseCount} licencias retiradas"));
-            }
-            catch (Exception ex)
-            {
-                steps.Add(new OffboardingStep("Quitar licencias", "ERROR", ex.Message));
-                success = false;
-            }
-        }
-
-        if (options.ConvertMailboxToShared)
+        var convertRequested = options.ConvertMailboxToShared;
+        var convertSucceeded = false;
+        if (convertRequested)
         {
             try
             {
                 var info = await _mailboxes.ConvertToSharedAsync(upn, progress, cancellationToken).ConfigureAwait(false);
                 var detail = info is null ? "Aplicado" : $"Tipo final: {info.RecipientTypeDetails}";
+                convertSucceeded = info is null || info.IsSharedMailbox;
                 steps.Add(new OffboardingStep("Mailbox->Shared", "OK", detail));
             }
             catch (Exception ex)
             {
                 steps.Add(new OffboardingStep("Mailbox->Shared", "ERROR", ex.Message));
                 success = false;
+            }
+        }
+
+        if (options.RemoveLicenses)
+        {
+            // Safety gate: never strip the license if a requested shared conversion failed —
+            // doing so would schedule the mailbox (and its data) for permanent deletion.
+            if (convertRequested && !convertSucceeded)
+            {
+                steps.Add(new OffboardingStep("Quitar licencias", "OMITIDO",
+                    "Conversión a buzón compartido falló; no se quitan licencias para evitar el borrado del buzón (30 días)."));
+                success = false;
+            }
+            else
+            {
+                try
+                {
+                    await _users.RemoveAllLicensesAsync(user.Id, progress, cancellationToken).ConfigureAwait(false);
+                    steps.Add(new OffboardingStep("Quitar licencias", "OK",
+                        user.AssignedLicenseCount == 0 ? "Sin licencias asignadas" : $"{user.AssignedLicenseCount} licencias retiradas"));
+                }
+                catch (Exception ex)
+                {
+                    steps.Add(new OffboardingStep("Quitar licencias", "ERROR", ex.Message));
+                    success = false;
+                }
             }
         }
 

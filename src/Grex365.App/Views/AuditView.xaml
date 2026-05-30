@@ -325,6 +325,21 @@
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
+                            <GridViewColumn Header="{l:L10n Key=Audit.Column.Actions}" Width="110">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <!-- Only 'Disabled+License' findings are auto-fixable (guided offboarding). -->
+                                        <ui:Button Content="{l:L10n Key=Audit.Action.Fix}"
+                                                   Appearance="Primary"
+                                                   FontSize="11"
+                                                   Padding="10,2"
+                                                   ToolTip="{l:L10n Key=Audit.Action.Fix.Tooltip}"
+                                                   Visibility="{Binding IsAutoFixable, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}"
+                                                   Command="{Binding DataContext.FixDisabledWithLicenseCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                                   CommandParameter="{Binding}" />
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
                         </GridView>
                     </ListView.View>
                 </ListView>

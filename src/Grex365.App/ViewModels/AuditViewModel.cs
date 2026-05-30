@@ -20,6 +20,10 @@ public sealed partial class AuditViewModel : ObservableObject
     private readonly IUiLogSink _log;
     private readonly IAuditFindingsStore _findingsStore;
     private readonly IGraphConnection? _graph;
+    private readonly IOffboardingService? _offboarding;
+    private readonly ISharedMailboxService? _mailboxes;
+    private readonly IDialogService? _dialogs;
+    private readonly IRbacGuard? _rbac;
     private CancellationTokenSource? _cts;
 
     [ObservableProperty] private AuditSummary? _summary;
@@ -46,13 +50,21 @@ public sealed partial class AuditViewModel : ObservableObject
         IExoForwardingAuditService exoAudit,
         IUiLogSink log,
         IAuditFindingsStore findingsStore,
-        IGraphConnection? graph = null)
+        IGraphConnection? graph = null,
+        IOffboardingService? offboarding = null,
+        ISharedMailboxService? mailboxes = null,
+        IDialogService? dialogs = null,
+        IRbacGuard? rbac = null)
     {
         _audit = audit;
         _exoAudit = exoAudit;
         _log = log;
         _findingsStore = findingsStore;
         _graph = graph;
+        _offboarding = offboarding;
+        _mailboxes = mailboxes;
+        _dialogs = dialogs;
+        _rbac = rbac;
         FindingsView = CollectionViewSource.GetDefaultView(Findings);
         FindingsView.Filter = FindingsFilterPredicate;
         Findings.CollectionChanged += (_, _) => RecomputeCounts();
@@ -657,6 +669,137 @@ public sealed partial class AuditViewModel : ObservableObject
 
     private bool CanRun() => !IsBusy;
     private bool CanCancel() => IsBusy;
+
+    // Guided corrective flow for a "Disabled+License" finding: block sign-in + revoke
+    // sessions → convert mailbox to shared (preserves mail) → release licenses. Follows
+    // Microsoft's recommended order; the account stays disabled as the shared-mailbox anchor.
+    [RelayCommand]
+    private async Task FixDisabledWithLicenseAsync(AuditFinding? finding)
+    {
+        if (finding is null || !finding.IsAutoFixable)
+        {
+            StatusMessage = L10n.Get("Audit.Fix.NotApplicable");
+            return;
+        }
+        if (_offboarding is null || _dialogs is null)
+        {
+            return;
+        }
+        if (IsBusy)
+        {
+            return;
+        }
+
+        var upn = finding.Identity;
+        if (string.IsNullOrWhiteSpace(upn) || upn.StartsWith('('))
+        {
+            StatusMessage = L10n.Get("Audit.Fix.NotApplicable");
+            return;
+        }
+
+        if (_rbac is not null)
+        {
+            var decision = await _rbac.EvaluateAsync().ConfigureAwait(true);
+            if (!decision.Allowed)
+            {
+                StatusMessage = decision.Reason;
+                _log.Progress.Report(LogEntry.Warn("RBAC", $"Corrección offboarding bloqueada: {decision.Reason}"));
+                return;
+            }
+        }
+
+        // Best-effort pre-check to surface blockers (size / holds / already-shared) and to
+        // decide whether the convert step is needed at all.
+        MailboxInfo? mailbox = null;
+        if (_mailboxes is not null)
+        {
+            try
+            {
+                mailbox = await _mailboxes.GetMailboxAsync(upn, _log.Progress).ConfigureAwait(true);
+            }
+            catch (Exception ex)
+            {
+                _log.Progress.Report(LogEntry.Warn("Audit", $"Pre-check buzón {upn}: {ex.Message}"));
+            }
+        }
+
+        var alreadyShared = mailbox?.IsSharedMailbox == true;
+        var warnings = string.Empty;
+        if (mailbox is null)
+        {
+            warnings += L10n.Get("Audit.Fix.NoMailbox");
+        }
+        else
+        {
+            if (alreadyShared)
+            {
+                warnings += L10n.Get("Audit.Fix.AlreadyShared");
+            }
+            if (mailbox.ExceedsUnlicensedSharedLimit)
+            {
+                warnings += L10n.Format("Audit.Fix.Warn.Oversize", mailbox.TotalItemSizeGb ?? 0);
+            }
+            if (mailbox.HasBlockingHold)
+            {
+                warnings += L10n.Get("Audit.Fix.Warn.Hold");
+            }
+        }
+
+        var ok = await _dialogs.ConfirmAsync(
+            L10n.Format("Audit.Fix.Body", upn, warnings),
+            L10n.Get("Audit.Fix.Title"),
+            DialogIcon.Warning).ConfigureAwait(true);
+        if (!ok)
+        {
+            StatusMessage = L10n.Get("Common.Status.CancelledByUser");
+            return;
+        }
+
+        _cts = new CancellationTokenSource();
+        IsBusy = true;
+        NotifyAllCommands();
+        StatusMessage = L10n.Format("Audit.Fix.Running", upn);
+        try
+        {
+            // Convert only when the mailbox isn't already shared. The service still gates
+            // license removal on a successful conversion when convert is requested.
+            var options = new OffboardingOptions(
+                DisableAccount: true,
+                RemoveLicenses: true,
+                ConvertMailboxToShared: !alreadyShared);
+
+            var result = await _offboarding.RunAsync(upn, options, _log.Progress, _cts.Token).ConfigureAwait(true);
+            var okSteps = result.Steps.Count(s => s.Status == "OK");
+            StatusMessage = L10n.Format("Audit.Fix.Done", upn, okSteps, result.Steps.Count);
+
+            if (result.Success)
+            {
+                // Drop the resolved finding from the live list so the view reflects the fix.
+                var stale = Findings.FirstOrDefault(f => f.IsAutoFixable &&
+                    string.Equals(f.Identity, upn, StringComparison.OrdinalIgnoreCase));
+                if (stale is not null)
+                {
+                    Findings.Remove(stale);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = L10n.Get("Common.Status.Cancelled");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
+            _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
+        }
+        finally
+        {
+            IsBusy = false;
+            _cts?.Dispose();
+            _cts = null;
+            NotifyAllCommands();
+        }
+    }
 
     // ---- Pre-canned scenarios (combos) -----------------------------------
 

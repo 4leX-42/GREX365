@@ -17,11 +17,30 @@ public sealed class SharedMailboxService : ISharedMailboxService
         const string script = """
             param([string]$Identity)
             $m = Get-Mailbox -Identity $Identity -ErrorAction Stop
+            $bytes = $null
+            try {
+                $stats = Get-MailboxStatistics -Identity $Identity -ErrorAction Stop
+                if ($stats -and $stats.TotalItemSize) {
+                    $s = $stats.TotalItemSize.ToString()
+                    if ($s -match '\(([\d,]+) bytes\)') {
+                        $bytes = [int64]($matches[1] -replace ',','')
+                    }
+                }
+            } catch { }
+            $holds = 0
+            if ($m.InPlaceHolds) { $holds = @($m.InPlaceHolds).Count }
+            $archive = $false
+            if ($m.ArchiveStatus -and [string]$m.ArchiveStatus -ne 'None') { $archive = $true }
+            elseif ($m.ArchiveGuid -and [string]$m.ArchiveGuid -ne '00000000-0000-0000-0000-000000000000') { $archive = $true }
             [PSCustomObject]@{
                 Identity            = [string]$m.Identity
                 DisplayName         = [string]$m.DisplayName
                 PrimarySmtpAddress  = [string]$m.PrimarySmtpAddress
                 RecipientTypeDetails = [string]$m.RecipientTypeDetails
+                LitigationHoldEnabled = [bool]$m.LitigationHoldEnabled
+                InPlaceHoldCount    = [int]$holds
+                ArchiveEnabled      = [bool]$archive
+                TotalItemBytes      = $bytes
             }
             """;
 
@@ -288,7 +307,16 @@ public sealed class SharedMailboxService : ISharedMailboxService
                 Identity: ps.Properties["Identity"]?.Value?.ToString() ?? string.Empty,
                 DisplayName: ps.Properties["DisplayName"]?.Value?.ToString() ?? string.Empty,
                 PrimarySmtpAddress: ps.Properties["PrimarySmtpAddress"]?.Value?.ToString() ?? string.Empty,
-                RecipientTypeDetails: ps.Properties["RecipientTypeDetails"]?.Value?.ToString() ?? string.Empty);
+                RecipientTypeDetails: ps.Properties["RecipientTypeDetails"]?.Value?.ToString() ?? string.Empty,
+                LitigationHoldEnabled: ps.Properties["LitigationHoldEnabled"]?.Value is bool lh && lh,
+                InPlaceHoldCount: ps.Properties["InPlaceHoldCount"]?.Value is int ih ? ih : 0,
+                ArchiveEnabled: ps.Properties["ArchiveEnabled"]?.Value is bool ar && ar,
+                TotalItemBytes: ps.Properties["TotalItemBytes"]?.Value switch
+                {
+                    long l => l,
+                    int i => i,
+                    _ => long.TryParse(ps.Properties["TotalItemBytes"]?.Value?.ToString(), out var parsed) ? parsed : (long?)null,
+                });
         }
 
         var t = raw?.GetType();

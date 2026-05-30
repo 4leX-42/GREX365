@@ -38,7 +38,7 @@ public sealed class IdentityAuditAnalyzer
         {
             _totals.DisabledWithLicense++;
             _findings.Add(new AuditFinding(
-                "Disabled+License", upn,
+                AuditFinding.DisabledWithLicenseCategory, upn,
                 $"Deshabilitado con {user.AssignedLicenseCount} licencias asignadas", "WARN"));
         }
 
