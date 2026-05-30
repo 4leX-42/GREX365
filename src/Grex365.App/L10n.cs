@@ -424,7 +424,7 @@ public static class L10n
         ["Offboarding.Batch.NoTargets"] = "Añade al menos un usuario a la cola.",
         ["Offboarding.Batch.Confirm"] = "Se aplicará el offboarding a {0} usuario(s) en cola. ¿Continuar?",
         ["Offboarding.Batch.Summary"] = "Hecho: {0} OK · {1} ERROR / {2} usuarios.",
-        ["Offboarding.Log.Title"] = "Registro en vivo",
+        ["Offboarding.Log.Title"] = "Log",
         ["Offboarding.Log.Clear"] = "Limpiar",
 
         ["DomainCheck.Eyebrow"] = "DOMINIO",
@@ -1315,7 +1315,7 @@ public static class L10n
         ["Offboarding.Batch.NoTargets"] = "Add at least one user to the queue.",
         ["Offboarding.Batch.Confirm"] = "Offboarding will be applied to {0} queued user(s). Continue?",
         ["Offboarding.Batch.Summary"] = "Done: {0} OK · {1} ERROR / {2} users.",
-        ["Offboarding.Log.Title"] = "Live log",
+        ["Offboarding.Log.Title"] = "Log",
         ["Offboarding.Log.Clear"] = "Clear",
 
         ["DomainCheck.Eyebrow"] = "DOMAIN",

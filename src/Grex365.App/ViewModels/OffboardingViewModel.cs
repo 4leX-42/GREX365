@@ -25,6 +25,9 @@ public sealed partial class OffboardingTarget : ObservableObject
     [ObservableProperty] private string _status = "PENDIENTE";
 }
 
+// One coloured line in the live log console.
+public sealed record LogLine(string Time, string Text, string Level);
+
 public sealed partial class OffboardingViewModel : ObservableObject
 {
     private readonly IOffboardingService _service;
@@ -53,7 +56,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
     public ObservableCollection<UserSummary> Suggestions { get; } = new();
     public ObservableCollection<OffboardingTarget> Candidates { get; } = new();
     public ObservableCollection<OffboardingTarget> Targets { get; } = new();
-    public ObservableCollection<string> LiveLog { get; } = new();
+    public ObservableCollection<LogLine> LiveLog { get; } = new();
 
     public OffboardingViewModel(
         IOffboardingService service,
@@ -76,17 +79,25 @@ public sealed partial class OffboardingViewModel : ObservableObject
     // ---------- live log ----------
     private const int MaxLogLines = 600;
 
-    private void AppendLog(string line)
+    private void AppendLog(string text, string level = "INFO")
     {
         var dispatcher = Application.Current?.Dispatcher;
         if (dispatcher is not null && !dispatcher.CheckAccess())
         {
-            dispatcher.InvokeAsync(() => AppendLog(line));
+            dispatcher.InvokeAsync(() => AppendLog(text, level));
             return;
         }
-        LiveLog.Add($"{DateTime.Now:HH:mm:ss}  {line}");
+        LiveLog.Add(new LogLine(DateTime.Now.ToString("HH:mm:ss"), text, level));
         while (LiveLog.Count > MaxLogLines) LiveLog.RemoveAt(0);
     }
+
+    private static string LevelFromStatus(string status) => status switch
+    {
+        "OK" => "OK",
+        "ERROR" => "ERROR",
+        "OMITIDO" => "WARN",
+        _ => "INFO",
+    };
 
     [RelayCommand]
     private void ClearLog() => LiveLog.Clear();
@@ -95,8 +106,15 @@ public sealed partial class OffboardingViewModel : ObservableObject
     // global log panel.
     private IProgress<LogEntry> LiveProgress() => new Progress<LogEntry>(e =>
     {
-        var sev = (e.Severity.ToString().ToUpperInvariant() + "    ")[..4];
-        AppendLog($"{sev} [{e.Source}] {e.Message}");
+        var level = e.Severity switch
+        {
+            LogSeverity.Ok => "OK",
+            LogSeverity.Warning => "WARN",
+            LogSeverity.Error => "ERROR",
+            LogSeverity.Debug => "DEBUG",
+            _ => "INFO",
+        };
+        AppendLog($"[{e.Source}] {e.Message}", level);
         _log.Progress.Report(e);
     });
 
@@ -257,11 +275,12 @@ public sealed partial class OffboardingViewModel : ObservableObject
             {
                 _cts.Token.ThrowIfCancellationRequested();
                 target.Status = "RUNNING";
-                AppendLog($"════ {target.Upn} ════");
+                AppendLog($"════ {target.Upn} ════", "HEADER");
                 StatusMessage = L10n.Format("Offboarding.Status.Running", target.Upn);
 
                 var options = new OffboardingOptions(DisableAccount, RemoveLicenses, ConvertMailboxToShared);
-                var stepProgress = new Progress<OffboardingStep>(s => AppendLog($"   [{s.Status}] {s.Name} — {s.Detail}"));
+                var stepProgress = new Progress<OffboardingStep>(s =>
+                    AppendLog($"   [{s.Status}] {s.Name} — {s.Detail}", LevelFromStatus(s.Status)));
 
                 try
                 {
@@ -271,9 +290,9 @@ public sealed partial class OffboardingViewModel : ObservableObject
                     var del = !string.IsNullOrWhiteSpace(target.DelegateTo) ? target.DelegateTo : DelegateToAll;
                     if (result.Success && !string.IsNullOrWhiteSpace(del) && _mailboxes is not null)
                     {
-                        AppendLog($"   delegando buzón → {del.Trim()} (FullAccess)…");
+                        AppendLog($"   delegando buzón → {del.Trim()} (FullAccess)…", "INFO");
                         var pr = await _mailboxes.ApplyPermissionAsync("add", "FullAccess", target.Upn, del.Trim(), live, _cts.Token).ConfigureAwait(true);
-                        AppendLog($"   [{pr.Status}] delegación FullAccess — {pr.Detail}");
+                        AppendLog($"   [{pr.Status}] delegación FullAccess — {pr.Detail}", LevelFromStatus(pr.Status));
                         if (pr.Status != "OK") result = result with { Success = false };
                     }
 
@@ -285,16 +304,16 @@ public sealed partial class OffboardingViewModel : ObservableObject
                 {
                     target.Status = "ERROR";
                     errCount++;
-                    AppendLog($"   ERROR: {ex.Message}");
+                    AppendLog($"   ERROR: {ex.Message}", "ERROR");
                 }
             }
             StatusMessage = L10n.Format("Offboarding.Batch.Summary", okCount, errCount, Targets.Count);
-            AppendLog($"── fin: {okCount} OK · {errCount} ERROR / {Targets.Count} ──");
+            AppendLog($"── fin: {okCount} OK · {errCount} ERROR / {Targets.Count} ──", "HEADER");
         }
         catch (OperationCanceledException)
         {
             StatusMessage = L10n.Get("Common.Status.Cancelled");
-            AppendLog("── cancelado ──");
+            AppendLog("── cancelado ──", "WARN");
         }
         finally
         {

@@ -41,15 +41,17 @@ public sealed class GraphAuditService : IAuditService
                 req.Headers.Add("ConsistencyLevel", "eventual");
             }, cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception ex) when (IsAuditLogPermissionError(ex))
+        catch (Exception ex)
         {
-            // Info, not Warn: this is expected degradation, not a failure. A Warn here would
-            // pop a snackbar on every run. The condition is still surfaced as a finding row
-            // below, so the admin sees it without a toast.
+            // The signInActivity field needs AuditLog.Read.All. Without it Graph returns a
+            // bare 403 Forbidden whose message often does NOT contain "AuditLog.Read.All",
+            // so we can't rely on string matching — ANY failure of the enriched query falls
+            // back to the same query without signInActivity. Info, not Warn (no toast); the
+            // condition is surfaced as a finding row below.
             progress?.Report(LogEntry.Info(
                 "Audit",
-                "Falta el permiso AuditLog.Read.All. Stale-user detection deshabilitado. " +
-                "Concede admin consent al permiso AuditLog.Read.All en la App Registration."));
+                $"signInActivity no disponible ({ex.Message}). Detección de inactividad deshabilitada " +
+                "(requiere AuditLog.Read.All). Reintentando sin actividad de sign-in..."));
             signInActivityAvailable = false;
             response = await client.Users.GetAsync(req =>
             {
