@@ -33,6 +33,34 @@ public sealed partial class OffboardingViewModel : ObservableObject
         _dialogs = dialogs;
     }
 
+    // Upserts a streamed step by Name so RUNNING→OK/ERROR updates in place (UI thread).
+    private void UpsertStep(OffboardingStep step)
+    {
+        for (var i = 0; i < Steps.Count; i++)
+        {
+            if (string.Equals(Steps[i].Name, step.Name, StringComparison.Ordinal))
+            {
+                Steps[i] = step;
+                return;
+            }
+        }
+        Steps.Add(step);
+    }
+
+    // Entry point used by Audit "Corregir": preset the recommended corrective options and
+    // run, so the work happens here in the dedicated Offboarding section.
+    public async Task RunCorrectiveAsync(string upn)
+    {
+        Upn = upn;
+        DisableAccount = true;
+        RemoveLicenses = true;
+        ConvertMailboxToShared = true;
+        if (RunCommand.CanExecute(null))
+        {
+            await RunCommand.ExecuteAsync(null).ConfigureAwait(true);
+        }
+    }
+
     [RelayCommand(CanExecute = nameof(CanRun))]
     private async Task RunAsync()
     {
@@ -82,11 +110,13 @@ public sealed partial class OffboardingViewModel : ObservableObject
         try
         {
             var options = new OffboardingOptions(DisableAccount, RemoveLicenses, ConvertMailboxToShared);
-            var result = await _service.RunAsync(Upn.Trim(), options, _log.Progress, cancellationToken: _cts.Token).ConfigureAwait(true);
+            var stepProgress = new Progress<OffboardingStep>(UpsertStep);
+            var result = await _service.RunAsync(Upn.Trim(), options, _log.Progress, stepProgress, _cts.Token).ConfigureAwait(true);
             Result = result;
-            foreach (var step in result.Steps)
+            // If nothing streamed live (e.g. a non-streaming service), fall back to the final list.
+            if (Steps.Count == 0)
             {
-                Steps.Add(step);
+                foreach (var step in result.Steps) Steps.Add(step);
             }
             StatusMessage = result.Success
                 ? L10n.Format("Offboarding.Status.SuccessSummary", result.Steps.Count)

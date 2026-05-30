@@ -25,6 +25,7 @@ public sealed partial class AuditViewModel : ObservableObject
     private readonly IExternalExoOps? _externalExo;
     private readonly IDialogService? _dialogs;
     private readonly IRbacGuard? _rbac;
+    private readonly IServiceProvider? _services;
     private CancellationTokenSource? _cts;
 
     [ObservableProperty] private AuditSummary? _summary;
@@ -46,30 +47,6 @@ public sealed partial class AuditViewModel : ObservableObject
     public ObservableCollection<AuditFinding> Findings { get; } = new();
     public ICollectionView FindingsView { get; }
 
-    // Live corrective-action panel (independent side panel; not a modal dialog).
-    [ObservableProperty] private bool _correctivePanelVisible;
-    [ObservableProperty] private bool _correctiveRunning;
-    [ObservableProperty] private string _correctiveUser = string.Empty;
-    [ObservableProperty] private string _correctiveSummary = string.Empty;
-    public ObservableCollection<OffboardingStep> CorrectiveSteps { get; } = new();
-
-    // Upserts a streamed step by Name so RUNNING→OK/ERROR updates in place (UI thread).
-    private void UpsertStep(OffboardingStep step)
-    {
-        for (var i = 0; i < CorrectiveSteps.Count; i++)
-        {
-            if (string.Equals(CorrectiveSteps[i].Name, step.Name, StringComparison.Ordinal))
-            {
-                CorrectiveSteps[i] = step;
-                return;
-            }
-        }
-        CorrectiveSteps.Add(step);
-    }
-
-    [RelayCommand]
-    private void CloseCorrectivePanel() => CorrectivePanelVisible = false;
-
     public AuditViewModel(
         IAuditService audit,
         IExoForwardingAuditService exoAudit,
@@ -80,7 +57,8 @@ public sealed partial class AuditViewModel : ObservableObject
         ISharedMailboxService? mailboxes = null,
         IDialogService? dialogs = null,
         IRbacGuard? rbac = null,
-        IExternalExoOps? externalExo = null)
+        IExternalExoOps? externalExo = null,
+        IServiceProvider? services = null)
     {
         _audit = audit;
         _exoAudit = exoAudit;
@@ -92,6 +70,7 @@ public sealed partial class AuditViewModel : ObservableObject
         _dialogs = dialogs;
         _rbac = rbac;
         _externalExo = externalExo;
+        _services = services;
         FindingsView = CollectionViewSource.GetDefaultView(Findings);
         FindingsView.Filter = FindingsFilterPredicate;
         Findings.CollectionChanged += (_, _) => RecomputeCounts();
@@ -697,9 +676,11 @@ public sealed partial class AuditViewModel : ObservableObject
     private bool CanRun() => !IsBusy;
     private bool CanCancel() => IsBusy;
 
-    // Guided corrective flow for a "Disabled+License" finding: block sign-in + revoke
-    // sessions → convert mailbox to shared (preserves mail) → release licenses. Follows
-    // Microsoft's recommended order; the account stays disabled as the shared-mailbox anchor.
+    // Guided corrective flow for a "Disabled+License" finding. Hands off to the dedicated
+    // Offboarding section (sidebar) and runs there with live, professional step feedback —
+    // not a transient overlay. Follows Microsoft's recommended order: block sign-in + revoke
+    // sessions → convert mailbox to shared (preserves mail) → release licenses; the account
+    // stays disabled as the shared-mailbox anchor.
     [RelayCommand]
     private async Task FixDisabledWithLicenseAsync(AuditFinding? finding)
     {
@@ -708,136 +689,39 @@ public sealed partial class AuditViewModel : ObservableObject
             StatusMessage = L10n.Get("Audit.Fix.NotApplicable");
             return;
         }
-        if (_offboarding is null || _dialogs is null)
-        {
-            return;
-        }
-        if (IsBusy)
-        {
-            return;
-        }
-
         var upn = finding.Identity;
-        if (string.IsNullOrWhiteSpace(upn) || upn.StartsWith('('))
+        if (string.IsNullOrWhiteSpace(upn) || upn.StartsWith('(') || _services is null)
         {
             StatusMessage = L10n.Get("Audit.Fix.NotApplicable");
             return;
         }
 
-        if (_rbac is not null)
+        var offVm = (OffboardingViewModel?)_services.GetService(typeof(OffboardingViewModel));
+        var main = (MainViewModel?)_services.GetService(typeof(MainViewModel));
+        if (offVm is null || main is null)
         {
-            var decision = await _rbac.EvaluateAsync().ConfigureAwait(true);
-            if (!decision.Allowed)
-            {
-                StatusMessage = decision.Reason;
-                _log.Progress.Report(LogEntry.Warn("RBAC", $"Corrección offboarding bloqueada: {decision.Reason}"));
-                return;
-            }
-        }
-
-        // Quick confirmation (the detailed plan + warnings now stream live in the panel).
-        var ok = await _dialogs.ConfirmAsync(
-            L10n.Format("Audit.Fix.Body", upn, string.Empty),
-            L10n.Get("Audit.Fix.Title"),
-            DialogIcon.Warning).ConfigureAwait(true);
-        if (!ok)
-        {
-            StatusMessage = L10n.Get("Common.Status.CancelledByUser");
             return;
         }
 
-        // Open the independent live panel.
-        CorrectiveSteps.Clear();
-        CorrectiveUser = upn;
-        CorrectiveSummary = string.Empty;
-        CorrectiveRunning = true;
-        CorrectivePanelVisible = true;
+        // Navigate to the Offboarding section so the corrective run is visible there.
+        var target = main.NavigationItems.FirstOrDefault(i => i.ViewModelType == typeof(OffboardingViewModel));
+        if (target is not null)
+        {
+            main.SelectedNavigation = target;
+        }
 
-        _cts = new CancellationTokenSource();
-        IsBusy = true;
-        NotifyAllCommands();
         StatusMessage = L10n.Format("Audit.Fix.Running", upn);
+        await offVm.RunCorrectiveAsync(upn).ConfigureAwait(true);
 
-        // Progress captured on the UI thread → callbacks marshal back here, safe for the
-        // ObservableCollection bound to the panel.
-        var stepProgress = new Progress<OffboardingStep>(UpsertStep);
-
-        try
+        // Drop the finding once the dedicated section reports success.
+        if (offVm.Result?.Success == true)
         {
-            // Step 1 (visible): pre-check the mailbox so we surface holds/size/already-shared.
-            UpsertStep(new OffboardingStep("Pre-check buzón", "RUNNING", "…"));
-            MailboxInfo? mailbox = null;
-            try
+            var stale = Findings.FirstOrDefault(f => f.IsAutoFixable &&
+                string.Equals(f.Identity, upn, StringComparison.OrdinalIgnoreCase));
+            if (stale is not null)
             {
-                if (_externalExo is not null)
-                {
-                    mailbox = await _externalExo.GetMailboxFactsAsync(upn, _log.Progress, _cts.Token).ConfigureAwait(true);
-                }
-                else if (_mailboxes is not null)
-                {
-                    mailbox = await _mailboxes.GetMailboxAsync(upn, _log.Progress).ConfigureAwait(true);
-                }
+                Findings.Remove(stale);
             }
-            catch (Exception ex)
-            {
-                _log.Progress.Report(LogEntry.Info("Audit", $"Pre-check buzón {upn} no disponible: {ex.Message}"));
-            }
-
-            var alreadyShared = mailbox?.IsSharedMailbox == true;
-            if (mailbox is null)
-            {
-                UpsertStep(new OffboardingStep("Pre-check buzón", "OMITIDO", "No se pudo leer el buzón (¿Exchange?). Continuando; si la conversión falla NO se quitan licencias."));
-            }
-            else
-            {
-                var facts = $"Tipo={mailbox.RecipientTypeDetails}";
-                if (mailbox.TotalItemSizeGb is { } gb) facts += $" · {gb} GB";
-                if (mailbox.HasBlockingHold) facts += " · ⚠ retención (hold)";
-                if (mailbox.ExceedsUnlicensedSharedLimit) facts += " · ⚠ >50 GB";
-                UpsertStep(new OffboardingStep("Pre-check buzón", "OK", facts));
-            }
-
-            var options = new OffboardingOptions(
-                DisableAccount: true,
-                RemoveLicenses: true,
-                ConvertMailboxToShared: !alreadyShared);
-
-            var result = await _offboarding.RunAsync(upn, options, _log.Progress, stepProgress, _cts.Token).ConfigureAwait(true);
-
-            var okSteps = result.Steps.Count(s => s.Status == "OK");
-            CorrectiveSummary = result.Success
-                ? L10n.Format("Audit.Fix.Done", upn, okSteps, result.Steps.Count)
-                : L10n.Format("Audit.Fix.Failed", upn);
-            StatusMessage = CorrectiveSummary;
-
-            if (result.Success)
-            {
-                var stale = Findings.FirstOrDefault(f => f.IsAutoFixable &&
-                    string.Equals(f.Identity, upn, StringComparison.OrdinalIgnoreCase));
-                if (stale is not null)
-                {
-                    Findings.Remove(stale);
-                }
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            CorrectiveSummary = L10n.Get("Common.Status.Cancelled");
-            StatusMessage = CorrectiveSummary;
-        }
-        catch (Exception ex)
-        {
-            CorrectiveSummary = L10n.Format("Common.Status.Error", ex.Message);
-            StatusMessage = CorrectiveSummary;
-            _log.Progress.Report(LogEntry.Error("Audit", ex.Message, ex));
-        }
-        finally
-        {
-            CorrectiveRunning = false;
-            IsBusy = false;
-            _cts?.Dispose();
-            _cts = null;
-            NotifyAllCommands();
         }
     }
 

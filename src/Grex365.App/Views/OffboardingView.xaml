@@ -61,16 +61,42 @@
                     <ItemsControl ItemsSource="{Binding Steps}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type models:OffboardingStep}">
-                                <Grid Margin="0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="200" />
-                                        <ColumnDefinition Width="80" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{Binding Name}" FontWeight="SemiBold" />
-                                    <TextBlock Grid.Column="1" Text="{Binding Status}" />
-                                    <TextBlock Grid.Column="2" Text="{Binding Detail}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
-                                </Grid>
+                                <Border CornerRadius="6" Padding="12,9" Margin="0,3"
+                                        Background="{DynamicResource SubtleFillColorSecondaryBrush}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="86" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <!-- Status badge, colored by state -->
+                                        <Border Grid.Column="0" CornerRadius="4" Padding="6,2" Margin="0,0,12,0"
+                                                HorizontalAlignment="Left" VerticalAlignment="Top">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#553B82F6" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Status}" Value="OK">
+                                                            <Setter Property="Background" Value="#5522C55E" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="ERROR">
+                                                            <Setter Property="Background" Value="#55EF4444" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="OMITIDO">
+                                                            <Setter Property="Background" Value="#55F59E0B" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding Status}" FontSize="10" FontWeight="Bold"
+                                                       HorizontalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" />
+                                            <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" FontSize="12"
+                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
