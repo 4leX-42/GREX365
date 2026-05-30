@@ -25,7 +25,7 @@
                                    Command="{Binding GoToCommand}"
                                    CommandParameter="Nav.Connection">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
+                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
                                 <TextBlock Text="{l:L10n Key=Dashboard.Action.Connect}" />
                             </StackPanel>
                         </ui:Button>
@@ -33,7 +33,7 @@
                                    Command="{Binding GoToCommand}"
                                    CommandParameter="Nav.Licenses">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
+                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
                                 <TextBlock Text="{l:L10n Key=Dashboard.Action.Licenses}" />
                             </StackPanel>
                         </ui:Button>
@@ -41,7 +41,7 @@
                                    Command="{Binding GoToCommand}"
                                    CommandParameter="Nav.Users">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
+                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
                                 <TextBlock Text="{l:L10n Key=Dashboard.Action.SearchUser}" />
                             </StackPanel>
                         </ui:Button>
@@ -49,7 +49,7 @@
                                    Command="{Binding GoToCommand}"
                                    CommandParameter="Nav.Audit">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
+                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
                                 <TextBlock Text="{l:L10n Key=Dashboard.Action.Audit}" />
                             </StackPanel>
                         </ui:Button>
@@ -57,7 +57,7 @@
                                    Command="{Binding GoToCommand}"
                                    CommandParameter="Nav.Offboarding">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
+                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
                                 <TextBlock Text="{l:L10n Key=Dashboard.Action.Offboarding}" />
                             </StackPanel>
                         </ui:Button>
@@ -71,7 +71,7 @@
                 <Border Style="{StaticResource MetricCard}" RenderTransformOrigin="0.5,0.5">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text=""
+                            <TextBlock Text=""
                                        FontFamily="{StaticResource IconFontFamily}"
                                        FontSize="14"
                                        Margin="0,0,8,0"
@@ -91,7 +91,7 @@
                 <Border Style="{StaticResource MetricCard}" RenderTransformOrigin="0.5,0.5">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text=""
+                            <TextBlock Text=""
                                        FontFamily="{StaticResource IconFontFamily}"
                                        FontSize="14"
                                        Margin="0,0,8,0"

@@ -264,7 +264,7 @@
                                 VerticalAlignment="Center"
                                 Margin="0,40"
                                 Visibility="{Binding Findings.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=invert}">
-                        <TextBlock Text=""
+                        <TextBlock Text=""
                                    FontFamily="{StaticResource IconFontFamily}"
                                    FontSize="48"
                                    HorizontalAlignment="Center"

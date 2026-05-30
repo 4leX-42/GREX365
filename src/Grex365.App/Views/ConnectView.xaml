@@ -27,7 +27,7 @@
 
                     <StackPanel Grid.Column="0" Margin="0,0,12,0">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                            <TextBlock Text=""
+                            <TextBlock Text=""
                                        FontFamily="{StaticResource IconFontFamily}"
                                        FontSize="16"
                                        Margin="0,0,8,0"
@@ -45,7 +45,7 @@
 
                     <StackPanel Grid.Column="1" Margin="12,0,0,0">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                            <TextBlock Text=""
+                            <TextBlock Text=""
                                        FontFamily="{StaticResource IconFontFamily}"
                                        FontSize="16"
                                        Margin="0,0,8,0"
@@ -71,13 +71,13 @@
                                    Appearance="Primary"
                                    Command="{Binding ConnectCommand}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
+                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
                                 <TextBlock Text="{l:L10n Key=Connect.Button.Connect}" />
                             </StackPanel>
                         </ui:Button>
                         <ui:Button Margin="0,0,8,0" Command="{Binding CancelCommand}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
+                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
                                 <TextBlock Text="{l:L10n Key=Connect.Button.Cancel}" />
                             </StackPanel>
                         </ui:Button>
@@ -88,7 +88,7 @@
                         </ui:Button>
                         <ui:Button Margin="0,0,8,0" Command="{Binding DisconnectCommand}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
+                                <TextBlock Text="" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,8,0" />
                                 <TextBlock Text="{l:L10n Key=Connect.Button.Disconnect}" />
                             </StackPanel>
                         </ui:Button>

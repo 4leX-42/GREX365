@@ -216,7 +216,7 @@
                                 VerticalAlignment="Center"
                                 Margin="0,24"
                                 Visibility="{Binding SelectedGroup, Converter={StaticResource NullToCollapsedConverter}, ConverterParameter=invert, FallbackValue=Visible}">
-                        <TextBlock Text=""
+                        <TextBlock Text=""
                                    FontFamily="{StaticResource IconFontFamily}"
                                    FontSize="40"
                                    HorizontalAlignment="Center"

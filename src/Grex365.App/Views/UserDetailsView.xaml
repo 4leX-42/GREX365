@@ -227,7 +227,7 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0"
-                                               Text=""
+                                               Text=""
                                                FontFamily="{StaticResource IconFontFamily}"
                                                FontSize="12"
                                                Foreground="{DynamicResource TextFillColorTertiaryBrush}"
