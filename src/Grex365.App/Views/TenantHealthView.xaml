@@ -188,6 +188,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:LicenseCard}">
                                 <Border Style="{StaticResource SettingsCard}">
+                                  <StackPanel>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
@@ -239,6 +240,14 @@
                                                    HorizontalAlignment="Right"
                                                    Foreground="{Binding UtilizationLevel, Converter={StaticResource UtilizationToBrushConverter}}" />
                                     </Grid>
+                                    <!-- Premium SKUs (E3/E5, Business Premium): light sky-blue underline -->
+                                    <Border Height="2"
+                                            Margin="0,10,0,0"
+                                            CornerRadius="1"
+                                            HorizontalAlignment="Stretch"
+                                            Background="#38BDF8"
+                                            Visibility="{Binding IsPremium, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}" />
+                                  </StackPanel>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

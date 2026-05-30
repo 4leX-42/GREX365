@@ -14,6 +14,11 @@ public sealed record LicenseCard(
     double PercentUsed,
     string UtilizationLevel)    // "Low" | "Medium" | "High" | "Critical"
 {
+    // Top-tier SKUs (Office/M365 E3·E5, M365 Business Premium) — highlighted in the UI.
+    public bool IsPremium =>
+        Category == LicenseCategory.Enterprise
+        || string.Equals(SkuPartNumber, "SPB", StringComparison.OrdinalIgnoreCase);
+
     public static LicenseCard From(LicenseSummary summary)
     {
         var info = SkuCatalog.Resolve(summary.SkuPartNumber);

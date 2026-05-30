@@ -43,7 +43,10 @@ public sealed class GraphAuditService : IAuditService
         }
         catch (Exception ex) when (IsAuditLogPermissionError(ex))
         {
-            progress?.Report(LogEntry.Warn(
+            // Info, not Warn: this is expected degradation, not a failure. A Warn here would
+            // pop a snackbar on every run. The condition is still surfaced as a finding row
+            // below, so the admin sees it without a toast.
+            progress?.Report(LogEntry.Info(
                 "Audit",
                 "Falta el permiso AuditLog.Read.All. Stale-user detection deshabilitado. " +
                 "Concede admin consent al permiso AuditLog.Read.All en la App Registration."));
