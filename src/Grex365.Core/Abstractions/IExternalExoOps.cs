@@ -42,4 +42,13 @@ public interface IExternalExoOps
         string identity,
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default);
+
+    // Grants a delegate Full Access (AutoMapping off) and, optionally, Send As on the mailbox.
+    // Runs via external pwsh — the in-proc EXO path trips the GetResponseHeader bug. Returns a note.
+    Task<string> GrantDelegateAsync(
+        string mailbox,
+        string delegateUpn,
+        bool sendAs,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
 }

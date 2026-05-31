@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1329 passing** (xUnit + FluentAssertions) — 515 Core + 814 App
-- Última actualización: 2026-05-31 (sesión · Sprint AO — Offboarding: backbone + EXO + fixes + plantillas + layout horizontal + auto-reply grupo/excepción)
+- Tests: **1330 passing** (xUnit + FluentAssertions) — 516 Core + 814 App
+- Última actualización: 2026-05-31 (sesión · Sprint AO — Offboarding: backbone + EXO + fixes + plantillas + layout + auto-reply grupo/excepción + delegación por EXO externo)
 
 ## Sprint AO · 2026-05-31 — Offboarding: backbone de seguridad y observabilidad
 
@@ -54,6 +54,13 @@ Detectado al ejecutar offboarding real sobre un `testeo*` sin buzón → `Conver
   4. auto-reply global vacío + sin override → `null` (paso omitido).
   Resuelve el escenario real (5→Pepe / 4→Marta / 1→Fernando / 2 sin delegado): una sola config compartida (plantilla global) + delegado por usuario/grupo + excepciones individuales. El delegado por-fila ya alimentaba `{delegado}`; ahora además el caso sin-delegado y el override propio.
 - Tests: **+6 Core** (Resolve: override gana, con/sin delegado, off, theory por delegado) **+1 App** (batch: per-target delegado + fallback sin-delegado). Total **1329** (515 Core + 814 App).
+
+### Fix: delegación FullAccess/SendAs por EXO externo (commit 6)
+Error real en ejecución: `[HttpResponseMessage] does not contain a method named 'GetResponseHeader'` — el bug clásico de EXO **in-proc**. Causa: la delegación FullAccess post-éxito en el VM usaba `ISharedMailboxService.ApplyPermissionAsync` (RunspacePool interno). Fix:
+- `IExternalExoOps.GrantDelegateAsync(mailbox, delegate, sendAs)` → pwsh externo: `Add-MailboxPermission FullAccess -AutoMapping:$false` + `Add-RecipientPermission SendAs`.
+- `OffboardingOptions.DelegateMailboxTo`; el servicio concede FullAccess+SendAs como paso de finalización (vía `_externalExo`), AVISO no-fatal.
+- VM: pasa `DelegateMailboxTo = del` por target/single; **eliminada** la delegación in-proc (`_mailboxes`) y su campo/param del ctor. Ahora TODO EXO de offboarding va por pwsh externo.
+- Tests: **+1 Core** (`Delegate_GrantsFullAccessAndSendAs_ViaExternalExo`, con `ISharedMailboxService` strict que NO debe tocarse). Total **1330**.
 
 ## Sprint AN · 2026-05-30 — Remate funcional + UX
 

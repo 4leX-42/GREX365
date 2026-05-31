@@ -16,7 +16,9 @@ public sealed record OffboardingOptions(
     //   HideFromGal       — hide the mailbox from the global address list
     string? ForwardTo = null,
     string? AutoReplyMessage = null,
-    bool HideFromGal = false);
+    bool HideFromGal = false,
+    // Delegate that receives Full Access (+ Send As) on the resulting mailbox (via external EXO).
+    string? DelegateMailboxTo = null);
 
 public interface IOffboardingService
 {

@@ -396,4 +396,23 @@ public class OffboardingServiceTests
         r.Success.Should().BeTrue();
         r.Steps.Should().Contain(s => s.Name == "Auto-reply" && s.Status == "AVISO" && s.Detail.Contains("EXO hiccup"));
     }
+
+    // Delegation (FullAccess + SendAs) goes through the external EXO ops — never the in-proc
+    // ISharedMailboxService (which trips the GetResponseHeader bug).
+    [Fact]
+    public async Task Delegate_GrantsFullAccessAndSendAs_ViaExternalExo()
+    {
+        var users = UsersOk();
+        var exo = ExoWithFacts(new MailboxInfo("u@a", "U", "u@a", "UserMailbox"));
+        exo.Setup(e => e.GrantDelegateAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("FullAccess + SendAs -> deleg@a");
+        var inProc = new Mock<ISharedMailboxService>(MockBehavior.Strict); // must NOT be touched
+        var sut = new OffboardingService(users.Object, inProc.Object, exo.Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(false, false, true, DelegateMailboxTo: "deleg@a"));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name.Contains("Delegar") && s.Status == "OK");
+        exo.Verify(e => e.GrantDelegateAsync("jane@a", "deleg@a", true, It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

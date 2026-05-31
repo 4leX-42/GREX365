@@ -143,6 +143,30 @@ public sealed class ExternalExoOps : IExternalExoOps
         return ParseNote(json) ?? "aplicado";
     }
 
+    public async Task<string> GrantDelegateAsync(
+        string mailbox,
+        string delegateUpn,
+        bool sendAs,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
+        var sendAsLit = sendAs ? "$true" : "$false";
+        var body = $$"""
+            $id = {{Lit(mailbox)}}
+            $d = {{Lit(delegateUpn)}}
+            Add-MailboxPermission -Identity $id -User $d -AccessRights FullAccess -InheritanceType All -AutoMapping:$false -Confirm:$false -ErrorAction Stop | Out-Null
+            $note = 'FullAccess'
+            if ({{sendAsLit}}) {
+                Add-RecipientPermission -Identity $id -Trustee $d -AccessRights SendAs -Confirm:$false -ErrorAction Stop | Out-Null
+                $note = 'FullAccess + SendAs'
+            }
+            Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = ($note + ' -> ' + $d) }) | ConvertTo-Json -Compress))
+            """;
+        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        return ParseNote(json) ?? "delegado";
+    }
+
     private static string? ParseNote(string? json)
     {
         if (string.IsNullOrWhiteSpace(json)) return null;

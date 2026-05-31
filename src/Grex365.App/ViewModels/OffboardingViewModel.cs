@@ -43,7 +43,6 @@ public sealed partial class OffboardingViewModel : ObservableObject
     private readonly IDialogService _dialogs;
     private readonly IUsersService? _users;
     private readonly IAuditService? _audit;
-    private readonly ISharedMailboxService? _mailboxes;
     private readonly IClipboardService? _clipboard;
     private CancellationTokenSource? _cts;
     private CancellationTokenSource? _debounceCts;
@@ -94,7 +93,6 @@ public sealed partial class OffboardingViewModel : ObservableObject
         IDialogService dialogs,
         IUsersService? users = null,
         IAuditService? audit = null,
-        ISharedMailboxService? mailboxes = null,
         IClipboardService? clipboard = null)
     {
         _service = service;
@@ -103,7 +101,6 @@ public sealed partial class OffboardingViewModel : ObservableObject
         _dialogs = dialogs;
         _users = users;
         _audit = audit;
-        _mailboxes = mailboxes;
         _clipboard = clipboard;
 
         AutoReplyTemplates.Add(new AutoReplyTemplateItem(
@@ -344,8 +341,9 @@ public sealed partial class OffboardingViewModel : ObservableObject
                 AppendLog($"════ {target.Upn} ════", "HEADER");
                 StatusMessage = L10n.Format("Offboarding.Status.Running", target.Upn);
 
-                // The delegate (per-account override, else the batch default) gets FullAccess
-                // below and — when "forward to delegate" is on — is also the forward target.
+                // The delegate (per-account override, else the batch default) receives FullAccess +
+                // SendAs (granted by the service via external EXO), drives the {delegado} auto-reply
+                // token, and — when "forward to delegate" is on — is also the forward target.
                 var del = !string.IsNullOrWhiteSpace(target.DelegateTo) ? target.DelegateTo : DelegateToAll;
                 var fwd = ForwardToDelegate && !string.IsNullOrWhiteSpace(del) ? del.Trim() : null;
                 var options = new OffboardingOptions(
@@ -354,22 +352,14 @@ public sealed partial class OffboardingViewModel : ObservableObject
                     AutoReplyMessage: OffboardingAutoReply.Resolve(
                         AutoReplyMessage, target.AutoReplyOverride, L10n.Get("Offboarding.AutoReply.NoDelegate"),
                         target.DisplayName, del),
-                    HideFromGal: HideFromGal);
+                    HideFromGal: HideFromGal,
+                    DelegateMailboxTo: string.IsNullOrWhiteSpace(del) ? null : del.Trim());
                 var stepProgress = new Progress<OffboardingStep>(s =>
                     AppendLog($"   [{s.Status}] {s.Name} — {s.Detail}", LevelFromStatus(s.Status)));
 
                 try
                 {
                     var result = await _service.RunAsync(target.Upn, options, live, stepProgress, _cts.Token).ConfigureAwait(true);
-
-                    // Per-account exception: delegate the (now shared) mailbox to someone.
-                    if (result.Success && !string.IsNullOrWhiteSpace(del) && _mailboxes is not null)
-                    {
-                        AppendLog($"   delegando buzón → {del.Trim()} (FullAccess)…", "INFO");
-                        var pr = await _mailboxes.ApplyPermissionAsync("add", "FullAccess", target.Upn, del.Trim(), live, _cts.Token).ConfigureAwait(true);
-                        AppendLog($"   [{pr.Status}] delegación FullAccess — {pr.Detail}", LevelFromStatus(pr.Status));
-                        if (pr.Status != "OK") result = result with { Success = false };
-                    }
 
                     _lastResults.Add(result);
                     target.Status = result.Success ? "OK" : "ERROR";
@@ -481,7 +471,8 @@ public sealed partial class OffboardingViewModel : ObservableObject
                 AutoReplyMessage: OffboardingAutoReply.Resolve(
                     AutoReplyMessage, null, L10n.Get("Offboarding.AutoReply.NoDelegate"),
                     Upn, DelegateToAll),
-                HideFromGal: HideFromGal);
+                HideFromGal: HideFromGal,
+                DelegateMailboxTo: string.IsNullOrWhiteSpace(DelegateToAll) ? null : DelegateToAll.Trim());
             var stepProgress = new Progress<OffboardingStep>(UpsertStep);
             var result = await _service.RunAsync(Upn.Trim(), options, _log.Progress, stepProgress, _cts.Token).ConfigureAwait(true);
             Result = result;

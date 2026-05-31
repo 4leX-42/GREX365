@@ -260,10 +260,11 @@ public sealed class OffboardingService : IOffboardingService
         // ---- Step 4: optional mailbox finalization (EXO-only) ----
         // auto-reply / forwarding / hide-from-GAL on the (now shared) mailbox. Best-effort: a
         // failure here is reported AVISO (non-fatal) and never undoes the core offboarding.
+        var wantsDelegate = !string.IsNullOrWhiteSpace(options.DelegateMailboxTo);
         var wantsAutoReply = !string.IsNullOrWhiteSpace(options.AutoReplyMessage);
         var wantsForward = !string.IsNullOrWhiteSpace(options.ForwardTo);
         var wantsHide = options.HideFromGal;
-        if (wantsAutoReply || wantsForward || wantsHide)
+        if (wantsDelegate || wantsAutoReply || wantsForward || wantsHide)
         {
             // Mailbox exists if we have facts, it was already shared, or we just converted it.
             var mailboxExists = facts is not null || alreadyShared || (convertRequested && convertSucceeded);
@@ -296,6 +297,10 @@ public sealed class OffboardingService : IOffboardingService
                     Done(name, "AVISO", ex.Message);
                 }
             }
+
+            await FinalizeStepAsync("Delegar buzón (FullAccess + SendAs)", wantsDelegate,
+                $"se concedería FullAccess + SendAs a {options.DelegateMailboxTo}",
+                async () => await _externalExo!.GrantDelegateAsync(upn, options.DelegateMailboxTo!, sendAs: true, progress, cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
 
             await FinalizeStepAsync("Auto-reply", wantsAutoReply, "se activaría un OOO permanente",
                 async () =>
