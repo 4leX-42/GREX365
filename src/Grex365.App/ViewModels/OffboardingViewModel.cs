@@ -53,6 +53,11 @@ public sealed partial class OffboardingViewModel : ObservableObject
 
     // Dry-run: rehearse the whole flow read-only (touches nothing). Safe to run in production.
     [ObservableProperty] private bool _dryRun;
+
+    // Optional EXO finalization (applied after a successful conversion).
+    [ObservableProperty] private bool _hideFromGal;
+    [ObservableProperty] private bool _forwardToDelegate;
+    [ObservableProperty] private string _autoReplyMessage = string.Empty;
     [ObservableProperty] private string _statusMessage = L10n.Get("Offboarding.Status.Initial");
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private OffboardingResult? _result;
@@ -314,7 +319,15 @@ public sealed partial class OffboardingViewModel : ObservableObject
                 AppendLog($"════ {target.Upn} ════", "HEADER");
                 StatusMessage = L10n.Format("Offboarding.Status.Running", target.Upn);
 
-                var options = new OffboardingOptions(DisableAccount, RemoveLicenses, ConvertMailboxToShared, DryRun);
+                // The delegate (per-account override, else the batch default) gets FullAccess
+                // below and — when "forward to delegate" is on — is also the forward target.
+                var del = !string.IsNullOrWhiteSpace(target.DelegateTo) ? target.DelegateTo : DelegateToAll;
+                var fwd = ForwardToDelegate && !string.IsNullOrWhiteSpace(del) ? del.Trim() : null;
+                var options = new OffboardingOptions(
+                    DisableAccount, RemoveLicenses, ConvertMailboxToShared, DryRun,
+                    ForwardTo: fwd,
+                    AutoReplyMessage: string.IsNullOrWhiteSpace(AutoReplyMessage) ? null : AutoReplyMessage,
+                    HideFromGal: HideFromGal);
                 var stepProgress = new Progress<OffboardingStep>(s =>
                     AppendLog($"   [{s.Status}] {s.Name} — {s.Detail}", LevelFromStatus(s.Status)));
 
@@ -323,7 +336,6 @@ public sealed partial class OffboardingViewModel : ObservableObject
                     var result = await _service.RunAsync(target.Upn, options, live, stepProgress, _cts.Token).ConfigureAwait(true);
 
                     // Per-account exception: delegate the (now shared) mailbox to someone.
-                    var del = !string.IsNullOrWhiteSpace(target.DelegateTo) ? target.DelegateTo : DelegateToAll;
                     if (result.Success && !string.IsNullOrWhiteSpace(del) && _mailboxes is not null)
                     {
                         AppendLog($"   delegando buzón → {del.Trim()} (FullAccess)…", "INFO");
@@ -435,7 +447,12 @@ public sealed partial class OffboardingViewModel : ObservableObject
 
         try
         {
-            var options = new OffboardingOptions(DisableAccount, RemoveLicenses, ConvertMailboxToShared, DryRun);
+            var fwd = ForwardToDelegate && !string.IsNullOrWhiteSpace(DelegateToAll) ? DelegateToAll.Trim() : null;
+            var options = new OffboardingOptions(
+                DisableAccount, RemoveLicenses, ConvertMailboxToShared, DryRun,
+                ForwardTo: fwd,
+                AutoReplyMessage: string.IsNullOrWhiteSpace(AutoReplyMessage) ? null : AutoReplyMessage,
+                HideFromGal: HideFromGal);
             var stepProgress = new Progress<OffboardingStep>(UpsertStep);
             var result = await _service.RunAsync(Upn.Trim(), options, _log.Progress, stepProgress, _cts.Token).ConfigureAwait(true);
             Result = result;

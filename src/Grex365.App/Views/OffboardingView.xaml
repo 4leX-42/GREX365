@@ -200,6 +200,14 @@
                             <v:UserPickerBox Text="{Binding DelegateToAll, Mode=TwoWay}"
                                              Placeholder="{l:L10n Key=Offboarding.Target.DelegatePlaceholder}" />
 
+                            <CheckBox Content="{l:L10n Key=Offboarding.Option.ForwardToDelegate}" IsChecked="{Binding ForwardToDelegate}" FontSize="13" Margin="0,12,0,0" />
+                            <CheckBox Content="{l:L10n Key=Offboarding.Option.HideFromGal}" IsChecked="{Binding HideFromGal}" FontSize="13" Margin="0,6,0,0" />
+
+                            <TextBlock Text="{l:L10n Key=Offboarding.AutoReply.Label}" FontWeight="SemiBold" FontSize="14" Margin="0,12,0,6" />
+                            <ui:TextBox Text="{Binding AutoReplyMessage, UpdateSourceTrigger=PropertyChanged}"
+                                        FontSize="13" TextWrapping="Wrap" AcceptsReturn="True" MinHeight="54"
+                                        PlaceholderText="{l:L10n Key=Offboarding.AutoReply.Placeholder}" />
+
                             <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
                                 <ui:Button Content="{l:L10n Key=Offboarding.Run.Batch}"
                                            Appearance="Primary" Margin="0,0,8,0"

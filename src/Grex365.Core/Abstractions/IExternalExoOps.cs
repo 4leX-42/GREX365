@@ -21,4 +21,25 @@ public interface IExternalExoOps
         string identity,
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default);
+
+    // Enables a permanent auto-reply (out-of-office) with the same message internal + external.
+    Task SetAutoReplyAsync(
+        string identity,
+        string message,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    // Sets SMTP forwarding to a delegate, keeping a copy in the (now shared) mailbox.
+    Task SetForwardingAsync(
+        string identity,
+        string forwardTo,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    // Hides the mailbox from address lists (GAL). Returns a short note; may report a SKIP for
+    // hybrid objects synced from on-prem AD (which must be hidden in local AD instead).
+    Task<string> HideFromGalAsync(
+        string identity,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
 }

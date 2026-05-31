@@ -245,6 +245,64 @@ public sealed class OffboardingService : IOffboardingService
             }
         }
 
+        // ---- Step 4: optional mailbox finalization (EXO-only) ----
+        // auto-reply / forwarding / hide-from-GAL on the (now shared) mailbox. Best-effort: a
+        // failure here is reported AVISO (non-fatal) and never undoes the core offboarding.
+        var wantsAutoReply = !string.IsNullOrWhiteSpace(options.AutoReplyMessage);
+        var wantsForward = !string.IsNullOrWhiteSpace(options.ForwardTo);
+        var wantsHide = options.HideFromGal;
+        if (wantsAutoReply || wantsForward || wantsHide)
+        {
+            // Mailbox exists if we have facts, it was already shared, or we just converted it.
+            var mailboxExists = facts is not null || alreadyShared || (convertRequested && convertSucceeded);
+
+            async Task FinalizeStepAsync(string name, bool requested, string simDetail, Func<Task<string>> action)
+            {
+                if (!requested) return;
+                Running(name);
+                if (_externalExo is null)
+                {
+                    Done(name, "OMITIDO", "requiere Exchange Online externo (no configurado)");
+                    return;
+                }
+                if (!mailboxExists)
+                {
+                    Done(name, "OMITIDO", "el usuario no tiene buzón");
+                    return;
+                }
+                if (dry)
+                {
+                    Done(name, "SIMULADO", simDetail);
+                    return;
+                }
+                try
+                {
+                    Done(name, "OK", await action().ConfigureAwait(false));
+                }
+                catch (Exception ex)
+                {
+                    Done(name, "AVISO", ex.Message);
+                }
+            }
+
+            await FinalizeStepAsync("Auto-reply", wantsAutoReply, "se activaría un OOO permanente",
+                async () =>
+                {
+                    await _externalExo!.SetAutoReplyAsync(upn, options.AutoReplyMessage!, progress, cancellationToken).ConfigureAwait(false);
+                    return "OOO permanente activado";
+                }).ConfigureAwait(false);
+
+            await FinalizeStepAsync("Forward al delegado", wantsForward, $"se reenviaría el correo a {options.ForwardTo}",
+                async () =>
+                {
+                    await _externalExo!.SetForwardingAsync(upn, options.ForwardTo!, progress, cancellationToken).ConfigureAwait(false);
+                    return $"forward → {options.ForwardTo} (entrega doble)";
+                }).ConfigureAwait(false);
+
+            await FinalizeStepAsync("Ocultar de la GAL", wantsHide, "se ocultaría de la lista global de direcciones",
+                async () => await _externalExo!.HideFromGalAsync(upn, progress, cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
+        }
+
         return Result(success);
     }
 

@@ -9,7 +9,14 @@ public sealed record OffboardingOptions(
     // Dry-run: run the read-only pre-checks for real, then simulate every mutating step
     // (status "SIMULADO") without touching the tenant. Lets the flow be rehearsed safely
     // — including against production — before a real run.
-    bool DryRun = false);
+    bool DryRun = false,
+    // Optional mailbox finalization (EXO-only, applied after a successful conversion):
+    //   ForwardTo         — SMTP forwarding to a delegate (copy kept in the shared mailbox)
+    //   AutoReplyMessage  — permanent out-of-office, internal + external
+    //   HideFromGal       — hide the mailbox from the global address list
+    string? ForwardTo = null,
+    string? AutoReplyMessage = null,
+    bool HideFromGal = false);
 
 public interface IOffboardingService
 {

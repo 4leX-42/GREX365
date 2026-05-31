@@ -191,4 +191,27 @@ public class OffboardingViewModelTests
         captured.Should().Contain("Deshabilitar"); // a step name from StubRunOk
         h.Vm.StatusMessage.Should().StartWith("CSV copiado");
     }
+
+    [Fact]
+    public async Task FinalizationOptions_FlowIntoService()
+    {
+        var h = new Harness();
+        h.Vm.Upn = "jane@a";
+        h.Vm.DelegateToAll = "deleg@a";
+        h.Vm.ForwardToDelegate = true;
+        h.Vm.HideFromGal = true;
+        h.Vm.AutoReplyMessage = "Ya no trabaja aquí";
+        h.Dialogs.ConfirmResult = true;
+        h.StubRunOk();
+
+        await h.Vm.RunCommand.ExecuteAsync(null);
+
+        h.Service.Verify(s => s.RunAsync(
+            "jane@a",
+            It.Is<OffboardingOptions>(o =>
+                o.ForwardTo == "deleg@a" && o.HideFromGal && o.AutoReplyMessage == "Ya no trabaja aquí"),
+            It.IsAny<IProgress<LogEntry>>(),
+            It.IsAny<IProgress<OffboardingStep>>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

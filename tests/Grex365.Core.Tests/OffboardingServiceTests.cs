@@ -42,6 +42,8 @@ public class OffboardingServiceTests
             .ReturnsAsync(facts);
         e.Setup(x => x.ConvertToSharedAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(facts with { RecipientTypeDetails = "SharedMailbox" });
+        e.Setup(x => x.HideFromGalAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("GAL oculto");
         return e;
     }
 
@@ -301,5 +303,76 @@ public class OffboardingServiceTests
         r.Success.Should().BeTrue();
         r.Steps.Should().Contain(s => s.Name.Contains("Quitar licencias") && s.Status == "AVISO" && s.Detail.Contains("grupo"));
         users.Verify(u => u.RemoveAllLicensesAsync("uid", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // Optional EXO finalization steps run after a successful conversion when requested.
+    [Fact]
+    public async Task Finalization_RunsAutoReplyForwardHideGal_WhenRequested()
+    {
+        var users = UsersOk();
+        var exo = ExoWithFacts(new MailboxInfo("u@a", "U", "u@a", "UserMailbox"));
+        var sut = new OffboardingService(users.Object, new Mock<ISharedMailboxService>().Object, exo.Object);
+
+        var opts = new OffboardingOptions(
+            DisableAccount: false, RemoveLicenses: false, ConvertMailboxToShared: true,
+            ForwardTo: "deleg@a", AutoReplyMessage: "Ya no trabaja aquí", HideFromGal: true);
+        var r = await sut.RunAsync("jane@a", opts);
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name == "Auto-reply" && s.Status == "OK");
+        r.Steps.Should().Contain(s => s.Name == "Forward al delegado" && s.Status == "OK");
+        r.Steps.Should().Contain(s => s.Name == "Ocultar de la GAL" && s.Status == "OK" && s.Detail.Contains("GAL"));
+        exo.Verify(e => e.SetAutoReplyAsync("jane@a", "Ya no trabaja aquí", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+        exo.Verify(e => e.SetForwardingAsync("jane@a", "deleg@a", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+        exo.Verify(e => e.HideFromGalAsync("jane@a", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // Dry-run simulates the finalization steps too — no EXO calls.
+    [Fact]
+    public async Task Finalization_DryRun_SimulatesWithoutExoCalls()
+    {
+        var users = UsersOk();
+        var exo = ExoWithFacts(new MailboxInfo("u@a", "U", "u@a", "UserMailbox"));
+        var sut = new OffboardingService(users.Object, new Mock<ISharedMailboxService>().Object, exo.Object);
+
+        var opts = new OffboardingOptions(false, false, true, DryRun: true,
+            ForwardTo: "deleg@a", AutoReplyMessage: "msg", HideFromGal: true);
+        var r = await sut.RunAsync("jane@a", opts);
+
+        r.Steps.Should().Contain(s => s.Name == "Auto-reply" && s.Status == "SIMULADO");
+        r.Steps.Should().Contain(s => s.Name == "Forward al delegado" && s.Status == "SIMULADO");
+        exo.Verify(e => e.SetAutoReplyAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+        exo.Verify(e => e.SetForwardingAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+        exo.Verify(e => e.HideFromGalAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // Without an external EXO backend, the finalization steps are skipped (not errored).
+    [Fact]
+    public async Task Finalization_NoExternalExo_Omitido()
+    {
+        var users = UsersOk();
+        var sut = new OffboardingService(users.Object, MailboxOk().Object); // no IExternalExoOps
+
+        var opts = new OffboardingOptions(false, false, true, AutoReplyMessage: "msg", HideFromGal: true);
+        var r = await sut.RunAsync("jane@a", opts);
+
+        r.Steps.Should().Contain(s => s.Name == "Auto-reply" && s.Status == "OMITIDO");
+        r.Steps.Should().Contain(s => s.Name == "Ocultar de la GAL" && s.Status == "OMITIDO");
+    }
+
+    // A finalization failure is non-fatal: reported AVISO, overall run still succeeds.
+    [Fact]
+    public async Task Finalization_Failure_IsNonFatal()
+    {
+        var users = UsersOk();
+        var exo = ExoWithFacts(new MailboxInfo("u@a", "U", "u@a", "UserMailbox"));
+        exo.Setup(e => e.SetAutoReplyAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("EXO hiccup"));
+        var sut = new OffboardingService(users.Object, new Mock<ISharedMailboxService>().Object, exo.Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(false, false, true, AutoReplyMessage: "msg"));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name == "Auto-reply" && s.Status == "AVISO" && s.Detail.Contains("EXO hiccup"));
     }
 }

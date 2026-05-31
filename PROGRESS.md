@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1308 passing** (xUnit + FluentAssertions) — 499 Core + 809 App
-- Última actualización: 2026-05-31 (sesión · Sprint AO — Offboarding: backbone de seguridad y observabilidad)
+- Tests: **1313 passing** (xUnit + FluentAssertions) — 503 Core + 810 App
+- Última actualización: 2026-05-31 (sesión · Sprint AO — Offboarding: backbone de seguridad/observabilidad + pasos EXO de finalización)
 
 ## Sprint AO · 2026-05-31 — Offboarding: backbone de seguridad y observabilidad
 
@@ -18,8 +18,19 @@ Mejora del módulo Offboarding a partir de un review técnico (9 áreas). Esta t
 - **Dry-run** (`OffboardingOptions.DryRun`): ejecuta los pre-checks read-only y simula cada paso mutador (estado SIMULADO) sin tocar el tenant. Checkbox en la vista. Para rehearsal seguro en producción sobre `testeo*`.
 - **Export auditable**: `OffboardingReport.ToJson/ToCsv` (puro, testeado, escape RFC-4180); botón "Exportar CSV" copia al portapapeles los resultados del último run (1 fila por paso, con timestamps).
 - **Observabilidad**: `OffboardingStep.At` (timestamp), `OffboardingResult.StartedAt/EndedAt/DryRun`.
-- Tests: **+10 Core** (gates 50 GB/hold, skips idempotentes, dry-run, aviso grupo, exporter) **+3 App** (opción dry-run, export). Total **1308** (499 Core + 809 App).
-- **Pendiente (requiere scopes nuevos / decisión del usuario)**: limpieza de métodos MFA (`UserAuthenticationMethod.ReadWrite.All`), OneDrive delegación+tamaño (`Files/Sites`), Teams ownership transfer, notificaciones (`Mail.Send`), retirada de roles Entra. Además: portar los pasos EXO ya validados en `Invoke-OffboardingWizard.ps1` (auto-reply, forwarding, FullAccess/SendAs, hide GAL, quitar de grupos) al servicio .NET.
+- **Validación en vivo (read-only, sin mutaciones)**: probe headless efímero conectó por cert al tenant productivo y corrió dry-run contra los 6 `testeo*`. Confirmado: pre-check lee facts EXO reales (testeo224 → SharedMailbox 0 GB → convert OMITIDO idempotente), already-disabled skip (Testeo3.1), degradación sin buzón, todos los pasos SIMULADO, 0 cambios.
+
+### Pasos EXO de finalización (mismo sprint, commit 2)
+Portados de `Invoke-OffboardingWizard.ps1` al servicio .NET como pasos **opcionales** post-conversión (sin scopes nuevos — `Exchange.ManageAsApp`):
+- **Auto-reply** (#5 del review): `IExternalExoOps.SetAutoReplyAsync` → `Set-MailboxAutoReplyConfiguration` (OOO permanente interno+externo). Opción `OffboardingOptions.AutoReplyMessage`. TextBox en la vista.
+- **Forwarding** (#6 del review): `SetForwardingAsync` → `Set-Mailbox -ForwardingSmtpAddress -DeliverToMailboxAndForward`. Opción `ForwardTo`; checkbox "Reenviar al delegado" usa el mismo destino que el FullAccess.
+- **Hide-from-GAL**: `HideFromGalAsync` → `Set-Mailbox -HiddenFromAddressListsEnabled` con manejo del caso híbrido on-prem (SKIP con guía, como el legacy). Checkbox.
+- Best-effort: fallo de finalización = AVISO **no fatal** (no deshace el offboarding). Solo corren con buzón presente + EXO externo; si no → OMITIDO.
+- Tests: **+4 Core** (corren/dry-run/sin-EXO/fallo-no-fatal) **+1 App** (opciones fluyen al servicio).
+- Total tras ambos commits: **1313** (503 Core + 810 App).
+- **Pendiente offboarding**:
+  - Sin scope nuevo: SendAs al delegado (FullAccess ya en VM), quitar de DLs/M365 groups (`GroupMember.ReadWrite.All` ya concedido — vía Graph, no EXO).
+  - **Requiere scopes nuevos + decisión del usuario** (consentimiento Global Admin en App Reg productivo): limpieza de métodos MFA (`UserAuthenticationMethod.ReadWrite.All`), OneDrive delegación+tamaño (`Files/Sites`), Teams ownership transfer, notificaciones (`Mail.Send`), retirada de roles Entra.
 
 ## Sprint AN · 2026-05-30 — Remate funcional + UX
 

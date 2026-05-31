@@ -86,6 +86,71 @@ public sealed class ExternalExoOps : IExternalExoOps
         return Parse(json);
     }
 
+    public async Task SetAutoReplyAsync(
+        string identity,
+        string message,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
+        var body = $$"""
+            $id = {{Lit(identity)}}
+            $msg = {{Lit(message)}}
+            Set-MailboxAutoReplyConfiguration -Identity $id -AutoReplyState Enabled -ExternalAudience All -InternalMessage $msg -ExternalMessage $msg -ErrorAction Stop
+            Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = 'auto-reply Enabled' }) | ConvertTo-Json -Compress))
+            """;
+        await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task SetForwardingAsync(
+        string identity,
+        string forwardTo,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
+        var body = $$"""
+            $id = {{Lit(identity)}}
+            Set-Mailbox -Identity $id -ForwardingSmtpAddress {{Lit(forwardTo)}} -DeliverToMailboxAndForward $true -ErrorAction Stop
+            Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = 'forward configurado' }) | ConvertTo-Json -Compress))
+            """;
+        await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<string> HideFromGalAsync(
+        string identity,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
+        // Hybrid objects synced from on-prem AD can't be modified in EXO — detect that specific
+        // failure and report it as a SKIP-with-guidance instead of a hard error (legacy parity).
+        var body = $$"""
+            $id = {{Lit(identity)}}
+            try {
+                Set-Mailbox -Identity $id -HiddenFromAddressListsEnabled $true -ErrorAction Stop
+                $note = 'HiddenFromAddressListsEnabled=true'
+            } catch {
+                $m = $_.Exception.Message
+                if ($m -match 'sincroniz|on-prem|on premises|write scope|organizaci.n local|cannot be performed.*synchron') {
+                    $note = 'objeto hibrido sincronizado desde AD on-prem: aplicar msExchHideFromAddressLists=TRUE en AD local'
+                } else { throw }
+            }
+            Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = $note }) | ConvertTo-Json -Compress))
+            """;
+        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        return ParseNote(json) ?? "aplicado";
+    }
+
+    private static string? ParseNote(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return null;
+        using var doc = JsonDocument.Parse(json);
+        return doc.RootElement.TryGetProperty("Note", out var v) && v.ValueKind == JsonValueKind.String
+            ? v.GetString()
+            : null;
+    }
+
     private async Task<CertConfig> RequireConfigAsync(CancellationToken ct)
     {
         var cfg = await _certStore.LoadAsync(ct).ConfigureAwait(false);
