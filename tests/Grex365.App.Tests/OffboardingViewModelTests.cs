@@ -214,4 +214,44 @@ public class OffboardingViewModelTests
             It.IsAny<IProgress<OffboardingStep>>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Fact]
+    public void Construction_PreselectsFirstTemplate_AndFillsMessage()
+    {
+        var h = new Harness();
+
+        h.Vm.AutoReplyTemplates.Should().HaveCountGreaterThan(1);
+        h.Vm.SelectedAutoReplyTemplate.Should().NotBeNull();
+        h.Vm.AutoReplyMessage.Should().NotBeNullOrEmpty();
+        h.Vm.AutoReplyMessage.Should().Contain("{delegado}"); // template body carries the token
+    }
+
+    [Fact]
+    public void SelectingCustomTemplate_ClearsMessageToFreeText()
+    {
+        var h = new Harness();
+
+        h.Vm.SelectedAutoReplyTemplate = h.Vm.AutoReplyTemplates.Last(); // "Personalizado" → empty body
+        h.Vm.AutoReplyMessage.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task AutoReplyTemplate_TokensRendered_IntoOptions()
+    {
+        var h = new Harness();
+        h.Vm.Upn = "jane@a";
+        h.Vm.DelegateToAll = "deleg@a";
+        h.Vm.AutoReplyMessage = "{usuario} ya no está; contacta con {delegado}";
+        h.Dialogs.ConfirmResult = true;
+        h.StubRunOk();
+
+        await h.Vm.RunCommand.ExecuteAsync(null);
+
+        h.Service.Verify(s => s.RunAsync(
+            "jane@a",
+            It.Is<OffboardingOptions>(o => o.AutoReplyMessage == "jane@a ya no está; contacta con deleg@a"),
+            It.IsAny<IProgress<LogEntry>>(),
+            It.IsAny<IProgress<OffboardingStep>>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

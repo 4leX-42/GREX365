@@ -29,6 +29,10 @@ public sealed partial class OffboardingTarget : ObservableObject
 // One coloured line in the live log console.
 public sealed record LogLine(string Time, string Text, string Level);
 
+// An auto-reply template the user can pick from the dropdown. Body may contain {usuario} and
+// {delegado} tokens, substituted per-user at run time. Empty body = free-text ("Personalizado").
+public sealed record AutoReplyTemplateItem(string Name, string Body);
+
 public sealed partial class OffboardingViewModel : ObservableObject
 {
     private readonly IOffboardingService _service;
@@ -58,6 +62,16 @@ public sealed partial class OffboardingViewModel : ObservableObject
     [ObservableProperty] private bool _hideFromGal;
     [ObservableProperty] private bool _forwardToDelegate;
     [ObservableProperty] private string _autoReplyMessage = string.Empty;
+
+    // Auto-reply templates: picking one fills the message box; {usuario}/{delegado} are
+    // substituted per-user at run time. "Personalizado" clears to free text.
+    public ObservableCollection<AutoReplyTemplateItem> AutoReplyTemplates { get; } = new();
+    [ObservableProperty] private AutoReplyTemplateItem? _selectedAutoReplyTemplate;
+
+    partial void OnSelectedAutoReplyTemplateChanged(AutoReplyTemplateItem? value)
+    {
+        if (value is not null) AutoReplyMessage = value.Body;
+    }
     [ObservableProperty] private string _statusMessage = L10n.Get("Offboarding.Status.Initial");
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private OffboardingResult? _result;
@@ -89,6 +103,15 @@ public sealed partial class OffboardingViewModel : ObservableObject
         _audit = audit;
         _mailboxes = mailboxes;
         _clipboard = clipboard;
+
+        AutoReplyTemplates.Add(new AutoReplyTemplateItem(
+            L10n.Get("Offboarding.AutoReply.Tpl.Left.Name"), L10n.Get("Offboarding.AutoReply.Tpl.Left.Body")));
+        AutoReplyTemplates.Add(new AutoReplyTemplateItem(
+            L10n.Get("Offboarding.AutoReply.Tpl.Contact.Name"), L10n.Get("Offboarding.AutoReply.Tpl.Contact.Body")));
+        AutoReplyTemplates.Add(new AutoReplyTemplateItem(
+            L10n.Get("Offboarding.AutoReply.Tpl.Custom.Name"), string.Empty));
+        // Templates-first: pre-select the first so the auto-reply box starts filled.
+        SelectedAutoReplyTemplate = AutoReplyTemplates[0];
     }
 
     // ---------- live log ----------
@@ -326,7 +349,9 @@ public sealed partial class OffboardingViewModel : ObservableObject
                 var options = new OffboardingOptions(
                     DisableAccount, RemoveLicenses, ConvertMailboxToShared, DryRun,
                     ForwardTo: fwd,
-                    AutoReplyMessage: string.IsNullOrWhiteSpace(AutoReplyMessage) ? null : AutoReplyMessage,
+                    AutoReplyMessage: string.IsNullOrWhiteSpace(AutoReplyMessage)
+                        ? null
+                        : OffboardingAutoReply.Render(AutoReplyMessage, target.DisplayName, del),
                     HideFromGal: HideFromGal);
                 var stepProgress = new Progress<OffboardingStep>(s =>
                     AppendLog($"   [{s.Status}] {s.Name} — {s.Detail}", LevelFromStatus(s.Status)));
@@ -451,7 +476,9 @@ public sealed partial class OffboardingViewModel : ObservableObject
             var options = new OffboardingOptions(
                 DisableAccount, RemoveLicenses, ConvertMailboxToShared, DryRun,
                 ForwardTo: fwd,
-                AutoReplyMessage: string.IsNullOrWhiteSpace(AutoReplyMessage) ? null : AutoReplyMessage,
+                AutoReplyMessage: string.IsNullOrWhiteSpace(AutoReplyMessage)
+                    ? null
+                    : OffboardingAutoReply.Render(AutoReplyMessage, Upn, DelegateToAll),
                 HideFromGal: HideFromGal);
             var stepProgress = new Progress<OffboardingStep>(UpsertStep);
             var result = await _service.RunAsync(Upn.Trim(), options, _log.Progress, stepProgress, _cts.Token).ConfigureAwait(true);

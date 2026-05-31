@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1314 passing** (xUnit + FluentAssertions) — 504 Core + 810 App
-- Última actualización: 2026-05-31 (sesión · Sprint AO — Offboarding: backbone + pasos EXO + fixes real-run)
+- Tests: **1322 passing** (xUnit + FluentAssertions) — 509 Core + 813 App
+- Última actualización: 2026-05-31 (sesión · Sprint AO — Offboarding: backbone + pasos EXO + fixes real-run + plantillas auto-reply + UI más grande)
 
 ## Sprint AO · 2026-05-31 — Offboarding: backbone de seguridad y observabilidad
 
@@ -39,6 +39,11 @@ Detectado al ejecutar offboarding real sobre un `testeo*` sin buzón → `Conver
 - Diagnóstico EXO read-only confirmó: de los 6 `testeo*`, solo **testeo224** tiene buzón (SharedMailbox); los otros 5 no tienen buzón → de ahí el error original.
 - **App**: el assembly es `Grex365.exe` y el usuario corre **Release** (`bin/Release/net10.0-windows`). Rebuild Release + relanzada para que se vean los cambios de UI (antes se compilaba Debug).
 - Tests: **+1 Core** (`NoMailbox_SkipsConvert_AllowsLicenseRemoval`, repro del bug). Total **1314**.
+
+### Plantillas de auto-reply + UI más grande (commit 4)
+- **Plantillas**: `OffboardingAutoReply.Render` (puro) substituye `{usuario}` / `{delegado}` por-usuario al ejecutar. VM expone catálogo `AutoReplyTemplates` ("Baja — ya no trabaja aquí", "Contactar con el delegado", "Personalizado"); ComboBox pre-selecciona la primera (templates-first), al elegir rellena el textbox (editable). Render por-target: {usuario}=DisplayName, {delegado}=delegado (batch) / Upn+DelegateToAll (single).
+- **UI más grande** (queja "todo demasiado pequeño"): checkboxes 13→15, títulos de sección 16→18, label auto-reply 16, textbox auto-reply MinHeight 54→110, ComboBox FontSize 15, botones FontSize 15 + padding. Hint con los tokens disponibles.
+- Tests: **+5 Core** (render: substitución, case-insensitive, vacíos, sin tokens) **+3 App** (preselección, Personalizado limpia, tokens renderizados a opciones). Total **1322** (509 Core + 813 App).
 
 ## Sprint AN · 2026-05-30 — Remate funcional + UX
 
