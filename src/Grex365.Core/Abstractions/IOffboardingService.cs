@@ -18,7 +18,10 @@ public sealed record OffboardingOptions(
     string? AutoReplyMessage = null,
     bool HideFromGal = false,
     // Delegate that receives Full Access (+ Send As) on the resulting mailbox (via external EXO).
-    string? DelegateMailboxTo = null);
+    string? DelegateMailboxTo = null,
+    // Remove the user from all groups / distribution lists (best-effort, via Graph). Dynamic,
+    // on-prem-synced and built-in groups can't be removed and are reported, not failed.
+    bool RemoveFromGroups = false);
 
 public interface IOffboardingService
 {

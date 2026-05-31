@@ -415,4 +415,56 @@ public class OffboardingServiceTests
         r.Steps.Should().Contain(s => s.Name.Contains("Delegar") && s.Status == "OK");
         exo.Verify(e => e.GrantDelegateAsync("jane@a", "deleg@a", true, It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    private static Mock<IUsersService> UsersWithGroups(params GroupSummary[] groups)
+    {
+        var m = UsersOk();
+        m.Setup(u => u.GetGroupMembershipsAsync("uid", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(groups.ToList());
+        return m;
+    }
+
+    // Offboarding removes the leaver from every group / DL (best-effort, via IGroupsService).
+    [Fact]
+    public async Task RemovesFromGroups_WhenRequested()
+    {
+        var users = UsersWithGroups(new("g1", "Grupo 1", null, "Unified"), new("g2", "DL 2", null, "Distribution"));
+        var groups = new Mock<IGroupsService>();
+        var sut = new OffboardingService(users.Object, MailboxOk().Object, null, groups.Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(false, false, false, RemoveFromGroups: true));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name.Contains("grupos") && s.Status == "OK" && s.Detail.Contains("2"));
+        groups.Verify(g => g.RemoveMemberAsync("g1", "uid", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+        groups.Verify(g => g.RemoveMemberAsync("g2", "uid", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // Groups that can't be removed (dynamic / on-prem / classic DL) are reported, not fatal.
+    [Fact]
+    public async Task RemoveFromGroups_PartialFailure_ReportsAvisoButSucceeds()
+    {
+        var users = UsersWithGroups(new("g1", "Dinámico", null, "Unified"), new("g2", "OK", null, "Unified"));
+        var groups = new Mock<IGroupsService>();
+        groups.Setup(g => g.RemoveMemberAsync("g1", "uid", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("dynamic group"));
+        var sut = new OffboardingService(users.Object, MailboxOk().Object, null, groups.Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(false, false, false, RemoveFromGroups: true));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name.Contains("grupos") && s.Status == "AVISO" && s.Detail.Contains("Dinámico"));
+        groups.Verify(g => g.RemoveMemberAsync("g2", "uid", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RemoveFromGroups_NoGroupsService_Omitido()
+    {
+        var users = UsersOk();
+        var sut = new OffboardingService(users.Object, MailboxOk().Object); // no IGroupsService
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(false, false, false, RemoveFromGroups: true));
+
+        r.Steps.Should().Contain(s => s.Name.Contains("grupos") && s.Status == "OMITIDO");
+    }
 }

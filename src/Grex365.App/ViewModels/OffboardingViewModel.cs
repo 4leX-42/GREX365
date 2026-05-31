@@ -55,6 +55,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
     [ObservableProperty] private bool _disableAccount = true;
     [ObservableProperty] private bool _removeLicenses = true;
     [ObservableProperty] private bool _convertMailboxToShared = true;
+    [ObservableProperty] private bool _removeFromGroups = true;
 
     // Dry-run: rehearse the whole flow read-only (touches nothing). Safe to run in production.
     [ObservableProperty] private bool _dryRun;
@@ -300,7 +301,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
             StatusMessage = L10n.Get("Offboarding.Batch.NoTargets");
             return;
         }
-        if (!DisableAccount && !RemoveLicenses && !ConvertMailboxToShared)
+        if (!DisableAccount && !RemoveLicenses && !ConvertMailboxToShared && !RemoveFromGroups)
         {
             StatusMessage = L10n.Get("Offboarding.Status.NoActionSelected");
             return;
@@ -353,7 +354,8 @@ public sealed partial class OffboardingViewModel : ObservableObject
                         AutoReplyMessage, target.AutoReplyOverride, L10n.Get("Offboarding.AutoReply.NoDelegate"),
                         target.DisplayName, del),
                     HideFromGal: HideFromGal,
-                    DelegateMailboxTo: string.IsNullOrWhiteSpace(del) ? null : del.Trim());
+                    DelegateMailboxTo: string.IsNullOrWhiteSpace(del) ? null : del.Trim(),
+                    RemoveFromGroups: RemoveFromGroups);
                 var stepProgress = new Progress<OffboardingStep>(s =>
                     AppendLog($"   [{s.Status}] {s.Name} — {s.Detail}", LevelFromStatus(s.Status)));
 
@@ -430,6 +432,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
         if (DisableAccount) actions.Add(L10n.Get("Offboarding.Action.DisableAccount"));
         if (RemoveLicenses) actions.Add(L10n.Get("Offboarding.Action.RemoveLicenses"));
         if (ConvertMailboxToShared) actions.Add(L10n.Get("Offboarding.Action.ConvertShared"));
+        if (RemoveFromGroups) actions.Add(L10n.Get("Offboarding.Action.RemoveFromGroups"));
         if (actions.Count == 0)
         {
             StatusMessage = L10n.Get("Offboarding.Status.NoActionSelected");
@@ -472,7 +475,8 @@ public sealed partial class OffboardingViewModel : ObservableObject
                     AutoReplyMessage, null, L10n.Get("Offboarding.AutoReply.NoDelegate"),
                     Upn, DelegateToAll),
                 HideFromGal: HideFromGal,
-                DelegateMailboxTo: string.IsNullOrWhiteSpace(DelegateToAll) ? null : DelegateToAll.Trim());
+                DelegateMailboxTo: string.IsNullOrWhiteSpace(DelegateToAll) ? null : DelegateToAll.Trim(),
+                RemoveFromGroups: RemoveFromGroups);
             var stepProgress = new Progress<OffboardingStep>(UpsertStep);
             var result = await _service.RunAsync(Upn.Trim(), options, _log.Progress, stepProgress, _cts.Token).ConfigureAwait(true);
             Result = result;

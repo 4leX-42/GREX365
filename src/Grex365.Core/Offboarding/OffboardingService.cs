@@ -8,15 +8,21 @@ public sealed class OffboardingService : IOffboardingService
     private readonly IUsersService _users;
     private readonly ISharedMailboxService _mailboxes;
     private readonly IExternalExoOps? _externalExo;
+    private readonly IGroupsService? _groups;
 
     // externalExo (when wired) runs the mailbox conversion + fact-gathering via an external
     // pwsh process — the in-process EXO path is unreliable. Falls back to the in-proc service
-    // when absent.
-    public OffboardingService(IUsersService users, ISharedMailboxService mailboxes, IExternalExoOps? externalExo = null)
+    // when absent. groups (when wired) is used to remove the leaver from DLs / M365 groups.
+    public OffboardingService(
+        IUsersService users,
+        ISharedMailboxService mailboxes,
+        IExternalExoOps? externalExo = null,
+        IGroupsService? groups = null)
     {
         _users = users;
         _mailboxes = mailboxes;
         _externalExo = externalExo;
+        _groups = groups;
     }
 
     // Delay between license-removal verification re-reads (Graph license changes propagate
@@ -253,6 +259,71 @@ public sealed class OffboardingService : IOffboardingService
                 {
                     Done("Quitar licencias", "ERROR", ex.Message);
                     success = false;
+                }
+            }
+        }
+
+        // ---- Step 3b: remove from groups / distribution lists (best-effort, Graph) ----
+        if (options.RemoveFromGroups)
+        {
+            Running("Quitar de grupos y DLs");
+            if (_groups is null)
+            {
+                Done("Quitar de grupos y DLs", "OMITIDO", "servicio de grupos no disponible");
+            }
+            else
+            {
+                IReadOnlyList<GroupSummary>? memberships = null;
+                string? readError = null;
+                try
+                {
+                    memberships = await _users.GetGroupMembershipsAsync(user.Id, cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    readError = ex.Message;
+                }
+
+                if (readError is not null)
+                {
+                    Done("Quitar de grupos y DLs", "AVISO", $"no se pudieron leer los grupos: {readError}");
+                }
+                else if (memberships is null || memberships.Count == 0)
+                {
+                    Done("Quitar de grupos y DLs", "OK", "sin grupos");
+                }
+                else if (dry)
+                {
+                    Done("Quitar de grupos y DLs", "SIMULADO", $"se intentaría quitar de {memberships.Count} grupo(s)");
+                }
+                else
+                {
+                    var removed = 0;
+                    var failed = new List<string>();
+                    foreach (var g in memberships)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        try
+                        {
+                            // Pass null progress: report an aggregate instead of one log line per group.
+                            await _groups.RemoveMemberAsync(g.Id, user.Id, null, cancellationToken).ConfigureAwait(false);
+                            removed++;
+                        }
+                        catch
+                        {
+                            failed.Add(g.DisplayName);
+                        }
+                    }
+                    if (failed.Count == 0)
+                    {
+                        Done("Quitar de grupos y DLs", "OK", $"Quitado de {removed} grupo(s)");
+                    }
+                    else
+                    {
+                        var sample = string.Join(", ", failed.Take(5)) + (failed.Count > 5 ? "…" : "");
+                        Done("Quitar de grupos y DLs", "AVISO",
+                            $"Quitado de {removed}/{memberships.Count}. No se pudo en {failed.Count} (dinámicos / sincronizados on-prem / DL clásicas): {sample}");
+                    }
                 }
             }
         }

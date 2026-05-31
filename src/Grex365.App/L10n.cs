@@ -403,6 +403,7 @@ public static class L10n
         ["Offboarding.Option.Disable"] = "Deshabilitar cuenta (AccountEnabled=false)",
         ["Offboarding.Option.RemoveLicenses"] = "Quitar todas las licencias asignadas",
         ["Offboarding.Option.ConvertShared"] = "Convertir buzón a SharedMailbox (libera licencia E3/E5)",
+        ["Offboarding.Option.RemoveFromGroups"] = "Quitar de grupos y listas de distribución",
         ["Offboarding.Run"] = "Ejecutar offboarding",
         ["Offboarding.Cancel"] = "Cancelar",
         ["Offboarding.Steps.Title"] = "Pasos",
@@ -822,6 +823,7 @@ public static class L10n
         ["Offboarding.Action.DisableAccount"] = "deshabilitar la cuenta",
         ["Offboarding.Action.RemoveLicenses"] = "quitar todas las licencias",
         ["Offboarding.Action.ConvertShared"] = "convertir buzón a SharedMailbox",
+        ["Offboarding.Action.RemoveFromGroups"] = "quitar de grupos y DLs",
         ["Offboarding.Confirm.Title"] = "Confirmar offboarding",
         ["Offboarding.Confirm.Body"] = "Offboarding de {0}:\n\n  {1}\n\n¿Continuar?",
 
@@ -1312,6 +1314,7 @@ public static class L10n
         ["Offboarding.Option.Disable"] = "Disable account (AccountEnabled=false)",
         ["Offboarding.Option.RemoveLicenses"] = "Remove all assigned licenses",
         ["Offboarding.Option.ConvertShared"] = "Convert mailbox to SharedMailbox (frees E3/E5 license)",
+        ["Offboarding.Option.RemoveFromGroups"] = "Remove from groups and distribution lists",
         ["Offboarding.Run"] = "Run offboarding",
         ["Offboarding.Cancel"] = "Cancel",
         ["Offboarding.Steps.Title"] = "Steps",
@@ -1731,6 +1734,7 @@ public static class L10n
         ["Offboarding.Action.DisableAccount"] = "disable the account",
         ["Offboarding.Action.RemoveLicenses"] = "remove all licenses",
         ["Offboarding.Action.ConvertShared"] = "convert mailbox to SharedMailbox",
+        ["Offboarding.Action.RemoveFromGroups"] = "remove from groups and DLs",
         ["Offboarding.Confirm.Title"] = "Confirm offboarding",
         ["Offboarding.Confirm.Body"] = "Offboarding of {0}:\n\n  {1}\n\nContinue?",
 

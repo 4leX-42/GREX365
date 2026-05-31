@@ -57,6 +57,7 @@ public class OffboardingViewModelTests
         h.Vm.DisableAccount = false;
         h.Vm.RemoveLicenses = false;
         h.Vm.ConvertMailboxToShared = false;
+        h.Vm.RemoveFromGroups = false;
 
         await h.Vm.RunCommand.ExecuteAsync(null);
 

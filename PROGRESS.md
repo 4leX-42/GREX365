@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1330 passing** (xUnit + FluentAssertions) — 516 Core + 814 App
-- Última actualización: 2026-05-31 (sesión · Sprint AO — Offboarding: backbone + EXO + fixes + plantillas + layout + auto-reply grupo/excepción + delegación por EXO externo)
+- Tests: **1333 passing** (xUnit + FluentAssertions) — 519 Core + 814 App
+- Última actualización: 2026-05-31 (sesión · Sprint AO — Offboarding: backbone + EXO + fixes + plantillas + layout + auto-reply + delegación + quitar-de-grupos)
 
 ## Sprint AO · 2026-05-31 — Offboarding: backbone de seguridad y observabilidad
 
@@ -62,6 +62,11 @@ Error real en ejecución: `[HttpResponseMessage] does not contain a method named
 - VM: pasa `DelegateMailboxTo = del` por target/single; **eliminada** la delegación in-proc (`_mailboxes`) y su campo/param del ctor. Ahora TODO EXO de offboarding va por pwsh externo.
 - Tests: **+1 Core** (`Delegate_GrantsFullAccessAndSendAs_ViaExternalExo`, con `ISharedMailboxService` strict que NO debe tocarse). Total **1330**.
 - **Validado en vivo contra testeo224** (real, con revert): FullAccess + SendAs + auto-reply → **OK por pwsh externo** (las 3 que petaban con GetResponseHeader in-proc). Confirma el fix. Hide-GAL → error legítimo "objeto sincronizado desde organización interna" = testeo224 es **híbrido** (sync AD on-prem) → `HideFromGalAsync` lo maneja como SKIP con guía. Endurecido el regex de detección híbrida (`ámbito de escritura|organizaci.n interna|local organization|synchroniz…`) para no depender solo de "sincroniz". Aviso: muchos buzones de Andersen pueden ser híbridos → hide-GAL se aplica en AD local.
+
+### Quitar de grupos/DLs + limpieza UI (commit 7)
+- **Hueco detectado por el usuario**: al convertir a shared NO se quitaba de grupos. El legacy (`Invoke-OffboardingWizard.ps1` paso 10) sí. Portado: `OffboardingService` paso "Quitar de grupos y DLs" (best-effort vía Graph) — lee `IUsersService.GetGroupMembershipsAsync`, quita con `IGroupsService.RemoveMemberAsync` por grupo (try/catch). Grupos dinámicos / sincronizados on-prem / DL clásicas no se pueden quitar → se reportan (AVISO, no fatal). `OffboardingOptions.RemoveFromGroups` (default ON en VM, checkbox en la grid de acciones). `IGroupsService?` inyectado al servicio (ya registrado en DI; sin scope nuevo — `GroupMember.ReadWrite.All` concedido). 4ª acción → guard de "ninguna acción" actualizado.
+- **UI**: quitado el ToolTip "Selecciona filas y Ctrl+C para copiar" del log (la función sigue, sobraba el texto).
+- Tests: **+3 Core** (quita de N grupos, fallo parcial→AVISO, sin servicio→OMITIDO). Total **1333** (519 Core + 814 App).
 
 ## Sprint AN · 2026-05-30 — Remate funcional + UX
 
