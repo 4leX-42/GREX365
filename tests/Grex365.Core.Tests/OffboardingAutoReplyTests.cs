@@ -42,4 +42,43 @@ public class OffboardingAutoReplyTests
         OffboardingAutoReply.Render("", "Jane", "d@a").Should().BeEmpty();
         OffboardingAutoReply.Render(null, "Jane", "d@a").Should().BeEmpty();
     }
+
+    private const string Global = "Contacte con {delegado}.";
+    private const string NoDel = "{usuario} ya no trabaja aquí.";
+
+    [Fact]
+    public void Resolve_PerUserOverride_AlwaysWins()
+    {
+        OffboardingAutoReply.Resolve(Global, "Mensaje propio para {delegado}", NoDel, "Jane", "p@a")
+            .Should().Be("Mensaje propio para p@a");
+    }
+
+    [Fact]
+    public void Resolve_WithDelegate_UsesGlobalTemplate()
+    {
+        OffboardingAutoReply.Resolve(Global, null, NoDel, "Jane", "pepe@a")
+            .Should().Be("Contacte con pepe@a.");
+    }
+
+    [Fact]
+    public void Resolve_NoDelegate_UsesNoDelegateTemplate()
+    {
+        OffboardingAutoReply.Resolve(Global, null, NoDel, "Jane", "")
+            .Should().Be("Jane ya no trabaja aquí.");
+    }
+
+    [Fact]
+    public void Resolve_AutoReplyOff_NoOverride_ReturnsNull()
+    {
+        OffboardingAutoReply.Resolve("", null, NoDel, "Jane", "pepe@a").Should().BeNull();
+    }
+
+    // Grouping: one shared global template, different delegates per user → different messages.
+    [Theory]
+    [InlineData("pepe@a", "Contacte con pepe@a.")]
+    [InlineData("marta@a", "Contacte con marta@a.")]
+    public void Resolve_SharedTemplate_PerUserDelegate(string del, string expected)
+    {
+        OffboardingAutoReply.Resolve(Global, null, NoDel, "Jane", del).Should().Be(expected);
+    }
 }

@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1322 passing** (xUnit + FluentAssertions) — 509 Core + 813 App
-- Última actualización: 2026-05-31 (sesión · Sprint AO — Offboarding: backbone + pasos EXO + fixes real-run + plantillas auto-reply + UI más grande)
+- Tests: **1329 passing** (xUnit + FluentAssertions) — 515 Core + 814 App
+- Última actualización: 2026-05-31 (sesión · Sprint AO — Offboarding: backbone + EXO + fixes + plantillas + layout horizontal + auto-reply grupo/excepción)
 
 ## Sprint AO · 2026-05-31 — Offboarding: backbone de seguridad y observabilidad
 
@@ -44,6 +44,16 @@ Detectado al ejecutar offboarding real sobre un `testeo*` sin buzón → `Conver
 - **Plantillas**: `OffboardingAutoReply.Render` (puro) substituye `{usuario}` / `{delegado}` por-usuario al ejecutar. VM expone catálogo `AutoReplyTemplates` ("Baja — ya no trabaja aquí", "Contactar con el delegado", "Personalizado"); ComboBox pre-selecciona la primera (templates-first), al elegir rellena el textbox (editable). Render por-target: {usuario}=DisplayName, {delegado}=delegado (batch) / Upn+DelegateToAll (single).
 - **UI más grande** (queja "todo demasiado pequeño"): checkboxes 13→15, títulos de sección 16→18, label auto-reply 16, textbox auto-reply MinHeight 54→110, ComboBox FontSize 15, botones FontSize 15 + padding. Hint con los tokens disponibles.
 - Tests: **+5 Core** (render: substitución, case-insensitive, vacíos, sin tokens) **+3 App** (preselección, Personalizado limpia, tokens renderizados a opciones). Total **1322** (509 Core + 813 App).
+
+### Layout horizontal + auto-reply grupo/excepción (commit 5)
+- **Layout en columnas** (queja "todo demasiado vertical, paneles largos"): listas de candidatos y de cola en `UniformGrid Columns=2` (2 por fila); checkboxes de acciones (Deshabilitar/Convertir/Quitar lic./Dry-run) y de finalización (forward/hide) en 2 columnas. Reduce la altura de los paneles ~50%.
+- **Auto-reply inteligente** `OffboardingAutoReply.Resolve` (puro) — modelo grupo + excepción:
+  1. override por usuario (`OffboardingTarget.AutoReplyOverride`, campo por fila en la cola) **siempre gana**;
+  2. si hay delegado (por-usuario `DelegateTo`, o el global `DelegateToAll`) → plantilla global con `{delegado}` substituido;
+  3. **sin delegado → mensaje "sin reemplazo" automático** (`Offboarding.AutoReply.NoDelegate`);
+  4. auto-reply global vacío + sin override → `null` (paso omitido).
+  Resuelve el escenario real (5→Pepe / 4→Marta / 1→Fernando / 2 sin delegado): una sola config compartida (plantilla global) + delegado por usuario/grupo + excepciones individuales. El delegado por-fila ya alimentaba `{delegado}`; ahora además el caso sin-delegado y el override propio.
+- Tests: **+6 Core** (Resolve: override gana, con/sin delegado, off, theory por delegado) **+1 App** (batch: per-target delegado + fallback sin-delegado). Total **1329** (515 Core + 814 App).
 
 ## Sprint AN · 2026-05-30 — Remate funcional + UX
 

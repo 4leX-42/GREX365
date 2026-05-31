@@ -215,6 +215,31 @@ public class OffboardingViewModelTests
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    // Grouping + exception model: a shared global template renders per-target with each user's
+    // delegate; a delegate-less user falls back to the "no replacement" message.
+    [Fact]
+    public async Task Batch_AutoReply_UsesPerTargetDelegate_AndNoDelegateFallback()
+    {
+        var h = new Harness();
+        var captured = new Dictionary<string, OffboardingOptions>();
+        h.Service.Setup(s => s.RunAsync(It.IsAny<string>(), It.IsAny<OffboardingOptions>(),
+                It.IsAny<IProgress<LogEntry>>(), It.IsAny<IProgress<OffboardingStep>>(), It.IsAny<CancellationToken>()))
+            .Callback<string, OffboardingOptions, IProgress<LogEntry>, IProgress<OffboardingStep>, CancellationToken>(
+                (upn, opt, _, _, _) => captured[upn] = opt)
+            .ReturnsAsync((string upn, OffboardingOptions _, IProgress<LogEntry> _, IProgress<OffboardingStep> _, CancellationToken _)
+                => new OffboardingResult(upn, true, new List<OffboardingStep>()));
+
+        h.Vm.AutoReplyMessage = "Contacte con {delegado}";
+        h.Vm.Targets.Add(new OffboardingTarget("ana@x", "Ana") { DelegateTo = "pepe@a" });
+        h.Vm.Targets.Add(new OffboardingTarget("bob@x", "Bob")); // no delegate
+        h.Dialogs.ConfirmResult = true;
+
+        await h.Vm.RunBatchCommand.ExecuteAsync(null);
+
+        captured["ana@x"].AutoReplyMessage.Should().Be("Contacte con pepe@a");
+        captured["bob@x"].AutoReplyMessage.Should().Be("Bob ya no forma parte de la organización.");
+    }
+
     [Fact]
     public void Construction_PreselectsFirstTemplate_AndFillsMessage()
     {

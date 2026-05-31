@@ -23,6 +23,8 @@ public sealed partial class OffboardingTarget : ObservableObject
     public string DisplayName { get; }
 
     [ObservableProperty] private string _delegateTo = string.Empty;
+    // Optional per-user auto-reply override; empty = use the global template / smart default.
+    [ObservableProperty] private string _autoReplyOverride = string.Empty;
     [ObservableProperty] private string _status = "PENDIENTE";
 }
 
@@ -349,9 +351,9 @@ public sealed partial class OffboardingViewModel : ObservableObject
                 var options = new OffboardingOptions(
                     DisableAccount, RemoveLicenses, ConvertMailboxToShared, DryRun,
                     ForwardTo: fwd,
-                    AutoReplyMessage: string.IsNullOrWhiteSpace(AutoReplyMessage)
-                        ? null
-                        : OffboardingAutoReply.Render(AutoReplyMessage, target.DisplayName, del),
+                    AutoReplyMessage: OffboardingAutoReply.Resolve(
+                        AutoReplyMessage, target.AutoReplyOverride, L10n.Get("Offboarding.AutoReply.NoDelegate"),
+                        target.DisplayName, del),
                     HideFromGal: HideFromGal);
                 var stepProgress = new Progress<OffboardingStep>(s =>
                     AppendLog($"   [{s.Status}] {s.Name} — {s.Detail}", LevelFromStatus(s.Status)));
@@ -476,9 +478,9 @@ public sealed partial class OffboardingViewModel : ObservableObject
             var options = new OffboardingOptions(
                 DisableAccount, RemoveLicenses, ConvertMailboxToShared, DryRun,
                 ForwardTo: fwd,
-                AutoReplyMessage: string.IsNullOrWhiteSpace(AutoReplyMessage)
-                    ? null
-                    : OffboardingAutoReply.Render(AutoReplyMessage, Upn, DelegateToAll),
+                AutoReplyMessage: OffboardingAutoReply.Resolve(
+                    AutoReplyMessage, null, L10n.Get("Offboarding.AutoReply.NoDelegate"),
+                    Upn, DelegateToAll),
                 HideFromGal: HideFromGal);
             var stepProgress = new Progress<OffboardingStep>(UpsertStep);
             var result = await _service.RunAsync(Upn.Trim(), options, _log.Progress, stepProgress, _cts.Token).ConfigureAwait(true);

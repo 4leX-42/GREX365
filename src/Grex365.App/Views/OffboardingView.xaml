@@ -108,6 +108,9 @@
                                            Visibility="{Binding Candidates.Count, Converter={StaticResource CountToVisibilityConverter}}" />
                             </Grid>
                             <ItemsControl ItemsSource="{Binding Candidates}" MinHeight="120" MaxHeight="360">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><UniformGrid Columns="2" /></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
                                 <ItemsControl.Template>
                                     <ControlTemplate TargetType="ItemsControl">
                                         <ScrollViewer VerticalScrollBarVisibility="Auto"><ItemsPresenter /></ScrollViewer>
@@ -115,7 +118,7 @@
                                 </ItemsControl.Template>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type vm:OffboardingTarget}">
-                                        <Border CornerRadius="6" Padding="14,11" Margin="0,3"
+                                        <Border CornerRadius="6" Padding="14,11" Margin="3"
                                                 Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
@@ -149,9 +152,12 @@
                                        Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                        Visibility="{Binding Targets.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=invert}" />
                             <ItemsControl ItemsSource="{Binding Targets}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><UniformGrid Columns="2" /></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type vm:OffboardingTarget}">
-                                        <Border CornerRadius="8" Padding="14,12" Margin="0,4"
+                                        <Border CornerRadius="8" Padding="14,12" Margin="4"
                                                 Background="{DynamicResource SubtleFillColorSecondaryBrush}">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
@@ -160,6 +166,7 @@
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
                                                 <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
                                                     <RowDefinition Height="Auto" />
                                                     <RowDefinition Height="Auto" />
                                                 </Grid.RowDefinitions>
@@ -175,10 +182,15 @@
                                                            FontSize="12" Padding="10,3"
                                                            Command="{Binding DataContext.RemoveTargetCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                            CommandParameter="{Binding}" />
-                                                <!-- Per-account delegate (this user's mailbox → X), with user autocomplete. Empty = default below / none. -->
+                                                <!-- Per-account delegate (this user's mailbox → X). Drives forwarding + the {delegado} auto-reply token. Empty = global default / none. -->
                                                 <v:UserPickerBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,8,0,0"
                                                                  Text="{Binding DelegateTo, Mode=TwoWay}"
                                                                  Placeholder="{l:L10n Key=Offboarding.Target.DelegatePlaceholder}" />
+                                                <!-- Per-user auto-reply override (optional). Empty = global template / smart default. -->
+                                                <ui:TextBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,6,0,0"
+                                                            FontSize="12"
+                                                            Text="{Binding AutoReplyOverride, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                            PlaceholderText="{l:L10n Key=Offboarding.Target.AutoReplyOverride}" />
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -191,17 +203,21 @@
                     <Border CornerRadius="8" Padding="20"
                             Background="{DynamicResource ControlFillColorDefaultBrush}">
                         <StackPanel>
-                            <CheckBox Content="{l:L10n Key=Offboarding.Option.Disable}" IsChecked="{Binding DisableAccount}" FontSize="15" Margin="0,0,0,8" />
-                            <CheckBox Content="{l:L10n Key=Offboarding.Option.ConvertShared}" IsChecked="{Binding ConvertMailboxToShared}" FontSize="15" Margin="0,0,0,8" />
-                            <CheckBox Content="{l:L10n Key=Offboarding.Option.RemoveLicenses}" IsChecked="{Binding RemoveLicenses}" FontSize="15" />
-                            <CheckBox Content="{l:L10n Key=Offboarding.Option.DryRun}" IsChecked="{Binding DryRun}" FontSize="15" FontWeight="SemiBold" Margin="0,14,0,0" />
+                            <UniformGrid Columns="2">
+                                <CheckBox Content="{l:L10n Key=Offboarding.Option.Disable}" IsChecked="{Binding DisableAccount}" FontSize="15" Margin="0,0,8,8" />
+                                <CheckBox Content="{l:L10n Key=Offboarding.Option.ConvertShared}" IsChecked="{Binding ConvertMailboxToShared}" FontSize="15" Margin="0,0,0,8" />
+                                <CheckBox Content="{l:L10n Key=Offboarding.Option.RemoveLicenses}" IsChecked="{Binding RemoveLicenses}" FontSize="15" Margin="0,0,8,0" />
+                                <CheckBox Content="{l:L10n Key=Offboarding.Option.DryRun}" IsChecked="{Binding DryRun}" FontSize="15" FontWeight="SemiBold" />
+                            </UniformGrid>
 
                             <TextBlock Text="{l:L10n Key=Offboarding.DelegateAll.Label}" FontWeight="SemiBold" FontSize="16" Margin="0,18,0,6" />
                             <v:UserPickerBox Text="{Binding DelegateToAll, Mode=TwoWay}"
                                              Placeholder="{l:L10n Key=Offboarding.Target.DelegatePlaceholder}" />
 
-                            <CheckBox Content="{l:L10n Key=Offboarding.Option.ForwardToDelegate}" IsChecked="{Binding ForwardToDelegate}" FontSize="15" Margin="0,14,0,0" />
-                            <CheckBox Content="{l:L10n Key=Offboarding.Option.HideFromGal}" IsChecked="{Binding HideFromGal}" FontSize="15" Margin="0,8,0,0" />
+                            <UniformGrid Columns="2" Margin="0,12,0,0">
+                                <CheckBox Content="{l:L10n Key=Offboarding.Option.ForwardToDelegate}" IsChecked="{Binding ForwardToDelegate}" FontSize="15" Margin="0,0,8,0" />
+                                <CheckBox Content="{l:L10n Key=Offboarding.Option.HideFromGal}" IsChecked="{Binding HideFromGal}" FontSize="15" />
+                            </UniformGrid>
 
                             <TextBlock Text="{l:L10n Key=Offboarding.AutoReply.Label}" FontWeight="SemiBold" FontSize="16" Margin="0,18,0,6" />
                             <TextBlock Text="{l:L10n Key=Offboarding.AutoReply.Template}" FontSize="14" Margin="0,0,0,4"
