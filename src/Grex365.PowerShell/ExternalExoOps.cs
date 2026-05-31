@@ -167,6 +167,127 @@ public sealed class ExternalExoOps : IExternalExoOps
         return ParseNote(json) ?? "delegado";
     }
 
+    public async Task<MailboxInfo?> ConvertToRegularAsync(
+        string identity,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
+        var id = Lit(identity);
+        var body = $$"""
+            $id = {{id}}
+            $cur = Get-Mailbox -Identity $id -ErrorAction Stop
+            if ($cur.RecipientTypeDetails -eq 'SharedMailbox') {
+                Set-Mailbox -Identity $id -Type Regular -ErrorAction Stop
+                Write-Output 'Set-Mailbox -Type Regular aplicado; esperando propagacion...'
+            }
+            $final = [string]$cur.RecipientTypeDetails
+            $deadline = (Get-Date).AddSeconds(150)
+            while ($final -eq 'SharedMailbox' -and (Get-Date) -lt $deadline) {
+                Start-Sleep -Seconds 8
+                try { $final = [string](Get-Mailbox -Identity $id -ErrorAction Stop).RecipientTypeDetails } catch { }
+            }
+            $m = Get-Mailbox -Identity $id -ErrorAction Stop
+            $o = [PSCustomObject]@{
+                Identity             = [string]$m.Identity
+                DisplayName          = [string]$m.DisplayName
+                PrimarySmtpAddress   = [string]$m.PrimarySmtpAddress
+                RecipientTypeDetails = [string]$m.RecipientTypeDetails
+            }
+            Write-Output ('{{JsonMarker}}' + ($o | ConvertTo-Json -Compress))
+            """;
+        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        return Parse(json);
+    }
+
+    // Pure: maps (action, permission) → the EXO cmdlet operating on $m (mailbox) / $p (principal).
+    // Returns null for an unsupported combination. Kept public+static so it stays unit-testable.
+    public static string? BuildPermissionCmdlet(string action, string permission)
+    {
+        var add = string.Equals(action, "add", StringComparison.OrdinalIgnoreCase);
+        return permission switch
+        {
+            "FullAccess" => add
+                ? "Add-MailboxPermission -Identity $m -User $p -AccessRights FullAccess -InheritanceType All -AutoMapping:$true -Confirm:$false -ErrorAction Stop | Out-Null"
+                : "Remove-MailboxPermission -Identity $m -User $p -AccessRights FullAccess -InheritanceType All -Confirm:$false -ErrorAction Stop | Out-Null",
+            "SendAs" => add
+                ? "Add-RecipientPermission -Identity $m -Trustee $p -AccessRights SendAs -Confirm:$false -ErrorAction Stop | Out-Null"
+                : "Remove-RecipientPermission -Identity $m -Trustee $p -AccessRights SendAs -Confirm:$false -ErrorAction Stop | Out-Null",
+            "SendOnBehalf" => add
+                ? "Set-Mailbox -Identity $m -GrantSendOnBehalfTo @{Add=$p} -ErrorAction Stop | Out-Null"
+                : "Set-Mailbox -Identity $m -GrantSendOnBehalfTo @{Remove=$p} -ErrorAction Stop | Out-Null",
+            _ => null,
+        };
+    }
+
+    public async Task<MailboxPermissionResult> ApplyPermissionAsync(
+        string action,
+        string permission,
+        string mailbox,
+        string principal,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cmdlet = BuildPermissionCmdlet(action, permission);
+        if (cmdlet is null)
+        {
+            return new MailboxPermissionResult(action, permission, mailbox, principal, "INVALIDO", "Permission no soportada");
+        }
+        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
+        var body = $$"""
+            $m = {{Lit(mailbox)}}
+            $p = {{Lit(principal)}}
+            {{cmdlet}}
+            Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = 'OK' }) | ConvertTo-Json -Compress))
+            """;
+        try
+        {
+            await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+            return new MailboxPermissionResult(action, permission, mailbox, principal, "OK", "Aplicado");
+        }
+        catch (Exception ex)
+        {
+            return new MailboxPermissionResult(action, permission, mailbox, principal, "ERROR", ex.Message);
+        }
+    }
+
+    public async Task<IReadOnlyList<MailboxPermissionEntry>> GetPermissionsAsync(
+        string mailbox,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
+        var body = $$"""
+            $mbx = {{Lit(mailbox)}}
+            $full = @(Get-MailboxPermission -Identity $mbx -ErrorAction Stop |
+                Where-Object { $_.AccessRights -contains 'FullAccess' -and -not $_.IsInherited -and $_.User -notlike 'NT AUTHORITY\SELF' })
+            $send = @(Get-RecipientPermission -Identity $mbx -ErrorAction SilentlyContinue |
+                Where-Object { $_.AccessRights -contains 'SendAs' -and $_.Trustee -notlike 'NT AUTHORITY\SELF' })
+            $m = Get-Mailbox -Identity $mbx -ErrorAction Stop
+            $out = New-Object System.Collections.Generic.List[object]
+            foreach ($f in $full) { $out.Add([PSCustomObject]@{ Permission='FullAccess';   Principal=[string]$f.User;    Detail=[string]$f.AccessRights }) }
+            foreach ($s in $send) { $out.Add([PSCustomObject]@{ Permission='SendAs';       Principal=[string]$s.Trustee; Detail=[string]$s.AccessRights }) }
+            foreach ($o in @($m.GrantSendOnBehalfTo)) { $out.Add([PSCustomObject]@{ Permission='SendOnBehalf'; Principal=[string]$o; Detail='From Set-Mailbox' }) }
+            Write-Output ('{{JsonMarker}}' + ($out | ConvertTo-Json -Compress -AsArray))
+            """;
+        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        return ParsePermissions(json);
+    }
+
+    private static IReadOnlyList<MailboxPermissionEntry> ParsePermissions(string? json)
+    {
+        var list = new List<MailboxPermissionEntry>();
+        if (string.IsNullOrWhiteSpace(json)) return list;
+        using var doc = JsonDocument.Parse(json);
+        if (doc.RootElement.ValueKind != JsonValueKind.Array) return list;
+        foreach (var el in doc.RootElement.EnumerateArray())
+        {
+            string S(string n) => el.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString()! : string.Empty;
+            list.Add(new MailboxPermissionEntry(S("Permission"), S("Principal"), S("Detail")));
+        }
+        return list;
+    }
+
     private static string? ParseNote(string? json)
     {
         if (string.IsNullOrWhiteSpace(json)) return null;

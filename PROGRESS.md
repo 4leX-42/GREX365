@@ -76,6 +76,14 @@ Queja del usuario: el `UserPickerBox` (autocompletado live vía `IUsersService.S
 - NO aplicado donde no encaja un picker de valor único: búsqueda de grupos (lista), add-members bulk (multilínea), campos de creación de usuario en Onboarding, filtro de MailFlow. Pendiente: `GroupPickerBox` para campos de grupo + helper "elegir y añadir" para los bulk.
 - Sin tests nuevos (cambio XAML; el control ya estaba probado en uso). Total sigue **1333**.
 
+### Fix: SharedMailbox migrado a EXO externo (commit 9)
+Usuario: el Lookup de Buzones compartidos petaba con `GetResponseHeader` (EXO in-proc). `SharedMailboxService` corría TODO por `IPowerShellRunner` (RunspacePool roto para EXO V3). Migrado entero a pwsh externo:
+- `IExternalExoOps` += `ConvertToRegularAsync`, `ApplyPermissionAsync`, `GetPermissionsAsync` (+ ya tenía GetMailboxFacts/ConvertToShared). `ExternalExoOps.BuildPermissionCmdlet` (pure static, testeable) mapea add/remove × FullAccess/SendAs/SendOnBehalf → cmdlet.
+- `SharedMailboxService` ahora es wrapper fino sobre `IExternalExoOps` (ctor cambia `IPowerShellRunner`→`IExternalExoOps`); mantiene la validación de ApplyPermission (INVALIDO sin tocar EXO). El VM y la interfaz `ISharedMailboxService` no cambian.
+- **Requiere conexión por certificado** (como offboarding); el path in-proc queda muerto para esta vista.
+- Tests SharedMailboxServiceTests reescritos: mock `IExternalExoOps` (validación + delegación) + theory de `BuildPermissionCmdlet`. Total **1331** (517 Core + 814 App).
+- **Pendiente in-proc** (mismo bug, migrar cuando den problemas): `MailboxRulesService` (OOO/forwarding/calendario), auditorías EXO (`ExoForwardingAuditService`, inbox rules), y EXO cmdlets en la Consola PS.
+
 ## Sprint AN · 2026-05-30 — Remate funcional + UX
 
 - **Usuarios**: panel de detalle rico (`UserDetailsView`) ahora embebido inline en la columna derecha, se carga al seleccionar (1 clic). Drawer se mantiene solo para Groups; se suprime en la página Usuarios (`MainViewModel.SyncUserDrawerVisibility`). `UserDetailsView.ShowClose` DP nueva.

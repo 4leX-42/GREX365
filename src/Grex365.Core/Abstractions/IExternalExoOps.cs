@@ -51,4 +51,26 @@ public interface IExternalExoOps
         bool sendAs,
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default);
+
+    // Converts the mailbox back to a regular user mailbox (Set-Mailbox -Type Regular) and waits.
+    Task<MailboxInfo?> ConvertToRegularAsync(
+        string identity,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    // Adds/removes a mailbox permission (FullAccess / SendAs / SendOnBehalf). Inputs are assumed
+    // pre-validated by the caller; returns OK/ERROR.
+    Task<MailboxPermissionResult> ApplyPermissionAsync(
+        string action,
+        string permission,
+        string mailbox,
+        string principal,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    // Lists the explicit FullAccess / SendAs / SendOnBehalf delegates on the mailbox.
+    Task<IReadOnlyList<MailboxPermissionEntry>> GetPermissionsAsync(
+        string mailbox,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
 }
