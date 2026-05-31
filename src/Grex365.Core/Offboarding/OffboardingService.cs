@@ -140,12 +140,22 @@ public sealed class OffboardingService : IOffboardingService
         // The mailbox MUST be converted while still licensed; removing the license first starts
         // a 30-day deletion clock and hides the convert option. So convert before removing
         // licenses, and skip license removal if conversion failed (gate below).
+        // EXO is reachable (external ops wired) but reported no readable mailbox → the user has
+        // no EXO mailbox; skip the mailbox steps rather than erroring on each one.
+        var noMailbox = facts is null && _externalExo is not null;
+
         var convertRequested = options.ConvertMailboxToShared;
         var convertSucceeded = false;
         if (convertRequested)
         {
             Running("Convertir a buzón compartido");
-            if (alreadyShared)
+            if (noMailbox)
+            {
+                // No mailbox to convert — skip (license removal may still proceed; there is no
+                // mailbox to strand). Matches the legacy "if ($mbox) { ... } else SKIP" flow.
+                Done("Convertir a buzón compartido", "OMITIDO", "El usuario no tiene buzón en Exchange Online; se omiten los pasos de buzón.");
+            }
+            else if (alreadyShared)
             {
                 // Idempotent: nothing to do; license removal may still proceed.
                 convertSucceeded = true;
@@ -188,13 +198,15 @@ public sealed class OffboardingService : IOffboardingService
         if (options.RemoveLicenses)
         {
             // Whether the mailbox will end up retained as shared (and therefore unlicensed).
-            var willBeShared = alreadyShared || convertRequested;
+            var willBeShared = alreadyShared || (convertRequested && convertSucceeded);
 
             // Safety gates: never strip the license when doing so would either strand the
             // mailbox for deletion or leave a non-compliant unlicensed mailbox.
             string? block = null;
-            if (convertRequested && !convertSucceeded)
+            if (convertRequested && !convertSucceeded && !noMailbox)
             {
+                // Convert was attempted on an existing mailbox and didn't take — stripping the
+                // license now would schedule that mailbox for deletion.
                 block = "Conversión a buzón compartido falló; no se quitan licencias para evitar el borrado del buzón (30 días).";
             }
             else if (willBeShared && exceedsSize)

@@ -186,6 +186,8 @@ public class OffboardingServiceTests
         var users = UsersOk();
         var mbx = new Mock<ISharedMailboxService>();
         var exo = new Mock<IExternalExoOps>();
+        exo.Setup(e => e.GetMailboxFactsAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MailboxInfo("u@a", "U", "u@a", "UserMailbox"));
         exo.Setup(e => e.ConvertToSharedAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new MailboxInfo("u@a", "U", "u@a", "SharedMailbox"));
 
@@ -302,6 +304,25 @@ public class OffboardingServiceTests
 
         r.Success.Should().BeTrue();
         r.Steps.Should().Contain(s => s.Name.Contains("Quitar licencias") && s.Status == "AVISO" && s.Detail.Contains("grupo"));
+        users.Verify(u => u.RemoveAllLicensesAsync("uid", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // EXO reachable but the user has no mailbox → convert is skipped (not errored), and the
+    // license can still be released (no mailbox to strand). Repro of the real "pwsh exit 1".
+    [Fact]
+    public async Task NoMailbox_SkipsConvert_AllowsLicenseRemoval()
+    {
+        var users = UsersOk();
+        var exo = new Mock<IExternalExoOps>();
+        exo.Setup(e => e.GetMailboxFactsAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MailboxInfo?)null); // connected, but no mailbox for this user
+        var sut = new OffboardingService(users.Object, new Mock<ISharedMailboxService>().Object, exo.Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(DisableAccount: false, RemoveLicenses: true, ConvertMailboxToShared: true));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name.Contains("compartido") && s.Status == "OMITIDO" && s.Detail.Contains("no tiene buzón"));
+        exo.Verify(e => e.ConvertToSharedAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
         users.Verify(u => u.RemoveAllLicensesAsync("uid", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 

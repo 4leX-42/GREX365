@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1313 passing** (xUnit + FluentAssertions) — 503 Core + 810 App
-- Última actualización: 2026-05-31 (sesión · Sprint AO — Offboarding: backbone de seguridad/observabilidad + pasos EXO de finalización)
+- Tests: **1314 passing** (xUnit + FluentAssertions) — 504 Core + 810 App
+- Última actualización: 2026-05-31 (sesión · Sprint AO — Offboarding: backbone + pasos EXO + fixes real-run)
 
 ## Sprint AO · 2026-05-31 — Offboarding: backbone de seguridad y observabilidad
 
@@ -31,6 +31,14 @@ Portados de `Invoke-OffboardingWizard.ps1` al servicio .NET como pasos **opciona
 - **Pendiente offboarding**:
   - Sin scope nuevo: SendAs al delegado (FullAccess ya en VM), quitar de DLs/M365 groups (`GroupMember.ReadWrite.All` ya concedido — vía Graph, no EXO).
   - **Requiere scopes nuevos + decisión del usuario** (consentimiento Global Admin en App Reg productivo): limpieza de métodos MFA (`UserAuthenticationMethod.ReadWrite.All`), OneDrive delegación+tamaño (`Files/Sites`), Teams ownership transfer, notificaciones (`Mail.Send`), retirada de roles Entra.
+
+### Fixes tras prueba real (commit 3)
+Detectado al ejecutar offboarding real sobre un `testeo*` sin buzón → `Convertir a buzón compartido — ERROR pwsh exit 1`.
+- **Error EXO real ahora se ve**: `ExternalExoOps.RunAsync` envuelve el body en try/catch y emite el mensaje real con marker `###GREX-ERR###`; antes el error CLIXML se filtraba y solo quedaba "pwsh exit 1". Ahora muestra p.ej. "el objeto no se encontró".
+- **Sin buzón → se omiten pasos de buzón** (paridad legacy `if ($mbox)`): si EXO está conectado pero no hay buzón legible, `OffboardingService` marca convert OMITIDO "El usuario no tiene buzón…" y **permite** liberar licencia (no hay buzón que dejar huérfano). `willBeShared` ahora exige `convertSucceeded`; el gate de convert-fallido excluye el caso sin-buzón.
+- Diagnóstico EXO read-only confirmó: de los 6 `testeo*`, solo **testeo224** tiene buzón (SharedMailbox); los otros 5 no tienen buzón → de ahí el error original.
+- **App**: el assembly es `Grex365.exe` y el usuario corre **Release** (`bin/Release/net10.0-windows`). Rebuild Release + relanzada para que se vean los cambios de UI (antes se compilaba Debug).
+- Tests: **+1 Core** (`NoMailbox_SkipsConvert_AllowsLicenseRemoval`, repro del bug). Total **1314**.
 
 ## Sprint AN · 2026-05-30 — Remate funcional + UX
 

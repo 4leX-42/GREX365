@@ -9,6 +9,7 @@ namespace Grex365.PowerShell;
 public sealed class ExternalExoOps : IExternalExoOps
 {
     private const string JsonMarker = "###GREX-JSON###";
+    private const string ErrMarker = "###GREX-ERR###";
     private readonly ICertConfigStore _certStore;
 
     public ExternalExoOps(ICertConfigStore certStore)
@@ -179,6 +180,9 @@ public sealed class ExternalExoOps : IExternalExoOps
             try {
             {{body}}
             }
+            catch {
+                Write-Output ('{{ErrMarker}}' + $_.Exception.Message)
+            }
             finally {
                 Disconnect-ExchangeOnline -Confirm:$false -InformationAction SilentlyContinue -ErrorAction SilentlyContinue *> $null
             }
@@ -202,11 +206,21 @@ public sealed class ExternalExoOps : IExternalExoOps
 
         using var proc = new Process { StartInfo = psi };
         string? jsonLine = null;
+        string? scriptError = null;
         var errors = new StringBuilder();
 
         proc.OutputDataReceived += (_, e) =>
         {
             if (string.IsNullOrEmpty(e.Data)) return;
+            // The script wraps the body in try/catch and emits the real exception message on a
+            // marked line — capture it so failures surface the actual EXO error instead of a
+            // bare "pwsh exit 1".
+            var errIdx = e.Data.IndexOf(ErrMarker, StringComparison.Ordinal);
+            if (errIdx >= 0)
+            {
+                scriptError = e.Data[(errIdx + ErrMarker.Length)..];
+                return;
+            }
             var idx = e.Data.IndexOf(JsonMarker, StringComparison.Ordinal);
             if (idx >= 0)
             {
@@ -246,6 +260,10 @@ public sealed class ExternalExoOps : IExternalExoOps
             await proc.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
         }
 
+        if (scriptError is not null)
+        {
+            throw new InvalidOperationException("Operación Exchange Online falló: " + scriptError.Trim());
+        }
         if (proc.ExitCode != 0 && jsonLine is null)
         {
             throw new InvalidOperationException(
