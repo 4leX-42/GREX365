@@ -9,14 +9,20 @@ public sealed class OffboardingService : IOffboardingService
     private readonly ISharedMailboxService _mailboxes;
     private readonly IExternalExoOps? _externalExo;
 
-    // externalExo (when wired) runs the mailbox conversion via an external pwsh process —
-    // the in-process EXO path is unreliable. Falls back to the in-proc service when absent.
+    // externalExo (when wired) runs the mailbox conversion + fact-gathering via an external
+    // pwsh process — the in-process EXO path is unreliable. Falls back to the in-proc service
+    // when absent.
     public OffboardingService(IUsersService users, ISharedMailboxService mailboxes, IExternalExoOps? externalExo = null)
     {
         _users = users;
         _mailboxes = mailboxes;
         _externalExo = externalExo;
     }
+
+    // Delay between license-removal verification re-reads (Graph license changes propagate
+    // with a small lag). Exposed as init-only tuning knobs so unit tests can run instantly.
+    public TimeSpan VerifyPollDelay { get; init; } = TimeSpan.FromSeconds(3);
+    public int VerifyAttempts { get; init; } = 5;
 
     public async Task<OffboardingResult> RunAsync(
         string upn,
@@ -25,104 +31,190 @@ public sealed class OffboardingService : IOffboardingService
         IProgress<OffboardingStep>? stepProgress = null,
         CancellationToken cancellationToken = default)
     {
+        var startedAt = DateTimeOffset.Now;
         var steps = new List<OffboardingStep>();
         var success = true;
+        var dry = options.DryRun;
 
         void Running(string name) => stepProgress?.Report(new OffboardingStep(name, "RUNNING", "…"));
         void Done(string name, string status, string detail)
         {
-            var s = new OffboardingStep(name, status, detail);
+            var s = new OffboardingStep(name, status, detail, DateTimeOffset.Now);
             steps.Add(s);
             stepProgress?.Report(s);
         }
+        OffboardingResult Result(bool ok) => new(upn, ok, steps, dry, startedAt, DateTimeOffset.Now);
 
         if (string.IsNullOrWhiteSpace(upn))
         {
             Done("Validar", "ERROR", "UPN vacío");
-            return new OffboardingResult(upn, false, steps);
+            return Result(false);
         }
 
-        progress?.Report(LogEntry.Info("Offboarding", $"Iniciando offboarding de {upn}"));
+        progress?.Report(LogEntry.Info("Offboarding", $"Iniciando offboarding{(dry ? " (DRY-RUN)" : "")} de {upn}"));
 
         Running("Buscar usuario");
         var user = await _users.GetByIdAsync(upn, cancellationToken).ConfigureAwait(false);
         if (user is null)
         {
             Done("Buscar usuario", "ERROR", "Usuario no encontrado en Graph");
-            return new OffboardingResult(upn, false, steps);
+            return Result(false);
         }
         Done("Buscar usuario", "OK",
             $"{user.DisplayName} (enabled={user.AccountEnabled}, lic={user.AssignedLicenseCount})");
 
-        // Step order follows Microsoft's "remove a former employee" guidance:
-        //   block sign-in (+ revoke sessions) → convert mailbox to shared → remove licenses.
-        // The mailbox MUST be converted to shared *while still licensed*; removing the
-        // license first starts a 30-day deletion clock and hides the convert option. We
-        // therefore convert before removing licenses and skip license removal if the
-        // conversion failed, so the mailbox is never stranded for deletion.
+        // ---- Step 0: blocking pre-checks (read-only; always run, even in dry-run) ----
+        // These drive idempotent skips (already-disabled / already-shared) and the license
+        // safety gate below. The mailbox facts come from EXO (size / holds / archive); when
+        // EXO isn't wired they degrade to null and the flow proceeds without those guards.
+        Running("Verificaciones previas");
+        var facts = await ReadMailboxFactsAsync(upn, progress, cancellationToken).ConfigureAwait(false);
+        var alreadyDisabled = !user.AccountEnabled;
+        var alreadyShared = facts?.IsSharedMailbox == true;
+        var exceedsSize = facts?.ExceedsUnlicensedSharedLimit == true;
+        var hasHold = facts?.HasBlockingHold == true;
 
+        var notes = new List<string>();
+        if (alreadyDisabled) notes.Add("cuenta ya deshabilitada");
+        if (facts is null)
+        {
+            notes.Add("sin datos de buzón (EXO no conectado o sin buzón)");
+        }
+        else
+        {
+            notes.Add($"buzón {facts.RecipientTypeDetails}");
+            if (facts.TotalItemSizeGb is { } gb) notes.Add($"{gb:N1} GB");
+            if (alreadyShared) notes.Add("ya es compartido");
+            if (exceedsSize) notes.Add(">50 GB: un buzón compartido sin licencia no puede superar ese límite");
+            if (hasHold) notes.Add($"hold activo (litigation={facts.LitigationHoldEnabled}, in-place={facts.InPlaceHoldCount})");
+            if (facts.ArchiveEnabled) notes.Add("archivo en línea habilitado");
+        }
+        var preWarn = exceedsSize || hasHold;
+        Done("Verificaciones previas", preWarn ? "AVISO" : "OK", string.Join("; ", notes));
+        if (preWarn)
+        {
+            progress?.Report(LogEntry.Warn("Offboarding", "Pre-check con avisos: " + string.Join("; ", notes)));
+        }
+
+        // ---- Step 1: block sign-in (+ revoke sessions) ----
         if (options.DisableAccount)
         {
             Running("Deshabilitar cuenta");
-            try
+            if (dry)
             {
-                await _users.SetAccountEnabledAsync(user.Id, false, progress, cancellationToken).ConfigureAwait(false);
-                // Disabling alone doesn't invalidate already-issued tokens — revoke sessions too.
+                Done("Deshabilitar cuenta", "SIMULADO",
+                    alreadyDisabled
+                        ? "ya estaba deshabilitada; se revocarían sesiones"
+                        : "se deshabilitaría la cuenta y se revocarían sesiones");
+            }
+            else
+            {
                 try
                 {
-                    await _users.RevokeSignInSessionsAsync(user.Id, progress, cancellationToken).ConfigureAwait(false);
-                    Done("Deshabilitar cuenta", "OK", "AccountEnabled=false; sesiones revocadas");
+                    if (!alreadyDisabled)
+                    {
+                        await _users.SetAccountEnabledAsync(user.Id, false, progress, cancellationToken).ConfigureAwait(false);
+                    }
+                    // Revoke sessions even when it was already disabled — disabling alone doesn't
+                    // invalidate tokens already issued.
+                    var basePrefix = alreadyDisabled ? "Ya estaba deshabilitada" : "AccountEnabled=false";
+                    try
+                    {
+                        await _users.RevokeSignInSessionsAsync(user.Id, progress, cancellationToken).ConfigureAwait(false);
+                        Done("Deshabilitar cuenta", alreadyDisabled ? "OMITIDO" : "OK", $"{basePrefix}; sesiones revocadas");
+                    }
+                    catch (Exception revokeEx)
+                    {
+                        Done("Deshabilitar cuenta", alreadyDisabled ? "OMITIDO" : "OK", $"{basePrefix}; revoke sesiones falló: {revokeEx.Message}");
+                    }
                 }
-                catch (Exception revokeEx)
+                catch (Exception ex)
                 {
-                    Done("Deshabilitar cuenta", "OK", $"AccountEnabled=false; revoke sesiones falló: {revokeEx.Message}");
+                    Done("Deshabilitar cuenta", "ERROR", ex.Message);
+                    success = false;
                 }
-            }
-            catch (Exception ex)
-            {
-                Done("Deshabilitar cuenta", "ERROR", ex.Message);
-                success = false;
             }
         }
 
+        // ---- Step 2: convert mailbox to shared ----
+        // The mailbox MUST be converted while still licensed; removing the license first starts
+        // a 30-day deletion clock and hides the convert option. So convert before removing
+        // licenses, and skip license removal if conversion failed (gate below).
         var convertRequested = options.ConvertMailboxToShared;
         var convertSucceeded = false;
         if (convertRequested)
         {
             Running("Convertir a buzón compartido");
-            try
+            if (alreadyShared)
             {
-                var info = _externalExo is not null
-                    ? await _externalExo.ConvertToSharedAsync(upn, progress, cancellationToken).ConfigureAwait(false)
-                    : await _mailboxes.ConvertToSharedAsync(upn, progress, cancellationToken).ConfigureAwait(false);
-                convertSucceeded = info is null || info.IsSharedMailbox;
-                if (convertSucceeded)
+                // Idempotent: nothing to do; license removal may still proceed.
+                convertSucceeded = true;
+                Done("Convertir a buzón compartido", "OMITIDO", "El buzón ya es compartido");
+            }
+            else if (dry)
+            {
+                convertSucceeded = true; // simulate success so the license step can also be simulated
+                Done("Convertir a buzón compartido", "SIMULADO",
+                    facts is null ? "se intentaría convertir (sin datos de buzón)" : "se convertiría a buzón compartido");
+            }
+            else
+            {
+                try
                 {
-                    Done("Convertir a buzón compartido", "OK", info is null ? "Aplicado" : $"Tipo final: {info.RecipientTypeDetails}");
+                    var info = _externalExo is not null
+                        ? await _externalExo.ConvertToSharedAsync(upn, progress, cancellationToken).ConfigureAwait(false)
+                        : await _mailboxes.ConvertToSharedAsync(upn, progress, cancellationToken).ConfigureAwait(false);
+                    convertSucceeded = info is null || info.IsSharedMailbox;
+                    if (convertSucceeded)
+                    {
+                        Done("Convertir a buzón compartido", "OK", info is null ? "Aplicado" : $"Tipo final: {info.RecipientTypeDetails}");
+                    }
+                    else
+                    {
+                        // Verification failed: the type didn't actually flip to SharedMailbox.
+                        Done("Convertir a buzón compartido", "ERROR", $"No se confirmó SharedMailbox (tipo={info!.RecipientTypeDetails})");
+                        success = false;
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    // Verification failed: the type didn't actually flip to SharedMailbox.
-                    Done("Convertir a buzón compartido", "ERROR", $"No se confirmó SharedMailbox (tipo={info!.RecipientTypeDetails})");
+                    Done("Convertir a buzón compartido", "ERROR", ex.Message);
                     success = false;
                 }
             }
-            catch (Exception ex)
-            {
-                Done("Convertir a buzón compartido", "ERROR", ex.Message);
-                success = false;
-            }
         }
 
+        // ---- Step 3: remove licenses (gated) ----
         if (options.RemoveLicenses)
         {
-            // Safety gate: never strip the license if a requested shared conversion failed —
-            // doing so would schedule the mailbox (and its data) for permanent deletion.
+            // Whether the mailbox will end up retained as shared (and therefore unlicensed).
+            var willBeShared = alreadyShared || convertRequested;
+
+            // Safety gates: never strip the license when doing so would either strand the
+            // mailbox for deletion or leave a non-compliant unlicensed mailbox.
+            string? block = null;
             if (convertRequested && !convertSucceeded)
             {
-                Done("Quitar licencias", "OMITIDO",
-                    "Conversión a buzón compartido falló; no se quitan licencias para evitar el borrado del buzón (30 días).");
-                success = false;
+                block = "Conversión a buzón compartido falló; no se quitan licencias para evitar el borrado del buzón (30 días).";
+            }
+            else if (willBeShared && exceedsSize)
+            {
+                block = $"El buzón supera 50 GB ({facts!.TotalItemSizeGb:N1} GB): un buzón compartido sin licencia no puede superar ese límite. No se quitan licencias (requiere Exchange Online Plan 2).";
+            }
+            else if (willBeShared && hasHold)
+            {
+                block = "El buzón tiene un hold activo (litigation/in-place): conservarlo requiere licencia. No se quitan licencias; valora un buzón inactivo (inactive mailbox).";
+            }
+
+            if (block is not null)
+            {
+                Done("Quitar licencias", "OMITIDO", block);
+                if (!dry) success = false;
+            }
+            else if (dry)
+            {
+                Done("Quitar licencias", "SIMULADO",
+                    user.AssignedLicenseCount == 0 ? "sin licencias asignadas" : $"se quitarían {user.AssignedLicenseCount} licencia(s) directa(s)");
             }
             else
             {
@@ -130,17 +222,19 @@ public sealed class OffboardingService : IOffboardingService
                 try
                 {
                     await _users.RemoveAllLicensesAsync(user.Id, progress, cancellationToken).ConfigureAwait(false);
-                    // Verify removal actually took (Graph propagation can lag a few seconds).
-                    var verified = await VerifyLicensesRemovedAsync(user.Id, cancellationToken).ConfigureAwait(false);
-                    if (verified)
+                    var remaining = await CountRemainingLicensesAsync(user.Id, cancellationToken).ConfigureAwait(false);
+                    if (remaining <= 0)
                     {
                         Done("Quitar licencias", "OK",
                             user.AssignedLicenseCount == 0 ? "Sin licencias asignadas" : $"{user.AssignedLicenseCount} licencias retiradas (verificado)");
                     }
                     else
                     {
-                        Done("Quitar licencias", "ERROR", "La operación se aceptó pero el usuario sigue con licencias asignadas.");
-                        success = false;
+                        // Residual licenses after a successful call are almost always group-inherited:
+                        // RemoveAllLicensesAsync only clears DIRECT assignments. Flag it clearly with the
+                        // remediation instead of pretending the removal was complete.
+                        Done("Quitar licencias", "AVISO",
+                            $"Quedan {remaining} licencia(s) asignadas tras la retirada — probablemente heredadas de grupo. Quita al usuario del grupo de licencias en Entra ID.");
                     }
                 }
                 catch (Exception ex)
@@ -151,33 +245,53 @@ public sealed class OffboardingService : IOffboardingService
             }
         }
 
-        return new OffboardingResult(upn, success, steps);
+        return Result(success);
+    }
+
+    // Best-effort mailbox facts (size / holds / archive / type). Prefers the external EXO ops
+    // (reliable) and falls back to the in-proc service. Never throws — pre-checks must degrade
+    // gracefully rather than abort the flow.
+    private async Task<MailboxInfo?> ReadMailboxFactsAsync(string upn, IProgress<LogEntry>? progress, CancellationToken ct)
+    {
+        try
+        {
+            return _externalExo is not null
+                ? await _externalExo.GetMailboxFactsAsync(upn, progress, ct).ConfigureAwait(false)
+                : await _mailboxes.GetMailboxAsync(upn, progress, ct).ConfigureAwait(false);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     // Re-reads the user a few times (Graph license changes propagate with a small lag) and
-    // returns true once no licenses remain. If GetByIdAsync isn't usefully mocked (unit tests),
-    // the first read may already report 0; either way this never throws.
-    private async Task<bool> VerifyLicensesRemovedAsync(string userId, CancellationToken ct)
+    // returns the remaining assigned-license count: 0 once removal has taken effect, or the
+    // last observed count if licenses persist (typically group-inherited). Returns 0 if the
+    // user can't be re-read — never blocks the flow on a verification read failure.
+    private async Task<int> CountRemainingLicensesAsync(string userId, CancellationToken ct)
     {
-        for (var attempt = 0; attempt < 5; attempt++)
+        var last = 0;
+        for (var attempt = 0; attempt < VerifyAttempts; attempt++)
         {
             try
             {
                 var u = await _users.GetByIdAsync(userId, ct).ConfigureAwait(false);
-                if (u is null || u.AssignedLicenseCount == 0)
+                last = u?.AssignedLicenseCount ?? 0;
+                if (last == 0)
                 {
-                    return true;
+                    return 0;
                 }
             }
             catch
             {
-                return true; // can't verify → don't block the flow
+                return 0; // can't verify → don't raise a false warning
             }
-            if (attempt < 4)
+            if (attempt < VerifyAttempts - 1)
             {
-                await Task.Delay(TimeSpan.FromSeconds(3), ct).ConfigureAwait(false);
+                await Task.Delay(VerifyPollDelay, ct).ConfigureAwait(false);
             }
         }
-        return false;
+        return last;
     }
 }

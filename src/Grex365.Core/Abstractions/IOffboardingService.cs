@@ -5,7 +5,11 @@ namespace Grex365.Core.Abstractions;
 public sealed record OffboardingOptions(
     bool DisableAccount,
     bool RemoveLicenses,
-    bool ConvertMailboxToShared);
+    bool ConvertMailboxToShared,
+    // Dry-run: run the read-only pre-checks for real, then simulate every mutating step
+    // (status "SIMULADO") without touching the tenant. Lets the flow be rehearsed safely
+    // — including against production — before a real run.
+    bool DryRun = false);
 
 public interface IOffboardingService
 {

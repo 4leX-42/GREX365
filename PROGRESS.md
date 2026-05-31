@@ -4,8 +4,22 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1293 passing** (xUnit + FluentAssertions) — 487 Core + 806 App
-- Última actualización: 2026-05-30 (sesión · Sprint AN — UX remate: panel Usuarios inline, búsqueda Licencias, hardening Auditoría, offboarding guiado)
+- Tests: **1308 passing** (xUnit + FluentAssertions) — 499 Core + 809 App
+- Última actualización: 2026-05-31 (sesión · Sprint AO — Offboarding: backbone de seguridad y observabilidad)
+
+## Sprint AO · 2026-05-31 — Offboarding: backbone de seguridad y observabilidad
+
+Mejora del módulo Offboarding a partir de un review técnico (9 áreas). Esta tanda cubre los items **sin nuevos scopes Graph**: pre-checks bloqueantes, dry-run, idempotencia y export auditable. Los items que requieren consentimiento nuevo en el App Reg productivo (limpieza de métodos MFA, OneDrive, Teams ownership, notificaciones `sendMail`, retirada de roles) quedan pendientes de aprobación.
+
+- **Pre-checks como paso 0 (bloqueante)**: `OffboardingService` lee `MailboxInfo` (tamaño/holds/archivo vía EXO externo — `GetMailboxFactsAsync`, que existía pero no se invocaba) antes de tocar nada y emite el paso "Verificaciones previas". Detecta: cuenta ya deshabilitada, buzón ya compartido, >50 GB, hold activo.
+- **Gate de licencias ampliado** (cierra hueco real de pérdida de datos): además de "no quitar licencia si la conversión a shared falló", ahora tampoco la quita si el buzón resultante seguiría necesitando licencia — >50 GB (límite de shared sin licencia, requiere EXO Plan 2) o hold activo (litigation/in-place). Resultado OMITIDO + `success=false`.
+- **Idempotencia** (re-run seguro): cuenta ya deshabilitada → omite el disable pero revoca sesiones; buzón ya compartido → omite la conversión y **permite** liberar licencia.
+- **Aviso de licencia heredada de grupo**: si tras `RemoveAllLicensesAsync` siguen asignadas licencias (solo se quitan las directas), se marca AVISO con la remediación (sacar del grupo de licencias) en vez de fingir éxito.
+- **Dry-run** (`OffboardingOptions.DryRun`): ejecuta los pre-checks read-only y simula cada paso mutador (estado SIMULADO) sin tocar el tenant. Checkbox en la vista. Para rehearsal seguro en producción sobre `testeo*`.
+- **Export auditable**: `OffboardingReport.ToJson/ToCsv` (puro, testeado, escape RFC-4180); botón "Exportar CSV" copia al portapapeles los resultados del último run (1 fila por paso, con timestamps).
+- **Observabilidad**: `OffboardingStep.At` (timestamp), `OffboardingResult.StartedAt/EndedAt/DryRun`.
+- Tests: **+10 Core** (gates 50 GB/hold, skips idempotentes, dry-run, aviso grupo, exporter) **+3 App** (opción dry-run, export). Total **1308** (499 Core + 809 App).
+- **Pendiente (requiere scopes nuevos / decisión del usuario)**: limpieza de métodos MFA (`UserAuthenticationMethod.ReadWrite.All`), OneDrive delegación+tamaño (`Files/Sites`), Teams ownership transfer, notificaciones (`Mail.Send`), retirada de roles Entra. Además: portar los pasos EXO ya validados en `Invoke-OffboardingWizard.ps1` (auto-reply, forwarding, FullAccess/SendAs, hide GAL, quitar de grupos) al servicio .NET.
 
 ## Sprint AN · 2026-05-30 — Remate funcional + UX
 

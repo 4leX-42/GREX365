@@ -14,13 +14,14 @@ public class OffboardingViewModelTests
         public Mock<IRbacGuard> Rbac { get; } = new();
         public TestUiLogSink Log { get; } = new();
         public TestDialogService Dialogs { get; } = new();
+        public Mock<IClipboardService> Clipboard { get; } = new();
         public OffboardingViewModel Vm { get; }
 
         public Harness(bool rbacAllowed = true)
         {
             Rbac.Setup(r => r.EvaluateAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new RbacDecision(rbacAllowed, rbacAllowed ? "OK" : "Not in group"));
-            Vm = new OffboardingViewModel(Service.Object, Log, Rbac.Object, Dialogs);
+            Vm = new OffboardingViewModel(Service.Object, Log, Rbac.Object, Dialogs, clipboard: Clipboard.Object);
         }
 
         public void StubRunOk()
@@ -135,5 +136,59 @@ public class OffboardingViewModelTests
         await h.Vm.RunCommand.ExecuteAsync(null);
 
         h.Vm.StatusMessage.Should().StartWith("Offboarding con errores").And.Contain("2 fallos");
+    }
+
+    [Fact]
+    public async Task DryRunChecked_PassesDryRunOption()
+    {
+        var h = new Harness();
+        h.Vm.Upn = "jane@a";
+        h.Vm.DisableAccount = true;
+        h.Vm.RemoveLicenses = false;
+        h.Vm.ConvertMailboxToShared = false;
+        h.Vm.DryRun = true;
+        h.Dialogs.ConfirmResult = true;
+        h.StubRunOk();
+
+        await h.Vm.RunCommand.ExecuteAsync(null);
+
+        h.Service.Verify(s => s.RunAsync(
+            "jane@a",
+            It.Is<OffboardingOptions>(o => o.DryRun),
+            It.IsAny<IProgress<LogEntry>>(),
+            It.IsAny<IProgress<OffboardingStep>>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public void ExportResults_NoResults_SetsEmptyStatus()
+    {
+        var h = new Harness();
+
+        h.Vm.ExportResultsCommand.Execute(null);
+
+        h.Vm.StatusMessage.Should().Be("No hay resultados que exportar. Ejecuta primero.");
+        h.Clipboard.Verify(c => c.SetText(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ExportResults_AfterRun_CopiesCsvToClipboard()
+    {
+        var h = new Harness();
+        h.Vm.Upn = "jane@a";
+        h.Dialogs.ConfirmResult = true;
+        h.StubRunOk();
+        await h.Vm.RunCommand.ExecuteAsync(null);
+
+        string? captured = null;
+        h.Clipboard.Setup(c => c.SetText(It.IsAny<string>())).Callback<string>(s => captured = s);
+
+        h.Vm.ExportResultsCommand.Execute(null);
+
+        captured.Should().NotBeNull();
+        captured!.Should().StartWith("upn,success,dryRun");
+        captured.Should().Contain("u@a");        // result UPN from StubRunOk
+        captured.Should().Contain("Deshabilitar"); // a step name from StubRunOk
+        h.Vm.StatusMessage.Should().StartWith("CSV copiado");
     }
 }

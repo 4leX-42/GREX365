@@ -30,6 +30,21 @@ public class OffboardingServiceTests
         return m;
     }
 
+    private static UserSummary DisabledUser(int licenses = 0) =>
+        new("uid", "Jane Doe", "jane@a", "jane@a", false, false, licenses, null);
+
+    // External EXO ops that report the given mailbox facts in pre-checks and flip the type to
+    // SharedMailbox on convert (so the gate logic, not the convert, is what's under test).
+    private static Mock<IExternalExoOps> ExoWithFacts(MailboxInfo facts)
+    {
+        var e = new Mock<IExternalExoOps>();
+        e.Setup(x => x.GetMailboxFactsAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(facts);
+        e.Setup(x => x.ConvertToSharedAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(facts with { RecipientTypeDetails = "SharedMailbox" });
+        return e;
+    }
+
     [Fact]
     public async Task EmptyUpn_ReturnsError()
     {
@@ -61,7 +76,7 @@ public class OffboardingServiceTests
         var r = await sut.RunAsync("jane@a", new OffboardingOptions(true, true, true));
 
         r.Success.Should().BeTrue();
-        r.Steps.Should().HaveCount(4); // find + disable + licenses + mailbox
+        r.Steps.Should().HaveCount(5); // find + pre-checks + disable + mailbox + licenses
         users.Verify(u => u.SetAccountEnabledAsync("uid", false, It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
         users.Verify(u => u.RemoveAllLicensesAsync("uid", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
         mbx.Verify(s => s.ConvertToSharedAsync("jane@a", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -76,7 +91,7 @@ public class OffboardingServiceTests
 
         var r = await sut.RunAsync("jane@a", new OffboardingOptions(DisableAccount: true, RemoveLicenses: false, ConvertMailboxToShared: false));
 
-        r.Steps.Should().HaveCount(2); // find + disable
+        r.Steps.Should().HaveCount(3); // find + pre-checks + disable
         users.Verify(u => u.SetAccountEnabledAsync(It.IsAny<string>(), false, It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
         users.Verify(u => u.RemoveAllLicensesAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
         mbx.Verify(s => s.ConvertToSharedAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -139,5 +154,152 @@ public class OffboardingServiceTests
 
         r.Success.Should().BeFalse();
         r.Steps.Should().Contain(s => s.Name.Contains("compartido") && s.Status == "ERROR" && s.Detail.Contains("EXO down"));
+    }
+
+    // The convert call can succeed (no exception) yet the mailbox type never actually flips
+    // to SharedMailbox — e.g. EXO accepts the request but a hold/policy keeps it a UserMailbox.
+    // The safety gate must treat that as a failed conversion and still skip license removal.
+    [Fact]
+    public async Task ConvertVerificationFails_NoException_SkipsLicenseRemoval()
+    {
+        var users = UsersOk();
+        var mbx = new Mock<ISharedMailboxService>();
+        mbx.Setup(s => s.ConvertToSharedAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MailboxInfo("u@a", "U", "u@a", "UserMailbox")); // type did NOT flip
+
+        var sut = new OffboardingService(users.Object, mbx.Object);
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(DisableAccount: false, RemoveLicenses: true, ConvertMailboxToShared: true));
+
+        r.Success.Should().BeFalse();
+        r.Steps.Should().Contain(s => s.Name.Contains("compartido") && s.Status == "ERROR");
+        r.Steps.Should().Contain(s => s.Name.Contains("Quitar licencias") && s.Status == "OMITIDO");
+        users.Verify(u => u.RemoveAllLicensesAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // When an external EXO ops backend is wired, the conversion must go through it
+    // (the in-proc EXO path is unreliable) and the in-proc mailbox service must NOT be touched.
+    [Fact]
+    public async Task ExternalExo_WhenWired_HandlesConversion_InProcServiceUntouched()
+    {
+        var users = UsersOk();
+        var mbx = new Mock<ISharedMailboxService>();
+        var exo = new Mock<IExternalExoOps>();
+        exo.Setup(e => e.ConvertToSharedAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new MailboxInfo("u@a", "U", "u@a", "SharedMailbox"));
+
+        var sut = new OffboardingService(users.Object, mbx.Object, exo.Object);
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(DisableAccount: false, RemoveLicenses: true, ConvertMailboxToShared: true));
+
+        r.Success.Should().BeTrue();
+        exo.Verify(e => e.ConvertToSharedAsync("jane@a", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+        mbx.Verify(s => s.ConvertToSharedAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+        users.Verify(u => u.RemoveAllLicensesAsync("uid", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // Idempotency: re-running over an already-disabled account must not re-issue the disable
+    // call, but must still revoke sessions (cheap, and good hygiene on a re-run).
+    [Fact]
+    public async Task AlreadyDisabled_SkipsDisableCall_StillRevokesSessions()
+    {
+        var users = new Mock<IUsersService>();
+        users.Setup(u => u.GetByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(DisabledUser());
+        var sut = new OffboardingService(users.Object, MailboxOk().Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(DisableAccount: true, RemoveLicenses: false, ConvertMailboxToShared: false));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name.Contains("Deshabilitar") && s.Status == "OMITIDO");
+        users.Verify(u => u.SetAccountEnabledAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+        users.Verify(u => u.RevokeSignInSessionsAsync("uid", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // Idempotency: an already-shared mailbox skips the convert step but the gate still lets the
+    // license be released (the mailbox is already in its final shared state).
+    [Fact]
+    public async Task AlreadyShared_SkipsConvert_AllowsLicenseRemoval()
+    {
+        var users = UsersOk();
+        var exo = ExoWithFacts(new MailboxInfo("u@a", "U", "u@a", "SharedMailbox"));
+        var sut = new OffboardingService(users.Object, new Mock<ISharedMailboxService>().Object, exo.Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(DisableAccount: false, RemoveLicenses: true, ConvertMailboxToShared: true));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name.Contains("compartido") && s.Status == "OMITIDO" && s.Detail.Contains("ya"));
+        exo.Verify(e => e.ConvertToSharedAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+        users.Verify(u => u.RemoveAllLicensesAsync("uid", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // Safety gate: a >50 GB mailbox can't stay a shared mailbox without a license, so stripping
+    // the license is blocked even though the conversion itself succeeded.
+    [Fact]
+    public async Task MailboxOver50Gb_BlocksLicenseRemoval()
+    {
+        var users = UsersOk();
+        var exo = ExoWithFacts(new MailboxInfo("u@a", "U", "u@a", "UserMailbox", TotalItemBytes: 60L * 1024 * 1024 * 1024));
+        var sut = new OffboardingService(users.Object, new Mock<ISharedMailboxService>().Object, exo.Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(DisableAccount: false, RemoveLicenses: true, ConvertMailboxToShared: true));
+
+        r.Success.Should().BeFalse();
+        r.Steps.Should().Contain(s => s.Name.Contains("Quitar licencias") && s.Status == "OMITIDO" && s.Detail.Contains("50"));
+        users.Verify(u => u.RemoveAllLicensesAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // Safety gate: an active hold needs a license to be preserved, so stripping it is blocked.
+    [Fact]
+    public async Task MailboxOnHold_BlocksLicenseRemoval()
+    {
+        var users = UsersOk();
+        var exo = ExoWithFacts(new MailboxInfo("u@a", "U", "u@a", "UserMailbox", LitigationHoldEnabled: true));
+        var sut = new OffboardingService(users.Object, new Mock<ISharedMailboxService>().Object, exo.Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(DisableAccount: false, RemoveLicenses: true, ConvertMailboxToShared: true));
+
+        r.Success.Should().BeFalse();
+        r.Steps.Should().Contain(s => s.Name.Contains("Quitar licencias") && s.Status == "OMITIDO" && s.Detail.Contains("hold"));
+        users.Verify(u => u.RemoveAllLicensesAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // Dry-run rehearses the whole flow read-only: every mutating call is suppressed and the
+    // mutating steps are reported as SIMULADO.
+    [Fact]
+    public async Task DryRun_SimulatesEverything_NoMutations()
+    {
+        var users = UsersOk();
+        var mbx = MailboxOk();
+        var sut = new OffboardingService(users.Object, mbx.Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(true, true, true, DryRun: true));
+
+        r.DryRun.Should().BeTrue();
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Status == "SIMULADO");
+        users.Verify(u => u.SetAccountEnabledAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+        users.Verify(u => u.RevokeSignInSessionsAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+        users.Verify(u => u.RemoveAllLicensesAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+        mbx.Verify(s => s.ConvertToSharedAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // Residual licenses after a successful removal call are flagged (likely group-inherited),
+    // not silently reported as fully removed — but it's a warning, not a hard failure.
+    [Fact]
+    public async Task ResidualLicensesAfterRemoval_WarnsGroupInherited()
+    {
+        var users = new Mock<IUsersService>();
+        users.Setup(u => u.GetByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(SampleUser(1)); // never drops to 0 → simulates a group-inherited license
+        var sut = new OffboardingService(users.Object, MailboxOk().Object)
+        {
+            VerifyPollDelay = TimeSpan.Zero,
+            VerifyAttempts = 2,
+        };
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(DisableAccount: false, RemoveLicenses: true, ConvertMailboxToShared: false));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name.Contains("Quitar licencias") && s.Status == "AVISO" && s.Detail.Contains("grupo"));
+        users.Verify(u => u.RemoveAllLicensesAsync("uid", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

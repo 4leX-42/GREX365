@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using Grex365.App.Services;
 using Grex365.Core.Abstractions;
 using Grex365.Core.Models;
+using Grex365.Core.Offboarding;
 
 namespace Grex365.App.ViewModels;
 
@@ -37,14 +38,21 @@ public sealed partial class OffboardingViewModel : ObservableObject
     private readonly IUsersService? _users;
     private readonly IAuditService? _audit;
     private readonly ISharedMailboxService? _mailboxes;
+    private readonly IClipboardService? _clipboard;
     private CancellationTokenSource? _cts;
     private CancellationTokenSource? _debounceCts;
+
+    // Results of the last run (single or batch) — source for the CSV export.
+    private readonly List<OffboardingResult> _lastResults = new();
 
     // --- single-user form (kept for the manual path + unit tests) ---
     [ObservableProperty] private string _upn = string.Empty;
     [ObservableProperty] private bool _disableAccount = true;
     [ObservableProperty] private bool _removeLicenses = true;
     [ObservableProperty] private bool _convertMailboxToShared = true;
+
+    // Dry-run: rehearse the whole flow read-only (touches nothing). Safe to run in production.
+    [ObservableProperty] private bool _dryRun;
     [ObservableProperty] private string _statusMessage = L10n.Get("Offboarding.Status.Initial");
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private OffboardingResult? _result;
@@ -65,7 +73,8 @@ public sealed partial class OffboardingViewModel : ObservableObject
         IDialogService dialogs,
         IUsersService? users = null,
         IAuditService? audit = null,
-        ISharedMailboxService? mailboxes = null)
+        ISharedMailboxService? mailboxes = null,
+        IClipboardService? clipboard = null)
     {
         _service = service;
         _log = log;
@@ -74,6 +83,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
         _users = users;
         _audit = audit;
         _mailboxes = mailboxes;
+        _clipboard = clipboard;
     }
 
     // ---------- live log ----------
@@ -101,6 +111,28 @@ public sealed partial class OffboardingViewModel : ObservableObject
 
     [RelayCommand]
     private void ClearLog() => LiveLog.Clear();
+
+    // Export the last run's results (single or batch) as CSV to the clipboard — an auditable
+    // record to paste into a ticket / hand to HR. One row per step, with timestamps.
+    [RelayCommand]
+    private void ExportResults()
+    {
+        if (_lastResults.Count == 0)
+        {
+            StatusMessage = L10n.Get("Offboarding.Export.Empty");
+            return;
+        }
+        if (_clipboard is null)
+        {
+            StatusMessage = L10n.Get("Offboarding.Export.NoClipboard");
+            return;
+        }
+        var csv = OffboardingReport.ToCsv(_lastResults);
+        _clipboard.SetText(csv);
+        var steps = _lastResults.Sum(r => r.Steps.Count);
+        StatusMessage = L10n.Format("Offboarding.Export.Copied", _lastResults.Count, steps);
+        AppendLog($"Exportado CSV de {_lastResults.Count} usuario(s) al portapapeles.", "OK");
+    }
 
     // Progress that mirrors every backend log line into the in-section live console and the
     // global log panel.
@@ -270,6 +302,8 @@ public sealed partial class OffboardingViewModel : ObservableObject
         NotifyCommands();
         var live = LiveProgress();
         var okCount = 0; var errCount = 0;
+        _lastResults.Clear();
+        if (DryRun) AppendLog("DRY-RUN: simulación, no se tocará el tenant.", "WARN");
 
         try
         {
@@ -280,7 +314,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
                 AppendLog($"════ {target.Upn} ════", "HEADER");
                 StatusMessage = L10n.Format("Offboarding.Status.Running", target.Upn);
 
-                var options = new OffboardingOptions(DisableAccount, RemoveLicenses, ConvertMailboxToShared);
+                var options = new OffboardingOptions(DisableAccount, RemoveLicenses, ConvertMailboxToShared, DryRun);
                 var stepProgress = new Progress<OffboardingStep>(s =>
                     AppendLog($"   [{s.Status}] {s.Name} — {s.Detail}", LevelFromStatus(s.Status)));
 
@@ -298,6 +332,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
                         if (pr.Status != "OK") result = result with { Success = false };
                     }
 
+                    _lastResults.Add(result);
                     target.Status = result.Success ? "OK" : "ERROR";
                     if (result.Success) okCount++; else errCount++;
                 }
@@ -400,10 +435,12 @@ public sealed partial class OffboardingViewModel : ObservableObject
 
         try
         {
-            var options = new OffboardingOptions(DisableAccount, RemoveLicenses, ConvertMailboxToShared);
+            var options = new OffboardingOptions(DisableAccount, RemoveLicenses, ConvertMailboxToShared, DryRun);
             var stepProgress = new Progress<OffboardingStep>(UpsertStep);
             var result = await _service.RunAsync(Upn.Trim(), options, _log.Progress, stepProgress, _cts.Token).ConfigureAwait(true);
             Result = result;
+            _lastResults.Clear();
+            _lastResults.Add(result);
             if (Steps.Count == 0)
             {
                 foreach (var step in result.Steps) Steps.Add(step);
