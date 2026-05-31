@@ -287,10 +287,13 @@
                                            Command="{Binding ClearLogCommand}" />
                             </StackPanel>
                         </Grid>
-                        <ListBox ItemsSource="{Binding LogView}"
+                        <ListBox x:Name="GlobalLogList"
+                                 ItemsSource="{Binding LogView}"
                                  Background="Transparent"
                                  BorderThickness="0"
                                  Padding="8,0,8,8"
+                                 SelectionMode="Extended"
+                                 PreviewKeyDown="GlobalLogList_PreviewKeyDown"
                                  VirtualizingPanel.IsVirtualizing="True"
                                  ScrollViewer.VerticalScrollBarVisibility="Auto">
                             <ListBox.ItemTemplate>

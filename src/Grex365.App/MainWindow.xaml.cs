@@ -1,7 +1,10 @@
+using System.Text;
 using System.Windows;
+using System.Windows.Input;
 using Grex365.App.Services;
 using Grex365.App.ViewModels;
 using Grex365.Core.Abstractions;
+using Grex365.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Wpf.Ui.Controls;
 
@@ -89,6 +92,41 @@ public partial class MainWindow : FluentWindow
         {
             // Non-critical; ignore.
         }
+    }
+
+    // Ctrl+C copies the selected global-log rows (or all if none selected) as plain text.
+    private void GlobalLogList_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.C || (Keyboard.Modifiers & ModifierKeys.Control) == 0)
+        {
+            return;
+        }
+
+        var rows = GlobalLogList.SelectedItems.Count > 0
+            ? GlobalLogList.SelectedItems.Cast<object>()
+            : GlobalLogList.Items.Cast<object>();
+
+        var sb = new StringBuilder();
+        foreach (var row in rows)
+        {
+            if (row is LogEntry l)
+            {
+                sb.Append(l.Timestamp.ToString("yyyy-MM-dd HH:mm:ss"))
+                  .Append("  [").Append(l.Severity).Append("]  ")
+                  .Append(l.Source).Append("  ")
+                  .AppendLine(l.Message);
+            }
+            else if (row is not null)
+            {
+                sb.AppendLine(row.ToString());
+            }
+        }
+
+        if (sb.Length > 0)
+        {
+            try { Clipboard.SetText(sb.ToString()); } catch { /* clipboard busy */ }
+        }
+        e.Handled = true;
     }
 
     private static bool IsOnScreen(double left, double top, double width, double height)

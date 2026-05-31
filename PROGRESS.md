@@ -84,6 +84,9 @@ Usuario: el Lookup de Buzones compartidos petaba con `GetResponseHeader` (EXO in
 - Tests SharedMailboxServiceTests reescritos: mock `IExternalExoOps` (validación + delegación) + theory de `BuildPermissionCmdlet`. Total **1331** (517 Core + 814 App).
 - **Pendiente in-proc** (mismo bug, migrar cuando den problemas): `MailboxRulesService` (OOO/forwarding/calendario), auditorías EXO (`ExoForwardingAuditService`, inbox rules), y EXO cmdlets en la Consola PS.
 
+### Log global copiable con Ctrl+C (commit 10)
+El panel de log general (shell, `MainWindow.xaml` `ListBox ItemsSource=LogView`) no dejaba copiar. Añadido `x:Name=GlobalLogList` + `SelectionMode=Extended` + handler `GlobalLogList_PreviewKeyDown` (code-behind): Ctrl+C copia las filas seleccionadas (o todas si no hay selección) como texto `timestamp [Severity] Source Message`. Mismo patrón que el log de Offboarding. Sin tooltip (como pidió el usuario). UI-only, total sigue **1331**.
+
 ## Sprint AN · 2026-05-30 — Remate funcional + UX
 
 - **Usuarios**: panel de detalle rico (`UserDetailsView`) ahora embebido inline en la columna derecha, se carga al seleccionar (1 clic). Drawer se mantiene solo para Groups; se suprime en la página Usuarios (`MainViewModel.SyncUserDrawerVisibility`). `UserDetailsView.ShowClose` DP nueva.
