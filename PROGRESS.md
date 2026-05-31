@@ -61,6 +61,7 @@ Error real en ejecución: `[HttpResponseMessage] does not contain a method named
 - `OffboardingOptions.DelegateMailboxTo`; el servicio concede FullAccess+SendAs como paso de finalización (vía `_externalExo`), AVISO no-fatal.
 - VM: pasa `DelegateMailboxTo = del` por target/single; **eliminada** la delegación in-proc (`_mailboxes`) y su campo/param del ctor. Ahora TODO EXO de offboarding va por pwsh externo.
 - Tests: **+1 Core** (`Delegate_GrantsFullAccessAndSendAs_ViaExternalExo`, con `ISharedMailboxService` strict que NO debe tocarse). Total **1330**.
+- **Validado en vivo contra testeo224** (real, con revert): FullAccess + SendAs + auto-reply → **OK por pwsh externo** (las 3 que petaban con GetResponseHeader in-proc). Confirma el fix. Hide-GAL → error legítimo "objeto sincronizado desde organización interna" = testeo224 es **híbrido** (sync AD on-prem) → `HideFromGalAsync` lo maneja como SKIP con guía. Endurecido el regex de detección híbrida (`ámbito de escritura|organizaci.n interna|local organization|synchroniz…`) para no depender solo de "sincroniz". Aviso: muchos buzones de Andersen pueden ser híbridos → hide-GAL se aplica en AD local.
 
 ## Sprint AN · 2026-05-30 — Remate funcional + UX
 

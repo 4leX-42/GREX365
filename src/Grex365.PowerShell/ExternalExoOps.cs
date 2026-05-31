@@ -133,8 +133,8 @@ public sealed class ExternalExoOps : IExternalExoOps
                 $note = 'HiddenFromAddressListsEnabled=true'
             } catch {
                 $m = $_.Exception.Message
-                if ($m -match 'sincroniz|on-prem|on premises|write scope|organizaci.n local|cannot be performed.*synchron') {
-                    $note = 'objeto hibrido sincronizado desde AD on-prem: aplicar msExchHideFromAddressLists=TRUE en AD local'
+                if ($m -match 'sincroniz|synchroniz|on-prem|on premises|out of.*write scope|write scope|.mbito de escritura|organizaci.n (local|interna)|local organization|cannot be performed.*synchron') {
+                    $note = 'objeto hibrido sincronizado desde AD on-prem: aplicar msExchHideFromAddressLists=TRUE en AD local y esperar a Entra Connect'
                 } else { throw }
             }
             Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = $note }) | ConvertTo-Json -Compress))
