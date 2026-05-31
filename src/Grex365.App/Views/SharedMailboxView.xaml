@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:l="clr-namespace:Grex365.App.Xaml"
+             xmlns:v="clr-namespace:Grex365.App.Views"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -27,13 +28,9 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <ui:TextBox Grid.Column="0"
-                                    Text="{Binding MailboxIdentity, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="{l:L10n Key=SharedMailbox.Identity.Placeholder}">
-                            <ui:TextBox.InputBindings>
-                                <KeyBinding Key="Enter" Command="{Binding LookupCommand}" />
-                            </ui:TextBox.InputBindings>
-                        </ui:TextBox>
+                        <v:UserPickerBox Grid.Column="0"
+                                         Text="{Binding MailboxIdentity, Mode=TwoWay}"
+                                         Placeholder="{l:L10n Key=SharedMailbox.Identity.Placeholder}" />
                         <ui:Button Grid.Column="1"
                                    Content="{l:L10n Key=SharedMailbox.Button.Lookup}"
                                    Margin="8,0,0,0"
@@ -115,9 +112,9 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <ui:TextBox Grid.Column="0"
-                                    Text="{Binding PermPrincipal, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="{l:L10n Key=SharedMailbox.Permission.Principal.Placeholder}" />
+                        <v:UserPickerBox Grid.Column="0"
+                                         Text="{Binding PermPrincipal, Mode=TwoWay}"
+                                         Placeholder="{l:L10n Key=SharedMailbox.Permission.Principal.Placeholder}" />
                         <ComboBox Grid.Column="1"
                                   SelectedValue="{Binding PermAction}"
                                   SelectedValuePath="Tag"

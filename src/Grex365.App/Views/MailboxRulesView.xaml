@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:l="clr-namespace:Grex365.App.Xaml"
+             xmlns:v="clr-namespace:Grex365.App.Views"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -28,13 +29,9 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <ui:TextBox Grid.Column="0"
-                                Text="{Binding Identity, UpdateSourceTrigger=PropertyChanged}"
-                                PlaceholderText="{l:L10n Key=MailboxRules.Identity.Placeholder}">
-                        <ui:TextBox.InputBindings>
-                            <KeyBinding Key="Enter" Command="{Binding LoadCommand}" />
-                        </ui:TextBox.InputBindings>
-                    </ui:TextBox>
+                    <v:UserPickerBox Grid.Column="0"
+                                     Text="{Binding Identity, Mode=TwoWay}"
+                                     Placeholder="{l:L10n Key=MailboxRules.Identity.Placeholder}" />
                     <ui:Button Grid.Column="1"
                                Content="{l:L10n Key=MailboxRules.Button.Load}"
                                Margin="8,0,0,0"
@@ -116,9 +113,9 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <ui:TextBox Grid.Column="0"
-                                    Text="{Binding ForwardingSmtp, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="{l:L10n Key=MailboxRules.Forwarding.Placeholder}" />
+                        <v:UserPickerBox Grid.Column="0"
+                                         Text="{Binding ForwardingSmtp, Mode=TwoWay}"
+                                         Placeholder="{l:L10n Key=MailboxRules.Forwarding.Placeholder}" />
                         <CheckBox Grid.Column="1"
                                   Content="{l:L10n Key=MailboxRules.Forwarding.DeliverBoth}"
                                   IsChecked="{Binding DeliverToMailboxAndForward}"
@@ -149,9 +146,9 @@
                             <ColumnDefinition Width="200" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <ui:TextBox Grid.Column="0"
-                                    Text="{Binding CalendarPrincipal, UpdateSourceTrigger=PropertyChanged}"
-                                    PlaceholderText="{l:L10n Key=MailboxRules.Calendar.Principal.Placeholder}" />
+                        <v:UserPickerBox Grid.Column="0"
+                                         Text="{Binding CalendarPrincipal, Mode=TwoWay}"
+                                         Placeholder="{l:L10n Key=MailboxRules.Calendar.Principal.Placeholder}" />
                         <ComboBox Grid.Column="1"
                                   ItemsSource="{Binding CalendarAccessOptions}"
                                   SelectedItem="{Binding CalendarAccess}"

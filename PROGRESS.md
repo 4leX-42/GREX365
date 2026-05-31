@@ -68,6 +68,14 @@ Error real en ejecución: `[HttpResponseMessage] does not contain a method named
 - **UI**: quitado el ToolTip "Selecciona filas y Ctrl+C para copiar" del log (la función sigue, sobraba el texto).
 - Tests: **+3 Core** (quita de N grupos, fallo parcial→AVISO, sin servicio→OMITIDO). Total **1333** (519 Core + 814 App).
 
+### Autocompletado en campos de buzón/usuario (commit 8)
+Queja del usuario: el `UserPickerBox` (autocompletado live vía `IUsersService.SearchAsync`, self-contained, resuelve DI) solo estaba en Offboarding. Aplicado a los campos de **Mail/buzones**:
+- **SharedMailbox**: buzón objetivo (`MailboxIdentity`) + principal de permiso (`PermPrincipal`).
+- **MailboxRules**: buzón objetivo (`Identity`) + forwarding (`ForwardingSmtp`) + principal de calendario (`CalendarPrincipal`).
+- Los 2 campos "buzón objetivo" pierden Enter→Lookup (el botón sigue; Enter ahora elige sugerencia). Añadido `xmlns:v` a ambas vistas.
+- NO aplicado donde no encaja un picker de valor único: búsqueda de grupos (lista), add-members bulk (multilínea), campos de creación de usuario en Onboarding, filtro de MailFlow. Pendiente: `GroupPickerBox` para campos de grupo + helper "elegir y añadir" para los bulk.
+- Sin tests nuevos (cambio XAML; el control ya estaba probado en uso). Total sigue **1333**.
+
 ## Sprint AN · 2026-05-30 — Remate funcional + UX
 
 - **Usuarios**: panel de detalle rico (`UserDetailsView`) ahora embebido inline en la columna derecha, se carga al seleccionar (1 clic). Drawer se mantiene solo para Groups; se suprime en la página Usuarios (`MainViewModel.SyncUserDrawerVisibility`). `UserDetailsView.ShowClose` DP nueva.
