@@ -125,4 +125,15 @@ public class SharedMailboxServiceTests
     {
         ExternalExoOps.BuildPermissionCmdlet("add", "Bogus").Should().BeNull();
     }
+
+    [Theory]
+    // The real (mojibake'd) message from EXO when the mailbox doesn't exist.
+    [InlineData("Operación falló: ||La operaci¢n no se pudo efectuar porque el objeto 'testeo3.0@a' no se encontr¢ en 'VI1...'.", true)]
+    [InlineData("The operation couldn't be performed because object 'x@a' couldn't be found.", true)]
+    [InlineData("Insufficient access rights to perform the operation.", false)]
+    [InlineData("", false)]
+    public void IsMailboxNotFound_DetectsNotFound(string message, bool expected)
+    {
+        ExternalExoOps.IsMailboxNotFound(message).Should().Be(expected);
+    }
 }

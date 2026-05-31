@@ -87,6 +87,12 @@ Usuario: el Lookup de Buzones compartidos petaba con `GetResponseHeader` (EXO in
 ### Log global copiable con Ctrl+C (commit 10)
 El panel de log general (shell, `MainWindow.xaml` `ListBox ItemsSource=LogView`) no dejaba copiar. Añadido `x:Name=GlobalLogList` + `SelectionMode=Extended` + handler `GlobalLogList_PreviewKeyDown` (code-behind): Ctrl+C copia las filas seleccionadas (o todas si no hay selección) como texto `timestamp [Severity] Source Message`. Mismo patrón que el log de Offboarding. Sin tooltip (como pidió el usuario). UI-only, total sigue **1331**.
 
+### EXO externo: buzón no-encontrado + encoding UTF-8 (commit 11)
+Tras migrar SharedMailbox, buscar un buzón inexistente (testeo3.0, sin buzón) mostraba error rojo crudo + mojibake (`operaci¢n`, `encontr¢`). Dos fixes en `ExternalExoOps`:
+- **No-encontrado → null**: `GetMailboxFactsAsync` captura el "object not found" (`IsMailboxNotFound`, match en fragmento estable multi-locale + a prueba de mojibake) y devuelve `null` en vez de lanzar. El VM ya mostraba `SharedMailbox.Status.NotFound` (amigable) ante null. Otros errores (permiso, EXO caído) siguen surfaciendo.
+- **Encoding UTF-8**: `[Console]::OutputEncoding = UTF8` en el script + `StandardOutput/ErrorEncoding = UTF8` en el `ProcessStartInfo` → acentos correctos en errores y datos EXO (antes OEM → `ó`=`¢`).
+- Tests: **+4 Core** (`IsMailboxNotFound` con el mensaje real mojibake'd + variantes EN + no-match). Total **1335** (521 Core + 814 App).
+
 ## Sprint AN · 2026-05-30 — Remate funcional + UX
 
 - **Usuarios**: panel de detalle rico (`UserDetailsView`) ahora embebido inline en la columna derecha, se carga al seleccionar (1 clic). Drawer se mantiene solo para Groups; se suprime en la página Usuarios (`MainViewModel.SyncUserDrawerVisibility`). `UserDetailsView.ShowClose` DP nueva.

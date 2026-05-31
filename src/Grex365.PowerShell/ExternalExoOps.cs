@@ -49,8 +49,30 @@ public sealed class ExternalExoOps : IExternalExoOps
             Write-Output ('{{JsonMarker}}' + ($o | ConvertTo-Json -Compress))
             """;
 
-        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
-        return Parse(json);
+        try
+        {
+            var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+            return Parse(json);
+        }
+        catch (Exception ex) when (IsMailboxNotFound(ex.Message))
+        {
+            // Mailbox doesn't exist — a normal "not found", not a failure. Return null so the
+            // Shared Mailbox lookup / offboarding pre-checks report it gracefully (no red error).
+            progress?.Report(LogEntry.Info("EXO", $"Buzón no encontrado: {identity}"));
+            return null;
+        }
+    }
+
+    // EXO "the object couldn't be found", across locales. The accented text can arrive mojibake'd,
+    // so match on the stable fragment. Public for unit testing.
+    public static bool IsMailboxNotFound(string? message)
+    {
+        if (string.IsNullOrEmpty(message)) return false;
+        return message.Contains("no se encontr", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("couldn't be found", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("wasn't found", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("can't be found", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("ManagementObjectNotFound", StringComparison.OrdinalIgnoreCase);
     }
 
     public async Task<MailboxInfo?> ConvertToSharedAsync(
@@ -320,6 +342,7 @@ public sealed class ExternalExoOps : IExternalExoOps
             $ProgressPreference = 'SilentlyContinue'
             $InformationPreference = 'SilentlyContinue'
             $WarningPreference = 'SilentlyContinue'
+            [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
             Import-Module ExchangeOnlineManagement -ErrorAction Stop
             Connect-ExchangeOnline -AppId {{Lit(cfg.AppId)}} -CertificateThumbprint {{Lit(cfg.CertThumbprint)}} -Organization {{Lit(cfg.Organization)}} -ShowBanner:$false -InformationAction SilentlyContinue -ErrorAction Stop | Out-Null
             try {
@@ -341,6 +364,8 @@ public sealed class ExternalExoOps : IExternalExoOps
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8,
             CreateNoWindow = true,
         };
         psi.ArgumentList.Add("-NoLogo");
