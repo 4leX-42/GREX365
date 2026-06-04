@@ -4,8 +4,17 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1368 passing** (xUnit + FluentAssertions) — 554 Core + 814 App
-- Última actualización: 2026-06-05 (sesión · Sprint AP — migración EXO in-proc → pwsh externo: MailboxRules + Mail flow + auditorías EXO + DLs, vía `IExternalExoRunner` extraído)
+- Tests: **1381 passing** (xUnit + FluentAssertions) — 564 Core + 817 App
+- Última actualización: 2026-06-05 (sesión · Sprint AP migración EXO in-proc → pwsh externo + Sprint AQ pick&append en Grupos)
+
+## Sprint AQ · 2026-06-05 — Grupos: pick & append (autocompletado en add-members)
+
+Cierra el pending "helper elegir y añadir para los bulk" (Sprint AO commit 8). El campo de añadir miembros era un textarea pelado sin autocompletado. Añadido un `UserPickerBox` + botón "Añadir elegido" encima que **reutiliza el control de búsqueda live** (no uno nuevo) y agrega el UPN elegido a la lista.
+- **`MemberTextAppender`** (puro, Core.Groups): añade una entrada al texto separado por líneas, **dedup case-insensitive** sobre los mismos delimitadores que parsea `GroupsViewModel` (` , ; \n`), preservando el formato existente (nueva línea, sin doble salto).
+- **`GroupsViewModel`**: prop `MemberToAdd` (bound al picker) + `AddPickedMemberCommand` (append vía helper + limpia el picker).
+- **`GroupsView`**: picker + botón en la fila del label de add-members (`xmlns:v`). Visible solo con grupo seleccionado. L10n `Groups.AddMembers.PickPlaceholder/PickButton` ES+EN (parity test los cubre).
+- **`GroupPickerBox` standalone diferido**: el sitio obvio (búsqueda de grupos) es lista de resultados, no campo de valor único → sin encaje claro aún.
+- Tests: **+10 Core** (`MemberTextAppender`) **+3 App** (command append/dedup/empty). Total **1381** (564 Core + 817 App). ⏳ Placement UI pendiente de validación visual.
 
 ## Sprint AP · 2026-06-05 — Migración EXO in-proc → pwsh externo (mata GetResponseHeader)
 
@@ -86,7 +95,7 @@ Queja del usuario: el `UserPickerBox` (autocompletado live vía `IUsersService.S
 - **SharedMailbox**: buzón objetivo (`MailboxIdentity`) + principal de permiso (`PermPrincipal`).
 - **MailboxRules**: buzón objetivo (`Identity`) + forwarding (`ForwardingSmtp`) + principal de calendario (`CalendarPrincipal`).
 - Los 2 campos "buzón objetivo" pierden Enter→Lookup (el botón sigue; Enter ahora elige sugerencia). Añadido `xmlns:v` a ambas vistas.
-- NO aplicado donde no encaja un picker de valor único: búsqueda de grupos (lista), add-members bulk (multilínea), campos de creación de usuario en Onboarding, filtro de MailFlow. Pendiente: `GroupPickerBox` para campos de grupo + helper "elegir y añadir" para los bulk.
+- NO aplicado donde no encaja un picker de valor único: búsqueda de grupos (lista), add-members bulk (multilínea), campos de creación de usuario en Onboarding, filtro de MailFlow. Pendiente: `GroupPickerBox` para campos de grupo + helper "elegir y añadir" para los bulk. → **helper "elegir y añadir" hecho en Sprint AQ** (UserPickerBox + append en add-members de Grupos); `GroupPickerBox` standalone sigue diferido.
 - Sin tests nuevos (cambio XAML; el control ya estaba probado en uso). Total sigue **1333**.
 
 ### Fix: SharedMailbox migrado a EXO externo (commit 9)
