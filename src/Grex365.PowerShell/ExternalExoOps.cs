@@ -1,6 +1,4 @@
-using System.Diagnostics;
 using System.Globalization;
-using System.Text;
 using System.Text.Json;
 using Grex365.Core.Abstractions;
 using Grex365.Core.Models;
@@ -9,13 +7,14 @@ namespace Grex365.PowerShell;
 
 public sealed class ExternalExoOps : IExternalExoOps
 {
-    private const string JsonMarker = "###GREX-JSON###";
-    private const string ErrMarker = "###GREX-ERR###";
-    private readonly ICertConfigStore _certStore;
+    // Bodies emit their result after this marker; the runner parses it. Aliased so the many
+    // $$"""...{{JsonMarker}}...""" interpolations below stay unchanged after the host extraction.
+    private const string JsonMarker = ExternalExoRunner.JsonMarker;
+    private readonly IExternalExoRunner _runner;
 
-    public ExternalExoOps(ICertConfigStore certStore)
+    public ExternalExoOps(IExternalExoRunner runner)
     {
-        _certStore = certStore;
+        _runner = runner;
     }
 
     public async Task<MailboxInfo?> GetMailboxFactsAsync(
@@ -23,7 +22,6 @@ public sealed class ExternalExoOps : IExternalExoOps
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
         var id = Lit(identity);
         var body = $$"""
             $id = {{id}}
@@ -52,7 +50,7 @@ public sealed class ExternalExoOps : IExternalExoOps
 
         try
         {
-            var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+            var json = await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
             return Parse(json);
         }
         catch (Exception ex) when (IsMailboxNotFound(ex.Message))
@@ -81,7 +79,6 @@ public sealed class ExternalExoOps : IExternalExoOps
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
         var id = Lit(identity);
         var body = $$"""
             $id = {{id}}
@@ -106,7 +103,7 @@ public sealed class ExternalExoOps : IExternalExoOps
             Write-Output ('{{JsonMarker}}' + ($o | ConvertTo-Json -Compress))
             """;
 
-        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        var json = await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
         return Parse(json);
     }
 
@@ -116,14 +113,13 @@ public sealed class ExternalExoOps : IExternalExoOps
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
         var body = $$"""
             $id = {{Lit(identity)}}
             $msg = {{Lit(message)}}
             Set-MailboxAutoReplyConfiguration -Identity $id -AutoReplyState Enabled -ExternalAudience All -InternalMessage $msg -ExternalMessage $msg -ErrorAction Stop
             Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = 'auto-reply Enabled' }) | ConvertTo-Json -Compress))
             """;
-        await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task SetForwardingAsync(
@@ -132,13 +128,12 @@ public sealed class ExternalExoOps : IExternalExoOps
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
         var body = $$"""
             $id = {{Lit(identity)}}
             Set-Mailbox -Identity $id -ForwardingSmtpAddress {{Lit(forwardTo)}} -DeliverToMailboxAndForward $true -ErrorAction Stop
             Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = 'forward configurado' }) | ConvertTo-Json -Compress))
             """;
-        await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<string> HideFromGalAsync(
@@ -146,7 +141,6 @@ public sealed class ExternalExoOps : IExternalExoOps
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
         // Hybrid objects synced from on-prem AD can't be modified in EXO — detect that specific
         // failure and report it as a SKIP-with-guidance instead of a hard error (legacy parity).
         var body = $$"""
@@ -162,7 +156,7 @@ public sealed class ExternalExoOps : IExternalExoOps
             }
             Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = $note }) | ConvertTo-Json -Compress))
             """;
-        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        var json = await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
         return ParseNote(json) ?? "aplicado";
     }
 
@@ -173,7 +167,6 @@ public sealed class ExternalExoOps : IExternalExoOps
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
         var sendAsLit = sendAs ? "$true" : "$false";
         var body = $$"""
             $id = {{Lit(mailbox)}}
@@ -186,7 +179,7 @@ public sealed class ExternalExoOps : IExternalExoOps
             }
             Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = ($note + ' -> ' + $d) }) | ConvertTo-Json -Compress))
             """;
-        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        var json = await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
         return ParseNote(json) ?? "delegado";
     }
 
@@ -195,7 +188,6 @@ public sealed class ExternalExoOps : IExternalExoOps
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
         var id = Lit(identity);
         var body = $$"""
             $id = {{id}}
@@ -219,7 +211,7 @@ public sealed class ExternalExoOps : IExternalExoOps
             }
             Write-Output ('{{JsonMarker}}' + ($o | ConvertTo-Json -Compress))
             """;
-        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        var json = await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
         return Parse(json);
     }
 
@@ -256,7 +248,6 @@ public sealed class ExternalExoOps : IExternalExoOps
         {
             return new MailboxPermissionResult(action, permission, mailbox, principal, "INVALIDO", "Permission no soportada");
         }
-        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
         var body = $$"""
             $m = {{Lit(mailbox)}}
             $p = {{Lit(principal)}}
@@ -265,7 +256,7 @@ public sealed class ExternalExoOps : IExternalExoOps
             """;
         try
         {
-            await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+            await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
             return new MailboxPermissionResult(action, permission, mailbox, principal, "OK", "Aplicado");
         }
         catch (Exception ex)
@@ -279,7 +270,6 @@ public sealed class ExternalExoOps : IExternalExoOps
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
         var body = $$"""
             $mbx = {{Lit(mailbox)}}
             $full = @(Get-MailboxPermission -Identity $mbx -ErrorAction Stop |
@@ -293,7 +283,7 @@ public sealed class ExternalExoOps : IExternalExoOps
             foreach ($o in @($m.GrantSendOnBehalfTo)) { $out.Add([PSCustomObject]@{ Permission='SendOnBehalf'; Principal=[string]$o; Detail='From Set-Mailbox' }) }
             Write-Output ('{{JsonMarker}}' + ($out | ConvertTo-Json -Compress -AsArray))
             """;
-        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        var json = await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
         return ParsePermissions(json);
     }
 
@@ -304,7 +294,6 @@ public sealed class ExternalExoOps : IExternalExoOps
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
         var body = $$"""
             $id = {{Lit(identity)}}
             $c = Get-MailboxAutoReplyConfiguration -Identity $id -ErrorAction Stop
@@ -317,7 +306,7 @@ public sealed class ExternalExoOps : IExternalExoOps
             }
             Write-Output ('{{JsonMarker}}' + ($o | ConvertTo-Json -Compress))
             """;
-        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        var json = await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
         return ParseAutoReply(json);
     }
 
@@ -327,7 +316,6 @@ public sealed class ExternalExoOps : IExternalExoOps
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
         var body = $$"""
             $id = {{Lit(identity)}}
             $params = @{ Identity = $id; AutoReplyState = {{Lit(config.State.ToString())}}; ErrorAction = 'Stop' }
@@ -342,7 +330,7 @@ public sealed class ExternalExoOps : IExternalExoOps
             Set-MailboxAutoReplyConfiguration @params | Out-Null
             Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = ('auto-reply ' + {{Lit(config.State.ToString())}}) }) | ConvertTo-Json -Compress))
             """;
-        await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<ForwardingConfig?> GetForwardingAsync(
@@ -350,7 +338,6 @@ public sealed class ExternalExoOps : IExternalExoOps
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
         var body = $$"""
             $id = {{Lit(identity)}}
             $m = Get-Mailbox -Identity $id -ErrorAction Stop
@@ -361,7 +348,7 @@ public sealed class ExternalExoOps : IExternalExoOps
             }
             Write-Output ('{{JsonMarker}}' + ($o | ConvertTo-Json -Compress))
             """;
-        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        var json = await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
         return ParseForwarding(json);
     }
 
@@ -372,14 +359,13 @@ public sealed class ExternalExoOps : IExternalExoOps
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
         var deliverLit = deliverToMailboxAndForward ? "$true" : "$false";
         var body = $$"""
             $id = {{Lit(identity)}}
             Set-Mailbox -Identity $id -ForwardingSmtpAddress {{Lit(forwardingSmtpAddress)}} -DeliverToMailboxAndForward:{{deliverLit}} -ErrorAction Stop | Out-Null
             Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = 'forwarding configurado' }) | ConvertTo-Json -Compress))
             """;
-        await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task ClearForwardingAsync(
@@ -387,13 +373,12 @@ public sealed class ExternalExoOps : IExternalExoOps
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
         var body = $$"""
             $id = {{Lit(identity)}}
             Set-Mailbox -Identity $id -ForwardingAddress $null -ForwardingSmtpAddress $null -DeliverToMailboxAndForward:$false -ErrorAction Stop | Out-Null
             Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = 'forwarding limpiado' }) | ConvertTo-Json -Compress))
             """;
-        await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<IReadOnlyList<CalendarPermissionEntry>> GetCalendarPermissionsAsync(
@@ -401,7 +386,6 @@ public sealed class ExternalExoOps : IExternalExoOps
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
         // Filter the noise (Default/None, anonymous, empties) in PowerShell so the JSON is clean.
         var body = $$"""
             $id = {{Lit(identity)}}
@@ -417,7 +401,7 @@ public sealed class ExternalExoOps : IExternalExoOps
             }
             Write-Output ('{{JsonMarker}}' + ($out | ConvertTo-Json -Compress -AsArray))
             """;
-        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        var json = await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
         return ParseCalendarPermissions(json);
     }
 
@@ -428,7 +412,6 @@ public sealed class ExternalExoOps : IExternalExoOps
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
         var body = $$"""
             $id = {{Lit(identity)}}
             $p = {{Lit(principal)}}
@@ -444,7 +427,7 @@ public sealed class ExternalExoOps : IExternalExoOps
             }
             Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = $note }) | ConvertTo-Json -Compress))
             """;
-        await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task RemoveCalendarPermissionAsync(
@@ -453,7 +436,6 @@ public sealed class ExternalExoOps : IExternalExoOps
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
         var body = $$"""
             $id = {{Lit(identity)}}
             $p = {{Lit(principal)}}
@@ -461,7 +443,7 @@ public sealed class ExternalExoOps : IExternalExoOps
             Remove-MailboxFolderPermission -Identity $folder -User $p -Confirm:$false -ErrorAction Stop | Out-Null
             Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = ('eliminado: ' + $p) }) | ConvertTo-Json -Compress))
             """;
-        await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
     }
 
     private static IReadOnlyList<MailboxPermissionEntry> ParsePermissions(string? json)
@@ -534,129 +516,6 @@ public sealed class ExternalExoOps : IExternalExoOps
         return doc.RootElement.TryGetProperty("Note", out var v) && v.ValueKind == JsonValueKind.String
             ? v.GetString()
             : null;
-    }
-
-    private async Task<CertConfig> RequireConfigAsync(CancellationToken ct)
-    {
-        var cfg = await _certStore.LoadAsync(ct).ConfigureAwait(false);
-        if (cfg is null || string.IsNullOrWhiteSpace(cfg.CertThumbprint))
-        {
-            throw new InvalidOperationException(
-                "No hay configuración de certificado para Exchange Online. Conéctate por certificado primero.");
-        }
-        return cfg;
-    }
-
-    // Wraps the body in connect/disconnect and runs it in an external pwsh process.
-    private async Task<string?> RunAsync(
-        CertConfig cfg,
-        string body,
-        IProgress<LogEntry>? progress,
-        CancellationToken cancellationToken)
-    {
-        var full = $$"""
-            $ErrorActionPreference = 'Stop'
-            $ProgressPreference = 'SilentlyContinue'
-            $InformationPreference = 'SilentlyContinue'
-            $WarningPreference = 'SilentlyContinue'
-            [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-            Import-Module ExchangeOnlineManagement -ErrorAction Stop
-            Connect-ExchangeOnline -AppId {{Lit(cfg.AppId)}} -CertificateThumbprint {{Lit(cfg.CertThumbprint)}} -Organization {{Lit(cfg.Organization)}} -ShowBanner:$false -InformationAction SilentlyContinue -ErrorAction Stop | Out-Null
-            try {
-            {{body}}
-            }
-            catch {
-                Write-Output ('{{ErrMarker}}' + $_.Exception.Message)
-            }
-            finally {
-                Disconnect-ExchangeOnline -Confirm:$false -InformationAction SilentlyContinue -ErrorAction SilentlyContinue *> $null
-            }
-            """;
-
-        var encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(full));
-
-        var psi = new ProcessStartInfo
-        {
-            FileName = ExeResolver.ResolvePwsh(),
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            StandardOutputEncoding = Encoding.UTF8,
-            StandardErrorEncoding = Encoding.UTF8,
-            CreateNoWindow = true,
-        };
-        psi.ArgumentList.Add("-NoLogo");
-        psi.ArgumentList.Add("-NoProfile");
-        psi.ArgumentList.Add("-NonInteractive");
-        psi.ArgumentList.Add("-EncodedCommand");
-        psi.ArgumentList.Add(encoded);
-
-        using var proc = new Process { StartInfo = psi };
-        string? jsonLine = null;
-        string? scriptError = null;
-        var errors = new StringBuilder();
-
-        proc.OutputDataReceived += (_, e) =>
-        {
-            if (string.IsNullOrEmpty(e.Data)) return;
-            // The script wraps the body in try/catch and emits the real exception message on a
-            // marked line — capture it so failures surface the actual EXO error instead of a
-            // bare "pwsh exit 1".
-            var errIdx = e.Data.IndexOf(ErrMarker, StringComparison.Ordinal);
-            if (errIdx >= 0)
-            {
-                scriptError = e.Data[(errIdx + ErrMarker.Length)..];
-                return;
-            }
-            var idx = e.Data.IndexOf(JsonMarker, StringComparison.Ordinal);
-            if (idx >= 0)
-            {
-                jsonLine = e.Data[(idx + JsonMarker.Length)..];
-            }
-            else
-            {
-                progress?.Report(LogEntry.Info("EXO", e.Data));
-            }
-        };
-        proc.ErrorDataReceived += (_, e) =>
-        {
-            if (string.IsNullOrEmpty(e.Data)) return;
-            // The EXO module serialises non-text stream records to stderr as CLIXML noise
-            // ("#< CLIXML", "<Objs ...>"). It is not an error — drop it so the live log
-            // stays clean instead of showing scary XML warnings.
-            var t = e.Data.TrimStart();
-            if (t.StartsWith("#< CLIXML", StringComparison.Ordinal) ||
-                t.StartsWith("<Objs", StringComparison.Ordinal) ||
-                t.StartsWith("<", StringComparison.Ordinal))
-            {
-                return;
-            }
-            errors.AppendLine(e.Data);
-            progress?.Report(LogEntry.Warn("EXO", e.Data));
-        };
-
-        proc.Start();
-        proc.BeginOutputReadLine();
-        proc.BeginErrorReadLine();
-
-        await using (cancellationToken.Register(() =>
-        {
-            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
-        }).ConfigureAwait(false))
-        {
-            await proc.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        if (scriptError is not null)
-        {
-            throw new InvalidOperationException("Operación Exchange Online falló: " + scriptError.Trim());
-        }
-        if (proc.ExitCode != 0 && jsonLine is null)
-        {
-            throw new InvalidOperationException(
-                "Operación Exchange Online falló: " + (errors.Length > 0 ? errors.ToString().Trim() : $"pwsh exit {proc.ExitCode}"));
-        }
-        return jsonLine;
     }
 
     private static MailboxInfo? Parse(string? json)

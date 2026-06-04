@@ -1,15 +1,17 @@
-using System.Globalization;
-using System.Management.Automation;
+using System.Text.Json;
 using Grex365.Core.Abstractions;
 using Grex365.Core.Models;
 
 namespace Grex365.PowerShell;
 
+// Lists Exchange Online transport (mail flow) rules. Runs Get-TransportRule in an external pwsh
+// host: the in-proc RunspacePool trips the EXO V3 "HttpResponseMessage does not contain
+// GetResponseHeader" bug when reading rule PSObject properties.
 public sealed class MailFlowRulesService : IMailFlowRulesService
 {
-    private readonly IPowerShellRunner _runner;
+    private readonly IExternalExoRunner _runner;
 
-    public MailFlowRulesService(IPowerShellRunner runner)
+    public MailFlowRulesService(IExternalExoRunner runner)
     {
         _runner = runner;
     }
@@ -18,70 +20,45 @@ public sealed class MailFlowRulesService : IMailFlowRulesService
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        // Bug ExchangeOnlineManagement (REST session): el property accessor del PSObject de
-        // EXO toca un path interno que asume HttpWebResponse.GetResponseHeader pero recibe
-        // HttpResponseMessage. Workaround: ConnectByCertificateAsync ya set
-        // DISABLE_REST_API_USE_BY_DEFAULT=true antes de Connect-ExchangeOnline.
-        // Adicional: usar -ResultSize de Get-TransportRule no aplica (no expone tal parametro).
-        const string script = """
-            param()
-            $env:DISABLE_REST_API_USE_BY_DEFAULT = "true"
-            Get-TransportRule -ErrorAction Stop |
-                Select-Object Name, State, Priority, Mode, Description
-            """;
-
-        var result = await _runner.RunAsync(
-            script,
-            parameters: null,
-            progress,
-            cancellationToken).ConfigureAwait(false);
-
-        if (!result.Success)
-        {
-            throw new InvalidOperationException("Get-TransportRule falló: " + string.Join("; ", result.Errors));
-        }
-
-        var rules = new List<TransportRuleSummary>(result.Output.Count);
-        foreach (var obj in result.Output)
-        {
-            if (obj is not PSObject ps)
-            {
-                continue;
+        var body = $$"""
+            $rules = @(Get-TransportRule -ErrorAction Stop)
+            $out = New-Object System.Collections.Generic.List[object]
+            foreach ($r in $rules) {
+                $out.Add([PSCustomObject]@{
+                    Name        = [string]$r.Name
+                    State       = [string]$r.State
+                    Priority    = [int]$r.Priority
+                    Mode        = [string]$r.Mode
+                    Description = [string]$r.Description
+                })
             }
-            rules.Add(new TransportRuleSummary(
-                Name: GetString(ps, "Name") ?? "(sin nombre)",
-                State: GetString(ps, "State") ?? "(?)",
-                Priority: GetInt(ps, "Priority"),
-                Mode: GetString(ps, "Mode") ?? "(?)",
-                Description: GetString(ps, "Description")));
-        }
+            Write-Output ('{{ExternalExoRunner.JsonMarker}}' + ($out | ConvertTo-Json -Compress -AsArray))
+            """;
+        var json = await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
 
-        return rules
+        return ParseRules(json)
             .OrderBy(r => r.Priority)
             .ThenBy(r => r.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 
-    private static string? GetString(PSObject obj, string property)
+    private static IReadOnlyList<TransportRuleSummary> ParseRules(string? json)
     {
-        var value = obj.Properties[property]?.Value;
-        if (value is null)
+        var list = new List<TransportRuleSummary>();
+        if (string.IsNullOrWhiteSpace(json)) return list;
+        using var doc = JsonDocument.Parse(json);
+        if (doc.RootElement.ValueKind != JsonValueKind.Array) return list;
+        foreach (var el in doc.RootElement.EnumerateArray())
         {
-            return null;
+            string? S(string n) => el.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.String && v.GetString() is { Length: > 0 } s ? s : null;
+            int I(string n) => el.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out var i) ? i : 0;
+            list.Add(new TransportRuleSummary(
+                Name: S("Name") ?? "(sin nombre)",
+                State: S("State") ?? "(?)",
+                Priority: I("Priority"),
+                Mode: S("Mode") ?? "(?)",
+                Description: S("Description")));
         }
-        var s = Convert.ToString(value, CultureInfo.InvariantCulture);
-        return string.IsNullOrWhiteSpace(s) ? null : s;
-    }
-
-    private static int GetInt(PSObject obj, string property)
-    {
-        var value = obj.Properties[property]?.Value;
-        return value switch
-        {
-            int i => i,
-            long l => (int)l,
-            null => 0,
-            _ => int.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), out var parsed) ? parsed : 0,
-        };
+        return list;
     }
 }
