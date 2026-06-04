@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using Grex365.Core.Abstractions;
@@ -296,6 +297,173 @@ public sealed class ExternalExoOps : IExternalExoOps
         return ParsePermissions(json);
     }
 
+    // ---- Mailbox rules: auto-reply / forwarding / calendar (external pwsh) ----
+
+    public async Task<AutoReplyConfig?> GetAutoReplyAsync(
+        string identity,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
+        var body = $$"""
+            $id = {{Lit(identity)}}
+            $c = Get-MailboxAutoReplyConfiguration -Identity $id -ErrorAction Stop
+            $o = [PSCustomObject]@{
+                State           = [string]$c.AutoReplyState
+                InternalMessage = [string]$c.InternalMessage
+                ExternalMessage = [string]$c.ExternalMessage
+                StartTime       = if ($c.StartTime) { ([datetime]$c.StartTime).ToString('o') } else { '' }
+                EndTime         = if ($c.EndTime) { ([datetime]$c.EndTime).ToString('o') } else { '' }
+            }
+            Write-Output ('{{JsonMarker}}' + ($o | ConvertTo-Json -Compress))
+            """;
+        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        return ParseAutoReply(json);
+    }
+
+    public async Task SetAutoReplyConfigAsync(
+        string identity,
+        AutoReplyConfig config,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
+        var body = $$"""
+            $id = {{Lit(identity)}}
+            $params = @{ Identity = $id; AutoReplyState = {{Lit(config.State.ToString())}}; ErrorAction = 'Stop' }
+            $int = {{Lit(config.InternalMessage)}}
+            $ext = {{Lit(config.ExternalMessage)}}
+            $start = {{Lit(config.StartTime?.ToString("o", CultureInfo.InvariantCulture))}}
+            $end = {{Lit(config.EndTime?.ToString("o", CultureInfo.InvariantCulture))}}
+            if ($int)   { $params['InternalMessage'] = $int }
+            if ($ext)   { $params['ExternalMessage'] = $ext }
+            if ($start) { $params['StartTime'] = [datetime]::Parse($start, [System.Globalization.CultureInfo]::InvariantCulture) }
+            if ($end)   { $params['EndTime']   = [datetime]::Parse($end,   [System.Globalization.CultureInfo]::InvariantCulture) }
+            Set-MailboxAutoReplyConfiguration @params | Out-Null
+            Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = ('auto-reply ' + {{Lit(config.State.ToString())}}) }) | ConvertTo-Json -Compress))
+            """;
+        await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<ForwardingConfig?> GetForwardingAsync(
+        string identity,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
+        var body = $$"""
+            $id = {{Lit(identity)}}
+            $m = Get-Mailbox -Identity $id -ErrorAction Stop
+            $o = [PSCustomObject]@{
+                ForwardingAddress          = [string]$m.ForwardingAddress
+                ForwardingSmtpAddress      = [string]$m.ForwardingSmtpAddress
+                DeliverToMailboxAndForward = [bool]$m.DeliverToMailboxAndForward
+            }
+            Write-Output ('{{JsonMarker}}' + ($o | ConvertTo-Json -Compress))
+            """;
+        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        return ParseForwarding(json);
+    }
+
+    public async Task ConfigureForwardingAsync(
+        string identity,
+        string forwardingSmtpAddress,
+        bool deliverToMailboxAndForward,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
+        var deliverLit = deliverToMailboxAndForward ? "$true" : "$false";
+        var body = $$"""
+            $id = {{Lit(identity)}}
+            Set-Mailbox -Identity $id -ForwardingSmtpAddress {{Lit(forwardingSmtpAddress)}} -DeliverToMailboxAndForward:{{deliverLit}} -ErrorAction Stop | Out-Null
+            Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = 'forwarding configurado' }) | ConvertTo-Json -Compress))
+            """;
+        await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task ClearForwardingAsync(
+        string identity,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
+        var body = $$"""
+            $id = {{Lit(identity)}}
+            Set-Mailbox -Identity $id -ForwardingAddress $null -ForwardingSmtpAddress $null -DeliverToMailboxAndForward:$false -ErrorAction Stop | Out-Null
+            Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = 'forwarding limpiado' }) | ConvertTo-Json -Compress))
+            """;
+        await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<IReadOnlyList<CalendarPermissionEntry>> GetCalendarPermissionsAsync(
+        string identity,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
+        // Filter the noise (Default/None, anonymous, empties) in PowerShell so the JSON is clean.
+        var body = $$"""
+            $id = {{Lit(identity)}}
+            $folder = "{0}:\Calendar" -f $id
+            $perms = @(Get-MailboxFolderPermission -Identity $folder -ErrorAction Stop)
+            $out = New-Object System.Collections.Generic.List[object]
+            foreach ($p in $perms) {
+                $principal = [string]$p.User
+                $rights = ([string]::Join(',', @($p.AccessRights)))
+                if (-not $principal -or -not $rights) { continue }
+                if ($principal -eq 'Default' -and $rights -eq 'None') { continue }
+                $out.Add([PSCustomObject]@{ Principal = $principal; AccessRights = $rights })
+            }
+            Write-Output ('{{JsonMarker}}' + ($out | ConvertTo-Json -Compress -AsArray))
+            """;
+        var json = await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+        return ParseCalendarPermissions(json);
+    }
+
+    public async Task ApplyCalendarPermissionAsync(
+        string identity,
+        string principal,
+        string accessRights,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
+        var body = $$"""
+            $id = {{Lit(identity)}}
+            $p = {{Lit(principal)}}
+            $rights = {{Lit(accessRights)}}
+            $folder = "{0}:\Calendar" -f $id
+            $existing = Get-MailboxFolderPermission -Identity $folder -User $p -ErrorAction SilentlyContinue
+            if ($existing) {
+                Set-MailboxFolderPermission -Identity $folder -User $p -AccessRights $rights -ErrorAction Stop | Out-Null
+                $note = ('actualizado: ' + $p + ' -> ' + $rights)
+            } else {
+                Add-MailboxFolderPermission -Identity $folder -User $p -AccessRights $rights -ErrorAction Stop | Out-Null
+                $note = ('añadido: ' + $p + ' -> ' + $rights)
+            }
+            Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = $note }) | ConvertTo-Json -Compress))
+            """;
+        await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task RemoveCalendarPermissionAsync(
+        string identity,
+        string principal,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cfg = await RequireConfigAsync(cancellationToken).ConfigureAwait(false);
+        var body = $$"""
+            $id = {{Lit(identity)}}
+            $p = {{Lit(principal)}}
+            $folder = "{0}:\Calendar" -f $id
+            Remove-MailboxFolderPermission -Identity $folder -User $p -Confirm:$false -ErrorAction Stop | Out-Null
+            Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = ('eliminado: ' + $p) }) | ConvertTo-Json -Compress))
+            """;
+        await RunAsync(cfg, body, progress, cancellationToken).ConfigureAwait(false);
+    }
+
     private static IReadOnlyList<MailboxPermissionEntry> ParsePermissions(string? json)
     {
         var list = new List<MailboxPermissionEntry>();
@@ -306,6 +474,55 @@ public sealed class ExternalExoOps : IExternalExoOps
         {
             string S(string n) => el.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString()! : string.Empty;
             list.Add(new MailboxPermissionEntry(S("Permission"), S("Principal"), S("Detail")));
+        }
+        return list;
+    }
+
+    private static AutoReplyConfig? ParseAutoReply(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return null;
+        using var doc = JsonDocument.Parse(json);
+        var r = doc.RootElement;
+        string S(string n) => r.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString()! : string.Empty;
+        var state = S("State") switch
+        {
+            "Enabled" => AutoReplyState.Enabled,
+            "Scheduled" => AutoReplyState.Scheduled,
+            _ => AutoReplyState.Disabled,
+        };
+        DateTime? D(string n)
+        {
+            var s = S(n);
+            return DateTime.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dt) ? dt : null;
+        }
+        static string? NullIfEmpty(string s) => string.IsNullOrEmpty(s) ? null : s;
+        return new AutoReplyConfig(state, NullIfEmpty(S("InternalMessage")), NullIfEmpty(S("ExternalMessage")), D("StartTime"), D("EndTime"));
+    }
+
+    private static ForwardingConfig? ParseForwarding(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return null;
+        using var doc = JsonDocument.Parse(json);
+        var r = doc.RootElement;
+        string S(string n) => r.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString()! : string.Empty;
+        bool B(string n) => r.TryGetProperty(n, out var v) && (v.ValueKind == JsonValueKind.True || (v.ValueKind == JsonValueKind.String && bool.TryParse(v.GetString(), out var b) && b));
+        static string? NullIfEmpty(string s) => string.IsNullOrEmpty(s) ? null : s;
+        return new ForwardingConfig(NullIfEmpty(S("ForwardingAddress")), NullIfEmpty(S("ForwardingSmtpAddress")), B("DeliverToMailboxAndForward"));
+    }
+
+    private static IReadOnlyList<CalendarPermissionEntry> ParseCalendarPermissions(string? json)
+    {
+        var list = new List<CalendarPermissionEntry>();
+        if (string.IsNullOrWhiteSpace(json)) return list;
+        using var doc = JsonDocument.Parse(json);
+        if (doc.RootElement.ValueKind != JsonValueKind.Array) return list;
+        foreach (var el in doc.RootElement.EnumerateArray())
+        {
+            string S(string n) => el.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString()! : string.Empty;
+            var principal = S("Principal");
+            var rights = S("AccessRights");
+            if (string.IsNullOrEmpty(principal) || string.IsNullOrEmpty(rights)) continue;
+            list.Add(new CalendarPermissionEntry(principal, rights));
         }
         return list;
     }

@@ -73,4 +73,63 @@ public interface IExternalExoOps
         string mailbox,
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default);
+
+    // ---- Mailbox rules (OOO / forwarding / calendar) — used by MailboxRulesService ----
+    // These ran in-proc and tripped the GetResponseHeader bug; they go through external pwsh now.
+
+    // Reads the auto-reply (out-of-office) configuration. Null if the mailbox can't be read.
+    Task<AutoReplyConfig?> GetAutoReplyAsync(
+        string identity,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    // Sets the full auto-reply configuration (state + internal/external message + optional window).
+    // Unlike the offboarding SetAutoReplyAsync, this honours every field of the config as-is.
+    Task SetAutoReplyConfigAsync(
+        string identity,
+        AutoReplyConfig config,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    // Reads the current SMTP/internal forwarding configuration. Null if the mailbox can't be read.
+    Task<ForwardingConfig?> GetForwardingAsync(
+        string identity,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    // Sets SMTP forwarding with an explicit "keep a copy" flag (parameterised, unlike the
+    // offboarding SetForwardingAsync which always keeps a copy).
+    Task ConfigureForwardingAsync(
+        string identity,
+        string forwardingSmtpAddress,
+        bool deliverToMailboxAndForward,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    // Clears any SMTP/internal forwarding and the deliver-and-forward flag.
+    Task ClearForwardingAsync(
+        string identity,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    // Lists the non-default calendar folder permissions on the mailbox.
+    Task<IReadOnlyList<CalendarPermissionEntry>> GetCalendarPermissionsAsync(
+        string identity,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    // Adds or updates a calendar folder permission for a principal (Add- or Set-, as needed).
+    Task ApplyCalendarPermissionAsync(
+        string identity,
+        string principal,
+        string accessRights,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
+
+    // Removes a principal's calendar folder permission.
+    Task RemoveCalendarPermissionAsync(
+        string identity,
+        string principal,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
 }
