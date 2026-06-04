@@ -4,8 +4,21 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1333 passing** (xUnit + FluentAssertions) — 519 Core + 814 App
-- Última actualización: 2026-05-31 (sesión · Sprint AO — Offboarding: backbone + EXO + fixes + plantillas + layout + auto-reply + delegación + quitar-de-grupos)
+- Tests: **1368 passing** (xUnit + FluentAssertions) — 554 Core + 814 App
+- Última actualización: 2026-06-05 (sesión · Sprint AP — migración EXO in-proc → pwsh externo: MailboxRules + Mail flow + auditorías EXO + DLs, vía `IExternalExoRunner` extraído)
+
+## Sprint AP · 2026-06-05 — Migración EXO in-proc → pwsh externo (mata GetResponseHeader)
+
+Cierre del backlog **"Pendiente in-proc"** (PROGRESS Sprint AO commit 9): todo el EXO que aún corría por el `RunspacePool` interno (bug clásico EXO V3 `HttpResponseMessage does not contain GetResponseHeader`) migrado al host pwsh externo. 4 commits, mismo patrón que SharedMailbox/offboarding (lógica pura + validación se queda en C#, los cmdlets EXO van por proceso externo emitiendo JSON).
+
+- **`IExternalExoRunner` extraído** (commit 2): el plumbing del pwsh externo (carga de cert, connect/disconnect, parseo de markers `###GREX-JSON###`/`###GREX-ERR###`, proceso, encoding UTF-8, filtro CLIXML stderr, kill en cancelación) vivía privado dentro de `ExternalExoOps`. Movido **verbatim** a `ExternalExoRunner` (interfaz `IExternalExoRunner.RunAsync(body)` + markers públicos). `ExternalExoOps` ahora depende del runner; sus 17 call-sites pierden la carga de cert por-llamada y delegan en `_runner.RunAsync`. Una sola fuente de verdad para todo consumidor EXO.
+- **MailboxRulesService** (commit 1): OOO/forwarding/calendario migrado. `IExternalExoOps` += superficie mailbox-rules (GetAutoReply/SetAutoReplyConfig, GetForwarding/ConfigureForwarding/ClearForwarding, Get/Apply/Remove calendar perm) con nombres distintos para no solapar las de offboarding (que fuerzan OOO permanente / keep-a-copy). Servicio = wrapper fino; validación (`MailboxRulesValidator` + calendar rights) se queda y corta antes de tocar EXO. `IMailboxRulesService` y el VM sin cambios. **+15 Core**.
+- **MailFlowRulesService** (commit 2): `Get-TransportRule` (visor Flujo de correo) migrado, emite JSON en vez de leer PSObjects in-proc.
+- **ExoForwardingAuditService** (commit 3): las 4 auditorías de seguridad (forwarding externo, inbox rules, transport rules, shared-mailbox sign-in) ahora 1 invocación pwsh externa cada una (connect once, recorre, emite JSON). Inbox-rules itera `Get-InboxRule` dentro de la sesión única + progreso periódico (Write-Output reenviado por el runner); cancelación mata el proceso. `ConvertTo-Json -Depth` preserva los arrays anidados; el parseo C# es **defensivo** ante el colapso de arrays de 1 elemento de ConvertTo-Json (escalar/objeto suelto). Analizadores puros intactos. Gate `EnsureExchangeConnected` conservado. **+12 Core**.
+- **DistributionListsService** (commit 4): creación masiva de DLs (New-/Get-/Add-DistributionGroup(Member)) migrada — última ruta **mutadora** EXO in-proc. Orquestación (group-by, exists→create→add, dedup, contabilidad por fila) se queda en C#. Nombres/emails del CSV interpolados con `ExternalExoRunner.Lit` (escape de comilla simple) — **injection-safe**. **+6 Core**.
+- **Tests**: +33 Core (1335 → **1368**: 554 Core + 814 App). Cubren validación-corta-antes-de-EXO, delegación, parse→analyze de auditorías (con tolerancia a single-element-collapse), orquestación de DLs y escape de inyección.
+- **Pendiente in-proc restante**: solo la **Consola PS** (REPL general arbitrario) sigue in-proc — es intencional (escape-hatch de power-user; el EXO tiene vistas dedicadas ya migradas). Detectar/enrutar cmdlets EXO ahí sería un cambio de semántica (perdería el runspace compartido/historial), no una migración mecánica.
+- **Por validar en vivo** (read-only sobre `testeo*`): que los JSON shapes casen con el EXO real de Andersen (casing de propiedades, formato de `ForwardTo` etc.). Patrón externo ya validado en vivo para offboarding/SharedMailbox.
 
 ## Sprint AO · 2026-05-31 — Offboarding: backbone de seguridad y observabilidad
 
@@ -82,7 +95,7 @@ Usuario: el Lookup de Buzones compartidos petaba con `GetResponseHeader` (EXO in
 - `SharedMailboxService` ahora es wrapper fino sobre `IExternalExoOps` (ctor cambia `IPowerShellRunner`→`IExternalExoOps`); mantiene la validación de ApplyPermission (INVALIDO sin tocar EXO). El VM y la interfaz `ISharedMailboxService` no cambian.
 - **Requiere conexión por certificado** (como offboarding); el path in-proc queda muerto para esta vista.
 - Tests SharedMailboxServiceTests reescritos: mock `IExternalExoOps` (validación + delegación) + theory de `BuildPermissionCmdlet`. Total **1331** (517 Core + 814 App).
-- **Pendiente in-proc** (mismo bug, migrar cuando den problemas): `MailboxRulesService` (OOO/forwarding/calendario), auditorías EXO (`ExoForwardingAuditService`, inbox rules), y EXO cmdlets en la Consola PS.
+- **Pendiente in-proc** (mismo bug, migrar cuando den problemas): `MailboxRulesService` (OOO/forwarding/calendario), auditorías EXO (`ExoForwardingAuditService`, inbox rules), y EXO cmdlets en la Consola PS. → **RESUELTO en Sprint AP (2026-06-05)** salvo la Consola PS (REPL general, intencional).
 
 ### Log global copiable con Ctrl+C (commit 10)
 El panel de log general (shell, `MainWindow.xaml` `ListBox ItemsSource=LogView`) no dejaba copiar. Añadido `x:Name=GlobalLogList` + `SelectionMode=Extended` + handler `GlobalLogList_PreviewKeyDown` (code-behind): Ctrl+C copia las filas seleccionadas (o todas si no hay selección) como texto `timestamp [Severity] Source Message`. Mismo patrón que el log de Offboarding. Sin tooltip (como pidió el usuario). UI-only, total sigue **1331**.
