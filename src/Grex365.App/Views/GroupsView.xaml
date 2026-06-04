@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:l="clr-namespace:Grex365.App.Xaml"
+             xmlns:v="clr-namespace:Grex365.App.Views"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
     <Grid Margin="32,28,32,16">
@@ -256,11 +257,27 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <TextBlock Grid.Row="2"
-                               Text="{l:L10n Key=Groups.AddMembers.Label}"
-                               FontWeight="SemiBold"
-                               Margin="0,12,0,4"
-                               Visibility="{Binding SelectedGroup, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}" />
+                    <Grid Grid.Row="2" Margin="0,12,0,4"
+                          Visibility="{Binding SelectedGroup, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Text="{l:L10n Key=Groups.AddMembers.Label}"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center" />
+                        <v:UserPickerBox Grid.Column="1"
+                                         MinWidth="160"
+                                         Margin="12,0,8,0"
+                                         VerticalAlignment="Center"
+                                         Text="{Binding MemberToAdd, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                         Placeholder="{l:L10n Key=Groups.AddMembers.PickPlaceholder}" />
+                        <ui:Button Grid.Column="2"
+                                   Content="{l:L10n Key=Groups.AddMembers.PickButton}"
+                                   Command="{Binding AddPickedMemberCommand}" />
+                    </Grid>
                     <ui:TextBox Grid.Row="3"
                                 Text="{Binding NewMembersText, UpdateSourceTrigger=PropertyChanged}"
                                 AcceptsReturn="True"

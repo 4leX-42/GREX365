@@ -96,6 +96,44 @@ public class GroupsViewModelTests
     }
 
     [Fact]
+    public void AddPickedMember_AppendsToBox_AndClearsPicker()
+    {
+        var h = new Harness();
+        h.Vm.NewMembersText = "a@x.com";
+        h.Vm.MemberToAdd = "b@x.com";
+
+        h.Vm.AddPickedMemberCommand.Execute(null);
+
+        h.Vm.NewMembersText.Should().Be("a@x.com" + Environment.NewLine + "b@x.com");
+        h.Vm.MemberToAdd.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void AddPickedMember_Duplicate_DoesNotDuplicate()
+    {
+        var h = new Harness();
+        h.Vm.NewMembersText = "a@x.com";
+        h.Vm.MemberToAdd = "A@X.com";
+
+        h.Vm.AddPickedMemberCommand.Execute(null);
+
+        h.Vm.NewMembersText.Should().Be("a@x.com");
+        h.Vm.MemberToAdd.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void AddPickedMember_Empty_NoOp()
+    {
+        var h = new Harness();
+        h.Vm.NewMembersText = "a@x.com";
+        h.Vm.MemberToAdd = "   ";
+
+        h.Vm.AddPickedMemberCommand.Execute(null);
+
+        h.Vm.NewMembersText.Should().Be("a@x.com");
+    }
+
+    [Fact]
     public async Task RemoveMember_ServiceThrows_StatusAndLogError()
     {
         var h = new Harness();

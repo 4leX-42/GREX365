@@ -26,6 +26,7 @@ public sealed partial class GroupsViewModel : ObservableObject
     [ObservableProperty] private GroupSummary? _selectedGroup;
     [ObservableProperty] private GroupMember? _selectedMember;
     [ObservableProperty] private string _newMembersText = string.Empty;
+    [ObservableProperty] private string _memberToAdd = string.Empty;
     [ObservableProperty] private string _bulkDomain = string.Empty;
     [ObservableProperty] private string _bulkTypeChoice = "Auto"; // "Auto" | "M365" | "DL"
     [ObservableProperty] private string _statusMessage = string.Empty;
@@ -513,6 +514,20 @@ public sealed partial class GroupsViewModel : ObservableObject
         {
             StatusMessage = L10n.Format("Common.Status.Error", ex.Message);
         }
+    }
+
+    // "Pick & append": take the UPN chosen in the UserPickerBox and add it (deduped) to the
+    // multiline add-members box, then clear the picker for the next pick.
+    [RelayCommand]
+    private void AddPickedMember()
+    {
+        var pick = (MemberToAdd ?? string.Empty).Trim();
+        if (pick.Length == 0)
+        {
+            return;
+        }
+        NewMembersText = MemberTextAppender.Append(NewMembersText, pick);
+        MemberToAdd = string.Empty;
     }
 
     [RelayCommand]
