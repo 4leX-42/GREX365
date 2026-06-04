@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:l="clr-namespace:Grex365.App.Xaml"
+             xmlns:v="clr-namespace:Grex365.App.Views"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -91,13 +92,28 @@
                     </ItemsControl>
 
                     <TextBlock Grid.Row="5" Grid.Column="0" Text="{l:L10n Key=Onboarding.Field.Groups}" VerticalAlignment="Top" Opacity="0.8" Margin="0,4,0,0" />
-                    <ui:TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="4"
-                                Text="{Binding GroupsText, UpdateSourceTrigger=PropertyChanged}"
-                                AcceptsReturn="True"
-                                TextWrapping="Wrap"
-                                Height="80"
-                                VerticalScrollBarVisibility="Auto"
-                                PlaceholderText="{l:L10n Key=Onboarding.Field.Groups.Placeholder}" />
+                    <StackPanel Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="4">
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <v:GroupPickerBox Grid.Column="0"
+                                              VerticalAlignment="Center"
+                                              Text="{Binding GroupToAdd, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              Placeholder="{l:L10n Key=Onboarding.Field.Groups.PickPlaceholder}" />
+                            <ui:Button Grid.Column="1"
+                                       Margin="8,0,0,0"
+                                       Content="{l:L10n Key=Onboarding.Field.Groups.PickButton}"
+                                       Command="{Binding AddPickedGroupCommand}" />
+                        </Grid>
+                        <ui:TextBox Text="{Binding GroupsText, UpdateSourceTrigger=PropertyChanged}"
+                                    AcceptsReturn="True"
+                                    TextWrapping="Wrap"
+                                    Height="80"
+                                    VerticalScrollBarVisibility="Auto"
+                                    PlaceholderText="{l:L10n Key=Onboarding.Field.Groups.Placeholder}" />
+                    </StackPanel>
                 </Grid>
             </Border>
 

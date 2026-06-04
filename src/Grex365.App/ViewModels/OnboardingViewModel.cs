@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Grex365.App.Services;
 using Grex365.Core.Abstractions;
+using Grex365.Core.Groups;
 using Grex365.Core.Models;
 
 namespace Grex365.App.ViewModels;
@@ -24,6 +25,7 @@ public sealed partial class OnboardingViewModel : ObservableObject
     [ObservableProperty] private string _usageLocation = "ES";
     [ObservableProperty] private bool _forceChangePassword = true;
     [ObservableProperty] private string _groupsText = string.Empty;
+    [ObservableProperty] private string _groupToAdd = string.Empty;
     [ObservableProperty] private SkuInfo? _selectedSku;
     [ObservableProperty] private string _statusMessage = L10n.Get("Onboarding.Status.Initial");
     [ObservableProperty] private bool _isBusy;
@@ -141,6 +143,20 @@ public sealed partial class OnboardingViewModel : ObservableObject
     {
         if (sku is null) return;
         SelectedSkus.Remove(sku);
+    }
+
+    // "Pick & append": add the group chosen in the GroupPickerBox to the groups box (deduped),
+    // then clear the picker. The box is parsed the same way on Run.
+    [RelayCommand]
+    private void AddPickedGroup()
+    {
+        var pick = (GroupToAdd ?? string.Empty).Trim();
+        if (pick.Length == 0)
+        {
+            return;
+        }
+        GroupsText = MemberTextAppender.Append(GroupsText, pick);
+        GroupToAdd = string.Empty;
     }
 
     [RelayCommand(CanExecute = nameof(CanRun))]

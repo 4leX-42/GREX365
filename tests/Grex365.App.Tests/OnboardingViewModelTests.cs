@@ -100,6 +100,31 @@ public class OnboardingViewModelTests
     }
 
     [Fact]
+    public void AddPickedGroup_AppendsToBox_AndClearsPicker()
+    {
+        var h = new Harness();
+        h.Vm.GroupsText = "Sales";
+        h.Vm.GroupToAdd = "marketing@contoso.com";
+
+        h.Vm.AddPickedGroupCommand.Execute(null);
+
+        h.Vm.GroupsText.Should().Be("Sales" + Environment.NewLine + "marketing@contoso.com");
+        h.Vm.GroupToAdd.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void AddPickedGroup_Empty_NoOp()
+    {
+        var h = new Harness();
+        h.Vm.GroupsText = "Sales";
+        h.Vm.GroupToAdd = "  ";
+
+        h.Vm.AddPickedGroupCommand.Execute(null);
+
+        h.Vm.GroupsText.Should().Be("Sales");
+    }
+
+    [Fact]
     public async Task AddSelectedSku_AppendsUnique()
     {
         var h = new Harness();
