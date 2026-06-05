@@ -24,8 +24,18 @@ public class UpdateFeedResolverTests
     [InlineData("https://share.interno.local/grex365/releases", UpdateFeedKind.Http)]
     [InlineData("http://10.0.0.5/updates", UpdateFeedKind.Http)]
     [InlineData("  https://github.com/o/r  ", UpdateFeedKind.GitHub)]
+    [InlineData(@"C:\feeds\grex365", UpdateFeedKind.LocalPath)]
+    [InlineData(@"\\fileserver\soft\grex365", UpdateFeedKind.LocalPath)]
+    [InlineData("file://fileserver/soft/grex365", UpdateFeedKind.LocalPath)]
     public void Classify_RoutesByUrl(string? url, UpdateFeedKind expected) =>
         UpdateFeedResolver.Classify(url).Should().Be(expected);
+
+    [Theory]
+    [InlineData(@"C:\feeds\grex365", @"C:\feeds\grex365")]
+    [InlineData(@"\\fileserver\soft\grex365", @"\\fileserver\soft\grex365")]
+    [InlineData("file:///C:/feeds/grex365", @"C:\feeds\grex365")]
+    public void ToLocalDirectory_NormalizesFileUris(string url, string expected) =>
+        UpdateFeedResolver.ToLocalDirectory(url).Should().Be(expected);
 }
 
 // SettingsViewModel update commands: status messages per check outcome, apply gating, feed

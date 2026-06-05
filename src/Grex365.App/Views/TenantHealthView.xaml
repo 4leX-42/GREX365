@@ -160,6 +160,24 @@
                     </StackPanel>
                 </Grid>
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="16,0,16,12">
+                  <Grid>
+                    <!-- Skeleton durante la primera carga (IsBusy && aún sin datos) -->
+                    <ContentControl VerticalAlignment="Top">
+                        <ContentControl.Style>
+                            <Style TargetType="ContentControl" BasedOn="{StaticResource SkeletonListRows}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding IsBusy}" Value="True" />
+                                            <Condition Binding="{Binding Health}" Value="{x:Null}" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ContentControl.Style>
+                    </ContentControl>
                     <ItemsControl ItemsSource="{Binding LicensesView}"
                                   Background="Transparent"
                                   xmlns:vm="clr-namespace:Grex365.App.ViewModels">
@@ -252,6 +270,7 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                  </Grid>
                 </ScrollViewer>
             </DockPanel>
         </Border>

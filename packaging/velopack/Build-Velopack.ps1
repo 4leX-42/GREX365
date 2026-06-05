@@ -49,9 +49,11 @@ dotnet publish (Join-Path $repoRoot 'src/Grex365.App/Grex365.App.csproj') `
 if ($LASTEXITCODE -ne 0) { throw 'dotnet publish falló.' }
 
 Write-Host "2/2 vpk pack v$Version..." -ForegroundColor Cyan
+# packId DISTINTO del dir de datos: Velopack instala en %LocalAppData%\{packId} y el
+# uninstall BORRA esa carpeta. Con packId 'Grex365' arrasaría %LocalAppData%\Grex365\{config,logs}.
 $vpkArgs = @(
     'pack',
-    '--packId', 'Grex365',
+    '--packId', 'Grex365.App',
     '--packVersion', $Version,
     '--packDir', $publishDir,
     '--mainExe', 'Grex365.exe',

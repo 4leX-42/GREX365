@@ -134,6 +134,23 @@
                                        HorizontalAlignment="Center"
                                        Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                         </StackPanel>
+                        <!-- Skeleton mientras corre la búsqueda y aún no hay resultados -->
+                        <ContentControl Margin="0,8,0,0" VerticalAlignment="Top">
+                            <ContentControl.Style>
+                                <Style TargetType="ContentControl" BasedOn="{StaticResource SkeletonListRows}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsBusy}" Value="True" />
+                                                <Condition Binding="{Binding Groups.Count}" Value="0" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ContentControl.Style>
+                        </ContentControl>
                         <ListBox ItemsSource="{Binding Groups}"
                                  SelectedItem="{Binding SelectedGroup}"
                                  Background="Transparent"

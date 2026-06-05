@@ -31,9 +31,13 @@ public sealed class VelopackUpdateService : IUpdateService
                 return new UpdateCheckResult(UpdateCheckStatus.FeedNotConfigured);
             }
 
-            var manager = kind == UpdateFeedKind.GitHub
-                ? new UpdateManager(new GithubSource(url!, accessToken: null, prerelease: false))
-                : new UpdateManager(new SimpleWebSource(url!));
+            var manager = kind switch
+            {
+                UpdateFeedKind.GitHub => new UpdateManager(new GithubSource(url!, accessToken: null, prerelease: false)),
+                UpdateFeedKind.LocalPath => new UpdateManager(new SimpleFileSource(
+                    new System.IO.DirectoryInfo(UpdateFeedResolver.ToLocalDirectory(url!)))),
+                _ => new UpdateManager(new SimpleWebSource(url!)),
+            };
 
             if (!manager.IsInstalled)
             {

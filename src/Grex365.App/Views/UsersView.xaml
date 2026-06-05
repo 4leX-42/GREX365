@@ -80,10 +80,24 @@
                     </Grid>
 
                     <Grid Grid.Row="2">
+                        <!-- Estado vacío: solo sin resultados Y sin búsqueda en curso (si no, skeleton) -->
                         <StackPanel HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
-                                    Margin="0,24"
-                                    Visibility="{Binding Users.Count, Converter={StaticResource CountToVisibilityConverter}, ConverterParameter=invert}">
+                                    Margin="0,24">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsBusy}" Value="False" />
+                                                <Condition Binding="{Binding Users.Count}" Value="0" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
                             <TextBlock Text=""
                                        FontFamily="{StaticResource IconFontFamily}"
                                        FontSize="48"
@@ -100,6 +114,23 @@
                                        HorizontalAlignment="Center"
                                        Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
                         </StackPanel>
+                        <!-- Skeleton mientras corre la búsqueda y aún no hay resultados -->
+                        <ContentControl Margin="0,8,0,0" VerticalAlignment="Top">
+                            <ContentControl.Style>
+                                <Style TargetType="ContentControl" BasedOn="{StaticResource SkeletonListRows}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding IsBusy}" Value="True" />
+                                                <Condition Binding="{Binding Users.Count}" Value="0" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ContentControl.Style>
+                        </ContentControl>
                         <ListBox ItemsSource="{Binding Users}"
                                  SelectedItem="{Binding SelectedUser}"
                                  Background="Transparent"

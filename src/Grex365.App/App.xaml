@@ -278,6 +278,7 @@
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
                         <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource BrandAccentSolid}" />
                     </Trigger>
                 </Style.Triggers>
             </Style>
@@ -425,6 +426,109 @@
                                     <Setter TargetName="Bd" Property="ToolTip" Value="Requiere conexión (Graph o Exchange Online)" />
                                 </Trigger>
                             </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Skeleton loading: bloque base con esquinas redondeadas. -->
+            <Style x:Key="SkeletonBlock" TargetType="Border">
+                <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+                <Setter Property="CornerRadius" Value="5" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
+            </Style>
+
+            <!-- Skeleton de lista (avatar + 2 líneas ×6) con pulso de opacidad. Mostrar mientras
+                 IsBusy && lista vacía (MultiDataTrigger en el consumidor). -->
+            <Style x:Key="SkeletonListRows" TargetType="ContentControl">
+                <Setter Property="Focusable" Value="False" />
+                <Setter Property="IsTabStop" Value="False" />
+                <Setter Property="IsHitTestVisible" Value="False" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ContentControl">
+                            <StackPanel Opacity="0.6">
+                                <StackPanel.Triggers>
+                                    <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                 From="0.35" To="0.8" Duration="0:0:0.8">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <SineEase EasingMode="EaseInOut" />
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </StackPanel.Triggers>
+                                <Grid Margin="0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="32" Height="32" CornerRadius="16" Margin="0,0,10,0"
+                                            Background="{DynamicResource ControlFillColorSecondaryBrush}" />
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <Border Style="{StaticResource SkeletonBlock}" Height="12" Width="160" Margin="0,0,0,6" />
+                                        <Border Style="{StaticResource SkeletonBlock}" Height="9" Width="220" />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid Margin="0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="32" Height="32" CornerRadius="16" Margin="0,0,10,0"
+                                            Background="{DynamicResource ControlFillColorSecondaryBrush}" />
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <Border Style="{StaticResource SkeletonBlock}" Height="12" Width="120" Margin="0,0,0,6" />
+                                        <Border Style="{StaticResource SkeletonBlock}" Height="9" Width="190" />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid Margin="0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="32" Height="32" CornerRadius="16" Margin="0,0,10,0"
+                                            Background="{DynamicResource ControlFillColorSecondaryBrush}" />
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <Border Style="{StaticResource SkeletonBlock}" Height="12" Width="180" Margin="0,0,0,6" />
+                                        <Border Style="{StaticResource SkeletonBlock}" Height="9" Width="240" />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid Margin="0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="32" Height="32" CornerRadius="16" Margin="0,0,10,0"
+                                            Background="{DynamicResource ControlFillColorSecondaryBrush}" />
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <Border Style="{StaticResource SkeletonBlock}" Height="12" Width="140" Margin="0,0,0,6" />
+                                        <Border Style="{StaticResource SkeletonBlock}" Height="9" Width="200" />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid Margin="0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="32" Height="32" CornerRadius="16" Margin="0,0,10,0"
+                                            Background="{DynamicResource ControlFillColorSecondaryBrush}" />
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <Border Style="{StaticResource SkeletonBlock}" Height="12" Width="170" Margin="0,0,0,6" />
+                                        <Border Style="{StaticResource SkeletonBlock}" Height="9" Width="210" />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid Margin="0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="32" Height="32" CornerRadius="16" Margin="0,0,10,0"
+                                            Background="{DynamicResource ControlFillColorSecondaryBrush}" />
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <Border Style="{StaticResource SkeletonBlock}" Height="12" Width="130" Margin="0,0,0,6" />
+                                        <Border Style="{StaticResource SkeletonBlock}" Height="9" Width="180" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
