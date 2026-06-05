@@ -48,6 +48,11 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string? _applicationInsightsConnectionString;
     [ObservableProperty] private string? _authorizationGroupId;
 
+    [ObservableProperty] private string? _updateFeedUrl;
+    [ObservableProperty] private string _updateStatus = string.Empty;
+    [ObservableProperty] private bool _updateAvailable;
+    [ObservableProperty] private bool _isCheckingUpdates;
+
     [ObservableProperty] private string _certAppId = string.Empty;
     [ObservableProperty] private string _certTenantId = string.Empty;
     [ObservableProperty] private string _certOrganization = string.Empty;
@@ -60,13 +65,16 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public ObservableCollection<PluginToggleItem> Plugins { get; } = new();
 
+    // updates es opcional para no romper a los consumidores existentes; sin él, el botón de
+    // comprobar actualizaciones informa "no disponible".
     public SettingsViewModel(
         IPreferencesStore prefsStore,
         ICertConfigStore certStore,
         ICertValidator certValidator,
         IUiLogSink log,
         PluginLoadReport pluginReport,
-        LoggingLevelSwitch logLevelSwitch)
+        LoggingLevelSwitch logLevelSwitch,
+        IUpdateService? updates = null)
     {
         _prefsStore = prefsStore;
         _certStore = certStore;
@@ -74,7 +82,10 @@ public sealed partial class SettingsViewModel : ObservableObject
         _log = log;
         _pluginReport = pluginReport;
         _logLevelSwitch = logLevelSwitch;
+        _updates = updates;
     }
+
+    private readonly IUpdateService? _updates;
 
     [RelayCommand]
     private async Task LoadAsync()
@@ -91,6 +102,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         LogLevel = string.IsNullOrWhiteSpace(prefs.LogLevel) ? "Information" : prefs.LogLevel;
         ApplicationInsightsConnectionString = prefs.ApplicationInsightsConnectionString;
         AuthorizationGroupId = prefs.AuthorizationGroupId;
+        UpdateFeedUrl = prefs.UpdateFeedUrl;
 
         var cert = await _certStore.LoadAsync().ConfigureAwait(true);
         if (cert is not null)
@@ -153,6 +165,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             prefs.AuthorizationGroupId = string.IsNullOrWhiteSpace(AuthorizationGroupId)
                 ? null
                 : AuthorizationGroupId.Trim();
+            prefs.UpdateFeedUrl = string.IsNullOrWhiteSpace(UpdateFeedUrl) ? null : UpdateFeedUrl.Trim();
             _logLevelSwitch.MinimumLevel = App.ParseLogLevel(LogLevel);
             prefs.DisabledPluginAssemblies = Plugins
                 .Where(p => !p.IsEnabled)
@@ -223,6 +236,53 @@ public sealed partial class SettingsViewModel : ObservableObject
             return (SystemThemeProvider?.IsDarkTheme() ?? true) ? "Dark" : "Light";
         }
         return string.Equals(theme, "Light", StringComparison.OrdinalIgnoreCase) ? "Light" : "Dark";
+    }
+
+    [RelayCommand]
+    private async Task CheckUpdatesAsync()
+    {
+        UpdateAvailable = false;
+        if (_updates is null)
+        {
+            UpdateStatus = L10n.Get("Settings.Updates.NotWired");
+            return;
+        }
+        IsCheckingUpdates = true;
+        UpdateStatus = L10n.Get("Settings.Updates.Checking");
+        try
+        {
+            var r = await _updates.CheckAsync().ConfigureAwait(true);
+            UpdateStatus = r.Status switch
+            {
+                UpdateCheckStatus.FeedNotConfigured => L10n.Get("Settings.Updates.NoFeed"),
+                UpdateCheckStatus.NotInstalled => L10n.Get("Settings.Updates.NotInstalled"),
+                UpdateCheckStatus.UpToDate => L10n.Get("Settings.Updates.UpToDate"),
+                UpdateCheckStatus.UpdateAvailable => L10n.Format("Settings.Updates.Available", r.NewVersion ?? "?"),
+                _ => L10n.Format("Settings.Updates.Error", r.Detail ?? "?"),
+            };
+            UpdateAvailable = r.Status == UpdateCheckStatus.UpdateAvailable;
+        }
+        finally
+        {
+            IsCheckingUpdates = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ApplyUpdateAsync()
+    {
+        if (_updates is null || !UpdateAvailable) return;
+        UpdateStatus = L10n.Get("Settings.Updates.Applying");
+        try
+        {
+            // Descarga y reinicia la app en la versión nueva — no vuelve si tiene éxito.
+            await _updates.ApplyAsync().ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            UpdateStatus = L10n.Format("Settings.Updates.Error", ex.Message);
+            _log.Progress.Report(LogEntry.Error("Settings", ex.Message, ex));
+        }
     }
 
     [RelayCommand]

@@ -115,6 +115,30 @@
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                    FontSize="12"
                                    TextWrapping="Wrap" />
+
+                        <TextBlock Text="{l:L10n Key=Settings.Updates.Section}" FontWeight="SemiBold" Margin="0,16,0,4" />
+                        <TextBlock Text="{l:L10n Key=Settings.Updates.FeedLabel}"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   FontSize="12"
+                                   Margin="0,0,0,4" />
+                        <ui:TextBox Text="{Binding UpdateFeedUrl, UpdateSourceTrigger=PropertyChanged}"
+                                    PlaceholderText="{l:L10n Key=Settings.Updates.FeedHint}"
+                                    Margin="0,0,0,8" />
+                        <StackPanel Orientation="Horizontal">
+                            <!-- AsyncRelayCommand deshabilita el botón mientras ejecuta -->
+                            <ui:Button Content="{l:L10n Key=Settings.Updates.CheckButton}"
+                                       Command="{Binding CheckUpdatesCommand}" />
+                            <ui:Button Content="{l:L10n Key=Settings.Updates.ApplyButton}"
+                                       Command="{Binding ApplyUpdateCommand}"
+                                       Appearance="Primary"
+                                       Margin="8,0,0,0"
+                                       Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding UpdateStatus}"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   FontSize="12"
+                                   Margin="0,6,0,0"
+                                   TextWrapping="Wrap" />
                     </StackPanel>
                 </Border>
 

@@ -162,6 +162,7 @@ public partial class App : Application
                 services.AddSingleton<IClipboardService, WpfClipboardService>();
                 services.AddSingleton<ISystemThemeProvider, WindowsRegistryThemeProvider>();
                 services.AddSingleton<TrayIconService>();
+                services.AddSingleton<IUpdateService, VelopackUpdateService>();
 
                 var auditDir = Path.Combine(DataDirectory, "audit");
                 Directory.CreateDirectory(auditDir);

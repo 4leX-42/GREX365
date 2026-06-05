@@ -18,6 +18,10 @@ public sealed class UserPreferences
     public List<string> DisabledPluginAssemblies { get; set; } = new();
     public string? ApplicationInsightsConnectionString { get; set; }
     public string? AuthorizationGroupId { get; set; }
+
+    // Velopack update feed: a GitHub repo URL (releases) or a plain HTTP(S) directory.
+    // Null/empty = update checks disabled.
+    public string? UpdateFeedUrl { get; set; }
     public bool LogPanelVisible { get; set; } = false;
 
     // Window state restored on next launch. Null = use defaults.

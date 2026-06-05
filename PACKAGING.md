@@ -86,6 +86,41 @@ Subir `.msix` + `.appinstaller` firmados a:
 
 Intune: **Apps → Windows app (Win32) → MSIX** apuntando al `.appinstaller`.
 
+## 3b. Velopack (instalador + auto-update) — canal elegido para distribución (ver docs/DISTRIBUTION.md)
+
+Integrado en la app (paquete `Velopack` 1.2.0): `Program.Main` ejecuta `VelopackApp.Build().Run()`
+antes de WPF (hooks de install/update; no-op en builds dev/portable). El feed se configura en
+**Ajustes → Actualizaciones** (`UpdateFeedUrl`: repo GitHub de releases o URL HTTP); botones
+"Buscar actualizaciones" / "Actualizar y reiniciar".
+
+### Build local
+
+```powershell
+pwsh -File packaging/velopack/Build-Velopack.ps1 -Version 2.0.1
+# Salida: packaging/velopack/out/  (Grex365-win-Setup.exe + full/delta .nupkg + RELEASES)
+```
+
+El script publica **sin** single-file (Velopack gestiona el layout; los deltas necesitan el árbol
+expandido), con R2R, e invoca `vpk pack` (instala el tool global si falta).
+
+### Firma (cert CA interna Andersen — coste cero)
+
+```powershell
+pwsh -File packaging/velopack/Build-Velopack.ps1 -Version 2.0.1 `
+  -SignParams '/fd SHA256 /sha1 <thumbprint> /tr http://timestamp.digicert.com /td SHA256'
+```
+
+`vpk` firma exe+dlls+instalador con esos parámetros de signtool. En máquinas del dominio con la
+CA interna en Trusted Publishers → cero avisos. Fuera del dominio el binario muestra SmartScreen
+(asumido — decisión 2026-06-05, ver docs/DISTRIBUTION.md).
+
+### Publicar release
+
+Subir el contenido de `packaging/velopack/out/` como assets de una GitHub Release del repo de
+binarios (p.ej. `grex365-releases`, repo público SIN código). Los clientes con
+`UpdateFeedUrl=https://github.com/<org>/grex365-releases` reciben el update (delta si es posible)
+desde Ajustes.
+
 ## 4. Plugins externos
 
 `%LOCALAPPDATA%\Grex365\plugins\*.dll` se cargan al iniciar. Cada DLL puede contener una o varias clases que implementan `Grex365.Core.Plugins.IModule`:

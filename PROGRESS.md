@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1398 passing** (xUnit + FluentAssertions) — 579 Core + 819 App
-- Última actualización: 2026-06-05 (sesión · Sprint AR DLs clásicas en offboarding vía EXO + research distribución + validación en vivo Sprint AP)
+- Tests: **1418 passing** (xUnit + FluentAssertions) — 579 Core + 839 App
+- Última actualización: 2026-06-05 (sesión · Sprint AR DLs clásicas + validación en vivo + distribución + Velopack integrado)
 
 ## Validaciones en vivo — log acumulativo (NO repetir; lab = solo objetos `testeo*`, mutaciones solo con revert)
 
@@ -36,6 +36,14 @@ Probe efímero read-only (consola temp fuera del repo, borrada tras uso) con el 
 ### Research distribución y despliegue (docs/DISTRIBUTION.md)
 Deep-research con fuentes verificadas 2025-2026. Claves: MS Store ya **gratis** (individual sep-2025, company may-2026; KYC permanece pero sin coste) · Azure Artifact Signing (ex-Trusted Signing) **no disponible para individuos en España** (UE solo organizaciones) · EV ya **no** da reputación SmartScreen instantánea · NativeAOT/trimming **inviables con WPF** (ReadyToRun sí) · GitHub Releases privado no sirve para descarga pública. Recomendación por fases: pilotos = self-contained+R2R+Velopack+OV/Artifact-Signing+.NET Reactor; amplio = WinGet (primario) + MS Store + MSI-Intune.
 **Decisiones del usuario (2026-06-05)**: coste CERO en firma · single-tenant (sin Publisher Verification) · Store sigue descartada. → Estrategia resultante en docs/DISTRIBUTION.md: cert CA interna Andersen/GPO dentro, sin firma fuera (avisos asumidos), GitHub Releases público solo-binarios + Velopack, Obfuscar gratis para IP. **Próximos pasos**: integrar Velopack (NuGet + startup hook + vpk pack), cert AD CS + signtool, Obfuscar con exclusiones XAML + smoke test.
+
+### Velopack integrado (commit 3) — Fase 5 packaging avanza
+- **Paquete `Velopack` 1.2.0** en App + `Program.cs` entry point propio (`VelopackApp.Build().Run()` ANTES de WPF — hooks install/update; no-op en dev/portable) + `StartupObject` en csproj.
+- **`IUpdateService`/`VelopackUpdateService`**: check read-only + apply (download+restart). Feed en preferencias (`UpdateFeedUrl`: repo GitHub → `GithubSource`, URL HTTP → `SimpleWebSource`, vacío → desactivado). `UpdateFeedResolver` puro (Classify None/GitHub/Http).
+- **Ajustes → sección "Actualizaciones"**: TextBox feed + "Buscar actualizaciones" + "Actualizar y reiniciar" (visible solo con update disponible) + estado. L10n ES/EN ×13 keys. `SettingsViewModel` recibe `IUpdateService?` opcional (no rompe consumidores).
+- **`packaging/velopack/Build-Velopack.ps1`**: publish self-contained sin single-file (deltas) + R2R + `vpk pack` (auto-instala tool); `-SignParams` para signtool con cert CA interna. PACKAGING.md §3b documenta el flujo completo (build→firma→GitHub Release).
+- Tests: **+20 App** (UpdateFeedResolver theory ×11 + SettingsViewModel updates: not-wired, status map ×3, available, error, apply-gating strict, apply-failure, save persiste feed trim/null). Total **1418** (579 Core + 839 App).
+- ⏳ Smoke test end-to-end (install → update real entre 2 versiones) pendiente — necesita 2 builds versionados y máquina de prueba.
 
 ## Sprint AQ · 2026-06-05 — Autocompletado pick & append (Grupos + Onboarding)
 

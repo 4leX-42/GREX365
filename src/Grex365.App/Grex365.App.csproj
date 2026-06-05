@@ -21,6 +21,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.8" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="Velopack" Version="1.2.0" />
     <PackageReference Include="WPF-UI" Version="4.3.0" />
   </ItemGroup>
 
@@ -34,6 +35,8 @@
     <LangVersion>latest</LangVersion>
     <RootNamespace>Grex365.App</RootNamespace>
     <AssemblyName>Grex365</AssemblyName>
+    <!-- Velopack necesita correr antes que WPF (hooks de install/update) — Main propio en Program.cs. -->
+    <StartupObject>Grex365.App.Program</StartupObject>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- DPI awareness is set via app.manifest (true/PM) — canonical for WPF.
          WFO0003 is a WinForms-only check that asks to use ApplicationHighDpiMode,
