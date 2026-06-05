@@ -65,8 +65,12 @@ Deep-research con fuentes verificadas 2025-2026. Claves: MS Store ya **gratis** 
 - **Bug CI pre-existente cazado**: jobs subían `Grex365.App.exe` pero el assembly es `Grex365.exe` desde el rename — el release job habría fallado en el siguiente tag.
 - `Build-Velopack.ps1 -OutDir` para feeds separados. ⚠ gotcha observado: el Setup.exe embebe la versión MÁS ALTA del feed del outputDir, no la del pack en curso.
 
-### Smoke E2E Velopack (en curso)
-- Pack 2.0.0 + 2.0.1 (delta **0,5 MB** vs 142 full — deltas funcionan). Install silenciosa (`--silent`) → `%LocalAppData%\Grex365.App\current` OK, **sin** tocar el dir de datos. Feed local configurado en prefs (backup `.bak-velopack-smoke`). Pendiente: update in-app desde Ajustes de la app instalada.
+### Smoke E2E Velopack — COMPLETO ✅
+- **Pack**: 2.0.0→2.0.4, full+delta (delta **0,5 MB** vs 142 full — deltas funcionan).
+- **Install**: Setup `--silent` → `%LocalAppData%\Grex365.App\current`, sin tocar el dir de datos, sin auto-launch. Gotcha: Setup embebe la versión MÁS ALTA del feed del outputDir.
+- **Update**: `Update.exe apply --package <2.0.4-full.nupkg>` sobre la 2.0.1 instalada → 2.0.4 aplicado, app arranca, **log limpio** (0 errores de módulos; probe EXO normal). El error de Sort-Object reportado por el usuario queda eliminado en la build instalada.
+- **Residual menor**: el flujo desde el botón de Ajustes (CheckAsync/ApplyAsync) no ejercitado end-to-end con update pendiente (lógica unit-tested; el motor por debajo —UpdateManager/Update.exe— es el validado aquí). Probarlo en el siguiente release real.
+- Feed local en prefs apuntando a `packaging\velopack\out` (backup en `user_preferences.json.bak-velopack-smoke`); la instalada convive con el repo dev (datos compartidos en `%LocalAppData%\Grex365`).
 
 ### BUG REAL cazado por el smoke: módulos built-in de PowerShell ausentes en publish (commit 8)
 - Usuario arrancó la app **instalada** → log: `'Sort-Object' … Cannot find the built-in module 'Microsoft.PowerShell.Utility' compatible with the 'Core' edition` (primer uso de PS in-proc = probe del módulo EXO de `ExchangeConnection`).
