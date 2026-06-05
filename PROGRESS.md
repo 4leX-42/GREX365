@@ -5,7 +5,17 @@
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
 - Tests: **1398 passing** (xUnit + FluentAssertions) — 579 Core + 819 App
-- Última actualización: 2026-06-05 (sesión · Sprint AR DLs clásicas en offboarding vía EXO + research distribución)
+- Última actualización: 2026-06-05 (sesión · Sprint AR DLs clásicas en offboarding vía EXO + research distribución + validación en vivo Sprint AP)
+
+## Validaciones en vivo — log acumulativo (NO repetir; lab = solo objetos `testeo*`, mutaciones solo con revert)
+
+| Fecha | Qué se validó | Resultado |
+|---|---|---|
+| 2026-05-31 | Offboarding **dry-run** vs los 6 `testeo*` (read-only, probe headless) | OK — pre-checks leen facts EXO reales, idempotencia, todos SIMULADO, 0 cambios |
+| 2026-05-31 | FullAccess + SendAs + auto-reply vs **testeo224** (mutador, con revert) | OK vía pwsh externo; hide-GAL → SKIP híbrido correcto (testeo224 sync on-prem) |
+| 2026-06-05 | Getters Sprint AP read-only vs **testeo224**: GetAutoReply, GetForwarding, GetCalendarPermissions, GetPermissions, MailFlow.GetRules, Audit.ScanTransportRules | **6/6 OK** tras 3 fixes de bugs reales encontrados (ver Sprint AR commit 2). Shapes JSON del EXO real confirmados |
+| ⏳ pendiente | `ScanExternalForwardingAsync` / `ScanInboxRulesAsync` / `ScanSharedMailboxSignInAsync` (sweeps tenant-wide read-only — mejor desde la UI con tiempo) | mismo patrón de emisión ya validado en ScanTransportRules |
+| ⏳ pendiente | `RemoveFromDistributionGroupsAsync` (mutador — necesita una DL `testeo*` de prueba) | — |
 
 ## Sprint AR · 2026-06-05 — Offboarding: DLs clásicas vía EXO + estrategia de distribución
 
@@ -15,6 +25,13 @@ Cierra el hueco del Sprint AO commit 7: las DL clásicas y los mail-enabled secu
 - **`OffboardingService` paso 3b**: particiona por `GroupKind` (`IsExoManagedGroup` puro: DistributionList/MailSecurity) — esos van por EXO si está cableado (identidad: SMTP preferido, Id como fallback; los no reportados cuentan como fallo); M365/Security siguen por Graph. Sin EXO externo → comportamiento anterior (intento Graph → AVISO). Dry-run y detalle del paso indican el split.
 - Tests: **+15 Core** (3 routing/fallo/fallback + theory `IsExoManagedGroup` ×7 + 5 de `ExternalExoOps`: short-circuit vacío, body única invocación + escape, parse array/collapse/null). Total **1398** (579 Core + 819 App).
 - ⏳ Por validar en vivo (mutador — necesita DL `testeo*` de prueba): shape real de `Remove-DistributionGroupMember` contra el tenant.
+
+### Validación en vivo Sprint AP — 3 bugs reales cazados y arreglados (commit 2)
+Probe efímero read-only (consola temp fuera del repo, borrada tras uso) con el cert real vs **testeo224**. Primer run: 4/6 OK, 2 FAIL. Bisección en vivo (4 probes) → root causes → fixes → re-run **6/6 OK**:
+- **Bug 1 — carpeta de calendario localizada**: los 3 métodos de calendario usaban `"$id:\Calendar"` hardcoded → 404 en buzones en español ("Calendario"). Fix: snippet `ResolveCalendarFolder` (Get-MailboxFolderStatistics -FolderScope Calendar → FolderType 'Calendar' → nombre real, fallback 'Calendar') compartido por los 3 bodies.
+- **Bug 2 — `@($list)` lanza `ArgumentException: Argument types do not match`** (quirk ETS del módulo EXO en PS7 cuando los PSCustomObjects llevan propiedades array): rompía el ensamblado `[PSCustomObject]@{ Domains=…; Rules=@($out) }` de los 4 scans de auditoría. La forma pipeline `$list | ConvertTo-Json -AsArray` SÍ funciona (probado en vivo). Fix: los 4 bodies emiten fragmentos JSON por pipeline y los concatenan como string (guard `'[]'` para listas vacías). Shape JSON parseado sin cambios.
+- **Bug 3 — filtro de ruido de calendario no-localizado**: saltaba solo `Default=None` (inglés); en ES llegan "Predeterminado"/"Anónimo". Fix: saltar cualquier entrada `None` (locale-independiente).
+- Confirmado además en vivo: `ForwardingSmtpAddress` llega con prefijo `smtp:` (los analyzers ya lo manejan), permisos FullAccess/SendAs reales parsean, 15 transport rules reales del tenant parsean + analizador produce summary/findings coherentes (15 total · 9 enabled · 8 findings INFO/WARN).
 
 ### Research distribución y despliegue (docs/DISTRIBUTION.md)
 Deep-research con fuentes verificadas 2025-2026. Claves: MS Store ya **gratis** (individual sep-2025, company may-2026; KYC permanece pero sin coste) · Azure Artifact Signing (ex-Trusted Signing) **no disponible para individuos en España** (UE solo organizaciones) · EV ya **no** da reputación SmartScreen instantánea · NativeAOT/trimming **inviables con WPF** (ReadyToRun sí) · GitHub Releases privado no sirve para descarga pública. Recomendación por fases: pilotos = self-contained+R2R+Velopack+OV/Artifact-Signing+.NET Reactor; amplio = WinGet (primario) + MS Store + MSI-Intune. **4 decisiones abiertas para el usuario** (entidad legal vs individual, cuenta CPP/MPN para Publisher Verification, single vs multitenant, reconsiderar Store).

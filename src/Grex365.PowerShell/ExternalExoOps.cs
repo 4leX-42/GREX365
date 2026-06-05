@@ -381,6 +381,19 @@ public sealed class ExternalExoOps : IExternalExoOps
         await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
     }
 
+    // The default calendar folder name is LOCALIZED per mailbox ("Calendar" / "Calendario"…) —
+    // a hardcoded "$id:\Calendar" 404s on Spanish mailboxes (found live vs testeo224). Resolve
+    // the real name via folder statistics; fall back to the English name.
+    private const string ResolveCalendarFolder = """
+        $calName = $null
+        try {
+            $calName = [string](Get-MailboxFolderStatistics -Identity $id -FolderScope Calendar -ErrorAction Stop |
+                Where-Object { [string]$_.FolderType -eq 'Calendar' } | Select-Object -First 1 -ExpandProperty Name)
+        } catch { }
+        if (-not $calName) { $calName = 'Calendar' }
+        $folder = "{0}:\{1}" -f $id, $calName
+        """;
+
     public async Task<IReadOnlyList<CalendarPermissionEntry>> GetCalendarPermissionsAsync(
         string identity,
         IProgress<LogEntry>? progress = null,
@@ -389,14 +402,16 @@ public sealed class ExternalExoOps : IExternalExoOps
         // Filter the noise (Default/None, anonymous, empties) in PowerShell so the JSON is clean.
         var body = $$"""
             $id = {{Lit(identity)}}
-            $folder = "{0}:\Calendar" -f $id
+            {{ResolveCalendarFolder}}
             $perms = @(Get-MailboxFolderPermission -Identity $folder -ErrorAction Stop)
             $out = New-Object System.Collections.Generic.List[object]
             foreach ($p in $perms) {
                 $principal = [string]$p.User
                 $rights = ([string]::Join(',', @($p.AccessRights)))
                 if (-not $principal -or -not $rights) { continue }
-                if ($principal -eq 'Default' -and $rights -eq 'None') { continue }
+                # 'None' is noise regardless of principal — and the Default/Anonymous principal
+                # names come back LOCALIZED ("Predeterminado"/"Anónimo"), so don't match on them.
+                if ($rights -eq 'None') { continue }
                 $out.Add([PSCustomObject]@{ Principal = $principal; AccessRights = $rights })
             }
             Write-Output ('{{JsonMarker}}' + ($out | ConvertTo-Json -Compress -AsArray))
@@ -416,7 +431,7 @@ public sealed class ExternalExoOps : IExternalExoOps
             $id = {{Lit(identity)}}
             $p = {{Lit(principal)}}
             $rights = {{Lit(accessRights)}}
-            $folder = "{0}:\Calendar" -f $id
+            {{ResolveCalendarFolder}}
             $existing = Get-MailboxFolderPermission -Identity $folder -User $p -ErrorAction SilentlyContinue
             if ($existing) {
                 Set-MailboxFolderPermission -Identity $folder -User $p -AccessRights $rights -ErrorAction Stop | Out-Null
@@ -439,7 +454,7 @@ public sealed class ExternalExoOps : IExternalExoOps
         var body = $$"""
             $id = {{Lit(identity)}}
             $p = {{Lit(principal)}}
-            $folder = "{0}:\Calendar" -f $id
+            {{ResolveCalendarFolder}}
             Remove-MailboxFolderPermission -Identity $folder -User $p -Confirm:$false -ErrorAction Stop | Out-Null
             Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = ('eliminado: ' + $p) }) | ConvertTo-Json -Compress))
             """;

@@ -10,6 +10,11 @@ namespace Grex365.PowerShell;
 // emit JSON) instead of the in-proc RunspacePool, which trips the EXO V3 "HttpResponseMessage
 // does not contain GetResponseHeader" bug when reading mailbox/rule PSObjects. The pure analyzers
 // (already unit-tested) consume the parsed rows.
+//
+// NOTE: bodies emit JSON via the pipeline form ($list | ConvertTo-Json -AsArray) and concatenate
+// the fragments as strings. Wrapping the List[object] in @(...) — or assembling a combined
+// [PSCustomObject]@{ ... } — throws "Argument types do not match" when the items carry
+// array-typed properties (EXO module ETS quirk, reproduced live 2026-06-05).
 public sealed class ExoForwardingAuditService : IExoForwardingAuditService
 {
     private readonly IExternalExoRunner _runner;
@@ -52,8 +57,9 @@ public sealed class ExoForwardingAuditService : IExoForwardingAuditService
                     ForwardingAddress     = [string]$m.ForwardingAddress
                 })
             }
-            $o = [PSCustomObject]@{ Domains = @($domains); Rows = @($rows) }
-            Write-Output ('{{ExternalExoRunner.JsonMarker}}' + ($o | ConvertTo-Json -Compress -Depth 6))
+            $jd = if ($domains.Count -gt 0) { $domains | ConvertTo-Json -Compress -AsArray } else { '[]' }
+            $jr = if ($rows.Count -gt 0) { $rows | ConvertTo-Json -Compress -Depth 6 -AsArray } else { '[]' }
+            Write-Output ('{{ExternalExoRunner.JsonMarker}}' + ('{"Domains":' + $jd + ',"Rows":' + $jr + '}'))
             """;
 
         var json = await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
@@ -120,8 +126,9 @@ public sealed class ExoForwardingAuditService : IExoForwardingAuditService
                 $done++
                 if ($done % 25 -eq 0) { Write-Output ("Progreso: $done/$($upns.Count)") }
             }
-            $o = [PSCustomObject]@{ Domains = @($domains); Rules = @($rules) }
-            Write-Output ('{{ExternalExoRunner.JsonMarker}}' + ($o | ConvertTo-Json -Compress -Depth 8))
+            $jd = if ($domains.Count -gt 0) { $domains | ConvertTo-Json -Compress -AsArray } else { '[]' }
+            $jr = if ($rules.Count -gt 0) { $rules | ConvertTo-Json -Compress -Depth 8 -AsArray } else { '[]' }
+            Write-Output ('{{ExternalExoRunner.JsonMarker}}' + ('{"Domains":' + $jd + ',"Rules":' + $jr + '}'))
             """;
 
         var json = await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
@@ -176,8 +183,9 @@ public sealed class ExoForwardingAuditService : IExoForwardingAuditService
                     FromScope                     = [string]$r.FromScope
                 })
             }
-            $o = [PSCustomObject]@{ Domains = @($domains); Rules = @($out) }
-            Write-Output ('{{ExternalExoRunner.JsonMarker}}' + ($o | ConvertTo-Json -Compress -Depth 8))
+            $jd = if ($domains.Count -gt 0) { $domains | ConvertTo-Json -Compress -AsArray } else { '[]' }
+            $jr = if ($out.Count -gt 0) { $out | ConvertTo-Json -Compress -Depth 8 -AsArray } else { '[]' }
+            Write-Output ('{{ExternalExoRunner.JsonMarker}}' + ('{"Domains":' + $jd + ',"Rules":' + $jr + '}'))
             """;
 
         var json = await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
@@ -234,7 +242,8 @@ public sealed class ExoForwardingAuditService : IExoForwardingAuditService
                     AccountDisabled   = $disabled
                 })
             }
-            Write-Output ('{{ExternalExoRunner.JsonMarker}}' + (@($rows) | ConvertTo-Json -Compress -Depth 5 -AsArray))
+            $jr = if ($rows.Count -gt 0) { $rows | ConvertTo-Json -Compress -Depth 5 -AsArray } else { '[]' }
+            Write-Output ('{{ExternalExoRunner.JsonMarker}}' + $jr)
             """;
 
         var json = await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
