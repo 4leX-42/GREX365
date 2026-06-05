@@ -66,7 +66,13 @@ Deep-research con fuentes verificadas 2025-2026. Claves: MS Store ya **gratis** 
 - `Build-Velopack.ps1 -OutDir` para feeds separados. ⚠ gotcha observado: el Setup.exe embebe la versión MÁS ALTA del feed del outputDir, no la del pack en curso.
 
 ### Smoke E2E Velopack (en curso)
-- Pack 2.0.0 + 2.0.1 (delta **0,5 MB** vs 142 full — deltas funcionan). Install silenciosa (`--silent`) → `%LocalAppData%\Grex365.App\current` OK, **sin** tocar el dir de datos. Feed local configurado en prefs (backup `.bak-velopack-smoke`). Pendiente: update in-app 2.0.1→2.0.2 (2 clicks en Ajustes de la app instalada).
+- Pack 2.0.0 + 2.0.1 (delta **0,5 MB** vs 142 full — deltas funcionan). Install silenciosa (`--silent`) → `%LocalAppData%\Grex365.App\current` OK, **sin** tocar el dir de datos. Feed local configurado en prefs (backup `.bak-velopack-smoke`). Pendiente: update in-app desde Ajustes de la app instalada.
+
+### BUG REAL cazado por el smoke: módulos built-in de PowerShell ausentes en publish (commit 8)
+- Usuario arrancó la app **instalada** → log: `'Sort-Object' … Cannot find the built-in module 'Microsoft.PowerShell.Utility' compatible with the 'Core' edition` (primer uso de PS in-proc = probe del módulo EXO de `ExchangeConnection`).
+- **Root cause**: en `dotnet publish` con RID, el SDK de PowerShell deja los módulos built-in en `runtimes\win\lib\net10.0\Modules\` pero el motor embebido solo busca `$PSHOME\Modules` (raíz de la app). El build normal (`bin\`) no lo sufre (probing de runtimes activo) — por eso nunca se vio en dev. **Afectaba a Velopack, al MSIX y al portable single-file** (todos empaquetan publish).
+- **Fix**: target MSBuild `CopyPwshBuiltinModulesToPublishRoot` (AfterTargets=Publish) copia los módulos a `$(PublishDir)Modules`. Ruta TFM literal — un comodín `net*` desplaza el `RecursiveDir` y anida mal (descubierto en el primer intento, v2.0.3 salió rota y queda superada por 2.0.4 en el feed).
+- **CI**: artifact portable ahora sube la carpeta completa de publish (el exe a secas rompía el PS embebido); el exe suelto retirado de los assets de la Release (el Portable.zip de Velopack cubre ese caso).
 
 ## Sprint AQ · 2026-06-05 — Autocompletado pick & append (Grupos + Onboarding)
 

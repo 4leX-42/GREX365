@@ -20,6 +20,24 @@
     <Resource Include="Assets\Grex365.ico" />
   </ItemGroup>
 
+  <!-- PowerShell SDK: en publish con RID los módulos built-in quedan en
+       runtimes\win\lib\netX\Modules, pero el motor embebido solo los busca en $PSHOME\Modules
+       (la raíz de la app). Sin esta copia, la app PUBLICADA falla con "Cannot find the built-in
+       module 'Microsoft.PowerShell.Utility' compatible with the 'Core' edition" en el primer
+       Sort-Object/Get-Module. El build normal (bin\) no lo sufre: ahí el probing de runtimes sí
+       funciona. Detectado en el smoke E2E de Velopack (2026-06-05). -->
+  <Target Name="CopyPwshBuiltinModulesToPublishRoot" AfterTargets="Publish">
+    <ItemGroup>
+      <!-- Ruta literal (net10.0): un comodín net* desplaza el RecursiveDir y anida mal la copia.
+           Actualizar al subir de TFM. -->
+      <_PwshBuiltinModules Include="$(PublishDir)runtimes\win\lib\net10.0\Modules\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_PwshBuiltinModules)"
+          DestinationFiles="@(_PwshBuiltinModules->'$(PublishDir)Modules\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+    <Message Importance="high" Text="PowerShell built-in modules copiados a $(PublishDir)Modules (@(_PwshBuiltinModules->Count()) ficheros)" />
+  </Target>
+
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.23.0" />

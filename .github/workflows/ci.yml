@@ -82,12 +82,13 @@ jobs:
           -p:PublishProfile=win-x64-portable
           -o publish
 
-      - name: Upload portable EXE
+      - name: Upload portable bundle
         uses: actions/upload-artifact@v4
         with:
           name: Grex365-${{ github.ref_name }}-portable
-          # AssemblyName=Grex365 (no Grex365.App) desde el rename del assembly
-          path: publish/Grex365.exe
+          # Carpeta completa, NO solo el exe: el single-file no embebe los módulos built-in de
+          # PowerShell (Modules\ va suelto al lado) — el exe a secas rompe el PS embebido.
+          path: publish/
 
   msix:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -241,7 +242,6 @@ jobs:
           draft: true
           prerelease: ${{ contains(github.ref_name, '-') }}
           files: |
-            artifacts/portable/Grex365.exe
             artifacts/msix/Grex365.msix
             artifacts/msix/Grex365.appinstaller
             artifacts/velopack/*
