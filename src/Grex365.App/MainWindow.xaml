@@ -10,6 +10,7 @@
         xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
         mc:Ignorable="d"
         Title="GREX365"
+        Icon="pack://application:,,,/Assets/Grex365.ico"
         Height="820" Width="1320"
         MinHeight="640" MinWidth="1100"
         WindowBackdropType="Mica"
@@ -29,7 +30,11 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="GREX365 · Microsoft 365 toolkit" />
+        <ui:TitleBar Grid.Row="0" Title="GREX365 · Microsoft 365 toolkit">
+            <ui:TitleBar.Icon>
+                <ui:ImageIcon Source="pack://application:,,,/Assets/Grex365.ico" />
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
@@ -187,30 +192,36 @@
                     </RowDefinition>
                 </Grid.RowDefinitions>
 
+                <!-- Transición en CADA navegación: Binding.TargetUpdated dispara al cambiar
+                     CurrentPage (el Loaded del template anterior solo disparaba la primera vez —
+                     las páginas son singleton y el template no se recarga). Fade + slide-up. -->
                 <ContentControl Grid.Row="0"
-                                Content="{Binding CurrentPage}">
-                    <ContentControl.Template>
-                        <ControlTemplate TargetType="ContentControl">
-                            <Border x:Name="PageHost" Opacity="0">
-                                <Border.Triggers>
-                                    <EventTrigger RoutedEvent="FrameworkElement.Loaded">
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                                 From="0" To="1"
-                                                                 Duration="0:0:0.12">
-                                                    <DoubleAnimation.EasingFunction>
-                                                        <CubicEase EasingMode="EaseOut" />
-                                                    </DoubleAnimation.EasingFunction>
-                                                </DoubleAnimation>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </EventTrigger>
-                                </Border.Triggers>
-                                <ContentPresenter />
-                            </Border>
-                        </ControlTemplate>
-                    </ContentControl.Template>
+                                Content="{Binding CurrentPage, NotifyOnTargetUpdated=True}">
+                    <ContentControl.RenderTransform>
+                        <TranslateTransform Y="0" />
+                    </ContentControl.RenderTransform>
+                    <ContentControl.Triggers>
+                        <EventTrigger RoutedEvent="Binding.TargetUpdated">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                     From="0" To="1"
+                                                     Duration="0:0:0.18">
+                                        <DoubleAnimation.EasingFunction>
+                                            <CubicEase EasingMode="EaseOut" />
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                                     From="14" To="0"
+                                                     Duration="0:0:0.22">
+                                        <DoubleAnimation.EasingFunction>
+                                            <CubicEase EasingMode="EaseOut" />
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </ContentControl.Triggers>
                 </ContentControl>
 
                 <GridSplitter Grid.Row="1"

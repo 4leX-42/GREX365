@@ -15,6 +15,12 @@
 
 
   <ItemGroup>
+    <!-- Splash nativo: se muestra antes de cargar el CLR — tapa el arranque JIT (5-15s en frío). -->
+    <SplashScreen Include="Assets\Splash.png" />
+    <Resource Include="Assets\Grex365.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.23.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
@@ -37,6 +43,8 @@
     <AssemblyName>Grex365</AssemblyName>
     <!-- Velopack necesita correr antes que WPF (hooks de install/update) — Main propio en Program.cs. -->
     <StartupObject>Grex365.App.Program</StartupObject>
+    <!-- Icono del exe (taskbar/alt-tab). Regenerar con packaging/assets/New-BrandAssets.ps1. -->
+    <ApplicationIcon>Assets\Grex365.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- DPI awareness is set via app.manifest (true/PM) — canonical for WPF.
          WFO0003 is a WinForms-only check that asks to use ApplicationHighDpiMode,
