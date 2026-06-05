@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1418 passing** (xUnit + FluentAssertions) — 579 Core + 839 App
-- Última actualización: 2026-06-05 (sesión · Sprint AR DLs clásicas + validación en vivo + distribución + Velopack integrado)
+- Tests: **1436 passing** (xUnit + FluentAssertions) — 587 Core + 849 App
+- Última actualización: 2026-06-05 (sesión · Sprint AR: DLs clásicas, validación en vivo, distribución+Velopack, branding, skeletons, dashboard actividad, CI velopack)
 
 ## Validaciones en vivo — log acumulativo (NO repetir; lab = solo objetos `testeo*`, mutaciones solo con revert)
 
@@ -51,6 +51,22 @@ Deep-research con fuentes verificadas 2025-2026. Claves: MS Store ya **gratis** 
 - **Splash nativo WPF** (`SplashScreen` item): se muestra pre-CLR — tapa el arranque JIT frío de 5-15s.
 - **Transición de página en CADA navegación**: el trigger anterior (template `Loaded`) solo disparaba la primera vez (páginas singleton). Ahora `Binding.TargetUpdated` sobre `CurrentPage` → fade 0.18s + slide-up 14px 0.22s ease-out. Drawer ya tenía slide (sin cambios).
 - Sin tests nuevos (XAML/assets). Total sigue **1418**. Release recompilada y relanzada para validación visual.
+
+### Skeletons + feed local/UNC + fix packId (commit 5)
+- **`SkeletonListRows`** (App.xaml): 6 filas avatar+líneas con pulso de opacidad; visible con `IsBusy && lista vacía` (MultiDataTrigger) en **Usuarios, Grupos y Licencias**. Estado vacío de Usuarios ya no se solapa con la búsqueda en curso. `SettingsCard` hover gana borde accent.
+- **Feed de updates local/UNC**: `\\server\share`, `C:\dir` y `file://` → `SimpleFileSource` (escenario intranet Andersen). +6 tests.
+- **Fix packId** `Grex365` → `Grex365.App`: Velopack instala en `%LocalAppData%\{packId}` y el **uninstall borra esa carpeta** — con el packId original habría arrasado el dir de DATOS (`%LocalAppData%\Grex365\config|logs`).
+
+### Dashboard: actividad reciente (commit 6)
+- Tarjeta "Actividad reciente": contadores de hoy (ops/errores) + 5 últimas operaciones del audit JSONL local (hora, pill source, mensaje, dot outcome), refresco en cada Loaded. `RecentActivityAggregator` puro en Core; best-effort (JSONL corrupto no rompe el Dashboard); si el mes en curso trae <5, completa con el anterior. +8 Core +4 App tests → **1436**.
+
+### CI velopack + fix release job (commit 7)
+- Job `velopack` en tags `v*`: `vpk pack` → bundle como artifact + adjunto a la GitHub Release (Setup + full/delta + RELEASES).
+- **Bug CI pre-existente cazado**: jobs subían `Grex365.App.exe` pero el assembly es `Grex365.exe` desde el rename — el release job habría fallado en el siguiente tag.
+- `Build-Velopack.ps1 -OutDir` para feeds separados. ⚠ gotcha observado: el Setup.exe embebe la versión MÁS ALTA del feed del outputDir, no la del pack en curso.
+
+### Smoke E2E Velopack (en curso)
+- Pack 2.0.0 + 2.0.1 (delta **0,5 MB** vs 142 full — deltas funcionan). Install silenciosa (`--silent`) → `%LocalAppData%\Grex365.App\current` OK, **sin** tocar el dir de datos. Feed local configurado en prefs (backup `.bak-velopack-smoke`). Pendiente: update in-app 2.0.1→2.0.2 (2 clicks en Ajustes de la app instalada).
 
 ## Sprint AQ · 2026-06-05 — Autocompletado pick & append (Grupos + Onboarding)
 
