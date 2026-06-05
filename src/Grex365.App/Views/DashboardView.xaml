@@ -193,6 +193,87 @@
                     </StackPanel>
                 </StackPanel>
             </Border>
+
+            <TextBlock Text="{l:L10n Key=Dashboard.Activity.Title}"
+                       Style="{StaticResource SectionTitleText}"
+                       Margin="0,12,0,0"
+                       Visibility="{Binding HasActivity, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Border Style="{StaticResource Card}"
+                    Padding="20"
+                    Margin="0,0,0,12"
+                    Visibility="{Binding HasActivity, Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   Style="{StaticResource CaptionText}"
+                                   VerticalAlignment="Center">
+                            <Run Text="{Binding TodayOpsCount, Mode=OneWay}" FontWeight="SemiBold" />
+                            <Run Text="{l:L10n Key=Dashboard.Activity.TodayOps}" />
+                            <Run Text=" · " />
+                            <Run Text="{Binding TodayErrorCount, Mode=OneWay}" FontWeight="SemiBold" />
+                            <Run Text="{l:L10n Key=Dashboard.Activity.TodayErrors}" />
+                        </TextBlock>
+                        <ui:Button Grid.Column="1"
+                                   Content="{l:L10n Key=Dashboard.Activity.Open}"
+                                   Command="{Binding GoToCommand}"
+                                   CommandParameter="Nav.AuditLog"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding RecentOps}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Ellipse Grid.Column="0" Width="8" Height="8" Margin="0,0,10,0" VerticalAlignment="Center">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Fill" Value="{DynamicResource BrushSemanticOk}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Outcome}" Value="ERROR">
+                                                        <Setter Property="Fill" Value="{DynamicResource BrushSemanticError}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Outcome}" Value="WARN">
+                                                        <Setter Property="Fill" Value="{DynamicResource BrushSemanticWarn}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding Timestamp, StringFormat=HH:mm}"
+                                               FontFamily="Cascadia Mono, Consolas"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                               Margin="0,0,10,0"
+                                               VerticalAlignment="Center" />
+                                    <Border Grid.Column="2"
+                                            Background="{DynamicResource SubtleFillColorSecondaryBrush}"
+                                            CornerRadius="4"
+                                            Padding="6,2"
+                                            Margin="0,0,10,0"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Source}" FontSize="11" />
+                                    </Border>
+                                    <TextBlock Grid.Column="3"
+                                               Text="{Binding Message}"
+                                               FontSize="12"
+                                               TextTrimming="CharacterEllipsis"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

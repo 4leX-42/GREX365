@@ -162,6 +162,11 @@ public static class L10n
         ["Settings.Updates.Error"] = "Error al comprobar: {0}",
         ["Settings.Updates.NotWired"] = "Servicio de actualizaciones no disponible.",
 
+        ["Dashboard.Activity.Title"] = "Actividad reciente",
+        ["Dashboard.Activity.TodayOps"] = "operaciones hoy",
+        ["Dashboard.Activity.TodayErrors"] = "errores",
+        ["Dashboard.Activity.Open"] = "Ver registro",
+
         ["Connect.Eyebrow"] = "CONEXIÓN",
         ["Connect.Title"] = "Conexión a Microsoft 365",
         ["Connect.Subtitle"] = "Autenticación por certificado contra Microsoft Graph y Exchange Online",
@@ -1090,6 +1095,11 @@ public static class L10n
         ["Settings.Updates.Available"] = "Version {0} available.",
         ["Settings.Updates.Error"] = "Check failed: {0}",
         ["Settings.Updates.NotWired"] = "Update service not available.",
+
+        ["Dashboard.Activity.Title"] = "Recent activity",
+        ["Dashboard.Activity.TodayOps"] = "operations today",
+        ["Dashboard.Activity.TodayErrors"] = "errors",
+        ["Dashboard.Activity.Open"] = "Open log",
 
         ["Connect.Eyebrow"] = "CONNECTION",
         ["Connect.Title"] = "Connect to Microsoft 365",

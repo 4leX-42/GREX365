@@ -1,7 +1,10 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Grex365.Core.Abstractions;
+using Grex365.Core.Audit;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Grex365.App.ViewModels;
@@ -11,6 +14,7 @@ public sealed partial class DashboardViewModel : ObservableObject
     private readonly IConnectionStateMonitor _monitor;
     private readonly IAuditFindingsStore _auditStore;
     private readonly IServiceProvider _services;
+    private readonly IAuditLog? _auditLog;
 
     [ObservableProperty] private bool _graphConnected;
     [ObservableProperty] private bool _exchangeConnected;
@@ -24,18 +28,55 @@ public sealed partial class DashboardViewModel : ObservableObject
     [ObservableProperty] private int _lastAuditInfo;
     [ObservableProperty] private bool _hasLastAudit;
 
+    [ObservableProperty] private int _todayOpsCount;
+    [ObservableProperty] private int _todayErrorCount;
+    [ObservableProperty] private bool _hasActivity;
+    public ObservableCollection<AuditRecord> RecentOps { get; } = new();
+
+    // auditLog es opcional: sin él, la tarjeta de actividad simplemente no aparece.
     public DashboardViewModel(
         IConnectionStateMonitor monitor,
         IAuditFindingsStore auditStore,
-        IServiceProvider services)
+        IServiceProvider services,
+        IAuditLog? auditLog = null)
     {
         _monitor = monitor;
         _auditStore = auditStore;
         _services = services;
+        _auditLog = auditLog;
         _monitor.PropertyChanged += OnMonitorChanged;
         _auditStore.PropertyChanged += OnAuditStoreChanged;
         Sync();
         SyncAudit();
+    }
+
+    // Invocado desde el Loaded de la vista: refresca el resumen local de actividad (audit JSONL
+    // del mes en curso; si trae poco — p.ej. día 1 — completa con el mes anterior).
+    [RelayCommand]
+    private async Task RefreshActivityAsync()
+    {
+        if (_auditLog is null) return;
+        try
+        {
+            var now = DateTimeOffset.Now;
+            var records = (await _auditLog.ReadMonthAsync(now.Year, now.Month).ConfigureAwait(true)).ToList();
+            if (records.Count < 5)
+            {
+                var prev = now.AddMonths(-1);
+                records.AddRange(await _auditLog.ReadMonthAsync(prev.Year, prev.Month).ConfigureAwait(true));
+            }
+            var activity = RecentActivityAggregator.Compute(records, now);
+            TodayOpsCount = activity.TodayCount;
+            TodayErrorCount = activity.TodayErrors;
+            RecentOps.Clear();
+            foreach (var r in activity.Recent) RecentOps.Add(r);
+            HasActivity = RecentOps.Count > 0;
+        }
+        catch
+        {
+            // Best-effort: un JSONL corrupto/inaccesible no debe romper el Dashboard.
+            HasActivity = false;
+        }
     }
 
     [RelayCommand]
