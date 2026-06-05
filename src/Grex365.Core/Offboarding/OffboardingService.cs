@@ -292,37 +292,90 @@ public sealed class OffboardingService : IOffboardingService
                 {
                     Done("Quitar de grupos y DLs", "OK", "sin grupos");
                 }
-                else if (dry)
-                {
-                    Done("Quitar de grupos y DLs", "SIMULADO", $"se intentaría quitar de {memberships.Count} grupo(s)");
-                }
                 else
                 {
-                    var removed = 0;
-                    var failed = new List<string>();
+                    // Classic DLs / mail-enabled security groups keep their membership in EXO —
+                    // Graph always 400s on them. Route those through the external EXO host when
+                    // it's wired; without it they stay on the Graph path (fails → AVISO, as before).
+                    var viaGraph = new List<GroupSummary>();
+                    var viaExo = new List<GroupSummary>();
                     foreach (var g in memberships)
                     {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        try
-                        {
-                            // Pass null progress: report an aggregate instead of one log line per group.
-                            await _groups.RemoveMemberAsync(g.Id, user.Id, null, cancellationToken).ConfigureAwait(false);
-                            removed++;
-                        }
-                        catch
-                        {
-                            failed.Add(g.DisplayName);
-                        }
+                        if (_externalExo is not null && IsExoManagedGroup(g.GroupKind)) viaExo.Add(g);
+                        else viaGraph.Add(g);
                     }
-                    if (failed.Count == 0)
+
+                    if (dry)
                     {
-                        Done("Quitar de grupos y DLs", "OK", $"Quitado de {removed} grupo(s)");
+                        var exoNote = viaExo.Count > 0 ? $" ({viaExo.Count} DL/mail-security vía EXO)" : "";
+                        Done("Quitar de grupos y DLs", "SIMULADO",
+                            $"se intentaría quitar de {memberships.Count} grupo(s){exoNote}");
                     }
                     else
                     {
-                        var sample = string.Join(", ", failed.Take(5)) + (failed.Count > 5 ? "…" : "");
-                        Done("Quitar de grupos y DLs", "AVISO",
-                            $"Quitado de {removed}/{memberships.Count}. No se pudo en {failed.Count} (dinámicos / sincronizados on-prem / DL clásicas): {sample}");
+                        var removed = 0;
+                        var failed = new List<string>();
+                        foreach (var g in viaGraph)
+                        {
+                            cancellationToken.ThrowIfCancellationRequested();
+                            try
+                            {
+                                // Pass null progress: report an aggregate instead of one log line per group.
+                                await _groups.RemoveMemberAsync(g.Id, user.Id, null, cancellationToken).ConfigureAwait(false);
+                                removed++;
+                            }
+                            catch
+                            {
+                                failed.Add(g.DisplayName);
+                            }
+                        }
+
+                        if (viaExo.Count > 0)
+                        {
+                            // Identify DLs by SMTP (always present on mail-enabled groups); the
+                            // Entra object id is the fallback (modern EXO resolves it too).
+                            var nameByIdentity = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                            var identities = new List<string>();
+                            foreach (var g in viaExo)
+                            {
+                                var id = string.IsNullOrWhiteSpace(g.Mail) ? g.Id : g.Mail!;
+                                identities.Add(id);
+                                nameByIdentity.TryAdd(id, g.DisplayName);
+                            }
+                            try
+                            {
+                                var results = await _externalExo!.RemoveFromDistributionGroupsAsync(
+                                    upn, identities, progress, cancellationToken).ConfigureAwait(false);
+                                var reported = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                                foreach (var r in results)
+                                {
+                                    reported.Add(r.Group);
+                                    if (r.Success) removed++;
+                                    else failed.Add(nameByIdentity.TryGetValue(r.Group, out var n) ? n : r.Group);
+                                }
+                                // Defensive: a group EXO never reported back counts as failed.
+                                foreach (var id in identities.Where(i => !reported.Contains(i)))
+                                {
+                                    failed.Add(nameByIdentity[id]);
+                                }
+                            }
+                            catch
+                            {
+                                failed.AddRange(viaExo.Select(g => g.DisplayName));
+                            }
+                        }
+
+                        if (failed.Count == 0)
+                        {
+                            var exoNote = viaExo.Count > 0 ? $" ({viaExo.Count} DL/mail-security vía EXO)" : "";
+                            Done("Quitar de grupos y DLs", "OK", $"Quitado de {removed} grupo(s){exoNote}");
+                        }
+                        else
+                        {
+                            var sample = string.Join(", ", failed.Take(5)) + (failed.Count > 5 ? "…" : "");
+                            Done("Quitar de grupos y DLs", "AVISO",
+                                $"Quitado de {removed}/{memberships.Count}. No se pudo en {failed.Count} (dinámicos / sincronizados on-prem / DL clásicas): {sample}");
+                        }
                     }
                 }
             }
@@ -393,6 +446,12 @@ public sealed class OffboardingService : IOffboardingService
 
         return Result(success);
     }
+
+    // Classic DLs and mail-enabled security groups keep their membership in Exchange Online —
+    // Graph can't write it (always 400s). Kinds per GraphUsersService.ClassifyGroup.
+    public static bool IsExoManagedGroup(string? groupKind) =>
+        string.Equals(groupKind, "DistributionList", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(groupKind, "MailSecurity", StringComparison.OrdinalIgnoreCase);
 
     // Best-effort mailbox facts (size / holds / archive / type). Prefers the external EXO ops
     // (reliable) and falls back to the in-proc service. Never throws — pre-checks must degrade

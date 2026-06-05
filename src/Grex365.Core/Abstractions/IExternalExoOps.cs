@@ -132,4 +132,14 @@ public interface IExternalExoOps
         string principal,
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default);
+
+    // Removes a member from classic distribution lists / mail-enabled security groups, whose
+    // membership lives in Exchange Online (Graph can't write it). One pwsh invocation: connects
+    // once, iterates the groups, returns one per-group result (best-effort — a failing group
+    // doesn't stop the rest).
+    Task<IReadOnlyList<DistributionGroupRemovalResult>> RemoveFromDistributionGroupsAsync(
+        string memberIdentity,
+        IReadOnlyList<string> groupIdentities,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
 }

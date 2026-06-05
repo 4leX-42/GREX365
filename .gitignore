@@ -89,3 +89,8 @@ _bmad/
 .claude/scheduled_tasks.lock
 .claude/settings.local.json
 .claude/skills/
+
+# CodeGraph (test mode — local index + MCP config)
+.codegraph/
+.mcp.json
+.claude/settings.json

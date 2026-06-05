@@ -467,4 +467,76 @@ public class OffboardingServiceTests
 
         r.Steps.Should().Contain(s => s.Name.Contains("grupos") && s.Status == "OMITIDO");
     }
+
+    // Classic DLs / mail-enabled security groups route through external EXO (Graph can't write
+    // their membership). M365 groups stay on Graph. A DL without SMTP falls back to its id.
+    [Fact]
+    public async Task ClassicDls_RemovedViaExternalExo_NotGraph()
+    {
+        var users = UsersWithGroups(
+            new("g1", "Equipo", null, "M365"),
+            new("g2", "DL Ventas", "ventas@a", "DistributionList"),
+            new("g3", "Seguridad Mail", null, "MailSecurity"));
+        var groups = new Mock<IGroupsService>();
+        var exo = ExoWithFacts(new MailboxInfo("u@a", "U", "u@a", "UserMailbox"));
+        IReadOnlyList<string>? sentIdentities = null;
+        exo.Setup(e => e.RemoveFromDistributionGroupsAsync("jane@a", It.IsAny<IReadOnlyList<string>>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .Callback<string, IReadOnlyList<string>, IProgress<LogEntry>?, CancellationToken>((_, ids, _, _) => sentIdentities = ids)
+            .ReturnsAsync(new[]
+            {
+                new DistributionGroupRemovalResult("ventas@a", true, "quitado"),
+                new DistributionGroupRemovalResult("g3", true, "quitado"),
+            });
+        var sut = new OffboardingService(users.Object, MailboxOk().Object, exo.Object, groups.Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(false, false, false, RemoveFromGroups: true));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name.Contains("grupos") && s.Status == "OK" && s.Detail.Contains("3") && s.Detail.Contains("EXO"));
+        sentIdentities.Should().BeEquivalentTo(new[] { "ventas@a", "g3" }); // SMTP preferred, id fallback
+        groups.Verify(g => g.RemoveMemberAsync("g1", "uid", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+        groups.Verify(g => g.RemoveMemberAsync("g2", It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+        groups.Verify(g => g.RemoveMemberAsync("g3", It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // A per-DL EXO failure is reported AVISO with the group's display name, not fatal.
+    [Fact]
+    public async Task ClassicDl_ExoFailure_ReportsAviso()
+    {
+        var users = UsersWithGroups(new GroupSummary("g2", "DL Ventas", "ventas@a", "DistributionList"));
+        var exo = ExoWithFacts(new MailboxInfo("u@a", "U", "u@a", "UserMailbox"));
+        exo.Setup(e => e.RemoveFromDistributionGroupsAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<string>>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new[] { new DistributionGroupRemovalResult("ventas@a", false, "gestionado por el propietario") });
+        var sut = new OffboardingService(users.Object, MailboxOk().Object, exo.Object, new Mock<IGroupsService>().Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(false, false, false, RemoveFromGroups: true));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name.Contains("grupos") && s.Status == "AVISO" && s.Detail.Contains("DL Ventas"));
+    }
+
+    // Without external EXO wired, DL kinds keep the old behavior: attempted via Graph.
+    [Fact]
+    public async Task ClassicDl_NoExternalExo_FallsBackToGraph()
+    {
+        var users = UsersWithGroups(new GroupSummary("g2", "DL Ventas", "ventas@a", "DistributionList"));
+        var groups = new Mock<IGroupsService>();
+        var sut = new OffboardingService(users.Object, MailboxOk().Object, null, groups.Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(false, false, false, RemoveFromGroups: true));
+
+        r.Steps.Should().Contain(s => s.Name.Contains("grupos") && s.Status == "OK");
+        groups.Verify(g => g.RemoveMemberAsync("g2", "uid", It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Theory]
+    [InlineData("DistributionList", true)]
+    [InlineData("MailSecurity", true)]
+    [InlineData("mailsecurity", true)]
+    [InlineData("M365", false)]
+    [InlineData("Security", false)]
+    [InlineData("Other", false)]
+    [InlineData(null, false)]
+    public void IsExoManagedGroup_RoutesByKind(string? kind, bool expected) =>
+        OffboardingService.IsExoManagedGroup(kind).Should().Be(expected);
 }

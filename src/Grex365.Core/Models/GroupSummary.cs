@@ -16,3 +16,10 @@ public sealed record AddMemberResult(
     string Input,
     string Status,
     string Detail);
+
+// Outcome of removing a member from one classic DL / mail-enabled security group via EXO
+// (Remove-DistributionGroupMember). Group echoes the identity the cmdlet was invoked with.
+public sealed record DistributionGroupRemovalResult(
+    string Group,
+    bool Success,
+    string Detail);

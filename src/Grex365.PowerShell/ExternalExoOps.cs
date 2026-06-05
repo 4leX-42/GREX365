@@ -446,6 +446,66 @@ public sealed class ExternalExoOps : IExternalExoOps
         await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<IReadOnlyList<DistributionGroupRemovalResult>> RemoveFromDistributionGroupsAsync(
+        string memberIdentity,
+        IReadOnlyList<string> groupIdentities,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (groupIdentities.Count == 0)
+        {
+            return Array.Empty<DistributionGroupRemovalResult>();
+        }
+
+        // Single pwsh invocation: connect once, iterate the groups, per-group try/catch so one
+        // failure (owner-managed group, on-prem synced DL…) doesn't stop the rest.
+        var groupsArray = string.Join(", ", groupIdentities.Select(Lit));
+        var body = $$"""
+            $member = {{Lit(memberIdentity)}}
+            $groups = @({{groupsArray}})
+            $out = New-Object System.Collections.Generic.List[object]
+            foreach ($g in $groups) {
+                try {
+                    Remove-DistributionGroupMember -Identity $g -Member $member -Confirm:$false -BypassSecurityGroupManagerCheck -ErrorAction Stop
+                    $out.Add([PSCustomObject]@{ Group = [string]$g; Success = $true; Detail = 'quitado' })
+                } catch {
+                    $out.Add([PSCustomObject]@{ Group = [string]$g; Success = $false; Detail = [string]$_.Exception.Message })
+                }
+            }
+            Write-Output ('{{JsonMarker}}' + ($out | ConvertTo-Json -Compress -AsArray))
+            """;
+        var json = await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
+        return ParseDistributionGroupRemovals(json);
+    }
+
+    private static IReadOnlyList<DistributionGroupRemovalResult> ParseDistributionGroupRemovals(string? json)
+    {
+        var list = new List<DistributionGroupRemovalResult>();
+        if (string.IsNullOrWhiteSpace(json)) return list;
+        using var doc = JsonDocument.Parse(json);
+
+        void Add(JsonElement el)
+        {
+            if (el.ValueKind != JsonValueKind.Object) return;
+            string S(string n) => el.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString()! : string.Empty;
+            var ok = el.TryGetProperty("Success", out var s)
+                && (s.ValueKind == JsonValueKind.True
+                    || (s.ValueKind == JsonValueKind.String && bool.TryParse(s.GetString(), out var b) && b));
+            list.Add(new DistributionGroupRemovalResult(S("Group"), ok, S("Detail")));
+        }
+
+        // ConvertTo-Json can collapse a 1-element list to a bare object — tolerate both shapes.
+        if (doc.RootElement.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var el in doc.RootElement.EnumerateArray()) Add(el);
+        }
+        else
+        {
+            Add(doc.RootElement);
+        }
+        return list;
+    }
+
     private static IReadOnlyList<MailboxPermissionEntry> ParsePermissions(string? json)
     {
         var list = new List<MailboxPermissionEntry>();
