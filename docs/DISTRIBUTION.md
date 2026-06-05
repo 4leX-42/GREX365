@@ -79,12 +79,31 @@ Reputación SmartScreen: se acumula por **identidad de firma** estable entre ver
 - Firma consolidada en Artifact Signing (company UE verificada).
 - Entra: multitenant + publisher verified.
 
-## Decisiones abiertas (requieren al usuario)
+## Decisiones tomadas (usuario, 2026-06-05)
 
-1. ¿Individual o entidad legal ES/UE? → determina Artifact Signing (10 $/mes) vs OV (~100 €/año + token).
-2. ¿Cuenta Microsoft Partner (CPP/MPN) existente? → necesaria para Publisher Verification; trámite lento, iniciar ya.
-3. ¿App Entra single-tenant (por cliente) o multitenant? → afecta onboarding + consent.
-4. ¿Reconsiderar MS Store ahora que es gratis (KYC ligero individual)?
+1. **Firma: coste CERO** — no se paga certificado ni servicio.
+2. **App Entra: single-tenant** (cada cliente registra su app; la herramienta ya auto-crea el App Reg). Publisher Verification **no necesaria** con single-tenant (y de todas formas exigiría MFA en la cuenta Partner).
+3. **Microsoft Store: descartada** (evitar KYC).
+4. Cuenta Microsoft Partner: se crearía gratis solo si algún día hace falta (multitenant futuro).
+
+### Estrategia resultante (coste 0 €)
+
+| Ámbito | Solución | Coste | Avisos |
+|---|---|---|---|
+| **Dentro de Andersen** (máquinas del dominio) | Cert de code-signing emitido por la **CA interna (AD CS)** o self-signed desplegado por **GPO/Intune** a Trusted Publishers | 0 € | **Ninguno** en máquinas gestionadas |
+| **Fuera** (pilotos externos) | Binario **sin firmar** — avisar del SmartScreen ("Más información → Ejecutar de todas formas") | 0 € | SmartScreen sí (asumido) |
+| Canal | **GitHub Releases en repo público solo-releases** (sin árbol de fuente) — Velopack puede usarlo como feed de updates nativo | 0 € | — |
+| Empaquetado + auto-update | **Velopack** (MIT) | 0 € | — |
+| IP | **Obfuscar** (OSS gratis) con exclusiones para bindings XAML — protección limitada (renombrado básico); .NET Reactor queda como upgrade futuro si algún día hay presupuesto | 0 € | — |
+| Canal futuro opcional | **WinGet** (gratis, sin KYC) — ojo: instalador sin firma puede fallar la validación de malware del PR; mejor cuando haya firma interna o reputación | 0 € | — |
+
+**Limitaciones aceptadas del plan a coste cero**: SmartScreen/AV avisarán fuera de máquinas gestionadas; Smart App Control (Win11 estricto) puede bloquear sin firma; Obfuscar protege menos que un ofuscador comercial con virtualización.
+
+### Próximos pasos concretos
+1. Integrar **Velopack** (paquete NuGet + `VelopackApp.Build().Run()` en startup + script `vpk pack` en packaging/) con feed GitHub Releases.
+2. Emitir cert de code-signing en la **CA interna de Andersen** (AD CS) y firmar el instalador en CI/local (`signtool`); desplegar confianza por GPO si hiciera falta.
+3. Añadir **Obfuscar** al pipeline de publish con exclusiones XAML + smoke test runtime de la app ofuscada.
+4. Repo público `grex365-releases` (solo binarios) cuando haya primer piloto externo.
 
 ## Fuentes
 
