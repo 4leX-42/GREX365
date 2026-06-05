@@ -4,8 +4,20 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1383 passing** (xUnit + FluentAssertions) — 564 Core + 819 App
-- Última actualización: 2026-06-05 (sesión · Sprint AP migración EXO in-proc → pwsh externo + Sprint AQ autocompletado pick&append Grupos+Onboarding)
+- Tests: **1398 passing** (xUnit + FluentAssertions) — 579 Core + 819 App
+- Última actualización: 2026-06-05 (sesión · Sprint AR DLs clásicas en offboarding vía EXO + research distribución)
+
+## Sprint AR · 2026-06-05 — Offboarding: DLs clásicas vía EXO + estrategia de distribución
+
+### Quitar de DLs clásicas / mail-enabled security vía EXO externo (commit 1)
+Cierra el hueco del Sprint AO commit 7: las DL clásicas y los mail-enabled security groups guardan la membresía en EXO — Graph siempre devuelve 400 y quedaban como AVISO sin quitar. **Supera al legacy** (el wizard PS también iba solo por Graph y tragaba los fallos).
+- **`IExternalExoOps.RemoveFromDistributionGroupsAsync(member, identities[])`** — 1 invocación pwsh (connect once, itera, try/catch por grupo, JSON por resultado vía `Remove-DistributionGroupMember -Confirm:$false -BypassSecurityGroupManagerCheck`). Literales `Lit()`-escapados (injection-safe). Parse defensivo (tolera collapse de 1 elemento). Modelo `DistributionGroupRemovalResult`.
+- **`OffboardingService` paso 3b**: particiona por `GroupKind` (`IsExoManagedGroup` puro: DistributionList/MailSecurity) — esos van por EXO si está cableado (identidad: SMTP preferido, Id como fallback; los no reportados cuentan como fallo); M365/Security siguen por Graph. Sin EXO externo → comportamiento anterior (intento Graph → AVISO). Dry-run y detalle del paso indican el split.
+- Tests: **+15 Core** (3 routing/fallo/fallback + theory `IsExoManagedGroup` ×7 + 5 de `ExternalExoOps`: short-circuit vacío, body única invocación + escape, parse array/collapse/null). Total **1398** (579 Core + 819 App).
+- ⏳ Por validar en vivo (mutador — necesita DL `testeo*` de prueba): shape real de `Remove-DistributionGroupMember` contra el tenant.
+
+### Research distribución y despliegue (docs/DISTRIBUTION.md)
+Deep-research con fuentes verificadas 2025-2026. Claves: MS Store ya **gratis** (individual sep-2025, company may-2026; KYC permanece pero sin coste) · Azure Artifact Signing (ex-Trusted Signing) **no disponible para individuos en España** (UE solo organizaciones) · EV ya **no** da reputación SmartScreen instantánea · NativeAOT/trimming **inviables con WPF** (ReadyToRun sí) · GitHub Releases privado no sirve para descarga pública. Recomendación por fases: pilotos = self-contained+R2R+Velopack+OV/Artifact-Signing+.NET Reactor; amplio = WinGet (primario) + MS Store + MSI-Intune. **4 decisiones abiertas para el usuario** (entidad legal vs individual, cuenta CPP/MPN para Publisher Verification, single vs multitenant, reconsiderar Store).
 
 ## Sprint AQ · 2026-06-05 — Autocompletado pick & append (Grupos + Onboarding)
 
