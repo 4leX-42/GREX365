@@ -45,6 +45,13 @@ Deep-research con fuentes verificadas 2025-2026. Claves: MS Store ya **gratis** 
 - Tests: **+20 App** (UpdateFeedResolver theory ×11 + SettingsViewModel updates: not-wired, status map ×3, available, error, apply-gating strict, apply-failure, save persiste feed trim/null). Total **1418** (579 Core + 839 App).
 - ⏳ Smoke test end-to-end (install → update real entre 2 versiones) pendiente — necesita 2 builds versionados y máquina de prueba.
 
+### Branding + animaciones (commit 4) — petición del usuario "interfaz, logo, animaciones"
+- **`packaging/assets/New-BrandAssets.ps1`**: renderiza el monograma GX (mismos paths que `GxLogoMark` de App.xaml) con System.Drawing → `Assets/Grex365.ico` multirresolución (16-256, entradas PNG), `Assets/Splash.png` (460×260) y los 4 tiles MSIX (reemplaza placeholders de letra). Re-ejecutar si cambia el monograma.
+- **Icono**: `ApplicationIcon` en csproj (exe/taskbar/alt-tab) + `Window.Icon` + `TitleBar.Icon` (ImageIcon).
+- **Splash nativo WPF** (`SplashScreen` item): se muestra pre-CLR — tapa el arranque JIT frío de 5-15s.
+- **Transición de página en CADA navegación**: el trigger anterior (template `Loaded`) solo disparaba la primera vez (páginas singleton). Ahora `Binding.TargetUpdated` sobre `CurrentPage` → fade 0.18s + slide-up 14px 0.22s ease-out. Drawer ya tenía slide (sin cambios).
+- Sin tests nuevos (XAML/assets). Total sigue **1418**. Release recompilada y relanzada para validación visual.
+
 ## Sprint AQ · 2026-06-05 — Autocompletado pick & append (Grupos + Onboarding)
 
 Cierra el pending "helper elegir y añadir para los bulk" (Sprint AO commit 8). El campo de añadir miembros era un textarea pelado sin autocompletado. Añadido un `UserPickerBox` + botón "Añadir elegido" encima que **reutiliza el control de búsqueda live** (no uno nuevo) y agrega el UPN elegido a la lista.
