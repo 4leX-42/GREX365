@@ -96,5 +96,5 @@ _bmad/
 .claude/settings.json
 
 # Velopack build output (binarios grandes - no versionar)
-packaging/velopack/out/
+packaging/velopack/out*/
 packaging/velopack/publish/

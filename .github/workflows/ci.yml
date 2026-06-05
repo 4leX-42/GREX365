@@ -86,7 +86,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Grex365-${{ github.ref_name }}-portable
-          path: publish/Grex365.App.exe
+          # AssemblyName=Grex365 (no Grex365.App) desde el rename del assembly
+          path: publish/Grex365.exe
 
   msix:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -155,9 +156,43 @@ jobs:
             packaging/msix/out/Grex365.msix
             packaging/msix/out/Grex365.appinstaller
 
+  velopack:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: preview
+          include-prerelease: true
+
+      - name: Resolve semver from tag
+        id: ver
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}' -replace '^v',''
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Velopack version: $version"
+
+      - name: Build Velopack release (installer + full/delta packages)
+        shell: pwsh
+        run: pwsh -File packaging/velopack/Build-Velopack.ps1 -Version ${{ steps.ver.outputs.version }}
+
+      - name: Upload Velopack bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: Grex365-${{ github.ref_name }}-velopack
+          path: packaging/velopack/out/*
+
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [publish, msix]
+    needs: [publish, msix, velopack]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -176,6 +211,12 @@ jobs:
         with:
           name: Grex365-${{ github.ref_name }}-msix
           path: artifacts/msix
+
+      - name: Download Velopack artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Grex365-${{ github.ref_name }}-velopack
+          path: artifacts/velopack
 
       - name: Render release body
         id: body
@@ -200,6 +241,7 @@ jobs:
           draft: true
           prerelease: ${{ contains(github.ref_name, '-') }}
           files: |
-            artifacts/portable/Grex365.App.exe
+            artifacts/portable/Grex365.exe
             artifacts/msix/Grex365.msix
             artifacts/msix/Grex365.appinstaller
+            artifacts/velopack/*

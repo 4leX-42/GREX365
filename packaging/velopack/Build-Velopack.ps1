@@ -22,13 +22,14 @@
 #>
 param(
     [Parameter(Mandatory = $true)][string]$Version,
-    [string]$SignParams = ''
+    [string]$SignParams = '',
+    [string]$OutDir = ''
 )
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..' '..')
 $publishDir = Join-Path $PSScriptRoot 'publish'
-$outDir = Join-Path $PSScriptRoot 'out'
+$outDir = if ($OutDir) { $OutDir } else { Join-Path $PSScriptRoot 'out' }
 
 # vpk CLI presente?
 if (-not (Get-Command vpk -ErrorAction SilentlyContinue)) {
