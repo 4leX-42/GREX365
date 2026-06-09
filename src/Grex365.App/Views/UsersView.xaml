@@ -20,11 +20,10 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="0" Orientation="Horizontal">
+            <StackPanel Grid.Column="0">
                 <TextBlock Text="{l:L10n Key=Users.Eyebrow}" Style="{StaticResource EyebrowText}" />
                 <TextBlock Text="{l:L10n Key=Users.Title}"
-                           Style="{StaticResource PageHeroTitle}"
-                           VerticalAlignment="Center" />
+                           Style="{StaticResource PageHeroTitle}" />
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <ui:Button Content="{l:L10n Key=Users.Action.BulkCsv}"

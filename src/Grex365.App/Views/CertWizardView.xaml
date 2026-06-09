@@ -8,10 +8,10 @@
              mc:Ignorable="d">
     <ScrollViewer Style="{StaticResource PageRoot}">
         <StackPanel MaxWidth="900" HorizontalAlignment="Left">
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-            <TextBlock Text="{l:L10n Key=CertWizard.Eyebrow}" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="{l:L10n Key=CertWizard.Title}" Style="{StaticResource PageHeroTitle}" VerticalAlignment="Center" />
-        </StackPanel>
+            <StackPanel Margin="0,0,0,4">
+                <TextBlock Text="{l:L10n Key=CertWizard.Eyebrow}" Style="{StaticResource EyebrowText}" />
+                <TextBlock Text="{l:L10n Key=CertWizard.Title}" Style="{StaticResource PageHeroTitle}" />
+            </StackPanel>
             <TextBlock Text="{l:L10n Key=CertWizard.Subtitle}"
                        Style="{StaticResource PageSubtitleText}" />
 

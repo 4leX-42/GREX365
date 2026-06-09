@@ -10,11 +10,10 @@
              mc:Ignorable="d">
     <ScrollViewer Style="{StaticResource PageRoot}">
         <StackPanel>
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+            <StackPanel Margin="0,0,0,4">
                 <TextBlock Text="{l:L10n Key=MailboxRules.Eyebrow}" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="{l:L10n Key=MailboxRules.Title}"
-                           Style="{StaticResource PageHeroTitle}"
-                           VerticalAlignment="Center" />
+                <TextBlock Text="{l:L10n Key=MailboxRules.Title}"
+                           Style="{StaticResource PageHeroTitle}" />
             </StackPanel>
             <TextBlock Text="{l:L10n Key=MailboxRules.Subtitle}"
                        Style="{StaticResource PageSubtitleText}" />

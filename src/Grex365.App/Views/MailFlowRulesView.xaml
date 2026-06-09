@@ -14,9 +14,9 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
+        <StackPanel Grid.Row="0" Margin="0,0,0,4">
             <TextBlock Text="{l:L10n Key=MailFlow.Eyebrow}" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="{l:L10n Key=MailFlow.Title}" Style="{StaticResource PageHeroTitle}" VerticalAlignment="Center" />
+            <TextBlock Text="{l:L10n Key=MailFlow.Title}" Style="{StaticResource PageHeroTitle}" />
         </StackPanel>
         <TextBlock Grid.Row="1"
                    Text="{l:L10n Key=MailFlow.Subtitle}"

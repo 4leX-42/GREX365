@@ -19,8 +19,7 @@
         <StackPanel Grid.Row="0" Margin="0,0,0,4">
             <TextBlock Text="{l:L10n Key=TenantHealth.Eyebrow}" Style="{StaticResource EyebrowText}" />
             <TextBlock Text="{l:L10n Key=TenantHealth.Title}"
-                       Style="{StaticResource PageHeroTitle}"
-                       VerticalAlignment="Center" />
+                       Style="{StaticResource PageHeroTitle}" />
         </StackPanel>
         <TextBlock Grid.Row="1" Style="{StaticResource PageSubtitleText}"
                    Text="{l:L10n Key=TenantHealth.Subtitle}" />

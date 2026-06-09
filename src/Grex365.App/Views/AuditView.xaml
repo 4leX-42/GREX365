@@ -21,9 +21,9 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,4">
+        <StackPanel Grid.Row="0" Margin="0,0,0,4">
             <TextBlock Text="{l:L10n Key=Audit.Eyebrow}" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="{l:L10n Key=Audit.Title}" Style="{StaticResource PageHeroTitle}" VerticalAlignment="Center" />
+            <TextBlock Text="{l:L10n Key=Audit.Title}" Style="{StaticResource PageHeroTitle}" />
         </StackPanel>
         <TextBlock Grid.Row="1"
                    Text="{l:L10n Key=Audit.Subtitle}"

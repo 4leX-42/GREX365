@@ -167,7 +167,7 @@ public static class L10n
         ["Dashboard.Activity.TodayErrors"] = "errores",
         ["Dashboard.Activity.Open"] = "Ver registro",
 
-        ["Connect.Eyebrow"] = "CONEXIÓN",
+        ["Connect.Eyebrow"] = "TENANT",
         ["Connect.Title"] = "Conexión a Microsoft 365",
         ["Connect.Subtitle"] = "Autenticación por certificado contra Microsoft Graph y Exchange Online",
         ["Connect.MsGraph"] = "Microsoft Graph",
@@ -334,7 +334,7 @@ public static class L10n
         ["Shell.Status.Button.Log.Tooltip"] = "Mostrar/ocultar panel de log inferior (Ctrl+L)",
         ["Shell.Status.Button.Disconnect"] = "Desconectar",
 
-        ["Dashboard.Eyebrow"] = "DASHBOARD",
+        ["Dashboard.Eyebrow"] = "TENANT",
         ["Dashboard.Title"] = "Estado de la conexión",
         ["Dashboard.Subtitle"] = "Resumen del tenant y enlaces rápidos",
         ["Dashboard.QuickActions"] = "Acciones rápidas",
@@ -359,7 +359,7 @@ public static class L10n
         ["Dashboard.LastAudit.Pill.Warn"] = "WARN",
         ["Dashboard.LastAudit.Pill.Info"] = "INFO",
 
-        ["Users.Eyebrow"] = "USUARIOS",
+        ["Users.Eyebrow"] = "IDENTIDAD",
         ["Users.Title"] = "Usuarios",
         ["Users.Subtitle"] = "Buscar, ver y administrar cuentas (habilitar/deshabilitar, quitar licencias)",
         ["Users.Search.Label"] = "Buscar",
@@ -383,7 +383,7 @@ public static class L10n
         ["Users.Action.AssignLicense"] = "Asignar licencia",
         ["Users.MemberOf"] = "Pertenece a",
 
-        ["UserDetails.Eyebrow"] = "DETALLE DE USUARIO",
+        ["UserDetails.Eyebrow"] = "IDENTIDAD",
         ["UserDetails.Close"] = "Cerrar",
         ["UserDetails.Action.ToggleAccount"] = "Habilitar / Deshabilitar",
         ["UserDetails.Action.ToggleAccount.Tooltip"] = "Cambia AccountEnabled del usuario",
@@ -410,7 +410,7 @@ public static class L10n
         ["UserDetails.Section.Memberships"] = "Pertenencias",
         ["UserDetails.Memberships.GroupsSuffix"] = " grupos",
 
-        ["MailFlow.Eyebrow"] = "MAIL FLOW",
+        ["MailFlow.Eyebrow"] = "MAIL",
         ["MailFlow.Title"] = "Mail flow rules",
         ["MailFlow.Subtitle"] = "Transport rules de Exchange Online (Get-TransportRule). Solo lectura en esta versión.",
         ["MailFlow.Load"] = "Cargar",
@@ -422,7 +422,7 @@ public static class L10n
         ["MailFlow.Column.Name"] = "Name",
         ["MailFlow.Column.Description"] = "Description",
 
-        ["Offboarding.Eyebrow"] = "OFFBOARDING",
+        ["Offboarding.Eyebrow"] = "IDENTIDAD",
         ["Offboarding.Title"] = "Offboarding",
         ["Offboarding.Subtitle"] = "Deshabilitar cuenta, quitar licencias y convertir buzón a compartido",
         ["Offboarding.Upn.Label"] = "UPN del usuario",
@@ -473,7 +473,7 @@ public static class L10n
         ["Offboarding.Log.Title"] = "Log",
         ["Offboarding.Log.Clear"] = "Limpiar",
 
-        ["DomainCheck.Eyebrow"] = "DOMINIO",
+        ["DomainCheck.Eyebrow"] = "HERRAMIENTAS",
         ["DomainCheck.Title"] = "Comprobación de dominio",
         ["DomainCheck.Subtitle"] = "Verifica MX, SPF y DMARC vía nslookup (no requiere conexión a M365)",
         ["DomainCheck.Placeholder"] = "contoso.com",
@@ -483,7 +483,7 @@ public static class L10n
         ["DomainCheck.Column.Status"] = "Estado",
         ["DomainCheck.Column.Value"] = "Valor",
 
-        ["PsConsole.Eyebrow"] = "CONSOLA",
+        ["PsConsole.Eyebrow"] = "HERRAMIENTAS",
         ["PsConsole.Title"] = "Consola PowerShell",
         ["PsConsole.Subtitle"] = "Ejecuta scripts arbitrarios en el runspace pool compartido. Útil para diagnóstico y comandos puntuales.",
         ["PsConsole.Warning"] = "Sin sandbox. Los comandos se ejecutan con los privilegios de la sesión activa (incluyendo EXO y Graph si están conectados). Usa con cuidado.",
@@ -498,7 +498,7 @@ public static class L10n
         ["PsConsole.History.Next.Tooltip"] = "Comando siguiente (historial)",
         ["PsConsole.Output.Title"] = "Salida",
 
-        ["Onboarding.Eyebrow"] = "ONBOARDING",
+        ["Onboarding.Eyebrow"] = "IDENTIDAD",
         ["Onboarding.Title"] = "Onboarding",
         ["Onboarding.Subtitle"] = "Crear usuario · asignar licencias · añadir a grupos",
         ["Onboarding.Field.DisplayName"] = "Nombre completo",
@@ -524,7 +524,7 @@ public static class L10n
         ["Onboarding.Button.Cancel"] = "Cancelar",
         ["Onboarding.Steps.Title"] = "Pasos",
 
-        ["SharedMailbox.Eyebrow"] = "BUZONES",
+        ["SharedMailbox.Eyebrow"] = "MAIL",
         ["SharedMailbox.Title"] = "Buzones compartidos",
         ["SharedMailbox.Subtitle"] = "Conversión SharedMailbox → UserMailbox y gestión de permisos",
         ["SharedMailbox.TargetMailbox"] = "Buzón objetivo",
@@ -542,7 +542,7 @@ public static class L10n
         ["SharedMailbox.Button.ImportCsv"] = "Importar CSV...",
         ["SharedMailbox.Button.ExportResults"] = "Exportar resultados...",
 
-        ["MailboxRules.Eyebrow"] = "REGLAS",
+        ["MailboxRules.Eyebrow"] = "MAIL",
         ["MailboxRules.Title"] = "Reglas buzón",
         ["MailboxRules.Subtitle"] = "Out-of-Office (respuestas automáticas) · Forwarding (reenvío)",
         ["MailboxRules.Identity.Placeholder"] = "UPN o SMTP del buzón",
@@ -565,7 +565,7 @@ public static class L10n
         ["MailboxRules.Calendar.CurrentPermissions"] = "Permisos actuales",
         ["MailboxRules.Calendar.RemoveSelected"] = "Quitar seleccionado",
 
-        ["CertWizard.Eyebrow"] = "CERTIFICADO",
+        ["CertWizard.Eyebrow"] = "HERRAMIENTAS",
         ["CertWizard.Title"] = "Asistente de certificado",
         ["CertWizard.Subtitle"] = "Genera un certificado autofirmado para autenticación de la App Registration",
         ["CertWizard.Field.CommonName"] = "Nombre común (CN)",
@@ -596,7 +596,7 @@ public static class L10n
         ["CertWizard.NextSteps"] = "Próximos pasos",
         ["CertWizard.NextSteps.Body"] = "1. Subir el archivo .cer al App Registration en Azure AD (Certificates & secrets → Certificates).\n2. Anotar el Thumbprint y el Application (client) ID en Settings.\n3. Conceder los permisos delegados/aplicación necesarios (Graph: User.ReadWrite.All, Group.ReadWrite.All, Organization.Read.All, AuditLog.Read.All; Exchange.ManageAsApp).\n4. Volver a Conexión y pulsar Connect.",
 
-        ["Groups.Eyebrow"] = "GRUPOS",
+        ["Groups.Eyebrow"] = "IDENTIDAD",
         ["Groups.Title"] = "Grupos y DLs",
         ["Groups.Subtitle"] = "Buscar · creación masiva CSV",
         ["Groups.Type.Label"] = "Tipo:",
@@ -629,7 +629,7 @@ public static class L10n
         ["Groups.LastResults.Title"] = "Últimos resultados",
         ["Groups.BulkResults.Title"] = "Creación masiva (último lote)",
 
-        ["TenantHealth.Eyebrow"] = "LICENCIAS",
+        ["TenantHealth.Eyebrow"] = "TENANT",
         ["TenantHealth.Title"] = "Licencias del tenant",
         ["TenantHealth.Subtitle"] = "Consumo de SKUs, organización y conteo de usuarios/grupos. Carga automática al conectar.",
         ["TenantHealth.Refresh"] = "Refrescar",
@@ -647,7 +647,7 @@ public static class L10n
         ["TenantHealth.Total.Label"] = "Total: ",
         ["TenantHealth.License.FreeSuffix"] = " libres",
 
-        ["Audit.Eyebrow"] = "AUDITORÍA",
+        ["Audit.Eyebrow"] = "SEGURIDAD",
         ["Audit.Title"] = "Auditoría de identidades",
         ["Audit.Subtitle"] = "Detecta usuarios obsoletos, deshabilitados con licencia y otros hallazgos",
         ["Audit.Section.Scenarios"] = "ESCENARIOS RÁPIDOS",
@@ -735,7 +735,7 @@ public static class L10n
         ["Audit.Fix.PanelTitle"] = "Corrección offboarding",
         ["Audit.Fix.Close"] = "Cerrar",
 
-        ["AuditLog.Eyebrow"] = "REGISTRO",
+        ["AuditLog.Eyebrow"] = "SEGURIDAD",
         ["AuditLog.Title"] = "Audit log",
         ["AuditLog.Subtitle"] = "Acciones registradas por el sink local (Ok/Warn/Error). JSONL por mes en %LOCALAPPDATA%\\Grex365\\audit\\",
         ["AuditLog.Metrics.Title"] = "Métricas del mes",
@@ -1111,7 +1111,7 @@ public static class L10n
         ["Dashboard.Activity.TodayErrors"] = "errors",
         ["Dashboard.Activity.Open"] = "Open log",
 
-        ["Connect.Eyebrow"] = "CONNECTION",
+        ["Connect.Eyebrow"] = "TENANT",
         ["Connect.Title"] = "Connect to Microsoft 365",
         ["Connect.Subtitle"] = "Certificate-based auth against Microsoft Graph and Exchange Online",
         ["Connect.MsGraph"] = "Microsoft Graph",
@@ -1278,7 +1278,7 @@ public static class L10n
         ["Shell.Status.Button.Log.Tooltip"] = "Show/hide bottom log panel (Ctrl+L)",
         ["Shell.Status.Button.Disconnect"] = "Disconnect",
 
-        ["Dashboard.Eyebrow"] = "DASHBOARD",
+        ["Dashboard.Eyebrow"] = "TENANT",
         ["Dashboard.Title"] = "Connection status",
         ["Dashboard.Subtitle"] = "Tenant summary and quick links",
         ["Dashboard.QuickActions"] = "Quick actions",
@@ -1303,7 +1303,7 @@ public static class L10n
         ["Dashboard.LastAudit.Pill.Warn"] = "WARN",
         ["Dashboard.LastAudit.Pill.Info"] = "INFO",
 
-        ["Users.Eyebrow"] = "USERS",
+        ["Users.Eyebrow"] = "IDENTITY",
         ["Users.Title"] = "Users",
         ["Users.Subtitle"] = "Search, view and manage accounts (enable/disable, remove licenses)",
         ["Users.Search.Label"] = "Search",
@@ -1327,7 +1327,7 @@ public static class L10n
         ["Users.Action.AssignLicense"] = "Assign license",
         ["Users.MemberOf"] = "Member of",
 
-        ["UserDetails.Eyebrow"] = "USER DETAIL",
+        ["UserDetails.Eyebrow"] = "IDENTITY",
         ["UserDetails.Close"] = "Close",
         ["UserDetails.Action.ToggleAccount"] = "Enable / Disable",
         ["UserDetails.Action.ToggleAccount.Tooltip"] = "Toggle AccountEnabled for the user",
@@ -1354,7 +1354,7 @@ public static class L10n
         ["UserDetails.Section.Memberships"] = "Memberships",
         ["UserDetails.Memberships.GroupsSuffix"] = " groups",
 
-        ["MailFlow.Eyebrow"] = "MAIL FLOW",
+        ["MailFlow.Eyebrow"] = "MAIL",
         ["MailFlow.Title"] = "Mail flow rules",
         ["MailFlow.Subtitle"] = "Exchange Online transport rules (Get-TransportRule). Read-only in this version.",
         ["MailFlow.Load"] = "Load",
@@ -1366,7 +1366,7 @@ public static class L10n
         ["MailFlow.Column.Name"] = "Name",
         ["MailFlow.Column.Description"] = "Description",
 
-        ["Offboarding.Eyebrow"] = "OFFBOARDING",
+        ["Offboarding.Eyebrow"] = "IDENTITY",
         ["Offboarding.Title"] = "Offboarding",
         ["Offboarding.Subtitle"] = "Disable account, remove licenses and convert mailbox to shared",
         ["Offboarding.Upn.Label"] = "User UPN",
@@ -1417,7 +1417,7 @@ public static class L10n
         ["Offboarding.Log.Title"] = "Log",
         ["Offboarding.Log.Clear"] = "Clear",
 
-        ["DomainCheck.Eyebrow"] = "DOMAIN",
+        ["DomainCheck.Eyebrow"] = "TOOLS",
         ["DomainCheck.Title"] = "Domain check",
         ["DomainCheck.Subtitle"] = "Verifies MX, SPF and DMARC via nslookup (no M365 connection required)",
         ["DomainCheck.Placeholder"] = "contoso.com",
@@ -1427,7 +1427,7 @@ public static class L10n
         ["DomainCheck.Column.Status"] = "Status",
         ["DomainCheck.Column.Value"] = "Value",
 
-        ["PsConsole.Eyebrow"] = "CONSOLE",
+        ["PsConsole.Eyebrow"] = "TOOLS",
         ["PsConsole.Title"] = "PowerShell Console",
         ["PsConsole.Subtitle"] = "Run arbitrary scripts in the shared runspace pool. Useful for diagnostics and one-off commands.",
         ["PsConsole.Warning"] = "No sandbox. Commands run with the privileges of the active session (including EXO and Graph if connected). Use with care.",
@@ -1442,7 +1442,7 @@ public static class L10n
         ["PsConsole.History.Next.Tooltip"] = "Next command (history)",
         ["PsConsole.Output.Title"] = "Output",
 
-        ["Onboarding.Eyebrow"] = "ONBOARDING",
+        ["Onboarding.Eyebrow"] = "IDENTITY",
         ["Onboarding.Title"] = "Onboarding",
         ["Onboarding.Subtitle"] = "Create user · assign licenses · add to groups",
         ["Onboarding.Field.DisplayName"] = "Full name",
@@ -1468,7 +1468,7 @@ public static class L10n
         ["Onboarding.Button.Cancel"] = "Cancel",
         ["Onboarding.Steps.Title"] = "Steps",
 
-        ["SharedMailbox.Eyebrow"] = "MAILBOXES",
+        ["SharedMailbox.Eyebrow"] = "MAIL",
         ["SharedMailbox.Title"] = "Shared mailboxes",
         ["SharedMailbox.Subtitle"] = "SharedMailbox → UserMailbox conversion and permission management",
         ["SharedMailbox.TargetMailbox"] = "Target mailbox",
@@ -1486,7 +1486,7 @@ public static class L10n
         ["SharedMailbox.Button.ImportCsv"] = "Import CSV...",
         ["SharedMailbox.Button.ExportResults"] = "Export results...",
 
-        ["MailboxRules.Eyebrow"] = "RULES",
+        ["MailboxRules.Eyebrow"] = "MAIL",
         ["MailboxRules.Title"] = "Mailbox rules",
         ["MailboxRules.Subtitle"] = "Out-of-Office (auto-replies) · Forwarding",
         ["MailboxRules.Identity.Placeholder"] = "Mailbox UPN or SMTP",
@@ -1509,7 +1509,7 @@ public static class L10n
         ["MailboxRules.Calendar.CurrentPermissions"] = "Current permissions",
         ["MailboxRules.Calendar.RemoveSelected"] = "Remove selected",
 
-        ["CertWizard.Eyebrow"] = "CERTIFICATE",
+        ["CertWizard.Eyebrow"] = "TOOLS",
         ["CertWizard.Title"] = "Certificate wizard",
         ["CertWizard.Subtitle"] = "Generate a self-signed certificate for App Registration authentication",
         ["CertWizard.Field.CommonName"] = "Common name (CN)",
@@ -1540,7 +1540,7 @@ public static class L10n
         ["CertWizard.NextSteps"] = "Next steps",
         ["CertWizard.NextSteps.Body"] = "1. Upload the .cer file to the App Registration in Azure AD (Certificates & secrets → Certificates).\n2. Note the Thumbprint and Application (client) ID in Settings.\n3. Grant the necessary delegated/application permissions (Graph: User.ReadWrite.All, Group.ReadWrite.All, Organization.Read.All, AuditLog.Read.All; Exchange.ManageAsApp).\n4. Go back to Connection and click Connect.",
 
-        ["Groups.Eyebrow"] = "GROUPS",
+        ["Groups.Eyebrow"] = "IDENTITY",
         ["Groups.Title"] = "Groups and DLs",
         ["Groups.Subtitle"] = "Search · bulk CSV creation",
         ["Groups.Type.Label"] = "Type:",
@@ -1573,7 +1573,7 @@ public static class L10n
         ["Groups.LastResults.Title"] = "Last results",
         ["Groups.BulkResults.Title"] = "Bulk creation (last batch)",
 
-        ["TenantHealth.Eyebrow"] = "LICENSES",
+        ["TenantHealth.Eyebrow"] = "TENANT",
         ["TenantHealth.Title"] = "Tenant licenses",
         ["TenantHealth.Subtitle"] = "SKU consumption, organization and user/group counts. Auto-loads on connect.",
         ["TenantHealth.Refresh"] = "Refresh",
@@ -1591,7 +1591,7 @@ public static class L10n
         ["TenantHealth.Total.Label"] = "Total: ",
         ["TenantHealth.License.FreeSuffix"] = " available",
 
-        ["Audit.Eyebrow"] = "AUDIT",
+        ["Audit.Eyebrow"] = "SECURITY",
         ["Audit.Title"] = "Identity audit",
         ["Audit.Subtitle"] = "Detects stale users, disabled-with-license accounts and other findings",
         ["Audit.Section.Scenarios"] = "QUICK SCENARIOS",
@@ -1679,7 +1679,7 @@ public static class L10n
         ["Audit.Fix.PanelTitle"] = "Offboarding fix",
         ["Audit.Fix.Close"] = "Close",
 
-        ["AuditLog.Eyebrow"] = "LOG",
+        ["AuditLog.Eyebrow"] = "SECURITY",
         ["AuditLog.Title"] = "Audit log",
         ["AuditLog.Subtitle"] = "Actions logged by the local sink (Ok/Warn/Error). Monthly JSONL in %LOCALAPPDATA%\\Grex365\\audit\\",
         ["AuditLog.Metrics.Title"] = "Monthly metrics",

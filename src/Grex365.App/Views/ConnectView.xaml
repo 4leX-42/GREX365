@@ -9,13 +9,11 @@
              mc:Ignorable="d">
     <ScrollViewer Style="{StaticResource PageRoot}">
         <StackPanel MaxWidth="900" HorizontalAlignment="Stretch">
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="{l:L10n Key=Connect.Eyebrow}" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="{l:L10n Key=Connect.Title}" Style="{StaticResource PageHeroTitle}" />
-                    <TextBlock Text="{l:L10n Key=Connect.Subtitle}"
-                               Style="{StaticResource PageSubtitleText}" />
-                </StackPanel>
+            <StackPanel Margin="0,0,0,4">
+                <TextBlock Text="{l:L10n Key=Connect.Eyebrow}" Style="{StaticResource EyebrowText}" />
+                <TextBlock Text="{l:L10n Key=Connect.Title}" Style="{StaticResource PageHeroTitle}" />
+                <TextBlock Text="{l:L10n Key=Connect.Subtitle}"
+                           Style="{StaticResource PageSubtitleText}" />
             </StackPanel>
 
             <Border Style="{StaticResource Card}" Margin="0,0,0,16">
