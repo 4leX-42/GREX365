@@ -271,6 +271,9 @@ public static class L10n
         ["Dialog.No"] = "No",
         ["Dialog.Close"] = "Cerrar",
 
+        ["Settings.EnforceTenantLock.Tooltip"] = "Si está activo, GREX365 se niega a operar cuando el tenant conectado no coincide con el dominio esperado. Red de seguridad contra ejecutar cambios en el tenant equivocado.",
+        ["About.DataDir.OpenFailed"] = "No se pudo abrir la carpeta de datos. Comprueba que existe: {0}",
+
         ["CertPicker.Window.Title"] = "Seleccionar certificado",
         ["CertPicker.Column.Subject"] = "Asunto",
         ["CertPicker.Column.Thumbprint"] = "Huella (thumbprint)",
@@ -1214,6 +1217,9 @@ public static class L10n
         ["Dialog.Yes"] = "Yes",
         ["Dialog.No"] = "No",
         ["Dialog.Close"] = "Close",
+
+        ["Settings.EnforceTenantLock.Tooltip"] = "When enabled, GREX365 refuses to operate if the connected tenant does not match the expected domain. Safety net against running changes on the wrong tenant.",
+        ["About.DataDir.OpenFailed"] = "Could not open the data folder. Check that it exists: {0}",
 
         ["CertPicker.Window.Title"] = "Select certificate",
         ["CertPicker.Column.Subject"] = "Subject",

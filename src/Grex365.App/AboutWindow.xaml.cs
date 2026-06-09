@@ -30,12 +30,24 @@ public partial class AboutWindow : FluentWindow
                     FileName = App.DataDirectory,
                     UseShellExecute = true
                 });
+                return;
             }
+            ShowOpenFailed();
         }
         catch
         {
-            // Non-critical.
+            ShowOpenFailed();
         }
+    }
+
+    private void ShowOpenFailed()
+    {
+        _ = new Wpf.Ui.Controls.MessageBox
+        {
+            Title = "GREX365",
+            Content = L10n.Format("About.DataDir.OpenFailed", App.DataDirectory),
+            CloseButtonText = L10n.Get("Dialog.Ok"),
+        }.ShowDialogAsync();
     }
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();

@@ -5,7 +5,7 @@
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
 - Tests: **1436 passing** (xUnit + FluentAssertions) — 587 Core + 849 App
-- Última actualización: 2026-06-05 (sesión · Sprint AR: DLs clásicas, validación en vivo, distribución+Velopack, branding, skeletons, dashboard actividad, CI velopack)
+- Última actualización: 2026-06-09 (sesión · Sprint AS: gran pase de pulido UI — diálogos Fluent, normalización visual completa, headers verticales con categoría, smoke visual dark+light en vivo)
 
 ## Validaciones en vivo — log acumulativo (NO repetir; lab = solo objetos `testeo*`, mutaciones solo con revert)
 
@@ -16,6 +16,35 @@
 | 2026-06-05 | Getters Sprint AP read-only vs **testeo224**: GetAutoReply, GetForwarding, GetCalendarPermissions, GetPermissions, MailFlow.GetRules, Audit.ScanTransportRules | **6/6 OK** tras 3 fixes de bugs reales encontrados (ver Sprint AR commit 2). Shapes JSON del EXO real confirmados |
 | ⏳ pendiente | `ScanExternalForwardingAsync` / `ScanInboxRulesAsync` / `ScanSharedMailboxSignInAsync` (sweeps tenant-wide read-only — mejor desde la UI con tiempo) | mismo patrón de emisión ya validado en ScanTransportRules |
 | ⏳ pendiente | `RemoveFromDistributionGroupsAsync` (mutador — necesita una DL `testeo*` de prueba) | — |
+
+## Sprint AS · 2026-06-09 — Pase integral de pulido UI ("la herramienta está verde")
+
+Auditoría a fondo (3 agentes: consistencia visual / estados UI / shell+i18n) + ejecución en 3 tandas. Build limpio y **849 App tests** verdes en cada tanda.
+
+### Tanda 1 — Diálogos Fluent (commit `feat(ui): unify visual language...`)
+- **`WpfDialogService` reescrito sobre `Wpf.Ui.Controls.MessageBox`** (wpf-ui 4.3.0, API `ShowDialogAsync(bool, ct)` verificada contra el XML doc del paquete): respeta Mica/dark, icono semántico por `DialogIcon` (Warning/Error → `PrimaryButtonAppearance=Danger`), textos `Dialog.Yes/No/Ok` L10n, marshal a UI thread. Adiós MessageBox Win32 gris en todas las confirmaciones destructivas.
+- Verificado: el snackbar global ya existía (`UiLogSink`→`INotifier`→`SnackbarPresenter`; Ok silencioso por preferencia de usuario) y `[RelayCommand]` async ya bloquea reentrada (AsyncRelayCommand) — 2 "gaps" del audit eran falsos, no se tocó.
+
+### Tanda 2 — Normalización visual (14 vistas, 3 agentes paralelos + pase de cards)
+- Títulos inline `FontSize=28 FontWeight=Light` → `PageHeroTitle`; subtítulos ad-hoc → `PageSubtitleText`; roots `Margin=32,28,32,16`/`24` → `22,18,22,14` o `PageRoot` (grid-based NO se envuelven en ScrollViewer — virtualización).
+- **26 cards flat → estilo `Card` canónico** (stroke 1px sutil, mismo look que Dashboard).
+- Colores hex hardcoded → recursos semánticos: Offboarding (badges `#55…` → `BrushSemantic*Soft`, log console `#22C55E/#F59E0B/#EF4444/#3B82F6` → `BrushSemanticOk/Warn/Error/Info`), TenantHealth (`#38BDF8` → `BrandAccentCyan`).
+
+### Tanda 3 — Shell UX + i18n + estados
+- **Headers verticales** (patrón Dashboard/Linear): eyebrow ENCIMA del hero title en 13 vistas; eyebrows ahora muestran la **categoría** de nav (TENANT/IDENTIDAD/MAIL/SEGURIDAD/HERRAMIENTAS) en vez de repetir el título — ES+EN.
+- **CertificatePickerWindow localizada** (título, columnas, botones, error del code-behind) — era la única ventana 100% hardcoded en español.
+- **Ctrl+1..9** quick-nav (índice sobre NavigationItems, ignora disabled); **scrim click-fuera** cierra el drawer de usuario (Border `#28000000` + MouseBinding); Esc ya existía.
+- **Empty state en Audit log** (icono History + "Sin registros" + hint, MultiDataTrigger !IsBusy && Count==0).
+- **Onboarding Run** deshabilitado hasta DisplayName/UPN/password presentes (`NotifyCanExecuteChangedFor`).
+- Tooltip explicativo en checkbox TenantLock (Settings); About "abrir carpeta de datos" ahora avisa con MessageBox Fluent si falla (antes tragaba el error).
+
+### Smoke visual EN VIVO (primera validación gráfica del proyecto)
+App lanzada y navegada vía UIAutomation (sin robar foco), capturas por PrintWindow: Dashboard, Offboarding, Licencias (datos reales del tenant: 3923 users/1566 grupos/29 SKUs, license cards con barras de utilización), Audit log empty state — **dark Y light theme verificados**, render correcto en ambos. Tema del usuario restaurado a dark.
+
+### Pendiente UI menor (anotado, no bloqueante)
+- SearchFilterBox triplicado (TenantHealth/UserDetails/Audit) — extraer control reutilizable si se vuelve a tocar.
+- AutomationProperties.Name para screen readers (botones tienen texto, prioridad baja).
+- Persistencia tamaño/posición de SettingsWindow; animación entre pasos del FirstRunWizard.
 
 ## Sprint AR · 2026-06-05 — Offboarding: DLs clásicas vía EXO + estrategia de distribución
 
