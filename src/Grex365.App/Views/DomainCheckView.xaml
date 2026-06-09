@@ -7,7 +7,7 @@
              xmlns:l="clr-namespace:Grex365.App.Xaml"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
-    <Grid Margin="32,28,32,16">
+    <Grid Margin="22,18,22,14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -17,12 +17,11 @@
 
         <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,4">
             <TextBlock Text="{l:L10n Key=DomainCheck.Eyebrow}" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="{l:L10n Key=DomainCheck.Title}" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
+            <TextBlock Text="{l:L10n Key=DomainCheck.Title}" Style="{StaticResource PageHeroTitle}" VerticalAlignment="Center" />
         </StackPanel>
         <TextBlock Grid.Row="1"
                    Text="{l:L10n Key=DomainCheck.Subtitle}"
-                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                   Margin="0,0,0,16" />
+                   Style="{StaticResource PageSubtitleText}" />
 
         <Grid Grid.Row="2" Margin="0,0,0,16">
             <Grid.ColumnDefinitions>
@@ -54,8 +53,7 @@
                              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}" />
         </Grid>
 
-        <Border Grid.Row="3" CornerRadius="8"
-                Background="{DynamicResource ControlFillColorDefaultBrush}">
+        <Border Grid.Row="3" Style="{StaticResource Card}" Padding="0">
             <DockPanel>
                 <TextBlock DockPanel.Dock="Top"
                            Text="{Binding StatusMessage}"

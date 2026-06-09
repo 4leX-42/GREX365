@@ -474,6 +474,22 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void ToggleLogPanel() => LogPanelVisible = !LogPanelVisible;
 
+    // Ctrl+1..9 desde MainWindow: índice 1-based sobre el orden de NavigationItems
+    // (mismo orden visual del sidebar agrupado). Ignora items deshabilitados.
+    [RelayCommand]
+    private void NavigateToIndex(string? indexText)
+    {
+        if (!int.TryParse(indexText, out var idx) || idx < 1 || idx > NavigationItems.Count)
+        {
+            return;
+        }
+        var item = NavigationItems[idx - 1];
+        if (item.IsEnabled)
+        {
+            SelectedNavigation = item;
+        }
+    }
+
     [RelayCommand]
     private void CloseUserDrawer()
     {

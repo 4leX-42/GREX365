@@ -6,18 +6,16 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:l="clr-namespace:Grex365.App.Xaml"
              mc:Ignorable="d">
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="24" MaxWidth="900" HorizontalAlignment="Left">
+    <ScrollViewer Style="{StaticResource PageRoot}">
+        <StackPanel MaxWidth="900" HorizontalAlignment="Left">
             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
             <TextBlock Text="{l:L10n Key=CertWizard.Eyebrow}" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="{l:L10n Key=CertWizard.Title}" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
+            <TextBlock Text="{l:L10n Key=CertWizard.Title}" Style="{StaticResource PageHeroTitle}" VerticalAlignment="Center" />
         </StackPanel>
             <TextBlock Text="{l:L10n Key=CertWizard.Subtitle}"
-                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                       Margin="0,0,0,16" />
+                       Style="{StaticResource PageSubtitleText}" />
 
-            <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,16">
                 <StackPanel>
                     <TextBlock Text="{l:L10n Key=CertWizard.Field.CommonName}" FontWeight="SemiBold" Margin="0,0,0,4" />
                     <ui:TextBox Text="{Binding CommonName, UpdateSourceTrigger=PropertyChanged}"
@@ -60,8 +58,7 @@
                 </StackPanel>
             </Border>
 
-            <Border CornerRadius="8" Padding="16"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}"
+            <Border Style="{StaticResource Card}" Padding="16"
                     Visibility="{Binding Generated, Converter={StaticResource NullToCollapsedConverter}, FallbackValue=Collapsed}">
                 <StackPanel>
                     <TextBlock Text="{l:L10n Key=CertWizard.Result}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,12" />

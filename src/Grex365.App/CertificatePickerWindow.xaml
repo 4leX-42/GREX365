@@ -4,8 +4,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:l="clr-namespace:Grex365.App.Xaml"
         mc:Ignorable="d"
-        Title="Seleccionar certificado"
+        Title="{l:L10n Key=CertPicker.Window.Title}"
         Height="500" Width="780"
         MinHeight="380" MinWidth="600"
         WindowBackdropType="Mica"
@@ -29,20 +30,20 @@
                   BorderThickness="1">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn Header="Subject"     Width="280" DisplayMemberBinding="{Binding Subject}" />
-                    <GridViewColumn Header="Thumbprint"  Width="200" DisplayMemberBinding="{Binding Thumbprint}" />
-                    <GridViewColumn Header="Válido hasta" Width="120" DisplayMemberBinding="{Binding NotAfter, StringFormat='yyyy-MM-dd'}" />
-                    <GridViewColumn Header="Issuer"      Width="120" DisplayMemberBinding="{Binding Issuer}" />
+                    <GridViewColumn Header="{l:L10n Key=CertPicker.Column.Subject}" Width="280" DisplayMemberBinding="{Binding Subject}" />
+                    <GridViewColumn Header="{l:L10n Key=CertPicker.Column.Thumbprint}" Width="200" DisplayMemberBinding="{Binding Thumbprint}" />
+                    <GridViewColumn Header="{l:L10n Key=CertPicker.Column.ValidUntil}" Width="120" DisplayMemberBinding="{Binding NotAfter, StringFormat='yyyy-MM-dd'}" />
+                    <GridViewColumn Header="{l:L10n Key=CertPicker.Column.Issuer}" Width="120" DisplayMemberBinding="{Binding Issuer}" />
                 </GridView>
             </ListView.View>
         </ListView>
 
         <Border Grid.Row="2" Padding="24,12">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <ui:Button Content="Cancelar"
+                <ui:Button Content="{l:L10n Key=Dialog.Cancel}"
                            Margin="0,0,8,0"
                            Click="Cancel_Click" />
-                <ui:Button Content="Seleccionar"
+                <ui:Button Content="{l:L10n Key=CertPicker.Button.Select}"
                            Appearance="Primary"
                            Click="Select_Click" />
             </StackPanel>

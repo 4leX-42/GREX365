@@ -15,22 +15,22 @@
             <Setter Property="CornerRadius" Value="4" />
             <Setter Property="Padding" Value="6,2" />
             <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Background" Value="#553B82F6" />
+            <Setter Property="Background" Value="{StaticResource BrushSemanticInfoSoft}" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Status}" Value="OK">
-                    <Setter Property="Background" Value="#5522C55E" />
+                    <Setter Property="Background" Value="{StaticResource BrushSemanticOkSoft}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Status}" Value="ERROR">
-                    <Setter Property="Background" Value="#55EF4444" />
+                    <Setter Property="Background" Value="{StaticResource BrushSemanticErrorSoft}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Status}" Value="PENDIENTE">
-                    <Setter Property="Background" Value="#55808080" />
+                    <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
     </UserControl.Resources>
 
-    <Grid Margin="32,28,32,16">
+    <Grid Margin="22,18,22,14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -39,10 +39,10 @@
         <StackPanel Grid.Row="0" Margin="0,0,0,14">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="{l:L10n Key=Offboarding.Eyebrow}" Style="{StaticResource EyebrowText}" />
-                <TextBlock Text="{l:L10n Key=Offboarding.Title}" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
+                <TextBlock Text="{l:L10n Key=Offboarding.Title}" Style="{StaticResource PageHeroTitle}" VerticalAlignment="Center" />
             </StackPanel>
             <TextBlock Text="{l:L10n Key=Offboarding.Subtitle}"
-                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                       Style="{StaticResource PageSubtitleText}" Margin="0" />
         </StackPanel>
 
         <Grid Grid.Row="1">
@@ -55,8 +55,7 @@
             <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,8,0">
                 <StackPanel>
                     <!-- Search (typeahead) -->
-                    <Border CornerRadius="8" Padding="20" Margin="0,0,0,12"
-                            Background="{DynamicResource ControlFillColorDefaultBrush}">
+                    <Border Style="{StaticResource Card}" Padding="20" Margin="0,0,0,12">
                         <StackPanel>
                             <TextBlock Text="{l:L10n Key=Offboarding.Search.Label}" FontWeight="SemiBold" FontSize="18" Margin="0,0,0,8" />
                             <ui:TextBox Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}"
@@ -90,8 +89,7 @@
                     </Border>
 
                     <!-- Candidates -->
-                    <Border CornerRadius="8" Padding="20" Margin="0,0,0,12"
-                            Background="{DynamicResource ControlFillColorDefaultBrush}">
+                    <Border Style="{StaticResource Card}" Padding="20" Margin="0,0,0,12">
                         <StackPanel>
                             <Grid Margin="0,0,0,8">
                                 <Grid.ColumnDefinitions>
@@ -144,8 +142,7 @@
                     </Border>
 
                     <!-- Queue (targets) -->
-                    <Border CornerRadius="8" Padding="20" Margin="0,0,0,12"
-                            Background="{DynamicResource ControlFillColorDefaultBrush}">
+                    <Border Style="{StaticResource Card}" Padding="20" Margin="0,0,0,12">
                         <StackPanel>
                             <TextBlock Text="{l:L10n Key=Offboarding.Targets.Title}" FontWeight="SemiBold" FontSize="18" Margin="0,0,0,8" />
                             <TextBlock Text="{l:L10n Key=Offboarding.Targets.Empty}" FontSize="13"
@@ -200,8 +197,7 @@
                     </Border>
 
                     <!-- Options + run -->
-                    <Border CornerRadius="8" Padding="20"
-                            Background="{DynamicResource ControlFillColorDefaultBrush}">
+                    <Border Style="{StaticResource Card}" Padding="20">
                         <StackPanel>
                             <UniformGrid Columns="2">
                                 <CheckBox Content="{l:L10n Key=Offboarding.Option.Disable}" IsChecked="{Binding DisableAccount}" FontSize="15" Margin="0,0,8,8" />
@@ -253,8 +249,7 @@
             </ScrollViewer>
 
             <!-- RIGHT: live log console -->
-            <Border Grid.Column="1" CornerRadius="8" Margin="8,0,0,0" Padding="0"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <Border Grid.Column="1" Style="{StaticResource Card}" Margin="8,0,0,0" Padding="0">
                 <DockPanel>
                     <Grid DockPanel.Dock="Top" Margin="16,12,12,8">
                         <Grid.ColumnDefinitions>
@@ -270,7 +265,7 @@
                     </Grid>
                     <ListBox x:Name="LogList"
                              ItemsSource="{Binding LiveLog}"
-                             Background="#0D000000"
+                             Background="{DynamicResource ControlFillColorDefaultBrush}"
                              BorderThickness="0"
                              Margin="8,0,8,8"
                              SelectionMode="Extended"
@@ -303,17 +298,17 @@
                                                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding Level}" Value="OK">
-                                                        <Setter Property="Foreground" Value="#22C55E" />
+                                                        <Setter Property="Foreground" Value="{StaticResource BrushSemanticOk}" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Level}" Value="WARN">
-                                                        <Setter Property="Foreground" Value="#F59E0B" />
+                                                        <Setter Property="Foreground" Value="{StaticResource BrushSemanticWarn}" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Level}" Value="ERROR">
-                                                        <Setter Property="Foreground" Value="#EF4444" />
+                                                        <Setter Property="Foreground" Value="{StaticResource BrushSemanticError}" />
                                                         <Setter Property="FontWeight" Value="SemiBold" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Level}" Value="HEADER">
-                                                        <Setter Property="Foreground" Value="#3B82F6" />
+                                                        <Setter Property="Foreground" Value="{StaticResource BrushSemanticInfo}" />
                                                         <Setter Property="FontWeight" Value="Bold" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Level}" Value="DEBUG">

@@ -15,8 +15,7 @@
             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                 <TextBlock Text="{l:L10n Key=PsConsole.Eyebrow}" Style="{StaticResource EyebrowText}" />
             <TextBlock Text="{l:L10n Key=PsConsole.Title}"
-                           FontSize="28"
-                           FontWeight="Light"
+                           Style="{StaticResource PageHeroTitle}"
                            VerticalAlignment="Center" />
             </StackPanel>
             <TextBlock Text="{l:L10n Key=PsConsole.Subtitle}"

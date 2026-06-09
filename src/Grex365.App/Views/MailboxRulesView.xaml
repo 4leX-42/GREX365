@@ -8,21 +8,18 @@
              xmlns:v="clr-namespace:Grex365.App.Views"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="32,28,32,16">
+    <ScrollViewer Style="{StaticResource PageRoot}">
+        <StackPanel>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                 <TextBlock Text="{l:L10n Key=MailboxRules.Eyebrow}" Style="{StaticResource EyebrowText}" />
             <TextBlock Text="{l:L10n Key=MailboxRules.Title}"
-                           FontSize="28"
-                           FontWeight="Light"
+                           Style="{StaticResource PageHeroTitle}"
                            VerticalAlignment="Center" />
             </StackPanel>
             <TextBlock Text="{l:L10n Key=MailboxRules.Subtitle}"
-                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                       Margin="0,0,0,16" />
+                       Style="{StaticResource PageSubtitleText}" />
 
-            <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,16">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -44,8 +41,7 @@
                 </Grid>
             </Border>
 
-            <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}"
+            <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,16"
                     Visibility="{Binding RulesLoaded, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">
                 <StackPanel>
                     <TextBlock Text="{l:L10n Key=MailboxRules.AutoReply.Title}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
@@ -101,8 +97,7 @@
                 </StackPanel>
             </Border>
 
-            <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}"
+            <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,16"
                     Visibility="{Binding RulesLoaded, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">
                 <StackPanel>
                     <TextBlock Text="{l:L10n Key=MailboxRules.Forwarding.Title}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
@@ -134,8 +129,7 @@
                 </StackPanel>
             </Border>
 
-            <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}"
+            <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,16"
                     Visibility="{Binding RulesLoaded, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">
                 <StackPanel>
                     <TextBlock Text="{l:L10n Key=MailboxRules.Calendar.Title}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />

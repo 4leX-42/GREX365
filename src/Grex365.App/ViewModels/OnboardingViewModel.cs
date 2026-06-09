@@ -18,10 +18,19 @@ public sealed partial class OnboardingViewModel : ObservableObject
     private readonly IConnectionStateMonitor? _monitor;
     private CancellationTokenSource? _cts;
 
-    [ObservableProperty] private string _displayName = string.Empty;
-    [ObservableProperty] private string _upn = string.Empty;
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RunCommand))]
+    private string _displayName = string.Empty;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RunCommand))]
+    private string _upn = string.Empty;
+
     [ObservableProperty] private string _mailNickname = string.Empty;
-    [ObservableProperty] private string _initialPassword = string.Empty;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RunCommand))]
+    private string _initialPassword = string.Empty;
     [ObservableProperty] private string _usageLocation = "ES";
     [ObservableProperty] private bool _forceChangePassword = true;
     [ObservableProperty] private string _groupsText = string.Empty;
@@ -231,7 +240,13 @@ public sealed partial class OnboardingViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanCancel))]
     private void Cancel() => _cts?.Cancel();
 
-    private bool CanRun() => !IsBusy;
+    // Run exige los campos mínimos del alta (el validador de Core re-valida en el servicio;
+    // esto solo evita lanzar un run que fallará seguro y da feedback inmediato en el botón).
+    private bool CanRun() =>
+        !IsBusy
+        && !string.IsNullOrWhiteSpace(DisplayName)
+        && !string.IsNullOrWhiteSpace(Upn)
+        && !string.IsNullOrWhiteSpace(InitialPassword);
     private bool CanCancel() => IsBusy;
 
     private void EnsureToken()

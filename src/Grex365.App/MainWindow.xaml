@@ -22,6 +22,15 @@
         <KeyBinding Key="OemComma" Modifiers="Control" Command="{Binding OpenSettingsCommand}" />
         <KeyBinding Key="F1" Command="{Binding OpenAboutCommand}" />
         <KeyBinding Key="L" Modifiers="Control" Command="{Binding ToggleLogPanelCommand}" />
+        <KeyBinding Key="D1" Modifiers="Control" Command="{Binding NavigateToIndexCommand}" CommandParameter="1" />
+        <KeyBinding Key="D2" Modifiers="Control" Command="{Binding NavigateToIndexCommand}" CommandParameter="2" />
+        <KeyBinding Key="D3" Modifiers="Control" Command="{Binding NavigateToIndexCommand}" CommandParameter="3" />
+        <KeyBinding Key="D4" Modifiers="Control" Command="{Binding NavigateToIndexCommand}" CommandParameter="4" />
+        <KeyBinding Key="D5" Modifiers="Control" Command="{Binding NavigateToIndexCommand}" CommandParameter="5" />
+        <KeyBinding Key="D6" Modifiers="Control" Command="{Binding NavigateToIndexCommand}" CommandParameter="6" />
+        <KeyBinding Key="D7" Modifiers="Control" Command="{Binding NavigateToIndexCommand}" CommandParameter="7" />
+        <KeyBinding Key="D8" Modifiers="Control" Command="{Binding NavigateToIndexCommand}" CommandParameter="8" />
+        <KeyBinding Key="D9" Modifiers="Control" Command="{Binding NavigateToIndexCommand}" CommandParameter="9" />
     </ui:FluentWindow.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
@@ -421,6 +430,17 @@
                               HorizontalAlignment="Right"
                               VerticalAlignment="Bottom"
                               Margin="0,0,16,24" />
+
+        <!-- Scrim: click fuera del drawer lo cierra (patrón overlay estándar). Solo
+             intercepta input mientras el drawer está abierto. -->
+        <Border Grid.Row="1"
+                Background="#28000000"
+                Panel.ZIndex="998"
+                Visibility="{Binding UserDrawerOpen, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">
+            <Border.InputBindings>
+                <MouseBinding MouseAction="LeftClick" Command="{Binding CloseUserDrawerCommand}" />
+            </Border.InputBindings>
+        </Border>
 
         <!-- User details drawer overlay (animated slide-in from right) -->
         <Border Grid.Row="1"

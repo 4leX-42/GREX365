@@ -12,9 +12,9 @@
             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock Text="{l:L10n Key=Connect.Eyebrow}" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="{l:L10n Key=Connect.Title}" FontSize="28" FontWeight="Light" />
+            <TextBlock Text="{l:L10n Key=Connect.Title}" Style="{StaticResource PageHeroTitle}" />
                     <TextBlock Text="{l:L10n Key=Connect.Subtitle}"
-                               FontSize="12" Opacity="0.6" Margin="0,2,0,16" />
+                               Style="{StaticResource PageSubtitleText}" />
                 </StackPanel>
             </StackPanel>
 

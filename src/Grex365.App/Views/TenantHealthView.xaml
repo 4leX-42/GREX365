@@ -7,7 +7,7 @@
              xmlns:l="clr-namespace:Grex365.App.Xaml"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
-    <Grid Margin="32,28,32,16">
+    <Grid Margin="22,18,22,14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -19,8 +19,7 @@
         <StackPanel Grid.Row="0" Margin="0,0,0,4">
             <TextBlock Text="{l:L10n Key=TenantHealth.Eyebrow}" Style="{StaticResource EyebrowText}" />
             <TextBlock Text="{l:L10n Key=TenantHealth.Title}"
-                       FontSize="28"
-                       FontWeight="Light"
+                       Style="{StaticResource PageHeroTitle}"
                        VerticalAlignment="Center" />
         </StackPanel>
         <TextBlock Grid.Row="1" Style="{StaticResource PageSubtitleText}"
@@ -263,7 +262,7 @@
                                             Margin="0,10,0,0"
                                             CornerRadius="1"
                                             HorizontalAlignment="Stretch"
-                                            Background="#38BDF8"
+                                            Background="{StaticResource BrandAccentCyan}"
                                             Visibility="{Binding IsPremium, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}" />
                                   </StackPanel>
                                 </Border>

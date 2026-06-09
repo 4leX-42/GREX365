@@ -8,18 +8,16 @@
              xmlns:v="clr-namespace:Grex365.App.Views"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="32,28,32,16">
+    <ScrollViewer Style="{StaticResource PageRoot}">
+        <StackPanel>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                 <TextBlock Text="{l:L10n Key=Onboarding.Eyebrow}" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="{l:L10n Key=Onboarding.Title}" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
+            <TextBlock Text="{l:L10n Key=Onboarding.Title}" Style="{StaticResource PageHeroTitle}" VerticalAlignment="Center" />
             </StackPanel>
             <TextBlock Text="{l:L10n Key=Onboarding.Subtitle}"
-                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                       Margin="0,0,0,16" />
+                       Style="{StaticResource PageSubtitleText}" />
 
-            <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,16">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="160" />
@@ -117,8 +115,7 @@
                 </Grid>
             </Border>
 
-            <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,16">
                 <StackPanel Orientation="Horizontal">
                     <ui:Button Content="{l:L10n Key=Onboarding.Button.Run}"
                                Appearance="Primary"
@@ -137,8 +134,7 @@
                 </StackPanel>
             </Border>
 
-            <Border CornerRadius="8" Padding="16"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}"
+            <Border Style="{StaticResource Card}" Padding="16"
                     Visibility="{Binding Steps.Count, Converter={StaticResource CountToVisibilityConverter}, FallbackValue=Collapsed}">
                 <StackPanel>
                     <TextBlock Text="{l:L10n Key=Onboarding.Steps.Title}" FontWeight="SemiBold" Margin="0,0,0,8" />

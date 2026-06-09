@@ -31,7 +31,7 @@ public partial class CertificatePickerWindow : FluentWindow
         }
         catch (System.Exception ex)
         {
-            System.Windows.MessageBox.Show(ex.Message, "Error al leer Cert:\\CurrentUser\\My",
+            System.Windows.MessageBox.Show(ex.Message, L10n.Get("CertPicker.Error.Title"),
                 System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
     }

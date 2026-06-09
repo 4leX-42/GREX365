@@ -8,18 +8,16 @@
              xmlns:v="clr-namespace:Grex365.App.Views"
              xmlns:models="clr-namespace:Grex365.Core.Models;assembly=Grex365.Core"
              mc:Ignorable="d">
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="32,28,32,16">
+    <ScrollViewer Style="{StaticResource PageRoot}">
+        <StackPanel>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                 <TextBlock Text="{l:L10n Key=SharedMailbox.Eyebrow}" Style="{StaticResource EyebrowText}" />
-            <TextBlock Text="{l:L10n Key=SharedMailbox.Title}" FontSize="28" FontWeight="Light" VerticalAlignment="Center" />
+            <TextBlock Text="{l:L10n Key=SharedMailbox.Title}" Style="{StaticResource PageHeroTitle}" VerticalAlignment="Center" />
             </StackPanel>
             <TextBlock Text="{l:L10n Key=SharedMailbox.Subtitle}"
-                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                       Margin="0,0,0,16" />
+                       Style="{StaticResource PageSubtitleText}" />
 
-            <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,16">
                 <StackPanel>
                     <TextBlock Text="{l:L10n Key=SharedMailbox.TargetMailbox}" FontWeight="SemiBold" Margin="0,0,0,4" />
                     <Grid Margin="0,0,0,8">
@@ -76,8 +74,7 @@
                 </StackPanel>
             </Border>
 
-            <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}"
+            <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,16"
                     Visibility="{Binding CurrentPermissions.Count, Converter={StaticResource CountToVisibilityConverter}, FallbackValue=Collapsed}">
                 <StackPanel>
                     <TextBlock Text="{l:L10n Key=SharedMailbox.CurrentPermissions}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
@@ -100,8 +97,7 @@
                 </StackPanel>
             </Border>
 
-            <Border CornerRadius="8" Padding="16" Margin="0,0,0,16"
-                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,16">
                 <StackPanel>
                     <TextBlock Text="{l:L10n Key=SharedMailbox.ApplyPermissions}" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,8" />
                     <Grid Margin="0,0,0,8"
