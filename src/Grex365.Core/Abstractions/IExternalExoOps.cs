@@ -43,6 +43,15 @@ public interface IExternalExoOps
         IProgress<LogEntry>? progress = null,
         CancellationToken cancellationToken = default);
 
+    // Enables litigation hold on the mailbox (Set-Mailbox -LitigationHoldEnabled $true), with an
+    // optional duration in days (null = indefinite). Idempotent: already-on-hold reports a note
+    // instead of failing. Requires Exchange Online Plan 2 / archiving add-on on the mailbox.
+    Task<string> SetLitigationHoldAsync(
+        string identity,
+        int? durationDays = null,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default);
+
     // Grants a delegate Full Access (AutoMapping off) and, optionally, Send As on the mailbox.
     // Runs via external pwsh — the in-proc EXO path trips the GetResponseHeader bug. Returns a note.
     Task<string> GrantDelegateAsync(

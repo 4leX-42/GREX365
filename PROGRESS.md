@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1436 passing** (xUnit + FluentAssertions) — 587 Core + 849 App
-- Última actualización: 2026-06-09 (sesión · Sprint AS: gran pase de pulido UI — diálogos Fluent, normalización visual completa, headers verticales con categoría, smoke visual dark+light en vivo)
+- Tests: **1446 passing** (xUnit + FluentAssertions) — 593 Core + 853 App
+- Última actualización: 2026-06-12 (sesión · Sprint AT: litigation hold como acción de offboarding — camino inactive mailbox completo con gates de licencia)
 
 ## Validaciones en vivo — log acumulativo (NO repetir; lab = solo objetos `testeo*`, mutaciones solo con revert)
 
@@ -16,6 +16,18 @@
 | 2026-06-05 | Getters Sprint AP read-only vs **testeo224**: GetAutoReply, GetForwarding, GetCalendarPermissions, GetPermissions, MailFlow.GetRules, Audit.ScanTransportRules | **6/6 OK** tras 3 fixes de bugs reales encontrados (ver Sprint AR commit 2). Shapes JSON del EXO real confirmados |
 | ⏳ pendiente | `ScanExternalForwardingAsync` / `ScanInboxRulesAsync` / `ScanSharedMailboxSignInAsync` (sweeps tenant-wide read-only — mejor desde la UI con tiempo) | mismo patrón de emisión ya validado en ScanTransportRules |
 | ⏳ pendiente | `RemoveFromDistributionGroupsAsync` (mutador — necesita una DL `testeo*` de prueba) | — |
+
+## Sprint AT · 2026-06-12 — Litigation hold como acción de offboarding (camino inactive mailbox)
+
+Hasta ahora el hold solo se **detectaba** (pre-check + gate que bloquea quitar licencia si `willBeShared && hasHold`). Ahora también se puede **activar** desde el offboarding — el camino de retención legal soportado por MS: hold mientras el buzón sigue licenciado → quitar licencia SIN convertir a compartido → al borrar el usuario el buzón pasa a **inactive mailbox** y los datos se retienen sin coste de licencia.
+
+- **`IExternalExoOps.SetLitigationHoldAsync(identity, durationDays?)`** — `Set-Mailbox -LitigationHoldEnabled $true [-LitigationHoldDuration N] -Confirm:$false` vía pwsh externo. Idempotente en el body PS (re-lee `LitigationHoldEnabled` y reporta "ya estaba activo" sin mutar). Duración int validada (nunca texto de usuario interpolado).
+- **`OffboardingOptions`**: `EnableLitigationHold` + `LitigationHoldDays` (null = indefinido).
+- **`OffboardingService` paso 1b** (tras deshabilitar, ANTES de convertir/quitar licencias — el hold necesita el entitlement presente): OMITIDO si no hay EXO externo / no hay buzón / ya tiene hold; SIMULADO en dry-run; ERROR con hint de remediación si falla (match "licen" → "requiere EXO Plan 2 o add-on Exchange Online Archiving").
+- **Gates de licencia nuevos**: (1) hold solicitado y fallido → licencias OMITIDO + `success=false` (quitarla arrancaría el reloj de 30 días sobre datos que se querían retener); (2) el gate shared+hold existente ahora ve también el hold recién activado (`holdActive = hasHold || holdJustEnabled`) y su mensaje explica el camino correcto (hold + quitar licencia sin convertir). Hold pre-existente o recién puesto SIN convertir → licencias se quitan con normalidad (ese es el objetivo).
+- **UI**: checkbox "Activar Litigation Hold (retención legal)" + campo días (vacío = indefinido; texto no numérico bloquea el run con mensaje — coerción silenciosa a indefinido sobre-retendría) + hint explicando el camino inactive mailbox. Cuenta como acción seleccionable por sí sola (run de solo-retención válido). ES+EN.
+- Tests: **+6 Core** (orden hold→licencias con duración, idempotente ya-activo, fallo→gate licencias, hold+convert→gate shared, dry-run, sin buzón→no dispara gate) **+4 App** (días inválidos bloquea, días/flag fluyen a options, vacío=indefinido, hold-solo es acción suficiente). Total **1446** (593 Core + 853 App).
+- ⏳ Por validar en vivo (mutador — necesita buzón `testeo*` con EXO Plan 2 o add-on; el hold es reversible con `-LitigationHoldEnabled $false`): shape real del `Set-Mailbox` + mensaje de error real sin entitlement (para afinar el match del hint).
 
 ## Sprint AS · 2026-06-09 — Pase integral de pulido UI ("la herramienta está verde")
 

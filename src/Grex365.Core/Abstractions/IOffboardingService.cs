@@ -21,7 +21,14 @@ public sealed record OffboardingOptions(
     string? DelegateMailboxTo = null,
     // Remove the user from all groups / distribution lists (best-effort, via Graph). Dynamic,
     // on-prem-synced and built-in groups can't be removed and are reported, not failed.
-    bool RemoveFromGroups = false);
+    bool RemoveFromGroups = false,
+    // Enable litigation hold on the mailbox BEFORE any license removal (the hold needs the
+    // EXO Plan 2 / archiving add-on entitlement present when it's applied). This is the
+    // inactive-mailbox path: hold + later license removal / user deletion retains the data
+    // license-free. If the hold is requested but fails, license removal is gated off.
+    bool EnableLitigationHold = false,
+    // Optional hold duration in days; null = indefinite (until explicitly removed).
+    int? LitigationHoldDays = null);
 
 public interface IOffboardingService
 {

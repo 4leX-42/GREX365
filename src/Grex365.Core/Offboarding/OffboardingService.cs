@@ -142,13 +142,66 @@ public sealed class OffboardingService : IOffboardingService
             }
         }
 
+        // EXO is reachable (external ops wired) but reported no readable mailbox → the user has
+        // no EXO mailbox; skip the mailbox steps rather than erroring on each one.
+        var noMailbox = facts is null && _externalExo is not null;
+
+        // ---- Step 1b: litigation hold (legal retention / inactive-mailbox path) ----
+        // Applied BEFORE convert/license-removal: the hold needs the mailbox still entitled
+        // (EXO Plan 2 / archiving add-on) when it's set. With the hold on, removing the license
+        // and later deleting the user turns the mailbox into an inactive mailbox — the data is
+        // retained license-free. A requested-but-failed hold gates license removal off below.
+        var holdRequested = options.EnableLitigationHold;
+        var holdSucceeded = false;
+        if (holdRequested)
+        {
+            Running("Litigation Hold");
+            if (_externalExo is null)
+            {
+                Done("Litigation Hold", "OMITIDO", "requiere Exchange Online externo (no configurado)");
+            }
+            else if (noMailbox)
+            {
+                Done("Litigation Hold", "OMITIDO", "el usuario no tiene buzón en Exchange Online");
+            }
+            else if (facts?.LitigationHoldEnabled == true)
+            {
+                holdSucceeded = true;
+                Done("Litigation Hold", "OMITIDO", "el buzón ya tiene litigation hold activo");
+            }
+            else if (dry)
+            {
+                holdSucceeded = true;
+                Done("Litigation Hold", "SIMULADO", options.LitigationHoldDays is { } d
+                    ? $"se activaría litigation hold ({d} días)"
+                    : "se activaría litigation hold (indefinido)");
+            }
+            else
+            {
+                try
+                {
+                    var note = await _externalExo.SetLitigationHoldAsync(
+                        upn, options.LitigationHoldDays, progress, cancellationToken).ConfigureAwait(false);
+                    holdSucceeded = true;
+                    Done("Litigation Hold", "OK", note);
+                }
+                catch (Exception ex)
+                {
+                    // The most common failure is entitlement: litigation hold needs EXO Plan 2
+                    // or the Exchange Online Archiving add-on. Surface the remediation inline.
+                    var hint = ex.Message.Contains("licen", StringComparison.OrdinalIgnoreCase)
+                        ? " — litigation hold requiere Exchange Online Plan 2 o el add-on Exchange Online Archiving"
+                        : "";
+                    Done("Litigation Hold", "ERROR", ex.Message + hint);
+                    success = false;
+                }
+            }
+        }
+
         // ---- Step 2: convert mailbox to shared ----
         // The mailbox MUST be converted while still licensed; removing the license first starts
         // a 30-day deletion clock and hides the convert option. So convert before removing
         // licenses, and skip license removal if conversion failed (gate below).
-        // EXO is reachable (external ops wired) but reported no readable mailbox → the user has
-        // no EXO mailbox; skip the mailbox steps rather than erroring on each one.
-        var noMailbox = facts is null && _externalExo is not null;
 
         var convertRequested = options.ConvertMailboxToShared;
         var convertSucceeded = false;
@@ -206,10 +259,21 @@ public sealed class OffboardingService : IOffboardingService
             // Whether the mailbox will end up retained as shared (and therefore unlicensed).
             var willBeShared = alreadyShared || (convertRequested && convertSucceeded);
 
+            // A hold that exists or was just enabled this run. Removing the license on a USER
+            // mailbox with a hold is the supported inactive-mailbox path; on a SHARED mailbox a
+            // hold still requires a license, so that combination stays gated below.
+            var holdActive = hasHold || (holdRequested && holdSucceeded);
+
             // Safety gates: never strip the license when doing so would either strand the
             // mailbox for deletion or leave a non-compliant unlicensed mailbox.
             string? block = null;
-            if (convertRequested && !convertSucceeded && !noMailbox)
+            if (holdRequested && !holdSucceeded && !noMailbox)
+            {
+                // The operator asked for retention and it didn't take — stripping the license
+                // now would start the 30-day deletion clock on data they meant to keep.
+                block = "El litigation hold solicitado no se aplicó; no se quitan licencias para no perder los datos que se querían retener.";
+            }
+            else if (convertRequested && !convertSucceeded && !noMailbox)
             {
                 // Convert was attempted on an existing mailbox and didn't take — stripping the
                 // license now would schedule that mailbox for deletion.
@@ -219,9 +283,9 @@ public sealed class OffboardingService : IOffboardingService
             {
                 block = $"El buzón supera 50 GB ({facts!.TotalItemSizeGb:N1} GB): un buzón compartido sin licencia no puede superar ese límite. No se quitan licencias (requiere Exchange Online Plan 2).";
             }
-            else if (willBeShared && hasHold)
+            else if (willBeShared && holdActive)
             {
-                block = "El buzón tiene un hold activo (litigation/in-place): conservarlo requiere licencia. No se quitan licencias; valora un buzón inactivo (inactive mailbox).";
+                block = "El buzón tiene un hold activo (litigation/in-place): conservarlo como compartido requiere licencia. No se quitan licencias; para retención sin licencia usa el camino de buzón inactivo (hold + quitar licencia SIN convertir a compartido).";
             }
 
             if (block is not null)

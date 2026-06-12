@@ -280,4 +280,83 @@ public class OffboardingViewModelTests
             It.IsAny<IProgress<OffboardingStep>>(),
             It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    // ---- litigation hold ----
+
+    // Non-numeric duration must block the run loudly — coercing it to "indefinite" would
+    // silently over-retain.
+    [Fact]
+    public async Task LitigationHold_InvalidDays_BlocksRun()
+    {
+        var h = new Harness();
+        h.Vm.Upn = "jane@a";
+        h.Vm.EnableLitigationHold = true;
+        h.Vm.LitigationHoldDays = "siete años";
+
+        await h.Vm.RunCommand.ExecuteAsync(null);
+
+        h.Vm.StatusMessage.Should().Contain("litigation hold");
+        h.Dialogs.Confirmations.Should().BeEmpty();
+        h.Service.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task LitigationHold_DaysAndFlag_FlowIntoOptions()
+    {
+        var h = new Harness();
+        h.Vm.Upn = "jane@a";
+        h.Vm.EnableLitigationHold = true;
+        h.Vm.LitigationHoldDays = " 2555 ";
+        h.Dialogs.ConfirmResult = true;
+        h.StubRunOk();
+
+        await h.Vm.RunCommand.ExecuteAsync(null);
+
+        h.Service.Verify(s => s.RunAsync(
+            "jane@a",
+            It.Is<OffboardingOptions>(o => o.EnableLitigationHold && o.LitigationHoldDays == 2555),
+            It.IsAny<IProgress<LogEntry>>(),
+            It.IsAny<IProgress<OffboardingStep>>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task LitigationHold_EmptyDays_IsIndefinite()
+    {
+        var h = new Harness();
+        h.Vm.Upn = "jane@a";
+        h.Vm.EnableLitigationHold = true;
+        h.Vm.LitigationHoldDays = "";
+        h.Dialogs.ConfirmResult = true;
+        h.StubRunOk();
+
+        await h.Vm.RunCommand.ExecuteAsync(null);
+
+        h.Service.Verify(s => s.RunAsync(
+            "jane@a",
+            It.Is<OffboardingOptions>(o => o.EnableLitigationHold && o.LitigationHoldDays == null),
+            It.IsAny<IProgress<LogEntry>>(),
+            It.IsAny<IProgress<OffboardingStep>>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // Litigation hold alone counts as a selected action (a retention-only run is valid).
+    [Fact]
+    public async Task LitigationHold_OnlyAction_IsEnoughToRun()
+    {
+        var h = new Harness();
+        h.Vm.Upn = "jane@a";
+        h.Vm.DisableAccount = false;
+        h.Vm.RemoveLicenses = false;
+        h.Vm.ConvertMailboxToShared = false;
+        h.Vm.RemoveFromGroups = false;
+        h.Vm.EnableLitigationHold = true;
+        h.Dialogs.ConfirmResult = true;
+        h.StubRunOk();
+
+        await h.Vm.RunCommand.ExecuteAsync(null);
+
+        h.Service.Verify(s => s.RunAsync("jane@a", It.Is<OffboardingOptions>(o => o.EnableLitigationHold),
+            It.IsAny<IProgress<LogEntry>>(), It.IsAny<IProgress<OffboardingStep>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

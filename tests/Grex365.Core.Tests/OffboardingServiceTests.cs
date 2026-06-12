@@ -539,4 +539,131 @@ public class OffboardingServiceTests
     [InlineData(null, false)]
     public void IsExoManagedGroup_RoutesByKind(string? kind, bool expected) =>
         OffboardingService.IsExoManagedGroup(kind).Should().Be(expected);
+
+    // ---- litigation hold (inactive-mailbox retention path) ----
+
+    // Hold + license removal WITHOUT converting to shared is the supported inactive-mailbox
+    // path: the hold is applied while the mailbox is still licensed, then the license goes.
+    [Fact]
+    public async Task LitigationHold_Enabled_AppliedBeforeLicenseRemoval_WithDuration()
+    {
+        var users = UsersOk();
+        var exo = ExoWithFacts(new MailboxInfo("u@a", "U", "u@a", "UserMailbox"));
+        var order = new List<string>();
+        exo.Setup(e => e.SetLitigationHoldAsync("jane@a", 2555, It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .Callback(() => order.Add("hold"))
+            .ReturnsAsync("LitigationHoldEnabled=true (2555 dias)");
+        users.Setup(u => u.RemoveAllLicensesAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .Callback(() => order.Add("licenses"))
+            .Returns(Task.CompletedTask);
+        var sut = new OffboardingService(users.Object, MailboxOk().Object, exo.Object) { VerifyPollDelay = TimeSpan.Zero };
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(
+            DisableAccount: false, RemoveLicenses: true, ConvertMailboxToShared: false,
+            EnableLitigationHold: true, LitigationHoldDays: 2555));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name == "Litigation Hold" && s.Status == "OK");
+        r.Steps.Should().Contain(s => s.Name.Contains("Quitar licencias") && s.Status == "OK");
+        order.Should().Equal("hold", "licenses");
+    }
+
+    // Idempotent: an already-on-hold mailbox reports OMITIDO and still counts as retained,
+    // so license removal proceeds (inactive-mailbox path).
+    [Fact]
+    public async Task LitigationHold_AlreadyOn_SkipsAndStillRemovesLicenses()
+    {
+        var users = UsersOk();
+        var exo = ExoWithFacts(new MailboxInfo("u@a", "U", "u@a", "UserMailbox", LitigationHoldEnabled: true));
+        var sut = new OffboardingService(users.Object, MailboxOk().Object, exo.Object) { VerifyPollDelay = TimeSpan.Zero };
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(
+            DisableAccount: false, RemoveLicenses: true, ConvertMailboxToShared: false,
+            EnableLitigationHold: true));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name == "Litigation Hold" && s.Status == "OMITIDO" && s.Detail.Contains("ya tiene"));
+        exo.Verify(e => e.SetLitigationHoldAsync(It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+        users.Verify(u => u.RemoveAllLicensesAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // Safety gate: the operator asked for retention and the hold failed — stripping the
+    // license would start the 30-day deletion clock on data they meant to keep.
+    [Fact]
+    public async Task LitigationHold_Fails_BlocksLicenseRemoval()
+    {
+        var users = UsersOk();
+        var exo = ExoWithFacts(new MailboxInfo("u@a", "U", "u@a", "UserMailbox"));
+        exo.Setup(e => e.SetLitigationHoldAsync(It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("the mailbox license does not permit holds"));
+        var sut = new OffboardingService(users.Object, MailboxOk().Object, exo.Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(
+            DisableAccount: false, RemoveLicenses: true, ConvertMailboxToShared: false,
+            EnableLitigationHold: true));
+
+        r.Success.Should().BeFalse();
+        r.Steps.Should().Contain(s => s.Name == "Litigation Hold" && s.Status == "ERROR" && s.Detail.Contains("Plan 2"));
+        r.Steps.Should().Contain(s => s.Name.Contains("Quitar licencias") && s.Status == "OMITIDO" && s.Detail.Contains("hold"));
+        users.Verify(u => u.RemoveAllLicensesAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // Hold enabled this run + convert to shared: a shared mailbox with a hold still needs a
+    // license, so the existing shared+hold gate must also see the just-enabled hold.
+    [Fact]
+    public async Task LitigationHold_JustEnabled_PlusConvertShared_BlocksLicenseRemoval()
+    {
+        var users = UsersOk();
+        var exo = ExoWithFacts(new MailboxInfo("u@a", "U", "u@a", "UserMailbox"));
+        exo.Setup(e => e.SetLitigationHoldAsync(It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("LitigationHoldEnabled=true (indefinido)");
+        var sut = new OffboardingService(users.Object, MailboxOk().Object, exo.Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(
+            DisableAccount: false, RemoveLicenses: true, ConvertMailboxToShared: true,
+            EnableLitigationHold: true));
+
+        r.Success.Should().BeFalse();
+        r.Steps.Should().Contain(s => s.Name == "Litigation Hold" && s.Status == "OK");
+        r.Steps.Should().Contain(s => s.Name.Contains("Quitar licencias") && s.Status == "OMITIDO" && s.Detail.Contains("hold"));
+        users.Verify(u => u.RemoveAllLicensesAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // Dry-run simulates the hold (no EXO mutation) and the license step stays simulated too.
+    [Fact]
+    public async Task LitigationHold_DryRun_Simulated()
+    {
+        var users = UsersOk();
+        var exo = ExoWithFacts(new MailboxInfo("u@a", "U", "u@a", "UserMailbox"));
+        var sut = new OffboardingService(users.Object, MailboxOk().Object, exo.Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(
+            DisableAccount: false, RemoveLicenses: true, ConvertMailboxToShared: false,
+            DryRun: true, EnableLitigationHold: true, LitigationHoldDays: 365));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name == "Litigation Hold" && s.Status == "SIMULADO" && s.Detail.Contains("365"));
+        exo.Verify(e => e.SetLitigationHoldAsync(It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+        users.Verify(u => u.RemoveAllLicensesAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // No mailbox in EXO → the hold step is skipped, and the requested-but-failed gate must
+    // NOT fire (there is no data to retain); licenses are removed normally.
+    [Fact]
+    public async Task LitigationHold_NoMailbox_SkippedAndLicensesStillRemoved()
+    {
+        var users = UsersOk();
+        var exo = new Mock<IExternalExoOps>();
+        exo.Setup(x => x.GetMailboxFactsAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MailboxInfo?)null);
+        var sut = new OffboardingService(users.Object, MailboxOk().Object, exo.Object) { VerifyPollDelay = TimeSpan.Zero };
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(
+            DisableAccount: false, RemoveLicenses: true, ConvertMailboxToShared: false,
+            EnableLitigationHold: true));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name == "Litigation Hold" && s.Status == "OMITIDO" && s.Detail.Contains("no tiene buzón"));
+        users.Verify(u => u.RemoveAllLicensesAsync(It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

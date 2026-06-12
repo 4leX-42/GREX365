@@ -160,6 +160,29 @@ public sealed class ExternalExoOps : IExternalExoOps
         return ParseNote(json) ?? "aplicado";
     }
 
+    public async Task<string> SetLitigationHoldAsync(
+        string identity,
+        int? durationDays = null,
+        IProgress<LogEntry>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        // durationDays is a validated int (never user text) — safe to interpolate directly.
+        var durationArg = durationDays is { } d ? $" -LitigationHoldDuration {d}" : "";
+        var body = $$"""
+            $id = {{Lit(identity)}}
+            $m = Get-Mailbox -Identity $id -ErrorAction Stop
+            if ([bool]$m.LitigationHoldEnabled) {
+                $note = 'litigation hold ya estaba activo'
+            } else {
+                Set-Mailbox -Identity $id -LitigationHoldEnabled $true{{durationArg}} -Confirm:$false -ErrorAction Stop
+                $note = 'LitigationHoldEnabled=true{{(durationDays is { } dd ? $" ({dd} dias)" : " (indefinido)")}}'
+            }
+            Write-Output ('{{JsonMarker}}' + (([PSCustomObject]@{ Note = $note }) | ConvertTo-Json -Compress))
+            """;
+        var json = await _runner.RunAsync(body, progress, cancellationToken).ConfigureAwait(false);
+        return ParseNote(json) ?? "aplicado";
+    }
+
     public async Task<string> GrantDelegateAsync(
         string mailbox,
         string delegateUpn,

@@ -65,6 +65,25 @@ public sealed partial class OffboardingViewModel : ObservableObject
     [ObservableProperty] private bool _forwardToDelegate;
     [ObservableProperty] private string _autoReplyMessage = string.Empty;
 
+    // Litigation hold (inactive-mailbox retention path). Days is free text — empty = indefinite;
+    // anything non-numeric blocks the run with a validation message instead of being ignored.
+    [ObservableProperty] private bool _enableLitigationHold;
+    [ObservableProperty] private string _litigationHoldDays = string.Empty;
+
+    // Parses the hold duration. False = the field has text that isn't a positive whole number
+    // (silently coercing it to "indefinite" could over-retain — fail loudly instead).
+    private bool TryGetHoldDays(out int? days)
+    {
+        days = null;
+        if (!EnableLitigationHold || string.IsNullOrWhiteSpace(LitigationHoldDays)) return true;
+        if (int.TryParse(LitigationHoldDays.Trim(), out var d) && d > 0)
+        {
+            days = d;
+            return true;
+        }
+        return false;
+    }
+
     // Auto-reply templates: picking one fills the message box; {usuario}/{delegado} are
     // substituted per-user at run time. "Personalizado" clears to free text.
     public ObservableCollection<AutoReplyTemplateItem> AutoReplyTemplates { get; } = new();
@@ -301,9 +320,14 @@ public sealed partial class OffboardingViewModel : ObservableObject
             StatusMessage = L10n.Get("Offboarding.Batch.NoTargets");
             return;
         }
-        if (!DisableAccount && !RemoveLicenses && !ConvertMailboxToShared && !RemoveFromGroups)
+        if (!DisableAccount && !RemoveLicenses && !ConvertMailboxToShared && !RemoveFromGroups && !EnableLitigationHold)
         {
             StatusMessage = L10n.Get("Offboarding.Status.NoActionSelected");
+            return;
+        }
+        if (!TryGetHoldDays(out var holdDays))
+        {
+            StatusMessage = L10n.Get("Offboarding.LitigationHold.BadDays");
             return;
         }
 
@@ -355,7 +379,9 @@ public sealed partial class OffboardingViewModel : ObservableObject
                         target.DisplayName, del),
                     HideFromGal: HideFromGal,
                     DelegateMailboxTo: string.IsNullOrWhiteSpace(del) ? null : del.Trim(),
-                    RemoveFromGroups: RemoveFromGroups);
+                    RemoveFromGroups: RemoveFromGroups,
+                    EnableLitigationHold: EnableLitigationHold,
+                    LitigationHoldDays: holdDays);
                 var stepProgress = new Progress<OffboardingStep>(s =>
                     AppendLog($"   [{s.Status}] {s.Name} — {s.Detail}", LevelFromStatus(s.Status)));
 
@@ -433,9 +459,15 @@ public sealed partial class OffboardingViewModel : ObservableObject
         if (RemoveLicenses) actions.Add(L10n.Get("Offboarding.Action.RemoveLicenses"));
         if (ConvertMailboxToShared) actions.Add(L10n.Get("Offboarding.Action.ConvertShared"));
         if (RemoveFromGroups) actions.Add(L10n.Get("Offboarding.Action.RemoveFromGroups"));
+        if (EnableLitigationHold) actions.Add(L10n.Get("Offboarding.Action.LitigationHold"));
         if (actions.Count == 0)
         {
             StatusMessage = L10n.Get("Offboarding.Status.NoActionSelected");
+            return;
+        }
+        if (!TryGetHoldDays(out var holdDays))
+        {
+            StatusMessage = L10n.Get("Offboarding.LitigationHold.BadDays");
             return;
         }
 
@@ -476,7 +508,9 @@ public sealed partial class OffboardingViewModel : ObservableObject
                     Upn, DelegateToAll),
                 HideFromGal: HideFromGal,
                 DelegateMailboxTo: string.IsNullOrWhiteSpace(DelegateToAll) ? null : DelegateToAll.Trim(),
-                RemoveFromGroups: RemoveFromGroups);
+                RemoveFromGroups: RemoveFromGroups,
+                EnableLitigationHold: EnableLitigationHold,
+                LitigationHoldDays: holdDays);
             var stepProgress = new Progress<OffboardingStep>(UpsertStep);
             var result = await _service.RunAsync(Upn.Trim(), options, _log.Progress, stepProgress, _cts.Token).ConfigureAwait(true);
             Result = result;
