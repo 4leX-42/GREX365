@@ -38,6 +38,9 @@ public interface IUsersService
     // Deletes one auth method (must be Removable). Requires UserAuthenticationMethod.ReadWrite.All.
     Task RemoveAuthMethodAsync(string userId, AuthMethodSummary method, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default);
 
+    // Sends a plain-text mail from the given mailbox (app-only sendMail). Requires Mail.Send.
+    Task SendMailAsync(string fromUserIdOrUpn, string to, string subject, string body, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default);
+
     Task<UserSummary> CreateUserAsync(
         NewUserSpec spec,
         IProgress<LogEntry>? progress = null,

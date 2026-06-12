@@ -276,6 +276,25 @@ public sealed class GraphUsersService : IUsersService
         progress?.Report(LogEntry.Ok("Users", $"Método {method.Kind} eliminado de {userId}"));
     }
 
+    public async Task SendMailAsync(string fromUserIdOrUpn, string to, string subject, string body, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default)
+    {
+        var request = new Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody
+        {
+            Message = new Message
+            {
+                Subject = subject,
+                Body = new ItemBody { ContentType = BodyType.Text, Content = body },
+                ToRecipients = new List<Recipient>
+                {
+                    new() { EmailAddress = new EmailAddress { Address = to } },
+                },
+            },
+            SaveToSentItems = false,
+        };
+        await Client.Users[fromUserIdOrUpn].SendMail.PostAsync(request, cancellationToken: cancellationToken).ConfigureAwait(false);
+        progress?.Report(LogEntry.Ok("Users", $"Mail enviado a {to} desde {fromUserIdOrUpn}"));
+    }
+
     private static string GenerateTempPassword()
     {
         // 16 chars: mayúsculas + minúsculas + dígitos + símbolos. Sin caracteres ambiguos.

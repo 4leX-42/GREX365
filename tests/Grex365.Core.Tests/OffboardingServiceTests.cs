@@ -605,6 +605,54 @@ public class OffboardingServiceTests
         users.Verify(u => u.RemoveFromDirectoryRoleAsync(It.IsAny<string>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    // ---- result notification (sendMail) ----
+
+    [Fact]
+    public async Task NotifyResult_SendsSummaryFromLeaver_AsLastStep()
+    {
+        var users = UsersOk();
+        string? sentBody = null; string? sentSubject = null;
+        users.Setup(u => u.SendMailAsync("jane@a", "hr@a", It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .Callback<string, string, string, string, IProgress<LogEntry>?, CancellationToken>((_, _, s, b, _, _) => { sentSubject = s; sentBody = b; })
+            .Returns(Task.CompletedTask);
+        var sut = new OffboardingService(users.Object, MailboxOk().Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(true, false, false, NotifyResultTo: "hr@a"));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Last().Name.Should().Be("Notificar resultado");
+        r.Steps.Last().Status.Should().Be("OK");
+        sentSubject.Should().Contain("completado");
+        sentBody.Should().Contain("Deshabilitar cuenta"); // the summary covers the earlier steps
+    }
+
+    // A failed send (e.g. missing Mail.Send) is AVISO with the scope remediation, never fatal.
+    [Fact]
+    public async Task NotifyResult_SendFails_AvisoWithScopeHint()
+    {
+        var users = UsersOk();
+        users.Setup(u => u.SendMailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Access is denied: Forbidden"));
+        var sut = new OffboardingService(users.Object, MailboxOk().Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(true, false, false, NotifyResultTo: "hr@a"));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name == "Notificar resultado" && s.Status == "AVISO" && s.Detail.Contains("Mail.Send"));
+    }
+
+    [Fact]
+    public async Task NotifyResult_DryRun_DoesNotSend()
+    {
+        var users = UsersOk();
+        var sut = new OffboardingService(users.Object, MailboxOk().Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(true, false, false, DryRun: true, NotifyResultTo: "hr@a"));
+
+        r.Steps.Should().Contain(s => s.Name == "Notificar resultado" && s.Status == "SIMULADO");
+        users.Verify(u => u.SendMailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IProgress<LogEntry>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     // ---- MFA auth methods ----
 
     private static void WithAuthMethods(Mock<IUsersService> users, params AuthMethodSummary[] methods) =>

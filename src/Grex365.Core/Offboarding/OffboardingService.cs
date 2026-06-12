@@ -641,6 +641,39 @@ public sealed class OffboardingService : IOffboardingService
                 async () => await _externalExo!.HideFromGalAsync(upn, progress, cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
         }
 
+        // ---- Step 5: notify the result by mail (best-effort, Graph sendMail) ----
+        // Sent from the leaver's own mailbox: app-only Mail.Send covers any mailbox and it
+        // avoids a "service mailbox" setting. Runs LAST so the summary covers every step.
+        if (!string.IsNullOrWhiteSpace(options.NotifyResultTo))
+        {
+            var to = options.NotifyResultTo!.Trim();
+            Running("Notificar resultado");
+            if (dry)
+            {
+                Done("Notificar resultado", "SIMULADO", $"se enviaría el resumen a {to} (desde el buzón de {upn})");
+            }
+            else
+            {
+                try
+                {
+                    var subject = $"Offboarding de {user.DisplayName} ({upn}) — {(success ? "completado" : "con errores")}";
+                    var lines = steps.Select(s => $"[{s.Status}] {s.Name} — {s.Detail}");
+                    var body = $"Resumen del offboarding de {user.DisplayName} ({upn}), {startedAt:yyyy-MM-dd HH:mm}:\n\n"
+                        + string.Join("\n", lines)
+                        + "\n\nGenerado automáticamente por GREX365.";
+                    await _users.SendMailAsync(upn, to, subject, body, progress, cancellationToken).ConfigureAwait(false);
+                    Done("Notificar resultado", "OK", $"resumen enviado a {to}");
+                }
+                catch (Exception ex)
+                {
+                    var hint = IsPermissionError(ex.Message)
+                        ? " — concede Mail.Send (app-only) en el app registration"
+                        : "";
+                    Done("Notificar resultado", "AVISO", ex.Message + hint);
+                }
+            }
+        }
+
         return Result(success);
     }
 

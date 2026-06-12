@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1454 passing** (xUnit + FluentAssertions) — 601 Core + 853 App
-- Última actualización: 2026-06-12 (sesión · Sprint AT: litigation hold + quitar roles admin + revocar métodos MFA en offboarding)
+- Tests: **1457 passing** (xUnit + FluentAssertions) — 604 Core + 853 App
+- Última actualización: 2026-06-12 (sesión · Sprint AT: litigation hold + roles admin + MFA + notificación email del resultado en offboarding)
 
 ## Validaciones en vivo — log acumulativo (NO repetir; lab = solo objetos `testeo*`, mutaciones solo con revert)
 
@@ -45,9 +45,15 @@ Las registraciones MFA sobreviven al disable y seguirían satisfaciendo MFA si l
 - Tests: **+4 Core** (borra solo removables y salta password, solo-password→OK sin llamadas, read Forbidden→AVISO con scope, dry-run con kinds). Total **1454** (601 Core + 853 App).
 - ⚠ **Scope pendiente en tenant**: `UserAuthenticationMethod.ReadWrite.All` sin consent — degrada a AVISO con instrucción.
 
+### Notificación email del resultado (commit 4 — tercer item del backlog "scopes nuevos")
+- **`IUsersService.SendMailAsync`** (Graph `users/{from}/sendMail`, texto plano, `SaveToSentItems=false`).
+- **`OffboardingService` paso 5** (ÚLTIMO, para que el resumen cubra todos los pasos): si `NotifyResultTo` tiene email, envía asunto "Offboarding de X — completado/con errores" + una línea por paso `[STATUS] Nombre — Detalle`. **From = el buzón del propio saliente** (cero config extra; Mail.Send app-only cubre cualquier buzón). Fallo → AVISO con remediación **`Mail.Send` (app-only)**; nunca fatal.
+- **UI**: campo "Notificar resultado por email (opcional)" con tooltip. ES+EN.
+- Tests: **+3 Core** (resumen desde el saliente como último paso con asunto/cuerpo correctos, fallo→AVISO con scope, dry-run no envía). Total **1457** (604 Core + 853 App).
+- ⚠ **Scope pendiente en tenant**: `Mail.Send` sin consent — degrada a AVISO con instrucción. ⚠ Mail.Send app-only permite enviar como CUALQUIERA: al concederlo, aplicar **Application Access Policy** en EXO (`New-ApplicationAccessPolicy -PolicyScopeGroupId <grupo>`) para limitar el blast radius.
+
 ### Backlog scopes nuevos — restante
 - OneDrive del saliente (transferir/delegar acceso al site personal — `Sites.FullControl.All` o delegación; diseño pendiente, es el item más complejo).
-- sendMail de notificación al delegado/manager al acabar el offboarding (`Mail.Send`).
 - Teams: ya cubierto vía grupos M365 (paso 3b); no requiere item propio.
 
 ## Sprint AS · 2026-06-09 — Pase integral de pulido UI ("la herramienta está verde")

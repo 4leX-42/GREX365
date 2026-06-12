@@ -69,6 +69,9 @@ public sealed partial class OffboardingViewModel : ObservableObject
     [ObservableProperty] private bool _forwardToDelegate;
     [ObservableProperty] private string _autoReplyMessage = string.Empty;
 
+    // Email that receives the run summary (one line per step). Empty = no notification.
+    [ObservableProperty] private string _notifyResultTo = string.Empty;
+
     // Litigation hold (inactive-mailbox retention path). Days is free text — empty = indefinite;
     // anything non-numeric blocks the run with a validation message instead of being ignored.
     [ObservableProperty] private bool _enableLitigationHold;
@@ -387,7 +390,8 @@ public sealed partial class OffboardingViewModel : ObservableObject
                     RemoveDirectoryRoles: RemoveDirectoryRoles,
                     RemoveAuthMethods: RemoveAuthMethods,
                     EnableLitigationHold: EnableLitigationHold,
-                    LitigationHoldDays: holdDays);
+                    LitigationHoldDays: holdDays,
+                    NotifyResultTo: string.IsNullOrWhiteSpace(NotifyResultTo) ? null : NotifyResultTo.Trim());
                 var stepProgress = new Progress<OffboardingStep>(s =>
                     AppendLog($"   [{s.Status}] {s.Name} — {s.Detail}", LevelFromStatus(s.Status)));
 
@@ -520,7 +524,8 @@ public sealed partial class OffboardingViewModel : ObservableObject
                 RemoveDirectoryRoles: RemoveDirectoryRoles,
                 RemoveAuthMethods: RemoveAuthMethods,
                 EnableLitigationHold: EnableLitigationHold,
-                LitigationHoldDays: holdDays);
+                LitigationHoldDays: holdDays,
+                NotifyResultTo: string.IsNullOrWhiteSpace(NotifyResultTo) ? null : NotifyResultTo.Trim());
             var stepProgress = new Progress<OffboardingStep>(UpsertStep);
             var result = await _service.RunAsync(Upn.Trim(), options, _log.Progress, stepProgress, _cts.Token).ConfigureAwait(true);
             Result = result;

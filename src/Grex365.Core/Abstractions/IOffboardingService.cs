@@ -37,7 +37,11 @@ public sealed record OffboardingOptions(
     // license-free. If the hold is requested but fails, license removal is gated off.
     bool EnableLitigationHold = false,
     // Optional hold duration in days; null = indefinite (until explicitly removed).
-    int? LitigationHoldDays = null);
+    int? LitigationHoldDays = null,
+    // Email address that receives a plain-text summary of the run (one line per step) when the
+    // flow finishes. Sent FROM the leaver's own mailbox (zero extra config; app-only Mail.Send
+    // covers any mailbox). Null/empty = no notification.
+    string? NotifyResultTo = null);
 
 public interface IOffboardingService
 {
