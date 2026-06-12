@@ -461,6 +461,8 @@ public static class L10n
         ["Offboarding.Option.HideFromGal"] = "Ocultar el buzón de la GAL",
         ["Offboarding.Option.RemoveRoles"] = "Quitar roles de administrador",
         ["Offboarding.Option.RemoveRoles.Tooltip"] = "Quita los roles de directorio activos (Entra). Los roles elegibles vía PIM no se ven desde aquí. Requiere el permiso RoleManagement.ReadWrite.Directory.",
+        ["Offboarding.Option.RemoveAuthMethods"] = "Revocar métodos MFA registrados",
+        ["Offboarding.Option.RemoveAuthMethods.Tooltip"] = "Elimina teléfono, Authenticator, FIDO2, email, OATH y TAP registrados (la contraseña no se puede eliminar). Si la baja se revierte, el usuario tendrá que re-registrar MFA. Requiere el permiso UserAuthenticationMethod.ReadWrite.All.",
         ["Offboarding.Option.LitigationHold"] = "Activar Litigation Hold (retención legal)",
         ["Offboarding.LitigationHold.DaysPlaceholder"] = "días (vacío = indefinido)",
         ["Offboarding.LitigationHold.Hint"] = "Retiene todo el contenido del buzón, incluidos elementos eliminados y versiones editadas. Requiere Exchange Online Plan 2 o el add-on Exchange Online Archiving. Camino de buzón inactivo: hold + quitar licencia SIN convertir a compartido → al eliminar el usuario el buzón pasa a inactivo y los datos se conservan sin coste de licencia.",
@@ -868,6 +870,7 @@ public static class L10n
         ["Offboarding.Action.RemoveFromGroups"] = "quitar de grupos y DLs",
         ["Offboarding.Action.LitigationHold"] = "activar litigation hold",
         ["Offboarding.Action.RemoveRoles"] = "quitar roles de administrador",
+        ["Offboarding.Action.RemoveAuthMethods"] = "revocar métodos MFA",
         ["Offboarding.Confirm.Title"] = "Confirmar offboarding",
         ["Offboarding.Confirm.Body"] = "Offboarding de {0}:\n\n  {1}\n\n¿Continuar?",
 
@@ -1416,6 +1419,8 @@ public static class L10n
         ["Offboarding.Option.HideFromGal"] = "Hide the mailbox from the GAL",
         ["Offboarding.Option.RemoveRoles"] = "Remove admin roles",
         ["Offboarding.Option.RemoveRoles.Tooltip"] = "Removes active directory roles (Entra). PIM-eligible roles are not visible here. Requires the RoleManagement.ReadWrite.Directory permission.",
+        ["Offboarding.Option.RemoveAuthMethods"] = "Revoke registered MFA methods",
+        ["Offboarding.Option.RemoveAuthMethods.Tooltip"] = "Deletes registered phone, Authenticator, FIDO2, email, OATH and TAP methods (the password can't be deleted). If the offboarding is reversed, the user must re-register MFA. Requires the UserAuthenticationMethod.ReadWrite.All permission.",
         ["Offboarding.Option.LitigationHold"] = "Enable Litigation Hold (legal retention)",
         ["Offboarding.LitigationHold.DaysPlaceholder"] = "days (empty = indefinite)",
         ["Offboarding.LitigationHold.Hint"] = "Retains all mailbox content, including deleted items and edited versions. Requires Exchange Online Plan 2 or the Exchange Online Archiving add-on. Inactive-mailbox path: hold + remove license WITHOUT converting to shared → when the user is deleted the mailbox becomes inactive and the data is retained license-free.",
@@ -1823,6 +1828,7 @@ public static class L10n
         ["Offboarding.Action.RemoveFromGroups"] = "remove from groups and DLs",
         ["Offboarding.Action.LitigationHold"] = "enable litigation hold",
         ["Offboarding.Action.RemoveRoles"] = "remove admin roles",
+        ["Offboarding.Action.RemoveAuthMethods"] = "revoke MFA methods",
         ["Offboarding.Confirm.Title"] = "Confirm offboarding",
         ["Offboarding.Confirm.Body"] = "Offboarding of {0}:\n\n  {1}\n\nContinue?",
 

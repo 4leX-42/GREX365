@@ -605,6 +605,72 @@ public class OffboardingServiceTests
         users.Verify(u => u.RemoveFromDirectoryRoleAsync(It.IsAny<string>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()), Times.Never);
     }
 
+    // ---- MFA auth methods ----
+
+    private static void WithAuthMethods(Mock<IUsersService> users, params AuthMethodSummary[] methods) =>
+        users.Setup(u => u.GetAuthMethodsAsync("uid", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(methods);
+
+    [Fact]
+    public async Task RemoveAuthMethods_DeletesRemovableOnly_PasswordSkipped()
+    {
+        var users = UsersOk();
+        var phone = new AuthMethodSummary("m1", "Phone", "+34...", true);
+        var pwd = new AuthMethodSummary("m2", "Password", null, false);
+        var fido = new AuthMethodSummary("m3", "Fido2", "YubiKey", true);
+        WithAuthMethods(users, phone, pwd, fido);
+        var sut = new OffboardingService(users.Object, MailboxOk().Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(false, false, false, RemoveAuthMethods: true));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name.Contains("MFA") && s.Status == "OK" && s.Detail.Contains("Phone") && s.Detail.Contains("Fido2"));
+        users.Verify(u => u.RemoveAuthMethodAsync("uid", phone, null, It.IsAny<CancellationToken>()), Times.Once);
+        users.Verify(u => u.RemoveAuthMethodAsync("uid", fido, null, It.IsAny<CancellationToken>()), Times.Once);
+        users.Verify(u => u.RemoveAuthMethodAsync("uid", pwd, null, It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RemoveAuthMethods_OnlyPassword_ReportsOkNoCalls()
+    {
+        var users = UsersOk();
+        WithAuthMethods(users, new AuthMethodSummary("m1", "Password", null, false));
+        var sut = new OffboardingService(users.Object, MailboxOk().Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(false, false, false, RemoveAuthMethods: true));
+
+        r.Steps.Should().Contain(s => s.Name.Contains("MFA") && s.Status == "OK" && s.Detail.Contains("sin métodos"));
+        users.Verify(u => u.RemoveAuthMethodAsync(It.IsAny<string>(), It.IsAny<AuthMethodSummary>(), null, It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // Missing UserAuthenticationMethod.ReadWrite.All on the READ surfaces the scope hint too.
+    [Fact]
+    public async Task RemoveAuthMethods_ReadForbidden_AvisoWithScopeHint()
+    {
+        var users = UsersOk();
+        users.Setup(u => u.GetAuthMethodsAsync("uid", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Access is denied. Insufficient privileges."));
+        var sut = new OffboardingService(users.Object, MailboxOk().Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(false, false, false, RemoveAuthMethods: true));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name.Contains("MFA") && s.Status == "AVISO" && s.Detail.Contains("UserAuthenticationMethod.ReadWrite.All"));
+    }
+
+    [Fact]
+    public async Task RemoveAuthMethods_DryRun_SimulatesWithKinds()
+    {
+        var users = UsersOk();
+        WithAuthMethods(users, new AuthMethodSummary("m1", "MicrosoftAuthenticator", "iPhone", true));
+        var sut = new OffboardingService(users.Object, MailboxOk().Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(false, false, false, DryRun: true, RemoveAuthMethods: true));
+
+        r.Steps.Should().Contain(s => s.Name.Contains("MFA") && s.Status == "SIMULADO" && s.Detail.Contains("MicrosoftAuthenticator"));
+        users.Verify(u => u.RemoveAuthMethodAsync(It.IsAny<string>(), It.IsAny<AuthMethodSummary>(), null, It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     // ---- litigation hold (inactive-mailbox retention path) ----
 
     // Hold + license removal WITHOUT converting to shared is the supported inactive-mailbox

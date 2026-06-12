@@ -206,7 +206,9 @@
                                 <CheckBox Content="{l:L10n Key=Offboarding.Option.RemoveFromGroups}" IsChecked="{Binding RemoveFromGroups}" FontSize="15" Margin="0,0,0,8" />
                                 <CheckBox Content="{l:L10n Key=Offboarding.Option.RemoveRoles}" IsChecked="{Binding RemoveDirectoryRoles}" FontSize="15" Margin="0,0,8,8"
                                           ToolTip="{l:L10n Key=Offboarding.Option.RemoveRoles.Tooltip}" />
-                                <CheckBox Content="{l:L10n Key=Offboarding.Option.DryRun}" IsChecked="{Binding DryRun}" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,8" />
+                                <CheckBox Content="{l:L10n Key=Offboarding.Option.RemoveAuthMethods}" IsChecked="{Binding RemoveAuthMethods}" FontSize="15" Margin="0,0,0,8"
+                                          ToolTip="{l:L10n Key=Offboarding.Option.RemoveAuthMethods.Tooltip}" />
+                                <CheckBox Content="{l:L10n Key=Offboarding.Option.DryRun}" IsChecked="{Binding DryRun}" FontSize="15" FontWeight="SemiBold" Margin="0,0,8,0" />
                             </UniformGrid>
 
                             <TextBlock Text="{l:L10n Key=Offboarding.DelegateAll.Label}" FontWeight="SemiBold" FontSize="16" Margin="0,18,0,6" />

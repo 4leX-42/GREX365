@@ -26,6 +26,11 @@ public sealed record OffboardingOptions(
     // assignments aren't covered (they don't surface as memberOf). Needs
     // RoleManagement.ReadWrite.Directory; a missing scope degrades to AVISO with guidance.
     bool RemoveDirectoryRoles = false,
+    // Delete the user's registered MFA methods (phone / authenticator / FIDO2 / email / OATH /
+    // TAP) via Graph. Password isn't deletable. Needs UserAuthenticationMethod.ReadWrite.All;
+    // a missing scope degrades to AVISO with guidance. Hygiene: the methods would otherwise
+    // survive and still satisfy MFA if the account is ever re-enabled.
+    bool RemoveAuthMethods = false,
     // Enable litigation hold on the mailbox BEFORE any license removal (the hold needs the
     // EXO Plan 2 / archiving add-on entitlement present when it's applied). This is the
     // inactive-mailbox path: hold + later license removal / user deletion retains the data

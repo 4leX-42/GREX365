@@ -57,6 +57,9 @@ public sealed partial class OffboardingViewModel : ObservableObject
     [ObservableProperty] private bool _convertMailboxToShared = true;
     [ObservableProperty] private bool _removeFromGroups = true;
     [ObservableProperty] private bool _removeDirectoryRoles = true;
+    // Opt-in: deleting MFA registrations is hygiene, but it makes a reversed offboarding
+    // (re-enable) require full re-registration — leave it a conscious choice.
+    [ObservableProperty] private bool _removeAuthMethods;
 
     // Dry-run: rehearse the whole flow read-only (touches nothing). Safe to run in production.
     [ObservableProperty] private bool _dryRun;
@@ -321,7 +324,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
             StatusMessage = L10n.Get("Offboarding.Batch.NoTargets");
             return;
         }
-        if (!DisableAccount && !RemoveLicenses && !ConvertMailboxToShared && !RemoveFromGroups && !RemoveDirectoryRoles && !EnableLitigationHold)
+        if (!DisableAccount && !RemoveLicenses && !ConvertMailboxToShared && !RemoveFromGroups && !RemoveDirectoryRoles && !RemoveAuthMethods && !EnableLitigationHold)
         {
             StatusMessage = L10n.Get("Offboarding.Status.NoActionSelected");
             return;
@@ -382,6 +385,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
                     DelegateMailboxTo: string.IsNullOrWhiteSpace(del) ? null : del.Trim(),
                     RemoveFromGroups: RemoveFromGroups,
                     RemoveDirectoryRoles: RemoveDirectoryRoles,
+                    RemoveAuthMethods: RemoveAuthMethods,
                     EnableLitigationHold: EnableLitigationHold,
                     LitigationHoldDays: holdDays);
                 var stepProgress = new Progress<OffboardingStep>(s =>
@@ -462,6 +466,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
         if (ConvertMailboxToShared) actions.Add(L10n.Get("Offboarding.Action.ConvertShared"));
         if (RemoveFromGroups) actions.Add(L10n.Get("Offboarding.Action.RemoveFromGroups"));
         if (RemoveDirectoryRoles) actions.Add(L10n.Get("Offboarding.Action.RemoveRoles"));
+        if (RemoveAuthMethods) actions.Add(L10n.Get("Offboarding.Action.RemoveAuthMethods"));
         if (EnableLitigationHold) actions.Add(L10n.Get("Offboarding.Action.LitigationHold"));
         if (actions.Count == 0)
         {
@@ -513,6 +518,7 @@ public sealed partial class OffboardingViewModel : ObservableObject
                 DelegateMailboxTo: string.IsNullOrWhiteSpace(DelegateToAll) ? null : DelegateToAll.Trim(),
                 RemoveFromGroups: RemoveFromGroups,
                 RemoveDirectoryRoles: RemoveDirectoryRoles,
+                RemoveAuthMethods: RemoveAuthMethods,
                 EnableLitigationHold: EnableLitigationHold,
                 LitigationHoldDays: holdDays);
             var stepProgress = new Progress<OffboardingStep>(UpsertStep);

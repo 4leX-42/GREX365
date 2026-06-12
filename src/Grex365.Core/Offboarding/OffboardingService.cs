@@ -492,12 +492,7 @@ public sealed class OffboardingService : IOffboardingService
                     catch (Exception ex)
                     {
                         failures.Add(role.DisplayName);
-                        if (ex.Message.Contains("Authorization", StringComparison.OrdinalIgnoreCase)
-                            || ex.Message.Contains("Insufficient", StringComparison.OrdinalIgnoreCase)
-                            || ex.Message.Contains("Forbidden", StringComparison.OrdinalIgnoreCase))
-                        {
-                            scopeHint = true;
-                        }
+                        if (IsPermissionError(ex.Message)) scopeHint = true;
                     }
                 }
 
@@ -511,6 +506,74 @@ public sealed class OffboardingService : IOffboardingService
                     var hint = scopeHint ? " — concede RoleManagement.ReadWrite.Directory (app-only) en el app registration" : "";
                     Done("Quitar roles de administrador", "AVISO",
                         $"Quitado de {removed}/{roles.Count}. Falló en: {string.Join(", ", failures)}{hint}");
+                }
+            }
+        }
+
+        // ---- Step 3d: delete registered MFA methods (best-effort, Graph) ----
+        // The registrations survive a disable and would still satisfy MFA if the account is
+        // ever re-enabled. Password isn't deletable; unknown kinds are reported, not failed.
+        if (options.RemoveAuthMethods)
+        {
+            Running("Revocar métodos MFA");
+            IReadOnlyList<AuthMethodSummary>? methods = null;
+            string? methodsReadError = null;
+            try
+            {
+                methods = await _users.GetAuthMethodsAsync(user.Id, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                methodsReadError = ex.Message;
+            }
+
+            var removable = methods?.Where(m => m.Removable).ToList();
+            if (methodsReadError is not null)
+            {
+                var hint = IsPermissionError(methodsReadError)
+                    ? " — concede UserAuthenticationMethod.ReadWrite.All (app-only) en el app registration"
+                    : "";
+                Done("Revocar métodos MFA", "AVISO", $"no se pudieron leer los métodos: {methodsReadError}{hint}");
+            }
+            else if (removable is null || removable.Count == 0)
+            {
+                Done("Revocar métodos MFA", "OK", "sin métodos MFA registrados (la contraseña no se puede eliminar)");
+            }
+            else if (dry)
+            {
+                Done("Revocar métodos MFA", "SIMULADO",
+                    $"se eliminarían {removable.Count} método(s): {string.Join(", ", removable.Select(m => m.Kind))}");
+            }
+            else
+            {
+                var removed = 0;
+                var failures = new List<string>();
+                var scopeHint = false;
+                foreach (var m in removable)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    try
+                    {
+                        await _users.RemoveAuthMethodAsync(user.Id, m, null, cancellationToken).ConfigureAwait(false);
+                        removed++;
+                    }
+                    catch (Exception ex)
+                    {
+                        failures.Add(m.Kind);
+                        if (IsPermissionError(ex.Message)) scopeHint = true;
+                    }
+                }
+
+                if (failures.Count == 0)
+                {
+                    Done("Revocar métodos MFA", "OK",
+                        $"Eliminados {removed} método(s): {string.Join(", ", removable.Select(m => m.Kind))}");
+                }
+                else
+                {
+                    var hint = scopeHint ? " — concede UserAuthenticationMethod.ReadWrite.All (app-only) en el app registration" : "";
+                    Done("Revocar métodos MFA", "AVISO",
+                        $"Eliminados {removed}/{removable.Count}. Falló en: {string.Join(", ", failures)}{hint}");
                 }
             }
         }
@@ -580,6 +643,14 @@ public sealed class OffboardingService : IOffboardingService
 
         return Result(success);
     }
+
+    // Graph permission failures (missing app-only scope / not consented), across SDK phrasings.
+    public static bool IsPermissionError(string? message) =>
+        !string.IsNullOrEmpty(message)
+        && (message.Contains("Authorization", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("Insufficient", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("Forbidden", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("AccessDenied", StringComparison.OrdinalIgnoreCase));
 
     // Classic DLs and mail-enabled security groups keep their membership in Exchange Online —
     // Graph can't write it (always 400s). Kinds per GraphUsersService.ClassifyGroup.

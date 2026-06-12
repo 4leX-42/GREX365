@@ -225,6 +225,57 @@ public sealed class GraphUsersService : IUsersService
         progress?.Report(LogEntry.Ok("Users", $"Quitado {userId} del rol {roleId}"));
     }
 
+    public async Task<IReadOnlyList<AuthMethodSummary>> GetAuthMethodsAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var response = await Client.Users[userId].Authentication.Methods
+            .GetAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        var list = new List<AuthMethodSummary>();
+        if (response?.Value is null)
+        {
+            return list;
+        }
+
+        foreach (var m in response.Value)
+        {
+            if (string.IsNullOrEmpty(m.Id)) continue;
+            // Map the polymorphic Graph type to a stable app-level kind. Password is never
+            // deletable; kinds without a typed delete endpoint are reported but not removable.
+            var (kind, detail, removable) = m switch
+            {
+                PhoneAuthenticationMethod p => ("Phone", p.PhoneNumber, true),
+                Fido2AuthenticationMethod f => ("Fido2", f.Model, true),
+                MicrosoftAuthenticatorAuthenticationMethod a => ("MicrosoftAuthenticator", a.DisplayName, true),
+                WindowsHelloForBusinessAuthenticationMethod w => ("WindowsHello", w.DisplayName, true),
+                EmailAuthenticationMethod e => ("Email", e.EmailAddress, true),
+                SoftwareOathAuthenticationMethod => ("SoftwareOath", null, true),
+                TemporaryAccessPassAuthenticationMethod => ("TemporaryAccessPass", null, true),
+                PasswordAuthenticationMethod => ("Password", null, false),
+                _ => ("Other", m.OdataType, false),
+            };
+            list.Add(new AuthMethodSummary(m.Id!, kind, detail, removable));
+        }
+        return list;
+    }
+
+    public async Task RemoveAuthMethodAsync(string userId, AuthMethodSummary method, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default)
+    {
+        var auth = Client.Users[userId].Authentication;
+        Task delete = method.Kind switch
+        {
+            "Phone" => auth.PhoneMethods[method.Id].DeleteAsync(cancellationToken: cancellationToken),
+            "Fido2" => auth.Fido2Methods[method.Id].DeleteAsync(cancellationToken: cancellationToken),
+            "MicrosoftAuthenticator" => auth.MicrosoftAuthenticatorMethods[method.Id].DeleteAsync(cancellationToken: cancellationToken),
+            "WindowsHello" => auth.WindowsHelloForBusinessMethods[method.Id].DeleteAsync(cancellationToken: cancellationToken),
+            "Email" => auth.EmailMethods[method.Id].DeleteAsync(cancellationToken: cancellationToken),
+            "SoftwareOath" => auth.SoftwareOathMethods[method.Id].DeleteAsync(cancellationToken: cancellationToken),
+            "TemporaryAccessPass" => auth.TemporaryAccessPassMethods[method.Id].DeleteAsync(cancellationToken: cancellationToken),
+            _ => throw new NotSupportedException($"El método de autenticación '{method.Kind}' no se puede eliminar vía Graph."),
+        };
+        await delete.ConfigureAwait(false);
+        progress?.Report(LogEntry.Ok("Users", $"Método {method.Kind} eliminado de {userId}"));
+    }
+
     private static string GenerateTempPassword()
     {
         // 16 chars: mayúsculas + minúsculas + dígitos + símbolos. Sin caracteres ambiguos.

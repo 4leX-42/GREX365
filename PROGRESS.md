@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1450 passing** (xUnit + FluentAssertions) — 597 Core + 853 App
-- Última actualización: 2026-06-12 (sesión · Sprint AT: litigation hold como acción de offboarding + quitar roles de administrador)
+- Tests: **1454 passing** (xUnit + FluentAssertions) — 601 Core + 853 App
+- Última actualización: 2026-06-12 (sesión · Sprint AT: litigation hold + quitar roles admin + revocar métodos MFA en offboarding)
 
 ## Validaciones en vivo — log acumulativo (NO repetir; lab = solo objetos `testeo*`, mutaciones solo con revert)
 
@@ -36,6 +36,19 @@ Un saliente con Global Admin / Exchange Admin es privilegio residual aunque la c
 - **UI**: checkbox "Quitar roles de administrador" (default ON, como grupos) con tooltip que avisa de PIM y del scope. ES+EN.
 - Tests: **+4 Core** (quita cada rol y reporta nombres, 0 roles sin llamadas, Forbidden→AVISO con hint de scope, dry-run con nombres). Total **1450** (597 Core + 853 App).
 - ⚠ **Scope pendiente en tenant**: el app registration aún no tiene `RoleManagement.ReadWrite.Directory` — hasta el admin consent, el paso degrada a AVISO con la instrucción (comportamiento diseñado, validable en vivo tal cual).
+
+### Revocar métodos MFA registrados (commit 3 — segundo item del backlog "scopes nuevos")
+Las registraciones MFA sobreviven al disable y seguirían satisfaciendo MFA si la cuenta se re-habilita algún día.
+- **`IUsersService.GetAuthMethodsAsync`** (Graph `users/{id}/authentication/methods`, mapeo del tipo polimórfico a kind estable: Phone/Fido2/MicrosoftAuthenticator/WindowsHello/Email/SoftwareOath/TemporaryAccessPass; Password y kinds desconocidos → `Removable=false`) + **`RemoveAuthMethodAsync`** (DELETE al endpoint tipado según kind). Modelo `AuthMethodSummary`.
+- **`OffboardingService` paso 3d** (tras roles): best-effort — solo borra removables; password nunca; fallo de lectura O de borrado por permisos → AVISO con remediación: **conceder `UserAuthenticationMethod.ReadWrite.All` (app-only)**. Helper compartido `IsPermissionError` (Authorization/Insufficient/Forbidden/AccessDenied) — el paso de roles ahora lo reutiliza.
+- **UI**: checkbox **default OFF** (opt-in consciente: revertir la baja obligaría a re-registrar MFA) con tooltip. ES+EN.
+- Tests: **+4 Core** (borra solo removables y salta password, solo-password→OK sin llamadas, read Forbidden→AVISO con scope, dry-run con kinds). Total **1454** (601 Core + 853 App).
+- ⚠ **Scope pendiente en tenant**: `UserAuthenticationMethod.ReadWrite.All` sin consent — degrada a AVISO con instrucción.
+
+### Backlog scopes nuevos — restante
+- OneDrive del saliente (transferir/delegar acceso al site personal — `Sites.FullControl.All` o delegación; diseño pendiente, es el item más complejo).
+- sendMail de notificación al delegado/manager al acabar el offboarding (`Mail.Send`).
+- Teams: ya cubierto vía grupos M365 (paso 3b); no requiere item propio.
 
 ## Sprint AS · 2026-06-09 — Pase integral de pulido UI ("la herramienta está verde")
 

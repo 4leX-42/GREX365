@@ -32,6 +32,12 @@ public interface IUsersService
     // Removes the user from one directory role. Requires RoleManagement.ReadWrite.Directory.
     Task RemoveFromDirectoryRoleAsync(string roleId, string userId, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default);
 
+    // Registered authentication methods (MFA). Requires UserAuthenticationMethod.Read.All.
+    Task<IReadOnlyList<AuthMethodSummary>> GetAuthMethodsAsync(string userId, CancellationToken cancellationToken = default);
+
+    // Deletes one auth method (must be Removable). Requires UserAuthenticationMethod.ReadWrite.All.
+    Task RemoveAuthMethodAsync(string userId, AuthMethodSummary method, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default);
+
     Task<UserSummary> CreateUserAsync(
         NewUserSpec spec,
         IProgress<LogEntry>? progress = null,
