@@ -4,8 +4,8 @@
 
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
-- Tests: **1446 passing** (xUnit + FluentAssertions) — 593 Core + 853 App
-- Última actualización: 2026-06-12 (sesión · Sprint AT: litigation hold como acción de offboarding — camino inactive mailbox completo con gates de licencia)
+- Tests: **1450 passing** (xUnit + FluentAssertions) — 597 Core + 853 App
+- Última actualización: 2026-06-12 (sesión · Sprint AT: litigation hold como acción de offboarding + quitar roles de administrador)
 
 ## Validaciones en vivo — log acumulativo (NO repetir; lab = solo objetos `testeo*`, mutaciones solo con revert)
 
@@ -28,6 +28,14 @@ Hasta ahora el hold solo se **detectaba** (pre-check + gate que bloquea quitar l
 - **UI**: checkbox "Activar Litigation Hold (retención legal)" + campo días (vacío = indefinido; texto no numérico bloquea el run con mensaje — coerción silenciosa a indefinido sobre-retendría) + hint explicando el camino inactive mailbox. Cuenta como acción seleccionable por sí sola (run de solo-retención válido). ES+EN.
 - Tests: **+6 Core** (orden hold→licencias con duración, idempotente ya-activo, fallo→gate licencias, hold+convert→gate shared, dry-run, sin buzón→no dispara gate) **+4 App** (días inválidos bloquea, días/flag fluyen a options, vacío=indefinido, hold-solo es acción suficiente). Total **1446** (593 Core + 853 App).
 - ⏳ Por validar en vivo (mutador — necesita buzón `testeo*` con EXO Plan 2 o add-on; el hold es reversible con `-LitigationHoldEnabled $false`): shape real del `Set-Mailbox` + mensaje de error real sin entitlement (para afinar el match del hint).
+
+### Quitar roles de administrador (commit 2 — primer item del backlog "scopes nuevos")
+Un saliente con Global Admin / Exchange Admin es privilegio residual aunque la cuenta esté deshabilitada (el rol sobrevive a una re-habilitación y ensucia los access reviews).
+- **`IUsersService.GetDirectoryRolesAsync`** (memberOf filtrado a `DirectoryRole` — solo asignaciones ACTIVAS, PIM-eligible no aparece) + **`RemoveFromDirectoryRoleAsync`** (`DELETE directoryRoles/{id}/members/{uid}/$ref`). Modelo `DirectoryRoleSummary`.
+- **`OffboardingService` paso 3c** (tras grupos): best-effort — 0 roles → OK "sin roles"; fallo de lectura → AVISO; fallo por permisos (match Authorization/Insufficient/Forbidden) → AVISO con remediación exacta: **conceder `RoleManagement.ReadWrite.Directory` (app-only) en el app registration**. Nunca fatal.
+- **UI**: checkbox "Quitar roles de administrador" (default ON, como grupos) con tooltip que avisa de PIM y del scope. ES+EN.
+- Tests: **+4 Core** (quita cada rol y reporta nombres, 0 roles sin llamadas, Forbidden→AVISO con hint de scope, dry-run con nombres). Total **1450** (597 Core + 853 App).
+- ⚠ **Scope pendiente en tenant**: el app registration aún no tiene `RoleManagement.ReadWrite.Directory` — hasta el admin consent, el paso degrada a AVISO con la instrucción (comportamiento diseñado, validable en vivo tal cual).
 
 ## Sprint AS · 2026-06-09 — Pase integral de pulido UI ("la herramienta está verde")
 

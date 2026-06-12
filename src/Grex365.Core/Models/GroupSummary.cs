@@ -23,3 +23,9 @@ public sealed record DistributionGroupRemovalResult(
     string Group,
     bool Success,
     string Detail);
+
+// An ACTIVE Entra directory role the user holds (memberOf). PIM-eligible assignments don't
+// surface here — only what is currently activated.
+public sealed record DirectoryRoleSummary(
+    string Id,
+    string DisplayName);

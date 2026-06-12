@@ -204,7 +204,9 @@
                                 <CheckBox Content="{l:L10n Key=Offboarding.Option.ConvertShared}" IsChecked="{Binding ConvertMailboxToShared}" FontSize="15" Margin="0,0,0,8" />
                                 <CheckBox Content="{l:L10n Key=Offboarding.Option.RemoveLicenses}" IsChecked="{Binding RemoveLicenses}" FontSize="15" Margin="0,0,8,8" />
                                 <CheckBox Content="{l:L10n Key=Offboarding.Option.RemoveFromGroups}" IsChecked="{Binding RemoveFromGroups}" FontSize="15" Margin="0,0,0,8" />
-                                <CheckBox Content="{l:L10n Key=Offboarding.Option.DryRun}" IsChecked="{Binding DryRun}" FontSize="15" FontWeight="SemiBold" Margin="0,0,8,0" />
+                                <CheckBox Content="{l:L10n Key=Offboarding.Option.RemoveRoles}" IsChecked="{Binding RemoveDirectoryRoles}" FontSize="15" Margin="0,0,8,8"
+                                          ToolTip="{l:L10n Key=Offboarding.Option.RemoveRoles.Tooltip}" />
+                                <CheckBox Content="{l:L10n Key=Offboarding.Option.DryRun}" IsChecked="{Binding DryRun}" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,8" />
                             </UniformGrid>
 
                             <TextBlock Text="{l:L10n Key=Offboarding.DelegateAll.Label}" FontWeight="SemiBold" FontSize="16" Margin="0,18,0,6" />

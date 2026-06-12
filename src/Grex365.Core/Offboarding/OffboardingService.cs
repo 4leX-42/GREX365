@@ -445,6 +445,76 @@ public sealed class OffboardingService : IOffboardingService
             }
         }
 
+        // ---- Step 3c: remove directory (admin) roles (best-effort, Graph) ----
+        // A leaver keeping Global Admin / Exchange Admin etc. is a standing-privilege risk even
+        // on a disabled account (the role survives re-enablement and confuses access reviews).
+        // Only ACTIVE assignments are visible/removable here — PIM-eligible ones live elsewhere.
+        if (options.RemoveDirectoryRoles)
+        {
+            Running("Quitar roles de administrador");
+            IReadOnlyList<DirectoryRoleSummary>? roles = null;
+            string? rolesReadError = null;
+            try
+            {
+                roles = await _users.GetDirectoryRolesAsync(user.Id, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                rolesReadError = ex.Message;
+            }
+
+            if (rolesReadError is not null)
+            {
+                Done("Quitar roles de administrador", "AVISO", $"no se pudieron leer los roles: {rolesReadError}");
+            }
+            else if (roles is null || roles.Count == 0)
+            {
+                Done("Quitar roles de administrador", "OK", "sin roles de administrador activos");
+            }
+            else if (dry)
+            {
+                var names = string.Join(", ", roles.Select(r => r.DisplayName).Take(5)) + (roles.Count > 5 ? "…" : "");
+                Done("Quitar roles de administrador", "SIMULADO", $"se quitarían {roles.Count} rol(es): {names}");
+            }
+            else
+            {
+                var removed = 0;
+                var failures = new List<string>();
+                var scopeHint = false;
+                foreach (var role in roles)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    try
+                    {
+                        await _users.RemoveFromDirectoryRoleAsync(role.Id, user.Id, null, cancellationToken).ConfigureAwait(false);
+                        removed++;
+                    }
+                    catch (Exception ex)
+                    {
+                        failures.Add(role.DisplayName);
+                        if (ex.Message.Contains("Authorization", StringComparison.OrdinalIgnoreCase)
+                            || ex.Message.Contains("Insufficient", StringComparison.OrdinalIgnoreCase)
+                            || ex.Message.Contains("Forbidden", StringComparison.OrdinalIgnoreCase))
+                        {
+                            scopeHint = true;
+                        }
+                    }
+                }
+
+                if (failures.Count == 0)
+                {
+                    Done("Quitar roles de administrador", "OK",
+                        $"Quitado de {removed} rol(es): {string.Join(", ", roles.Select(r => r.DisplayName))}");
+                }
+                else
+                {
+                    var hint = scopeHint ? " — concede RoleManagement.ReadWrite.Directory (app-only) en el app registration" : "";
+                    Done("Quitar roles de administrador", "AVISO",
+                        $"Quitado de {removed}/{roles.Count}. Falló en: {string.Join(", ", failures)}{hint}");
+                }
+            }
+        }
+
         // ---- Step 4: optional mailbox finalization (EXO-only) ----
         // auto-reply / forwarding / hide-from-GAL on the (now shared) mailbox. Best-effort: a
         // failure here is reported AVISO (non-fatal) and never undoes the core offboarding.

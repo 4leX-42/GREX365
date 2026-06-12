@@ -26,6 +26,12 @@ public interface IUsersService
 
     Task RevokeSignInSessionsAsync(string userId, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default);
 
+    // ACTIVE Entra directory roles the user holds (memberOf — PIM-eligible don't surface).
+    Task<IReadOnlyList<DirectoryRoleSummary>> GetDirectoryRolesAsync(string userId, CancellationToken cancellationToken = default);
+
+    // Removes the user from one directory role. Requires RoleManagement.ReadWrite.Directory.
+    Task RemoveFromDirectoryRoleAsync(string roleId, string userId, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default);
+
     Task<UserSummary> CreateUserAsync(
         NewUserSpec spec,
         IProgress<LogEntry>? progress = null,

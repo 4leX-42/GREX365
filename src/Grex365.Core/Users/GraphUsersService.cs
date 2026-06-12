@@ -194,6 +194,37 @@ public sealed class GraphUsersService : IUsersService
         progress?.Report(LogEntry.Ok("Users", $"Sign-in sessions revocadas para {userId}"));
     }
 
+    public async Task<IReadOnlyList<DirectoryRoleSummary>> GetDirectoryRolesAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        // memberOf returns groups AND directory roles; here we keep only the roles. Only
+        // ACTIVE assignments surface this way (PIM-eligible roles aren't memberOf).
+        var response = await Client.Users[userId].MemberOf.GetAsync(req =>
+        {
+            req.QueryParameters.Top = 200;
+        }, cancellationToken).ConfigureAwait(false);
+
+        var list = new List<DirectoryRoleSummary>();
+        if (response?.Value is null)
+        {
+            return list;
+        }
+
+        foreach (var obj in response.Value)
+        {
+            if (obj is DirectoryRole r && !string.IsNullOrEmpty(r.Id))
+            {
+                list.Add(new DirectoryRoleSummary(r.Id!, r.DisplayName ?? "(sin nombre)"));
+            }
+        }
+        return list;
+    }
+
+    public async Task RemoveFromDirectoryRoleAsync(string roleId, string userId, IProgress<LogEntry>? progress = null, CancellationToken cancellationToken = default)
+    {
+        await Client.DirectoryRoles[roleId].Members[userId].Ref.DeleteAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        progress?.Report(LogEntry.Ok("Users", $"Quitado {userId} del rol {roleId}"));
+    }
+
     private static string GenerateTempPassword()
     {
         // 16 chars: mayúsculas + minúsculas + dígitos + símbolos. Sin caracteres ambiguos.

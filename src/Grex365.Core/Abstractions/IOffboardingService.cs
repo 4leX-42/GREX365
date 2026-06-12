@@ -22,6 +22,10 @@ public sealed record OffboardingOptions(
     // Remove the user from all groups / distribution lists (best-effort, via Graph). Dynamic,
     // on-prem-synced and built-in groups can't be removed and are reported, not failed.
     bool RemoveFromGroups = false,
+    // Remove the user's ACTIVE Entra directory roles (admin roles) via Graph. PIM-eligible
+    // assignments aren't covered (they don't surface as memberOf). Needs
+    // RoleManagement.ReadWrite.Directory; a missing scope degrades to AVISO with guidance.
+    bool RemoveDirectoryRoles = false,
     // Enable litigation hold on the mailbox BEFORE any license removal (the hold needs the
     // EXO Plan 2 / archiving add-on entitlement present when it's applied). This is the
     // inactive-mailbox path: hold + later license removal / user deletion retains the data

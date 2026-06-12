@@ -459,6 +459,8 @@ public static class L10n
         ["Offboarding.Export.Copied"] = "CSV copiado al portapapeles: {0} usuario(s), {1} pasos.",
         ["Offboarding.Option.ForwardToDelegate"] = "Reenviar correo al delegado (forwarding + copia en buzón)",
         ["Offboarding.Option.HideFromGal"] = "Ocultar el buzón de la GAL",
+        ["Offboarding.Option.RemoveRoles"] = "Quitar roles de administrador",
+        ["Offboarding.Option.RemoveRoles.Tooltip"] = "Quita los roles de directorio activos (Entra). Los roles elegibles vía PIM no se ven desde aquí. Requiere el permiso RoleManagement.ReadWrite.Directory.",
         ["Offboarding.Option.LitigationHold"] = "Activar Litigation Hold (retención legal)",
         ["Offboarding.LitigationHold.DaysPlaceholder"] = "días (vacío = indefinido)",
         ["Offboarding.LitigationHold.Hint"] = "Retiene todo el contenido del buzón, incluidos elementos eliminados y versiones editadas. Requiere Exchange Online Plan 2 o el add-on Exchange Online Archiving. Camino de buzón inactivo: hold + quitar licencia SIN convertir a compartido → al eliminar el usuario el buzón pasa a inactivo y los datos se conservan sin coste de licencia.",
@@ -865,6 +867,7 @@ public static class L10n
         ["Offboarding.Action.ConvertShared"] = "convertir buzón a SharedMailbox",
         ["Offboarding.Action.RemoveFromGroups"] = "quitar de grupos y DLs",
         ["Offboarding.Action.LitigationHold"] = "activar litigation hold",
+        ["Offboarding.Action.RemoveRoles"] = "quitar roles de administrador",
         ["Offboarding.Confirm.Title"] = "Confirmar offboarding",
         ["Offboarding.Confirm.Body"] = "Offboarding de {0}:\n\n  {1}\n\n¿Continuar?",
 
@@ -1411,6 +1414,8 @@ public static class L10n
         ["Offboarding.Export.Copied"] = "CSV copied to clipboard: {0} user(s), {1} steps.",
         ["Offboarding.Option.ForwardToDelegate"] = "Forward mail to the delegate (forwarding + mailbox copy)",
         ["Offboarding.Option.HideFromGal"] = "Hide the mailbox from the GAL",
+        ["Offboarding.Option.RemoveRoles"] = "Remove admin roles",
+        ["Offboarding.Option.RemoveRoles.Tooltip"] = "Removes active directory roles (Entra). PIM-eligible roles are not visible here. Requires the RoleManagement.ReadWrite.Directory permission.",
         ["Offboarding.Option.LitigationHold"] = "Enable Litigation Hold (legal retention)",
         ["Offboarding.LitigationHold.DaysPlaceholder"] = "days (empty = indefinite)",
         ["Offboarding.LitigationHold.Hint"] = "Retains all mailbox content, including deleted items and edited versions. Requires Exchange Online Plan 2 or the Exchange Online Archiving add-on. Inactive-mailbox path: hold + remove license WITHOUT converting to shared → when the user is deleted the mailbox becomes inactive and the data is retained license-free.",
@@ -1817,6 +1822,7 @@ public static class L10n
         ["Offboarding.Action.ConvertShared"] = "convert mailbox to SharedMailbox",
         ["Offboarding.Action.RemoveFromGroups"] = "remove from groups and DLs",
         ["Offboarding.Action.LitigationHold"] = "enable litigation hold",
+        ["Offboarding.Action.RemoveRoles"] = "remove admin roles",
         ["Offboarding.Confirm.Title"] = "Confirm offboarding",
         ["Offboarding.Confirm.Body"] = "Offboarding of {0}:\n\n  {1}\n\nContinue?",
 

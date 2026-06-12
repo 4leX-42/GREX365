@@ -540,6 +540,71 @@ public class OffboardingServiceTests
     public void IsExoManagedGroup_RoutesByKind(string? kind, bool expected) =>
         OffboardingService.IsExoManagedGroup(kind).Should().Be(expected);
 
+    // ---- directory (admin) roles ----
+
+    private static void WithRoles(Mock<IUsersService> users, params DirectoryRoleSummary[] roles) =>
+        users.Setup(u => u.GetDirectoryRolesAsync("uid", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(roles);
+
+    [Fact]
+    public async Task RemoveDirectoryRoles_RemovesEach_ReportsNames()
+    {
+        var users = UsersOk();
+        WithRoles(users, new DirectoryRoleSummary("r1", "Exchange Administrator"), new DirectoryRoleSummary("r2", "User Administrator"));
+        var sut = new OffboardingService(users.Object, MailboxOk().Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(false, false, false, RemoveDirectoryRoles: true));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name.Contains("roles") && s.Status == "OK" && s.Detail.Contains("Exchange Administrator"));
+        users.Verify(u => u.RemoveFromDirectoryRoleAsync("r1", "uid", null, It.IsAny<CancellationToken>()), Times.Once);
+        users.Verify(u => u.RemoveFromDirectoryRoleAsync("r2", "uid", null, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task RemoveDirectoryRoles_NoRoles_ReportsOkWithoutCalls()
+    {
+        var users = UsersOk();
+        WithRoles(users); // empty
+        var sut = new OffboardingService(users.Object, MailboxOk().Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(false, false, false, RemoveDirectoryRoles: true));
+
+        r.Steps.Should().Contain(s => s.Name.Contains("roles") && s.Status == "OK" && s.Detail.Contains("sin roles"));
+        users.Verify(u => u.RemoveFromDirectoryRoleAsync(It.IsAny<string>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // A missing RoleManagement.ReadWrite.Directory scope surfaces as AVISO with the exact
+    // remediation, never as a fatal error.
+    [Fact]
+    public async Task RemoveDirectoryRoles_Forbidden_ReportsAvisoWithScopeHint()
+    {
+        var users = UsersOk();
+        WithRoles(users, new DirectoryRoleSummary("r1", "Global Administrator"));
+        users.Setup(u => u.RemoveFromDirectoryRoleAsync("r1", "uid", null, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Insufficient privileges to complete the operation."));
+        var sut = new OffboardingService(users.Object, MailboxOk().Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(false, false, false, RemoveDirectoryRoles: true));
+
+        r.Success.Should().BeTrue();
+        r.Steps.Should().Contain(s => s.Name.Contains("roles") && s.Status == "AVISO"
+            && s.Detail.Contains("Global Administrator") && s.Detail.Contains("RoleManagement.ReadWrite.Directory"));
+    }
+
+    [Fact]
+    public async Task RemoveDirectoryRoles_DryRun_SimulatesWithNames()
+    {
+        var users = UsersOk();
+        WithRoles(users, new DirectoryRoleSummary("r1", "Helpdesk Administrator"));
+        var sut = new OffboardingService(users.Object, MailboxOk().Object);
+
+        var r = await sut.RunAsync("jane@a", new OffboardingOptions(false, false, false, DryRun: true, RemoveDirectoryRoles: true));
+
+        r.Steps.Should().Contain(s => s.Name.Contains("roles") && s.Status == "SIMULADO" && s.Detail.Contains("Helpdesk Administrator"));
+        users.Verify(u => u.RemoveFromDirectoryRoleAsync(It.IsAny<string>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     // ---- litigation hold (inactive-mailbox retention path) ----
 
     // Hold + license removal WITHOUT converting to shared is the supported inactive-mailbox

@@ -58,6 +58,7 @@ public class OffboardingViewModelTests
         h.Vm.RemoveLicenses = false;
         h.Vm.ConvertMailboxToShared = false;
         h.Vm.RemoveFromGroups = false;
+        h.Vm.RemoveDirectoryRoles = false;
 
         await h.Vm.RunCommand.ExecuteAsync(null);
 
@@ -350,6 +351,7 @@ public class OffboardingViewModelTests
         h.Vm.RemoveLicenses = false;
         h.Vm.ConvertMailboxToShared = false;
         h.Vm.RemoveFromGroups = false;
+        h.Vm.RemoveDirectoryRoles = false;
         h.Vm.EnableLitigationHold = true;
         h.Dialogs.ConfirmResult = true;
         h.StubRunOk();
