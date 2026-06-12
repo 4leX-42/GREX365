@@ -38,6 +38,14 @@
     <Message Importance="high" Text="PowerShell built-in modules copiados a $(PublishDir)Modules (@(_PwshBuiltinModules->Count()) ficheros)" />
   </Target>
 
+  <!-- Estas dos dlls se ofuscan post-publish (Build-Velopack.ps1). R2R las haría mixed-mode
+       y Obfuscar/Cecil no puede reescribirlas ("Writing mixed-mode assemblies is not
+       supported") — quedan IL-only (JIT; coste de arranque marginal, el splash lo tapa). -->
+  <ItemGroup>
+    <PublishReadyToRunExclude Include="Grex365.Core.dll" />
+    <PublishReadyToRunExclude Include="Grex365.PowerShell.dll" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.23.0" />

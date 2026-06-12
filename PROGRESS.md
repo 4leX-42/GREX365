@@ -5,7 +5,7 @@
 - Branch: `grex365-2.0` · Pushed up to `origin/grex365-2.0` (Sprints S–Y on remote, Sprint Z + AA local pre-push)
 - Stack actual: **C# · .NET 10 · WPF + wpf-ui (Fluent) · MVVM (CommunityToolkit.Mvvm) · Serilog · Microsoft.Extensions.Hosting · Microsoft.ApplicationInsights**
 - Tests: **1457 passing** (xUnit + FluentAssertions) — 604 Core + 853 App
-- Última actualización: 2026-06-12 (sesión · Sprint AT: litigation hold + roles admin + MFA + notificación email del resultado en offboarding)
+- Última actualización: 2026-06-12 (sesión · Sprint AT: litigation hold + roles admin + MFA + notificación email en offboarding · Obfuscar integrado en Velopack, validado con smoke)
 
 ## Validaciones en vivo — log acumulativo (NO repetir; lab = solo objetos `testeo*`, mutaciones solo con revert)
 
@@ -51,6 +51,13 @@ Las registraciones MFA sobreviven al disable y seguirían satisfaciendo MFA si l
 - **UI**: campo "Notificar resultado por email (opcional)" con tooltip. ES+EN.
 - Tests: **+3 Core** (resumen desde el saliente como último paso con asunto/cuerpo correctos, fallo→AVISO con scope, dry-run no envía). Total **1457** (604 Core + 853 App).
 - ⚠ **Scope pendiente en tenant**: `Mail.Send` sin consent — degrada a AVISO con instrucción. ⚠ Mail.Send app-only permite enviar como CUALQUIERA: al concederlo, aplicar **Application Access Policy** en EXO (`New-ApplicationAccessPolicy -PolicyScopeGroupId <grupo>`) para limitar el blast radius.
+
+### Obfuscar integrado en el build de Velopack (commit 5 — cierra el último pendiente de distribución)
+Petición: binario descargable sin exponer el código + app genérica para cualquier equipo Windows.
+- **`Build-Velopack.ps1` paso 2/3**: Obfuscar (`Obfuscar.GlobalTool`, auto-instala) sobre `Grex365.Core.dll` + `Grex365.PowerShell.dll` con `KeepPublicApi=true` (preserva contratos públicos: App.dll, JSON records, DI). `Grex365.App.dll` (WPF) **nunca** — XAML resuelve por nombre. Switch `-NoObfuscate`.
+- **Fix necesario**: R2R produce mixed-mode y Cecil no puede reescribirlo ("Writing mixed-mode assemblies is not supported") → `PublishReadyToRunExclude` para esas 2 dlls en el csproj (IL-only, JIT, splash tapa el coste).
+- **Validado en vivo**: build completo 2.0.9 + smoke (exe publicado+ofuscado arranca, MainWindow 'GREX365' visible) + verificación binaria: nombres privados (`GenerateTempPassword`, `CountRemainingLicensesAsync`) ya NO aparecen en la dll; en la original sí. Límite documentado: strings de métodos públicos visibles (HideStrings no aplica a miembros preservados) — sin secretos en strings, la config vive en disco.
+- **Auditoría "app genérica"** (mismo turno): cero hardcodes del tenant en `src/` (grep andersen → solo MSIX manifest, canal no usado); FirstRunWizard pide AppId/TenantId/Org/cert; fallback `pwsh.exe`→`powershell.exe` (PS 5.1, presente en todo Windows); módulo EXO se auto-instala (`Install-Module` en pwsh externo); self-contained → no requiere .NET en destino. Único requisito real de estación: Windows 10 1809+.
 
 ### Backlog scopes nuevos — restante
 - OneDrive del saliente (transferir/delegar acceso al site personal — `Sites.FullControl.All` o delegación; diseño pendiente, es el item más complejo).

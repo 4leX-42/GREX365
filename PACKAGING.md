@@ -103,6 +103,24 @@ pwsh -File packaging/velopack/Build-Velopack.ps1 -Version 2.0.1
 El script publica **sin** single-file (Velopack gestiona el layout; los deltas necesitan el árbol
 expandido), con R2R, e invoca `vpk pack` (instala el tool global si falta).
 
+### Ofuscación (integrada, por defecto ON)
+
+Entre el publish y el `vpk pack`, el script ofusca **`Grex365.Core.dll` + `Grex365.PowerShell.dll`**
+con [Obfuscar](https://github.com/obfuscar/obfuscar) (`Obfuscar.GlobalTool`, se auto-instala):
+
+- `KeepPublicApi=true`: lo público se preserva (contratos que consume App.dll, records que
+  System.Text.Json (de)serializa por nombre, tipos registrados en DI). Lo privado/interno
+  (métodos, campos, tipos) se renombra — un ILSpy casual no lee la lógica con nombres significativos.
+- **`Grex365.App.dll` (WPF) nunca se ofusca**: XAML resuelve tipos/propiedades por nombre
+  (bindings, `x:Class`, DataTemplates) y el renombrado la rompe.
+- Las 2 dlls ofuscadas se excluyen de R2R en el csproj (`PublishReadyToRunExclude`): Cecil no
+  puede reescribir assemblies mixed-mode. Quedan IL-only (JIT; el splash tapa el coste).
+- Límite conocido: los strings de métodos **públicos** quedan visibles (HideStrings solo aplica
+  a miembros ofuscables). No hay secretos en strings: AppId/TenantId/thumbprint viven en la
+  config de la estación (`%LOCALAPPDATA%\Grex365\config`), nunca en el binario.
+- `-NoObfuscate` salta el paso (debug de un build de release).
+- Smoke validado 2026-06-12: app publicada+ofuscada arranca y muestra MainWindow correctamente.
+
 ### Firma (cert CA interna Andersen — coste cero)
 
 ```powershell
