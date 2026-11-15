@@ -5,6 +5,8 @@ Toolkit de administración Microsoft 365 para sysadmin. Operaciones sobre Exchan
 > **Estado del proyecto (2026-05)**: reescritura **C# .NET 10 + WPF + WPF-UI (Fluent)** activa en branch `grex365-2.0`. La versión PowerShell (`GREX365/`) sigue funcional para fallback durante la migración. La nueva app reemplaza al toolkit legacy en producción.
 >
 > Documentación operativa:
+> - [`docs/PLATFORM.md`](docs/PLATFORM.md) — plataforma: catálogo de operaciones, línea de comandos `grex365`, servidor MCP para agentes de IA y hoja de ruta.
+> - [`docs/AUDIT-2026-11.md`](docs/AUDIT-2026-11.md) — auditoría del estado del proyecto.
 > - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — stack, capas, patrones, decisiones técnicas.
 > - [`docs/RUNBOOK.md`](docs/RUNBOOK.md) — manual operativo: instalación, primer arranque, troubleshooting, plugins, telemetría.
 > - [`docs/ROADMAP.md`](docs/ROADMAP.md) — punch list completo H0-H6, hitos + status.

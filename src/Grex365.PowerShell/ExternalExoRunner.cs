@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 using Grex365.Core.Abstractions;
 using Grex365.Core.Models;
@@ -43,9 +43,9 @@ public sealed class ExternalExoRunner : IExternalExoRunner
             $InformationPreference = 'SilentlyContinue'
             $WarningPreference = 'SilentlyContinue'
             [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+            try {
             Import-Module ExchangeOnlineManagement -ErrorAction Stop
             Connect-ExchangeOnline -AppId {{Lit(cfg.AppId)}} -CertificateThumbprint {{Lit(cfg.CertThumbprint)}} -Organization {{Lit(cfg.Organization)}} -ShowBanner:$false -InformationAction SilentlyContinue -ErrorAction Stop | Out-Null
-            try {
             {{body}}
             }
             catch {

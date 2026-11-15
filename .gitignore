@@ -98,3 +98,6 @@ _bmad/
 # Velopack build output (binarios grandes - no versionar)
 packaging/velopack/out*/
 packaging/velopack/publish/
+
+# Estado local de agentes
+.claude/
