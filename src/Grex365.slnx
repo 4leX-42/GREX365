@@ -2,6 +2,7 @@
   <Project Path="../tests/Grex365.App.Tests/Grex365.App.Tests.csproj" />
   <Project Path="../tests/Grex365.Core.Tests/Grex365.Core.Tests.csproj" />
   <Project Path="Grex365.App/Grex365.App.csproj" />
+  <Project Path="Grex365.Cli/Grex365.Cli.csproj" />
   <Project Path="Grex365.Core/Grex365.Core.csproj" />
   <Project Path="Grex365.PowerShell/Grex365.PowerShell.csproj" />
 </Solution>
